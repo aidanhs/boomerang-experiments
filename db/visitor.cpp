@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.8 $
+ * $Revision: 1.14.2.9 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -621,54 +621,11 @@ bool ConstFinder::visit(Const* e) {
 	return true;
 }
 bool ConstFinder::visit(Location* e, bool& override) {
-	if (e->isRegOf())
-		override = true;	// Don't treat register numbers as typable constants
+	if (e->isMemOf())
+		override = false;		// We DO want to see constants in memofs
 	else
-		override = false;	// However, we DO want to see constants in memofs
+		override = true;		// Don't consider register numbers, global names, etc
 	return true;			
-}
-
-// Convert expressions to locals
-DfaLocalConverter::DfaLocalConverter(Type* ty, UserProc* proc) : parentType(ty), proc(proc) {
-// Example: BranchStatement... does the condition have a top level type?
-if (parentType == NULL) parentType = new VoidType();	// MVE: Hack for now
-	sig = proc->getSignature();
-	prog = proc->getProg();
-}
-
-Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
-	// Check if this is an appropriate pattern for local variables	
-	if (e->isMemOf()) {
-		if (sig->isStackLocal(proc->getProg(), e)) {
-			recur = false;
-			mod = true;			// We've made a modification
-			// Don't change parentType; e is a Location now so postVisit won't expect parentTypt changed
-			return proc->getLocalExp(e, parentType, true);
-		}
-		// When we recurse into the m[...], the type will be changed
-		parentType = new PointerType(parentType);
-	}
-	recur = true;
-	return e;
-}
-Exp* DfaLocalConverter::postVisit(Location* e) {
-	if (e->isMemOf()) {
-		PointerType* pt = parentType->asPointer();
-		assert(pt);
-		parentType = pt->getPointsTo();
-	}
-	return e;
-}
-
-Exp* DfaLocalConverter::preVisit(Binary* e, bool& recur) {
-	// Check for sp -/+ K, but only if TA indicates this is a pointer
-	if (parentType->isPointer() && sig->isAddrOfStackLocal(prog, e)) {
-		recur = false;
-		mod = true;
-		return proc->getLocalExp(e, parentType, true);
-	}
-	recur = true;
-	return e;
 }
 
 // This is in the POST visit function, because it's important to process any child expressions first.

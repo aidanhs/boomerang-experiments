@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.5 $
+ * $Revision: 1.5.2.6 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -175,9 +175,9 @@ Type* IntegerType::meetWith(Type* other, bool& ch) {
 		IntegerType* otherInt = other->asInteger();
 		// Signedness
 		int oldSignedness = signedness;
-		if (otherInt->isSigned())
+		if (otherInt->signedness > 0)
 			signedness++;
-		else
+		else if (otherInt->signedness < 0)
 			signedness--;
 		ch |= (signedness >= 0 != oldSignedness >= 0);
 		// Size. Assume 0 indicates unknown size
@@ -525,7 +525,7 @@ Type* deltaDifference(Type* ta, Type* tb) {
 		return tb;
 	}
 	if (ta->isInteger()) {
-		if (tb->isInteger())
+		if (tb->isPointer())
 			return ta->createUnion(tb);
 		if (tb->isInteger())
 			return tb;
@@ -697,3 +697,47 @@ void Statement::dfaConvertLocals() {
 	StmtModifier sm(&dlc);
 	accept(&sm);
 }
+
+// Convert expressions to locals
+DfaLocalConverter::DfaLocalConverter(Type* ty, UserProc* proc) : parentType(ty), proc(proc) {
+// Example: BranchStatement... does the condition have a top level type?
+if (parentType == NULL) parentType = new VoidType();	// MVE: Hack for now
+	sig = proc->getSignature();
+	prog = proc->getProg();
+}
+
+Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
+	// Check if this is an appropriate pattern for local variables	
+	if (e->isMemOf()) {
+		if (sig->isStackLocal(proc->getProg(), e)) {
+			recur = false;
+			mod = true;			// We've made a modification
+			// Don't change parentType; e is a Location now so postVisit won't expect parentTypt changed
+			return proc->getLocalExp(e, parentType, true);
+		}
+		// When we recurse into the m[...], the type will be changed
+		parentType = new PointerType(parentType);
+	}
+	recur = true;
+	return e;
+}
+Exp* DfaLocalConverter::postVisit(Location* e) {
+	if (e->isMemOf()) {
+		PointerType* pt = parentType->asPointer();
+		assert(pt);
+		parentType = pt->getPointsTo();
+	}
+	return e;
+}
+
+Exp* DfaLocalConverter::preVisit(Binary* e, bool& recur) {
+	// Check for sp -/+ K, but only if TA indicates this is a pointer
+	if (parentType->isPointer() && sig->isAddrOfStackLocal(prog, e)) {
+		recur = false;
+		mod = true;
+		return proc->getLocalExp(e, parentType, true);
+	}
+	recur = true;
+	return e;
+}
+

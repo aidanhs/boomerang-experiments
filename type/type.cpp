@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33 $
+ * $Revision: 1.33.2.1 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -1127,7 +1127,6 @@ void Type::starPrint(std::ostream& os) {
 std::ostream& operator<<(std::ostream& os, Type* t) {
 	if (t == NULL) return os << '0';
 	switch (t->getId()) {
-		case eVoid:	os << 'v'; break;
 		case eInteger: {
 			int sg = ((IntegerType*)t)->getSignedness();
 			// 'j' for either i or u, don't know which
@@ -1135,16 +1134,17 @@ std::ostream& operator<<(std::ostream& os, Type* t) {
 			os << std::dec << t->asInteger()->getSize();
 			break;
 		}
-		case eFloat:
-			os << 'f';
-			os << std::dec << t->asFloat()->getSize();
-			break;
-		case eChar: os << 'c'; break;
-		case ePointer: os << t->asPointer()->getPointsTo() << '*'; break;
-		case eBoolean: os << 'b'; break;
-		case eSize: os << std::dec << t->getSize(); break;
-		default:
-			os << "?type?";
+		case eFloat:	os << 'f'; os << std::dec << t->asFloat()->getSize(); break;
+		case ePointer:	os << t->asPointer()->getPointsTo() << '*'; break;
+		case eSize:		os << std::dec << t->getSize(); break;
+		case eChar:		os << 'c'; break;
+		case eVoid:		os << 'v'; break;
+		case eBoolean:	os << 'b'; break;
+		case eCompound:	os << "struct"; break; 
+		case eUnion:	os << "union"; break;
+		case eFunc:		os << "func"; break;
+		case eArray:	os << '[' << t->asArray()->getBaseType() << ']'; break;
+		case eNamed:	os << t->asNamed()->getName(); break;
 	}
 	return os;
 }
