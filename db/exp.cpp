@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39.2.6 $
+ * $Revision: 1.39.2.7 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -2684,10 +2684,13 @@ void AssignExp::addUsedLocs(LocationSet& used) {
     Exp* left = getSubExp1();
     Exp* right = getSubExp2();
     right->addUsedLocs(used);
-    if (left->isMemOf()) {
+    Exp* baseLeft = left;
+    if (left->isSubscript())        // Should always be
+        baseLeft = ((UsesExp*)left)->getSubExp1();
+    if (baseLeft->isMemOf()) {
         // We also use any expr like m[exp] on the LHS (but not the outer m[])
-        left = ((Unary*)left)->getSubExp1();
-        left->addUsedLocs(used);
+        Exp* baseLeftChild = ((Unary*)baseLeft)->getSubExp1();
+        baseLeftChild->addUsedLocs(used);
     }
 }
 
