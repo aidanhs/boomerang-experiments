@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.8 $
+ * $Revision: 1.8.2.9 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -419,6 +419,7 @@ class DfaLocalConverter : public ExpModifier {
 		UserProc* proc;
 		Prog*	prog;
 		Signature* sig;		// Look up once (from proc) for speed
+		int		sp;			// Look up the stack pointer register once
 public:
 				DfaLocalConverter(Type* ty, UserProc* proc);
 		//void	setType(Type* ty) {parentType = ty;}

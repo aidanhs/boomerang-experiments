@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.6 $
+ * $Revision: 1.207.2.7 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1616,10 +1616,6 @@ void UserProc::trimReturns() {
 		// also check for any locals that slipped into the returns
 		for (int i = 0; i < signature->getNumReturns(); i++) {
 			Exp *e = signature->getReturnExp(i);
-			if (e->getOper() == opMemOf && 
-				e->getSubExp1()->getOper() == opMinus &&
-				*e->getSubExp1()->getSubExp1() == *regsp &&
-				e->getSubExp1()->getSubExp2()->isIntConst())
 			if ((signature->isLocalOffsetNegative() && e->getOper() == opMemOf
 					&& e->getSubExp1()->getOper() == opMinus && *e->getSubExp1()->getSubExp1() == *regsp
 					&& e->getSubExp1()->getSubExp2()->isIntConst()) ||

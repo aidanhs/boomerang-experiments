@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.7 $
+ * $Revision: 1.5.2.8 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -709,6 +709,7 @@ DfaLocalConverter::DfaLocalConverter(Type* ty, UserProc* proc) : parentType(ty),
 if (parentType == NULL) parentType = new VoidType();	// MVE: Hack for now
 	sig = proc->getSignature();
 	prog = proc->getProg();
+	sp = sig->getStackRegister();
 }
 
 Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
@@ -740,7 +741,7 @@ Exp* DfaLocalConverter::preVisit(Binary* e, bool& recur) {
 	if (parentType->isPointer() && sig->isAddrOfStackLocal(prog, e)) {
 		recur = false;
 		mod = true;
-		return proc->getLocalExp(e, parentType, true);
+		return proc->getLocalExp(e, parentType->asPointer()->getPointsTo(), true);	// MVE: Check this!
 	}
 	recur = true;
 	return e;
