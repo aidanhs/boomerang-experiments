@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.11 $
+ * $Revision: 1.14.2.12 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -166,13 +166,14 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 	Statement* def = r->getRef();
 	CallStatement *call = dynamic_cast<CallStatement*>(def);
 	if (call) {
+		// Get the left had side of the proven expression (e.g. from r28 = r28 + 4, get r28)
 		Exp *e = call->getProven(r->getSubExp1());
 		if (e) {
-			e = call->substituteParams(e->clone());
+			// Express e in terms of the arguments passed to this call
+			e = call->substituteParams(e);
 			assert(e);
 			if (VERBOSE)
-				LOG << "fixcall refs replacing " << r << " with " << e
-					<< "\n";
+				LOG << "fixcall refs replacing " << r << " with " << e << "\n";
 			// e = e->simplify();	// No: simplify the parent
 			unchanged &= ~mask;
 			mod = true;
@@ -181,10 +182,8 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 			Exp* subExp1 = r->getSubExp1();
 			if (call->findReturn(subExp1) == -1) {
 				if (VERBOSE && !subExp1->isPC()) {
-					LOG << "nothing proven about " << subExp1 <<
-						" and yet it is referenced by " << r <<
-						", and not in returns of " << "\n" <<
-						"	" << call << "\n";
+					LOG << "nothing proven about " << subExp1 << " and yet it is referenced by " << r <<
+						", and not in returns of " << "\n" << "	" << call << "\n";
 				}
 			}
 		}

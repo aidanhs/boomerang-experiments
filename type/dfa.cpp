@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.9 $
+ * $Revision: 1.5.2.10 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -166,8 +166,7 @@ Type* VoidType::meetWith(Type* other, bool& ch) {
 Type* FuncType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
 	if (*this == *other) return this;		// NOTE: at present, compares names as well as types and number of parameters
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* IntegerType::meetWith(Type* other, bool& ch) {
@@ -197,8 +196,7 @@ Type* IntegerType::meetWith(Type* other, bool& ch) {
 		size = max(size, ((SizeType*)other)->getSize());
 		return this;
 	}
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* FloatType::meetWith(Type* other, bool& ch) {
@@ -216,25 +214,25 @@ Type* FloatType::meetWith(Type* other, bool& ch) {
 		size = max(size, otherSize);
 		return this;
 	}
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* BooleanType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
 	if (other->isBoolean())
 		return this;
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* CharType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
 	if (other->isChar()) return this;
 	// Also allow char to merge with integer
-	ch = true;
-	if (other->isInteger()) return other;
-	return createUnion(other);
+	if (other->isInteger()) {
+		ch = true;
+		return other;
+	}
+	return createUnion(other, ch);
 }
 
 Type* PointerType::meetWith(Type* other, bool& ch) {
@@ -250,16 +248,13 @@ Type* PointerType::meetWith(Type* other, bool& ch) {
 			bool baseCh = false;
 			Type* thisBase = getPointsTo();
 			Type* otherBase = otherPtr->getPointsTo();
-			if (otherBase->isPointer()) {
+			if (otherBase->isPointer())
 				// Don't recurse infinately. Just union the pointers
-				ch = true;
-				return createUnion(other);
-			}
+				return createUnion(other, ch);
 			thisBase = thisBase->meetWith(otherBase, baseCh);
 			if (thisBase->isUnion()) {
 				// The bases did not meet successfully. Union the pointers.
-				ch = true;
-				return createUnion(other);
+				return createUnion(other, ch);
 			} else {
 				// The bases did meet successfully. Return a pointer to this possibly changed type.
 				if (baseCh) {
@@ -271,15 +266,13 @@ Type* PointerType::meetWith(Type* other, bool& ch) {
 		return this;
 	}
 	// Would be good to understand class hierarchys, so we know if a* is the same as b* when b is a subclass of a
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* ArrayType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
 	// Needs work
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* NamedType::meetWith(Type* other, bool& ch) {
@@ -288,7 +281,7 @@ Type* NamedType::meetWith(Type* other, bool& ch) {
 
 Type* CompoundType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
-	if (!other->isCompound()) { ch = true; return createUnion(other);}
+	if (!other->isCompound()) return createUnion(other, ch);
 	CompoundType* otherCmp = other->asCompound();
 	if (otherCmp->isSuperStructOf(this)) {
 		// The other structure has a superset of my struct's offsets. Preserve the names etc of the bigger struct.
@@ -303,15 +296,13 @@ Type* CompoundType::meetWith(Type* other, bool& ch) {
 	if (*this == *other) return this;
 	// Not compatible structs. Create a union of both complete structs.
 	// NOTE: may be possible to take advantage of some overlaps of the two structures some day.
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* UnionType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
 	if (*this == *other) return this;
-	ch = true;
-	return createUnion(other);
+	return createUnion(other, ch);
 }
 
 Type* SizeType::meetWith(Type* other, bool& ch) {
@@ -331,14 +322,22 @@ Type* SizeType::meetWith(Type* other, bool& ch) {
 	return other;
 }
 
-Type* Type::createUnion(Type* other) {
+Type* Type::createUnion(Type* other, bool& ch) {
 	char name[20];
 	sprintf(name, "x%d", ++nextUnionNumber);
 	if (isUnion()) {
+		if (((UnionType*)this)->findType(other))
+			// The type already exists; no change
+			return this;
+		ch = true;
 		((UnionType*)this)->addType(other, name);
 		return this;
 	}
 	if (other->isUnion()) {
+		if (((UnionType*)other)->findType(this))
+			// The type already exists in the other union
+			return other;
+		ch = true;
 		((UnionType*)other)->addType(this, name);
 		return other;
 	}
@@ -346,6 +345,7 @@ Type* Type::createUnion(Type* other) {
 	u->addType(this, name);
 	sprintf(name, "x%d", ++nextUnionNumber);
 	u->addType(other, name);
+	ch = true;
 	return u;
 }
 
@@ -459,9 +459,10 @@ void ReturnStatement::dfaTypeAnalysis(bool& ch) {
 // int		alpha*	int		pi
 // pi		alpha*	pi		pi
 Type* sigmaSum(Type* ta, Type* tb) {
+	bool ch;
 	if (ta->isPointer()) {
 		if (tb->isPointer())
-			return ta->createUnion(tb);
+			return ta->createUnion(tb, ch);
 		return ta;
 	}
 	if (ta->isInteger()) {
@@ -481,6 +482,7 @@ Type* sigmaSum(Type* ta, Type* tb) {
 // int		alpha*	int		pi
 // pi		pi		pi		pi
 Type* sigmaAddend(Type* tc, Type* to) {
+	bool ch;
 	if (tc->isPointer()) {
 		if (to->isPointer())
 			return new IntegerType;
@@ -490,7 +492,7 @@ Type* sigmaAddend(Type* tc, Type* to) {
 	}
 	if (tc->isInteger()) {
 		if (to->isPointer())
-			return tc->createUnion(to);
+			return tc->createUnion(to, ch);
 		return to;
 	}
 	if (to->isPointer())
@@ -504,9 +506,10 @@ Type* sigmaAddend(Type* tc, Type* to) {
 // int		alpha*	int		pi
 // pi		alpha*	int		pi
 Type* deltaSubtrahend(Type* tc, Type* tb) {
+	bool ch;
 	if (tc->isPointer()) {
 		if (tb->isPointer())
-			return tc->createUnion(tb);
+			return tc->createUnion(tb, ch);
 		return tc;
 	}
 	if (tc->isInteger()) {
@@ -525,11 +528,12 @@ Type* deltaSubtrahend(Type* tc, Type* tb) {
 // int		bottom	int		int
 // pi		alpha*	int		pi
 Type* deltaSubtractor(Type* tc, Type* ta) {
+	bool ch;
 	if (tc->isPointer()) {
 		if (ta->isPointer())
 			return new IntegerType;
 		if (ta->isInteger())
-			return tc->createUnion(ta);
+			return tc->createUnion(ta, ch);
 		return new IntegerType;
 	}
 	if (tc->isInteger())
@@ -545,6 +549,7 @@ Type* deltaSubtractor(Type* tc, Type* ta) {
 // int		alpha*	int		pi
 // pi		pi		int		pi
 Type* deltaDifference(Type* ta, Type* tb) {
+	bool ch;
 	if (ta->isPointer()) {
 		if (tb->isPointer())
 			return new IntegerType;
@@ -554,7 +559,7 @@ Type* deltaDifference(Type* ta, Type* tb) {
 	}
 	if (ta->isInteger()) {
 		if (tb->isPointer())
-			return ta->createUnion(tb);
+			return ta->createUnion(tb, ch);
 		if (tb->isInteger())
 			return tb;
 		return new IntegerType;

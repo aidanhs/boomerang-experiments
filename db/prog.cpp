@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.3 $
+ * $Revision: 1.112.2.4 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -979,8 +979,7 @@ void Prog::removeUnusedGlobals() {
 void Prog::removeUnusedReturns() {
 	// The counter
 	UserProc::ReturnCounter rc;
-	// Two worksets; one of procs whose return sets have changed, and
-	// one of their callers
+	// Two worksets; one of procs whose return sets have changed, and one of their callers
 	std::set<UserProc*> calleeSet, callerSet, newCalleeSet;
 
 	// First count (globally) the used returns
@@ -1030,9 +1029,8 @@ void Prog::removeUnusedReturns() {
 		for (it = calleeSet.begin(); it != calleeSet.end(); it++) {
 			UserProc* proc = *it;
 			if (proc->isLib()) continue;
-			if (Boomerang::get()->debugUnusedRets)
-				LOG << " @@ removeUnusedReturns: considering callee " 
-					<< proc->getName() << "\n";
+			if (Boomerang::get()->debugUnusedRetsAndParams)
+				LOG << " @@ removeUnusedReturns: considering callee " << proc->getName() << "\n";
 			bool thisChange = proc->removeUnusedReturns(rc);
 			if (thisChange && !Boomerang::get()->noRemoveNull) {
 				// It may be that now there are more unused statements
@@ -1042,8 +1040,7 @@ void Prog::removeUnusedReturns() {
 				proc->countRefs(refCounts);
 				// Now remove any that have no used
 				proc->removeUnusedStatements(refCounts, -1);
-				// It may also be that there are now some parameters unused,
-				// in particular esp
+				// It may also be that there are now some parameters unused, in particular esp
 				proc->trimParameters();
 				// and one more time
 				refCounts.clear();

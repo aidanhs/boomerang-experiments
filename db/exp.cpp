@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.162.2.7 $
+ * $Revision: 1.162.2.8 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -3954,19 +3954,19 @@ void Exp::addUsedLocs(LocationSet& used) {
 }
 
 // Subscript any occurrences of e with e{def} in this expression
-Exp* Exp::expSubscriptVar(Exp* e, Statement* def /*, Cfg* cfg*/) {
-	ExpSubscripter es(e, def /*, cfg*/);
+Exp* Exp::expSubscriptVar(Exp* e, Statement* def) {
+	ExpSubscripter es(e, def);
 	return accept(&es);
 }
 
 // Subscript any occurrences of e with e{0} in this expression
-// Note: with implicit assignments, we don't have NULL references any more
-Exp* Exp::expSubscriptVarImp(Exp* e /*, Cfg* cfg*/) {
-	return expSubscriptVar(e, NULL /*cfg->findImplicitAssign(e), cfg */);
+// Note: subscript with NULL, not implicit assignments as above
+Exp* Exp::expSubscriptValNull(Exp* e) {
+	return expSubscriptVar(e, NULL);
 }
 
-// Subscript any terminals in this expression (with their implicit assignments, of course)
-Exp* Exp::expSubscriptAllImp(/*Cfg* cfg*/) {
+// Subscript all locations in this expression with their implicit assignments
+Exp* Exp::expSubscriptAllNull(/*Cfg* cfg*/) {
 	return expSubscriptVar(new Terminal(opWild), NULL /* was NULL, NULL, cfg */);
 }
 

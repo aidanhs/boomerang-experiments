@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.10 $
+ * $Revision: 1.8.2.11 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -238,8 +238,7 @@ public:
 	ExpModifier* mod;			// The expression modifier object
 				StmtModifier(ExpModifier* em) {mod = em;}	// Constructor
 	virtual		~StmtModifier() {}
-	// This class' visitor functions don't return anything. Maybe we'll need
-	// return values at a later stage.
+	// This class' visitor functions don't return anything. Maybe we'll need return values at a later stage.
 virtual void visit(Assign *s,			bool& recur) {recur = true;}
 virtual void visit(PhiAssign *s,		bool& recur) {recur = true;}
 virtual void visit(ImplicitAssign *s,	bool& recur) {recur = true;}

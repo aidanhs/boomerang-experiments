@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.81.2.5 $
+ * $Revision: 1.81.2.6 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -347,12 +347,11 @@ Exp *CallingConvention::Win32Signature::getProven(Exp *left)
 	if (nparams > 0 && *params[0]->getExp() == *Location::regOf(28)) {
 		nparams--;
 	}
-	if (left->getOper() == opRegOf && 
-		left->getSubExp1()->getOper() == opIntConst) {
+	if (left->getOper() == opRegOf && left->getSubExp1()->getOper() == opIntConst) {
 		switch (((Const*)left->getSubExp1())->getInt()) {
 			case 28:
 				return new Binary(opPlus, Location::regOf(28), 
-										  new Const(4 + nparams*4));
+					new Const(4 + nparams*4));
 			case 26:
 				return Location::regOf(26);
 			case 27:
@@ -899,6 +898,7 @@ void Signature::setParamExp(int n, Exp *e)
 	params[n]->setExp(e);
 }
 
+// Return the index for the given expression, or -1 if not found
 int Signature::findParam(Exp *e) {
 	for (int i = 0; i < getNumParams(); i++)
 		if (*getParamExp(i) == *e)
@@ -1548,3 +1548,4 @@ bool Signature::isOpCompatStackLocal(OPER op) {
 	if (op == opPlus) return isLocalOffsetPositive();
 	return false;
 }
+

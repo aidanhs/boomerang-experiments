@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63.2.7 $
+ * $Revision: 1.63.2.8 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -985,8 +985,10 @@ virtual bool	accept(StmtModifier* visitor);
 	void		addReturn(Exp *e);
 	std::vector<Exp*>& getReturns() {return returns;}
 	Exp			*getProven(Exp *e);
+	// Substitute the various components of expression e with the appropriate actual arguments
 	Exp			*substituteParams(Exp *e);
 	void		addArgument(Exp *e);
+	// Treat e as the expression for a parameter, and return the actual, or failing that, the implicit parameter
 	Exp*		findArgument(Exp* e);
 	Exp*		getArgumentExp(int i);
 	Exp*		getImplicitArgumentExp(int i);

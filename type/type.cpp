@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.1 $
+ * $Revision: 1.33.2.2 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -581,8 +581,7 @@ bool SizeType::operator<(const Type& other) const {
 Exp *Type::match(Type *pattern)
 {
 	if (pattern->isNamed()) {
-		LOG << "type match: " << this->getCtype() << " to " <<
-		  pattern->getCtype() << "\n";
+		LOG << "type match: " << this->getCtype() << " to " << pattern->getCtype() << "\n";
 		return new Binary(opList, 
 			new Binary(opEquals, 
 				new Unary(opVar,
@@ -626,8 +625,7 @@ Exp *FuncType::match(Type *pattern)
 Exp *PointerType::match(Type *pattern)
 {
 	if (pattern->isPointer()) {
-		LOG << "got pointer match: " << this->getCtype() << " to " <<
-		  pattern->getCtype() << "\n";
+		LOG << "got pointer match: " << this->getCtype() << " to " << pattern->getCtype() << "\n";
 		return points_to->match(pattern->asPointer()->getPointsTo());
 	}
 	return Type::match(pattern);
@@ -1394,4 +1392,12 @@ bool CompoundType::isSubStructOf(Type* other) {
 	return true;
 }
 
-
+// Return true if this type is already in the union. Note: linear search, but number of types is usually small
+bool UnionType::findType(Type* ty) {
+	std::vector<Type*>::iterator it;
+	for (it = types.begin(); it != types.end(); it++) {
+		if (**it == *ty)
+			return true;
+	}
+	return false;
+}

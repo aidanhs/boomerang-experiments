@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.8 $
+ * $Revision: 1.207.2.9 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -57,7 +57,7 @@
 typedef std::map<Statement*, int> RefCounter;
 
 #define DEBUG_PROOF (Boomerang::get()->debugProof)
-#define DEBUG_UNUSED_RETS (Boomerang::get()->debugUnusedRets)
+#define DEBUG_UNUSED_RETS_PARAMS (Boomerang::get()->debugUnusedRetsAndParams)
 #define DEBUG_UNUSED_STMT (Boomerang::get()->debugUnusedStmt)
 #define DEBUG_LIVENESS (Boomerang::get()->debugLiveness)
 #define DFA_TYPE_ANALYSIS (Boomerang::get()->dfaTypeAnalysis)
@@ -306,282 +306,6 @@ std::ostream& operator<<(std::ostream& os, Proc& proc) {
 	return proc.put(os);
 }
 
-/*==============================================================================
- * FUNCTION:	   Proc::matchParams
- * OVERVIEW:	   Adjust the given list of potential actual parameter
- *					 locations that reach a call to this procedure to
- *					 match the formal parameters of this procedure.
- * NOTE:		   This was previously a virtual function, implemented
- *					separately for LibProc and UserProc
- * PARAMETERS:	   actuals - an ordered list of locations of actual parameters
- *				   caller - Proc object for calling procedure (for message)
- *				   outgoing - ref to Parameters object which encapsulates the
- *					 PARAMETERS CALLER section of the .pal file
- * RETURNS:		   <nothing>, but may add or delete elements from actuals
- *============================================================================*/
-#if 0		// FIXME: Need to think about whether we have a Parameters class
-bool isInt(const Exp* ss) {
-	assert(ss->getOper() == opTypedExp);
-	return ((TypedExp*)ss)->getType().getType() == INTEGER;}
-bool isFlt(const Exp* ss) {
-	assert(ss->getOper() == opTypedExp);
-	Type& ty = ((TypedExp*)ss)->getType();
-	return (ty.getType() == FLOATP) && (ty.getSize() == 32);}
-bool isDbl(const Exp* ss) {
-	assert(ss->getOper() == opTypedExp);
-	Type& ty = ((TypedExp*)ss)->getType();
-	return (ty.getType() == FLOATP) && (ty.getSize() == 64);}
-
-void Proc::matchParams(std::list<Exp*>& actuals, UserProc& caller,
-	const Parameters& outgoing) const {
-	int intSize = outgoing.getIntSize();	// Int size for the source machine
-
-	int currSlot = -1;				// Current parameter slot number
-	int currSize = 1;				// Size of current parameter, in slots
-	int ordParam = 1;				// Param ordinal number (first=1, for msg)
-	std::list<Exp*>::const_iterator it = parameters.begin();
-	std::list<Exp*>::iterator ita = actuals.begin();
-#if 0			// I believe this should be done later - MVE
-	if (isAggregateUsed()) {
-		// Need to match the aggregate parameter separately, before the main
-		// loop
-		if (ita == actuals.end())
-			insertParams(1, actuals, ita, name, outgoing);
-		else ita++;
-		assert(it != parameters.end());
-		it++;
-		ordParam++;
-	}
-#endif
-	// Loop through each formal parameter. There should be no gaps in the formal
-	// parameters, because that's the job of missingParamCheck()
-	int firstOff;
-	for (; it != parameters.end(); it++) {
-		// If the current formal is varargs, then leave the remaining actuals
-		// as they are
-		const Type& ty = it->getType();
-		if (ty.getType() == VARARGS) return;
-
-		// Note that we can't call outgoing.getParamSlot here because these are
-		// *formal* parameters (could be different locations to outgoing params)
-		// (Besides, it could be a library function with no parameter locations)
-		currSlot += currSize;
-		// Perform alignment, if needed. Note that it's OK to use the outgoing
-		// parameters, as we assume that the alignment is the same for incoming
-		outgoing.alignSlotNumber(currSlot, ty);
-		currSize = ty.getSize() / 8 / intSize;	// Current size in slots
-		// Ensure that small types still occupy one slot minimum
-		if (currSize == 0) currSize = 1;
-//cout << "matchParams: Proc " << name << ": formal " << *it << ", actual "; if (ita != actuals.end()) cout << *ita; cout << std::endl;	 // Hack
-		// We need to find the subset of actuals with the same slot number
-		std::list<Exp*>::iterator itst = ita;	   // Remember start of this set
-		int numAct = 0;							// The count of this set
-		int actSlot, actSize = 0, nextActSlot;
-		if (ita != actuals.end()) {
-			actSize = 1;			// Example: int const 0
-			nextActSlot = actSlot = outgoing.getParamSlot(*ita, actSize,
-				ita == actuals.begin(), firstOff);
-			ita++;
-			numAct = 1;
-		}
-		while (ita != actuals.end()) {
-			nextActSlot = outgoing.getParamSlot(*ita, actSize, false, firstOff);
-			if (actSlot != nextActSlot) break;
-			numAct++;
-			ita++;
-		}
-		// if (actSize == 0) this means that we have run out of actual
-		// parameters. If (currSlot < actSlot) it means that there is a gap
-		// in the actual parameters. Either way, we need to insert one of the
-		// dreaded "hidden" (actual)parameters appropriate to the formal
-		// parameter (in size and type).
-		if ((actSize == 0) || (currSlot < actSlot)) {
-			const Exp** newActual = outgoing.getActParamLoc(ty, currSlot);
-			actuals.insert(itst, *newActual);
-			ita = itst;				// Still need to deal with this actual
-			std::ostringstream ost;
-			ost << "adding hidden parameter " << *newActual << 
-			  " to call to " << name;
-			warning(str(ost));
-			delete newActual;
-			continue;				// Move to the next formal parameter
-		}
-		if (numAct > 1) {
-			// This means that there are several actual parameters to choose
-			// from, which all have the same slot number. This can happen in
-			// architectures like pa-risc, where different registers are used
-			// for different types of parameters, and they all could be live
-
-			// The rules depend on the basic type. Integer parameters can
-			// overlap (e.g. 68K, often pass one long to cover two shorts).
-			// This doesn't happen with floats, because values don't concaten-
-			// ate the same way. So the size can be used to choose the right
-			// floating point location (e.g. pa-risc)
-			std::list<Exp*>::iterator ch;  // Iterator to chosen item in actuals
-			if (!it->getType()->isFloat())
-				// Integer, pointer, etc. For now, assume all the same
-				ch = find_if(itst, ita, isInt);
-			else {
-				int size = it->getType().getSize();
-				if (size == 32)
-					ch = find_if(itst, ita, isFlt);
-				else if (size == 64)
-					ch = find_if(itst, ita, isDbl);
-				else assert(0);
-			}
-			if (ch == ita) {
-				std::ostringstream ost;
-				ost << "Parameter " << dec << ordParam << " of proc " << name <<
-				  " has no actual parameter of suitable type (slot " <<
-				  currSlot << ")";
-				error(str(ost));
-			} else {
-				// Eliminate all entries in actuals from itst up to but not
-				// including ita, except the ch one
-				// In other words, of all the actual parameter witht the same
-				// slot number, keep only ch
-				for (; itst != ita; itst++)
-					if (itst != ch)
-						actuals.erase(itst);
-			}
-		}
-
-		// Check that the sizes at least are compatible
-		// For example, sometimes 2 ints are passed for a formal double or long
-		if (currSize > actSize) {
-			// Check for the 2 int case. itst would point to the first, and
-			// ita (if not end) points to the second
-			if ((actSize == 1) && (currSize == 2) && (ita != actuals.end()) &&
-			  (ita->getType().getSize() == itst->getType().getSize())) {
-				// Let this through, by just skipping the second int
-				// It's up to the back end to cope with this situation
-				ita++;
-			}
-		}
-
-		ordParam++;
-	}
-	// At this point, any excess actuals can be discarded
-	actuals.erase(ita, actuals.end());
-}
-#endif
-
-#if 0		// FIXME: Again, Parameters object used
-/*==============================================================================
- * FUNCTION:		Proc::getParamTypeList
- * OVERVIEW:		Given a list of actual parameters, return a list of
- *					  Type objects representing the types that the actuals
- *					  need to be "cast to"
- * NOTE:			Have to take into account longs overlapping 2 shorts,
- *					  gaps for alignment, etc etc.
- * NOTE:			Caller must delete result
- * PARAMETERS:		actuals: list of actual parameters
- * RETURNS:			Ptr to a list of Types, same size as actuals
- *============================================================================*/
-std::list<Type>* Proc::getParamTypeList(const std::list<Exp*>& actuals) {
-	std::list<Type>* result = new std::list<Type>;
-	const Parameters& outgoing = prog.csrSrc.getOutgoingParamSpec();
-	int intSize = outgoing.getIntSize();	// Int size for the source machine
-
-	int currForSlot = -1;				// Current formal parameter slot number
-	int currForSize = 1;				// Size of current formal, in slots
-	int ordParam = 1;		   // Actual param ordinal number (first=1, for msg)
-	std::list<Exp*>::const_iterator it = parameters.begin();
-	std::list<Exp*>::const_iterator ita = actuals.begin();
-	std::list<Exp*>::const_iterator itaa;
-	if (isAggregateUsed()) {
-		// The first parameter is a DATA_ADDRESS
-		result->push_back(Type(DATA_ADDRESS));
-		if (it != parameters.end()) it++;
-		if (ita != actuals.end()) ita++;
-	}
-	int firstOff;
-	for (; it != parameters.end(); it++) {
-		if (ita == actuals.end())
-			// Run out of actual parameters. Can happen with varargs
-			break;
-		currForSlot += currForSize;
-		// Perform alignment, if needed. Note that it's OK to use the outgoing
-		// parameters, as we assume that the alignment is the same for incoming
-		Type ty = it->getType();
-		outgoing.alignSlotNumber(currForSlot, ty);
-		currForSize = ty.getSize() / 8 / intSize;  // Current size in slots
-		// Ensure that small types still occupy one slot minimum
-		if (currForSize == 0) currForSize = 1;
-		int actSize = 1;		// Default to 1 (e.g. int consts)
-		// Look at the current actual parameter, to get its size
-		if (ita->getFirstIdx() == idVar) {
-			// Just use the size from the Exp*'s Type
-			int bytes = ita->getType().getSize() / 8;
-			if (bytes && (bytes < intSize)) {
-				std::ostringstream ost;
-				ost << "getParamTypelist: one of those evil sub-integer "
-					"parameter passings at call to " << name;
-				warning(str(ost));
-				actSize = 1;
-			}
-			else
-				actSize = bytes / intSize;
-		} else {
-			// MVE: not sure that this is the best way to find the size
-			outgoing.getParamSlot(*ita, actSize, ita == actuals.begin(),
-			  firstOff);
-		}
-		ita++;
-		// If the current formal is varargs, that's a special case
-		// Similarly, if all the arguments are unknown
-		/*LOC_TYPE lt = ty.getType();
-		if ((lt == VARARGS) || (lt == UNKNOWN)) {
-			// We want to give all the remaining actuals their own type
-			ita--;
-			while (ita != actuals.end()) {
-				result->push_back(ita->getType());
-				ita++;
-			}
-			break;
-		} */
-		// If the sizes are the same, then we can use the formal's type
-		if (currForSize == actSize)
-			result->push_back(ty);
-		// Else there is an overlap. We get the type of the first formal,
-		// and widen it for the number of formals that this actual covers
-		else if (actSize > currForSize) {
-			Type first = ty;
-			int combinedSize = ty.getSize();
-			while ((actSize > currForSize) && (it != parameters.end())) {
-				currForSlot += currForSize;
-				ty = (++it)->getType();
-				outgoing.alignSlotNumber(currForSlot, ty);
-				currForSize += ty.getSize() / 8 / intSize;
-				combinedSize += ty.getSize();
-			}
-			if (actSize != currForSize) {
-				// Something has gone wrong with the matching process
-				std::ostringstream ost;
-				ost << "getParamTypeList: Actual parameter " << dec << ordParam
-				  << " does not match with formals in proc " << name;
-				error(str(ost));
-			}
-			first.setSize(combinedSize);
-			result->push_back(first);
-		}
-		// Could be overlapping parameters, e.g. two ints passed as a
-		// double or long. ita points to the second int (unless end)
-		else if ((actSize == 1) && (currForSize == 2) && (ita != actuals.end())
-		  && (itaa = ita, (*--itaa).getType() == ita->getType())) {
-			// Let this through, with the type of the formal
-			ita++;
-			ordParam++;
-			result->push_back(ty);
-		}
-		else {
-			assert(actSize > currForSize);
-		}
-		ordParam++;
-	}
-	return result;
-}
-#endif
 
 Proc *Proc::getFirstCaller() { 
 	if (m_firstCaller == NULL && m_firstCallerAddr != NO_ADDRESS) {
@@ -1346,7 +1070,6 @@ std::set<UserProc*>* UserProc::decompile() {
 		if (VERBOSE || DEBUG_TA)
 			LOG << "=== End Type Analysis for " << getName() << " ===\n";
 
-		replaceRegistersWithLocations();
 	}
 
 	if (!Boomerang::get()->noParameterNames) {
@@ -1359,17 +1082,21 @@ std::set<UserProc*>* UserProc::decompile() {
 		fixCallRefs();
 		trimParameters();
 		if (VERBOSE) {
-			LOG << "=== After replacing expressions, trimming params "
-			  "and returns ===\n";
+			LOG << "=== After replacing expressions, trimming params and returns ===\n";
 			printToLog();
-			LOG << "=== End after replacing expressions, trimming params "
-			  "and returns ===\n";
+			LOG << "=== End after replacing expressions, trimming params and returns ===\n";
 			LOG << "===== End after replacing params =====\n\n";
 		}
 	}
 
 	processConstants();
 	sortParameters();
+
+	if (DFA_TYPE_ANALYSIS)
+		// This has to be done fairly late, e.g. after trimming returns. This seems to be something to do with
+		// call statements not defining local variables properly. When -Td is not in force, it is for some reason
+		// delayed until code generation.
+		replaceRegistersWithLocations();
 
 	printXML();
 
@@ -1577,8 +1304,7 @@ void UserProc::trimReturns() {
 		// may need to do multiple times due to dependencies
 
 		// Special case for 32-bit stack-based machines (e.g. Pentium).
-		// RISC machines generally preserve the stack pointer (so no special
-		// case required)
+		// RISC machines generally preserve the stack pointer (so no special case required)
 		for (int p = 0; !stdsp && p < 8; p++) {
 			if (DEBUG_PROOF)
 				LOG << "attempting to prove sp = sp + " << p*4 << " for " << getName() << "\n";
@@ -1609,7 +1335,7 @@ void UserProc::trimReturns() {
 		Unary *regsp = Location::regOf(sp);
 		// I've been removing sp from the return set as it makes 
 		// the output look better, but this only works for recursive
-		// procs (because no other proc call them and fixCallRefs can
+		// procs (because no other proc calls them and fixCallRefs can
 		// replace refs to the call with a valid expression).  Not
 		// removing sp will make basically every procedure that doesn't
 		// preserve sp return it, and take it as a parameter.  Maybe a 
@@ -1637,7 +1363,10 @@ void UserProc::trimReturns() {
 			if (*e == *regsp) {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
-				e = e->expSubscriptAllImp(/*cfg*/);
+				// Make sure that the regsp in this expression is subscripted with a proper implicit assignment
+				// NOTE: This assumes simple functions of regsp, e.g. regsp + K, not involving other locations
+				// that need to be subscripted
+				e = e->expSubscriptVar(regsp, cfg->findImplicitAssign(regsp));
 
 				if (!(*e == *theReturnStatement->getReturnExp(i))) {
 					if (VERBOSE)
@@ -1655,6 +1384,14 @@ void UserProc::trimReturns() {
 			 it != preserved.end(); it++)
 			removeReturn(*it);
 	}
+
+	if (DEBUG_PROOF) {
+		LOG << "Proven for procedure " << getName() << ":\n";
+		for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++)
+			LOG << *it << "\n";
+		LOG << "End proven for procedure " << getName() << "\n\n";
+	}
+
 	removeRedundantPhis();
 }
 
@@ -1848,12 +1585,13 @@ void UserProc::trimParameters(int depth) {
 	int i;
 	for (i = 0; i < nparams; i++) {
 		referenced[i] = false;
-		// We want the 
-		params.push_back(signature->getParamExp(i)->clone()->expSubscriptAllImp(/*cfg*/));
+		// Push parameters implicitly defined e.g. m[r28{0}+8]{0}, (these are the parameters for the current proc)
+		params.push_back(signature->getParamExp(i)->clone()->expSubscriptAllNull());
 	}
 	for (i = 0; i < signature->getNumImplicitParams(); i++) {
 		referenced[i + nparams] = false;
-		params.push_back(signature->getImplicitParamExp(i)->clone()->expSubscriptAllImp(/*cfg*/));
+		// Same for the implicit parameters
+		params.push_back(signature->getImplicitParamExp(i)->clone()->expSubscriptAllNull());
 	}
 
 	std::set<Statement*> excluded;
@@ -1861,19 +1599,19 @@ void UserProc::trimParameters(int depth) {
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
 		if (s->isCall() && ((CallStatement*)s)->getDestProc() == this) {
+			// A self-recursive call
 			CallStatement *call = (CallStatement*)s;
 			for (int i = 0; i < signature->getNumImplicitParams(); i++) {
 				Exp *e = call->getImplicitArgumentExp(i);
 				if (e->isSubscript()) {
 					Statement *ref = ((RefExp*)e)->getRef();
-					if (ref != NULL)
+					if (ref && !ref->isImplicit())
 						excluded.insert(ref);
 				}
 			}
 		}
 	}
 	
-
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
 		if (!s->isCall() || ((CallStatement*)s)->getDestProc() != this) {
@@ -1883,25 +1621,30 @@ void UserProc::trimParameters(int depth) {
 					p = Location::param(signature->getParamName(i), this);
 					pe = signature->getParamExp(i);
 				} else {
-					p = Location::param(signature->getImplicitParamName(
-								i - nparams), this);
+					p = Location::param(signature->getImplicitParamName( i - nparams), this);
 					pe = signature->getImplicitParamExp(i - nparams);
 				}
+if (!referenced[i] && excluded.find(s) == excluded.end())
+  LOG << " ## Searching " << s << " for " << p << " ( " << params[i] << " )\n";
 				if (!referenced[i] && excluded.find(s) == excluded.end() && 
-					// Search for the named parameter (e.g. param1), and just
-					// in case, also for the expression (e.g. r8{0})
-					(s->usesExp(p) || s->usesExp(params[i])))
+						// Search for the named parameter (e.g. param1), and just
+						// in case, also for the expression (e.g. r8{0})
+						(s->usesExp(p) || s->usesExp(params[i]))) {
 					referenced[i] = true;
+					if (DEBUG_UNUSED_RETS_PARAMS)
+						LOG << "Parameter " << p << " used by statement " << s->getNumber() << "\n";
+				}
 				if (!referenced[i] && excluded.find(s) == excluded.end() &&
-					s->isPhi() && *s->getLeft() == *pe) {
-					if (VERBOSE)
-						LOG << "searching " << s << " for uses of " 
-								  << params[i] << "\n";
+						s->isPhi() && *s->getLeft() == *pe) {
+					if (DEBUG_UNUSED_RETS_PARAMS)
+						LOG << "searching " << s << " for uses of " << params[i] << "\n";
 					PhiAssign *pa = (PhiAssign*)s;
 					StatementVec::iterator it1;
 					for (it1 = pa->begin(); it1 != pa->end(); it1++)
 						if (*it1 == NULL) {
 							referenced[i] = true;
+							if (DEBUG_UNUSED_RETS_PARAMS)
+								LOG << "Parameter " << p << " used by phi statement " << s->getNumber() << "\n";
 							break;
 						}
 				}
@@ -1911,8 +1654,7 @@ void UserProc::trimParameters(int depth) {
 	}
 
 	for (i = 0; i < totparams; i++) {
-		if (!referenced[i] && (depth == -1 || 
-			  params[i]->getMemDepth() == depth)) {
+		if (!referenced[i] && (depth == -1 || params[i]->getMemDepth() == depth)) {
 			bool allZero;
 			Exp *e = params[i]->removeSubscripts(allZero);
 			if (VERBOSE) 
@@ -1922,20 +1664,16 @@ void UserProc::trimParameters(int depth) {
 	}
 }
 
-void Proc::removeReturn(Exp *e)
-{
+void Proc::removeReturn(Exp *e) {
 	signature->removeReturn(e);
-	for (std::set<CallStatement*>::iterator it = callerSet.begin();
-		 it != callerSet.end(); it++) {
-			if (VERBOSE)
-				LOG << "removing return " << e << " from " << *it 
-						  << "\n";
+	for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
+			if (DEBUG_UNUSED_RETS_PARAMS)
+				LOG << "removing return " << e << " from " << *it << "\n";
 			(*it)->removeReturn(e);
 	}
 }
 
-void UserProc::removeReturn(Exp *e)
-{
+void UserProc::removeReturn(Exp *e) {
 	int n = signature->findReturn(e);
 	if (n != -1) {
 		Proc::removeReturn(e);
@@ -1944,37 +1682,32 @@ void UserProc::removeReturn(Exp *e)
 	}
 }
 
-void Proc::removeParameter(Exp *e)
-{
+void Proc::removeParameter(Exp *e) {
 	int n = signature->findParam(e);
 	if (n != -1) {
 		signature->removeParameter(n);
-		for (std::set<CallStatement*>::iterator it = callerSet.begin();
-			 it != callerSet.end(); it++) {
-			if (VERBOSE)
-				LOG << "removing argument " << e << " in pos " << n 
-						  << " from " << *it << "\n";
+		for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
+			if (DEBUG_UNUSED_RETS_PARAMS)
+				LOG << "removing argument " << e << " in pos " << n << " from " << *it << "\n";
 			(*it)->removeArgument(n);
 		}
 	}
 	n = signature->findImplicitParam(e);
 	if (n != -1) {
 		signature->removeImplicitParameter(n);
-		for (std::set<CallStatement*>::iterator it = callerSet.begin();
-			 it != callerSet.end(); it++) {
-			if (VERBOSE)
-				LOG << "removing implicit argument " << e << " in pos " << n 
-						  << " from " << *it << "\n";
+		for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
+			// Don't remove an implicit argument if it is also a return of this call.
+			// Implicit arguments are needed for each return in fixCallRefs
+			if (DEBUG_UNUSED_RETS_PARAMS)
+				LOG << "removing implicit argument " << e << " in pos " << n << " from " << *it << "\n";
 			(*it)->removeImplicitArgument(n);
 		}
 	}
 }
 
-void Proc::addReturn(Exp *e)
-{
-	for (std::set<CallStatement*>::iterator it = callerSet.begin();
-		 it != callerSet.end(); it++)
-			(*it)->addReturn(e);
+void Proc::addReturn(Exp *e) {
+	for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++)
+		(*it)->addReturn(e);
 	signature->addReturn(e);
 }
 
@@ -1982,7 +1715,7 @@ void UserProc::addReturn(Exp *e)
 {
 	Exp *e1 = e->clone();
 	if (e1->getOper() == opMemOf) {
-		e1->refSubExp1() = e1->getSubExp1()->expSubscriptAllImp(/*cfg*/);
+		e1->refSubExp1() = e1->getSubExp1()->expSubscriptAllNull(/*cfg*/);
 	}
 	if (theReturnStatement)
 		theReturnStatement->addReturn(e1);
@@ -2352,7 +2085,7 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 		for (int i = 0; i < signature->getNumParams(); i++) {
 			if (depth < 0 || signature->getParamExp(i)->getMemDepth() == depth) {
 				Exp *r = signature->getParamExp(i)->clone();
-				r = r->expSubscriptAllImp(/*cfg*/);
+				r = r->expSubscriptAllNull();
 				// Remove the outer {0}, for where it appears on the LHS, and because we want to have param1{0}
 				assert(r->isSubscript());	// There should always be one
 				// if (r->getOper() == opSubscript)
@@ -2680,9 +2413,11 @@ bool UserProc::nameRegisters() {
 #endif
 		}
 	}
+
 	return found;
 }
 
+// Core of the register replacing logic
 void UserProc::regReplaceList(std::list<Exp**>& li) {
 	std::list<Exp**>::iterator it;
 	for (it = li.begin(); it != li.end(); it++) {
@@ -2887,10 +2622,10 @@ void UserProc::countRefs(RefCounter& refCounts) {
 			((PhiAssign*)s)->simplifyRefs();
 			s->simplify();
 		}
-		if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS && s->isReturn())
+		if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
 			LOG << "counting references in " << s << "\n";
 		LocationSet refs;
-#define IGNORE_IMPLICITS 1
+#define IGNORE_IMPLICITS 0
 #if IGNORE_IMPLICITS
 		s->addUsedLocs(refs, true);
 #else
@@ -2901,7 +2636,7 @@ void UserProc::countRefs(RefCounter& refCounts) {
 			if (((Exp*)*rr)->isSubscript()) {
 				Statement *ref = ((RefExp*)*rr)->getRef();
 				refCounts[ref]++;
-				if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS && s->isReturn())
+				if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
 					LOG << "counted ref to " << *rr << "\n";
 				
 			}
@@ -3184,7 +2919,7 @@ bool UserProc::prove(Exp *query)
 	query->getSubExp2()->addUsedLocs(locs);
 	LocationSet::iterator xx;
 	for (xx = locs.begin(); xx != locs.end(); xx++) {
-		query->refSubExp2() = query->getSubExp2()->expSubscriptVarImp(*xx /*, cfg */ );
+		query->refSubExp2() = query->getSubExp2()->expSubscriptValNull(*xx);
 	}
 
 	if (query->getSubExp1()->getOper() != opSubscript) {
@@ -3429,7 +3164,7 @@ void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
 	// We have a reference to a return of the call statement
 	UserProc* proc = (UserProc*) call->getDestProc();
 	//if (proc->isLib()) return;
-	if (DEBUG_UNUSED_RETS) {
+	if (DEBUG_UNUSED_RETS_PARAMS) {
 		LOG << " @@ Counted use of return location " << loc 
 			<< " for call to ";
 		if (proc) 
@@ -3457,7 +3192,7 @@ void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
 }
 
 void UserProc::countUsedReturns(ReturnCounter& rc) {
-	if (DEBUG_UNUSED_RETS)
+	if (DEBUG_UNUSED_RETS_PARAMS)
 		LOG << " @@ Counting used returns in " << getName() << "\n";
 	StatementList stmts;
 	getStatements(stmts);
@@ -3470,19 +3205,27 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
 		// For each use this statement
 		for (ll = used.begin(); ll != used.end(); ll++) {
 			Statement* def;
-			if ((*ll)->isSubscript()) {
+			Exp* loc = *ll;
+			if (loc->isLocal()) {
+				// We want the raw expression here
+				loc = getLocalExp(((Const*)((Location*)loc)->getSubExp1())->getStr());
+LOG << "symbolMap is:\n";
+std::map<Exp*, Exp*, lessExpStar>::iterator xx; for (xx = symbolMap.begin(); xx != symbolMap.end(); xx++) LOG << xx->first << " -> " << xx->second << "\n";
+				if (loc == NULL) continue;		// Needed?
+			}
+			if (loc->isSubscript()) {
 				// for this one reference
-				def = ((RefExp*)*ll)->getRef();
-				doCountReturns(def, rc, ((RefExp*)*ll)->getSubExp1());
+				def = ((RefExp*)loc)->getRef();
+				doCountReturns(def, rc, ((RefExp*)loc)->getSubExp1());
 #if 0
-			} else if ((*ll)->isPhi()) {
+			} else if ((loc)->isPhi()) {
 				StatementVec::iterator rr;
-				PhiAssign& pa = (PhiAssign&)**ll;
+				PhiAssign& pa = (PhiAssign&)*loc;
 				// for each reference this phi expression
 				for (rr = pa.begin(); rr != pa.end(); rr++)
 					doCountReturns(*rr, rc, pa.getSubExp1());
 #endif
-			}
+			} 
 		}
 	}
 }
@@ -3508,9 +3251,8 @@ bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
 		if (!signature->isPromoted() &&	 (*stackExp == **it))
 			// Only remove stack pointer if promoted
 			continue;
-		if (DEBUG_UNUSED_RETS)
-			LOG << " @@ Removing unused return " << *it <<
-			" in " << getName() << "\n";
+		if (DEBUG_UNUSED_RETS_PARAMS)
+			LOG << " @@ Removing unused return " << *it << " in " << getName() << "\n";
 		removeReturn(*it);
 		removedOne = true;
 	}
@@ -3664,15 +3406,14 @@ void UserProc::stripRefs() {
 		removeStatement(*it);
 }
 
-Exp *UserProc::getProven(Exp *left)
-{
-	for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); 
-		 it != proven.end(); it++) 
+Exp *UserProc::getProven(Exp *left) {
+	// Note: proven information is in the form "r28 = (r28 + 4)"
+	for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++) 
 		if (*(*it)->getSubExp1() == *left)
 			return (*it)->getSubExp2();
-	// not found, try the signature
-	// Shouldn't this only be for library functions?
-	//return signature->getProven(left);
+	// 	not found, try the signature
+	// No! The below should only be for library functions!
+	// return signature->getProven(left);
 	return NULL;
 }
 

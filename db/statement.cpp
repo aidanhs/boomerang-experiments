@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.11 $
+ * $Revision: 1.126.2.12 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1385,14 +1385,18 @@ Exp *CallStatement::getProven(Exp *e) {
 	return NULL;
 }
 
+// Substitute the various components of expression e with the appropriate actual arguments
+// Used in fixCallRefs (via the CallRefsFixer). Locations defined in this call are replaced with
+// their proven values, which are in terms of the initial values at the start of the call, which
+// are the actual arguments.
 Exp *CallStatement::substituteParams(Exp *e)
 {
 	e = e->clone();
 	LocationSet locs;
 	e->addUsedLocs(locs);
 	LocationSet::iterator xx;
-	for (xx = locs.begin(); xx != locs.end(); xx++) {
-		Exp *r = findArgument(*xx);
+	for (xx = locs.begin(); xx != locs.end(); xx++) {		// For each used location in e
+		Exp *r = findArgument(*xx);							// See if it is an argument of the call
 		if (r == NULL) continue;
 		bool change;
 		e = e->searchReplaceAll(*xx, r, change);
@@ -1400,9 +1404,11 @@ Exp *CallStatement::substituteParams(Exp *e)
 	return e->simplifyArith()->simplify();
 }
 
+// Look up e in the signature of the caller.
+// Return the actual argument, or failing that the implicit actual argument, or NULL.
 Exp *CallStatement::findArgument(Exp *e) {
 	int n = -1;
-	if (!m_isComputed && procDest) {
+	if (!m_isComputed && procDest) {			// ? What if we find a destination for a computed call?
 		n = procDest->getSignature()->findParam(e);
 		if (n != -1)
 			return arguments[n];
@@ -1415,8 +1421,7 @@ Exp *CallStatement::findArgument(Exp *e) {
 			LOG << "eep. " << implicitArguments.size() << " args ";
 			if (procDest) {
 				LOG << procDest->getName() << " ";
-				LOG << "(" << procDest->getSignature()->getNumParams()
-						  << " params) ";
+				LOG << "(" << procDest->getSignature()->getNumParams() << " params) ";
 			} else
 				LOG << "(no dest) ";
 			for (int i = 0; i < (int)implicitArguments.size(); i++)
@@ -3978,9 +3983,17 @@ void CallStatement::regReplace(UserProc* proc) {
 		Exp::doSearch(regOfWildRef, *it, li, false);
 	for (it = implicitArguments.begin(); it != implicitArguments.end(); it++)
 		Exp::doSearch(regOfWildRef, *it, li, false);
-	for (it = returns.begin(); it != returns.end(); it++)
-		if (*it) Exp::doSearch(regOfWildRef, *it, li, false);
 	proc->regReplaceList(li);
+	// Note: returns are "on the left hand side", and hence are never subscripted. So wrap in a RefExp
+	for (it = returns.begin(); it != returns.end(); it++) {
+		if (*it && **it == *regOfWild) {
+			std::list<Exp**> rli;
+			Exp* tmp = new RefExp(*it, this);
+			rli.push_front(&tmp);
+			proc->regReplaceList(rli);
+			*it = tmp;
+		}
+	}
 }
 void ReturnStatement::regReplace(UserProc* proc) {
 	std::list<Exp**> li;
