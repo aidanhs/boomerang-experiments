@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.9 $
+ * $Revision: 1.126.2.10 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2454,6 +2454,7 @@ if (def == NULL) continue;
 	char *p = formatStr;
 	while ((p = strchr(p, '%'))) {
 		p++;				// Point past the %
+		bool veryLong = false;			// %lld or %L
 		do {
 			ch = *p++;		// Skip size and precisionA
 			switch (ch) {
@@ -2467,13 +2468,20 @@ if (def == NULL) continue;
 					// flag. Ignore
 					continue;
 				case 'h': case 'l':
-					// size of half or long. Argument is still one word. Ignore.
+					// size of half or long. Argument is usually still one word. Ignore.
+					// Exception: %llx
 					// TODO: handle architectures where l implies two words
 					// TODO: at least h has implications for scanf
+					if (*p == 'l') {
+						// %llx
+						p++;		// Skip second l
+						veryLong = true;
+					}
 					continue;
 				case 'L':
 					// long. TODO: handle L for long doubles.
 					// n++;		// At least chew up one more parameter so later types are correct
+					veryLong = true;
 					continue;
 				default:
 					if ('0' <= ch && ch <= '9') continue;	// width or precision
@@ -2485,13 +2493,13 @@ if (def == NULL) continue;
 			n++;
 		switch (ch) {
 			case 'd': case 'i':							// Signed integer
-				setSigParam(sig, new IntegerType(), isScanf);
+				setSigParam(sig, new IntegerType(veryLong ? 64 : 32), isScanf);
 				break;
 			case 'u': case 'x': case 'X': case 'o':		// Unsigned integer
 				setSigParam(sig, new IntegerType(32, -1), isScanf);
 				break;
 			case 'f': case 'g': case 'G': case 'e': case 'E':	// Various floating point formats
-				setSigParam(sig, new FloatType(64), isScanf);	// Note: may not be 64 bits for some archs
+				setSigParam(sig, new FloatType(veryLong ? 128 : 64), isScanf);	// Note: may not be 64 bits for some archs
 				break;
 			case 's':									// String
 				setSigParam(sig, new PointerType(new CharType), isScanf);
