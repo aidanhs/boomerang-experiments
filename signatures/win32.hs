@@ -1,2 +1,0 @@
-windows.h
-mfc.h
