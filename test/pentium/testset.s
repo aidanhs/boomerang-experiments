@@ -2,18 +2,10 @@
 	.section	.rodata
 .LC0:
 	.string	"Hello, set\n"
-.LC_cs:
-    .string "Carry was set\n";
-.LC_cns:
-    .string "Carry was NOT set\n";
-table_c:
-    .long   .LC_cs, .LC_cns
-.LC_nns:
-    .string "Negative was NOT set\n";
-.LC_ns:
-    .string "Negative was set\n";
-table_n:
-    .long   .LC_nns, .LC_ns
+.LC_c:
+    .string "argc <u 3: %d\n";
+.LC_n:
+    .string "(argc - 4) >= 0: %d\n";
 
 	.text
 .globl main
@@ -35,16 +27,16 @@ main:
     mov     $0, %edx
     cmpl    $3, %eax
     setc    %dl
-    movl    table_c(,%edx,4), %ecx
-    push    %ecx
+    push    %edx
+    push    $.LC_c
     call    printf
 
     mov     8(%ebp), %eax    # argc
     mov     $0, %ecx
-    subl    $3, %eax
+    subl    $4, %eax
     setns   %cl
-    movl    table_n(,%ecx,4), %eax
-    push    %eax
+    push    %ecx
+    push    $.LC_n
     call    printf
 
     xorl    %eax, %eax
