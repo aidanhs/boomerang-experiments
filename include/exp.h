@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.24.2.5 $
+ * $Revision: 1.24.2.6 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -72,7 +72,8 @@ virtual void print(std::ostream& os, bool withUses = false) = 0;
     void     printAsHL(std::ostream& os = std::cout); // Print with v[5] as v5
     char*    prints();      // Print to string (for debugging)
              // Recursive print: don't want parens at the top level
-virtual void printr(std::ostream& os, bool withUses = false) = 0;
+virtual void printr(std::ostream& os, bool withUses = false) {
+                print(os, withUses);}       // But most classes want standard
              // Print with the "{1 2 3}" uses info
         void printWithUses(std::ostream& os) {print(os, true);}
 
@@ -236,6 +237,12 @@ virtual Exp* fixSuccessor() {return this;}
     // def is a statement defining left (pass left == getLeft(def))
     virtual Exp* updateUses(Statement* def, Exp* left) {return this;}
 
+    // Get number of definitions (statements this expression depends on)
+    virtual int getNumUses() {return 0;}
+
+    // Consistency check. Might be useful another day
+    void check();
+
 	// serialization
 	virtual bool serialize(std::ostream &ouf, int &len) = 0;
 	static Exp *deserialize(std::istream &inf);
@@ -287,8 +294,6 @@ public:
     void    print(std::ostream& os, bool withUses = false);
     void    printNoQuotes(std::ostream& os, bool withUses = false);
     // Print "recursive" (extra parens not wanted at outer levels)
-    void    printr(std::ostream& os, bool withUses = false) {
-                print (os, withUses); }
 
     void    appendDotFile(std::ofstream& of);
 
@@ -316,8 +321,6 @@ public:
     bool    operator< (const Exp& o) const;
 
     void    print(std::ostream& os, bool withUses = false);
-    void    printr(std::ostream& os, bool withUses = false) {
-                print (os, withUses);}
     void    appendDotFile(std::ofstream& of);
 
 	// serialization
@@ -355,10 +358,6 @@ virtual     ~Unary();
 
     // Print
     void    print(std::ostream& os, bool withUses = false);
-    // Only binary and higher arity get parentheses, so printr == print
-    void    printr(std::ostream& os, bool withUses = false) {
-                print (os, withUses);
-            }
     void    appendDotFile(std::ofstream& of);
 
     // Set first subexpression
@@ -546,9 +545,6 @@ public:
 
 
     void    print(std::ostream& os, bool withUses = false);
-    void    printr(std::ostream& os, bool withUses = false) {
-                print(os, withUses);
-            }     // Printr same as print
     void    appendDotFile(std::ofstream& of);
 
     // Get and set the type
@@ -591,8 +587,6 @@ public:
     bool    operator< (const Exp& o) const;
 
     virtual void print(std::ostream& os, bool withUses = false);
-    void    printr(std::ostream& os, bool withUses = false) {
-                print(os, withUses);}     // Printr same as print
     void    appendDotFile(std::ofstream& of);
 
     // Get and set the size
@@ -693,10 +687,15 @@ class UsesExp : public Unary {
 public:
             // Constructor with expression (e) and statement defining it (def)
             UsesExp(Exp* e, Statement* def);
+            UsesExp(Exp* e);
             UsesExp(UsesExp& o);
+virtual Exp* clone();
     bool    operator==(const Exp& o) const;
     void    print(std::ostream& os, bool withUses = false);
     Exp*    updateUses(Statement* def, Exp* left);
+virtual int getNumUses() {return stmtSet.size();}
+    Statement* getFirstUses() {StmtSetIter it; return stmtSet.getFirst(it);}
+    void    addUsedLocs(LocationSet& used);
 };
 
     
