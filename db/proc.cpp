@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.6 $
+ * $Revision: 1.33.2.7 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -923,6 +923,9 @@ void UserProc::initStatements(int& stmtNum) {
                 call->setProc(this);   // Different statement to its assignments
                 call->setBB(bb);
                 call->setNumber(++stmtNum);
+                // Take this opportunity to set up the parameters now
+                call->setSigArguments();
+                // FIXME: Likely not needed now:
                 StatementList &internal = call->getInternalStatements();
                 StmtListIter it1;
                 for (Statement* s1 = internal.getFirst(it1); s1;
@@ -1628,12 +1631,13 @@ void UserProc::propagateStatements() {
                     numProp++;
                     if (VERBOSE) {
                         std::cerr << "Propagating " << def->getNumber() <<
-                          " into " << s->getNumber() << ", result is " << s <<
-                          "\n";
+                          " into " << s->getNumber() <<
+                          ", result is " << s << "\n";
                     }
                 }
             }
         }
+std::cerr << "Propagated " << numProp << " statements\n";
     } while (numProp != oldNumProp);
 }
 

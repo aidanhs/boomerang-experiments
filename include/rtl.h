@@ -21,7 +21,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.19.2.2 $
+ * $Revision: 1.19.2.3 $
  * 08 Apr 02 - Mike: Mods for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  */
@@ -489,12 +489,14 @@ public:
     bool returnsStruct();
 
     void setArguments(std::vector<Exp*>& arguments); // Set call's arguments
+    void setSigArguments();         // Set arguments based on signature
     std::vector<Exp*>& getArguments();            // Return call's arguments
     Exp* getArgumentExp(int i) { return arguments[i]; }
     void setArgumentExp(int i, Exp *e) { arguments[i] = e; }
-    int getNumArguments() { return arguments.size(); }
+    int  getNumArguments() { return arguments.size(); }
     void setNumArguments(int i);
     Type *getArgumentType(int i);
+    void updateArgUses(Statement* def, Exp* left);  // Update arguments to {1 2} format
     void truncateArguments();
     void clearLiveEntry();
 
@@ -745,11 +747,11 @@ public:
     virtual void doReplaceUse(Statement *use);
 
 private:
-    JCOND_TYPE jtCond;             // the condition for jumping
+    JCOND_TYPE jtCond;             // the condition for setting true
     Exp* pCond;                    // Exp representation of the high level
                                    // condition: e.g. r[8] == 5
     bool bFloat;                   // True if condition uses floating point CC
-    Exp* pDest;
+    Exp* pDest;                    // The location assigned (with 0 or 1)
 };
 
 /* 

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.5 $
+ * $Revision: 1.33.2.6 $
  * 17 May 02 - Mike: Split off from rtl.cc (was getting too large)
  * 26 Nov 02 - Mike: Generate code for HlReturn with semantics (eg SPARC RETURN)
  * 26 Nov 02 - Mike: In getReturnLoc test for null procDest
@@ -573,8 +573,7 @@ void HLJcond::print(std::ostream& os /*= cout*/, bool withDF) {
         os << "0x" << std::hex << getFixedDest();
     }
     os << ", condition ";
-    switch (jtCond)
-    {
+    switch (jtCond) {
         case HLJCOND_JE:    os << "equals"; break;
         case HLJCOND_JNE:   os << "not equals"; break;
         case HLJCOND_JSL:   os << "signed less"; break;
@@ -597,9 +596,11 @@ void HLJcond::print(std::ostream& os /*= cout*/, bool withDF) {
         uses.printNums(os);
     }
     os << std::endl;
+#if 0       // This is always %flags now
     if (pCond) {
         os << "High level: " << pCond << std::endl;
     }
+#endif
 }
 
 /*==============================================================================
@@ -1011,6 +1012,28 @@ void HLCall::setArguments(std::vector<Exp*>& arguments) {
 }
 
 /*==============================================================================
+ * FUNCTION:      HLCall::setSigArguments
+ * OVERVIEW:      Set the arguments of this call based in signature info
+ * PARAMETERS:    None
+ * RETURNS:       <nothing>
+ *============================================================================*/
+void HLCall::setSigArguments() {
+    int n = procDest->getSignature()->getNumParams();
+    arguments.resize(n);
+    for (int i = 0; i < n; i++) {
+        Exp *e = procDest->getSignature()->getArgumentExp(i);
+        assert(e);
+        arguments[i] = e->clone();
+    }
+    if (procDest->getSignature()->hasEllipsis()) {
+        // Just guess 10 parameters for now
+        //for (int i = 0; i < 10; i++)
+            arguments.push_back(procDest->getSignature()->
+                            getArgumentExp(arguments.size())->clone());
+    }
+}
+
+/*==============================================================================
  * FUNCTION:      HLCall::getReturnLoc
  * OVERVIEW:      Return the location that will be used to hold the value
  *                  returned by this call.
@@ -1179,7 +1202,7 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
             os << "*no dest*";
     else {
         // But Trent hacked out the opAddrConst (opCodeAddr) stuff... Sigh.
-        // I'd like to retain the 0xHEX notation, if only to retaing the
+        // I'd like to retain the 0xHEX notation, if only to retain the
         // existing tests
         if (pDest->isIntConst())
             os << "0x" << std::hex << ((Const*)pDest)->getInt();
@@ -1194,21 +1217,7 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
             os << ", ";
         os << arguments[i];
     }
-    os << ")";
-    if (withDF) {
-        os << "   uses: ";
-        StmtSetIter it;
-        for (Statement* s = uses.getFirst(it); s; s = uses.getNext(it)) {
-            s->printAsUse(os);
-            os << ", ";
-        }
-        os << "   used by: ";
-        for (Statement* s = usedBy.getFirst(it); s; s = usedBy.getNext(it)) {
-            s->printAsUseBy(os);
-            os << ", ";
-        }
-    }
-    os << std::endl;
+    os << ")\n";
 
     // Print the post call RTLs, if any
     if (postCallExpList) {
@@ -1220,6 +1229,7 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
         }
     }
     
+    // FIXME: VERY LIKELY WE DON'T WANT THIS ANY MORE
     if (withDF) {
         StatementList &internal = getInternalStatements();
         StmtListIter it;
@@ -1375,6 +1385,7 @@ void HLCall::decompile() {
         if (p != NULL)
             p->decompile();
 
+        // FIXME: Very likely don't want this now:
         // This is now "on the way back up" for this call
         if (procDest && !procDest->isLib()) {
             // Copy the live-on-entry-to-the-dest-of-this-call info
@@ -1384,6 +1395,7 @@ void HLCall::decompile() {
             liveEntry = *((UserProc*)procDest)->getCFG()->getLiveEntry();
         }
         procDest->getInternalStatements(internal);
+#if 0       // Done in HLCall::setSigArguments() now
         assert(arguments.size() == 0);
         int n = procDest->getSignature()->getNumParams();
         arguments.resize(n);
@@ -1398,6 +1410,7 @@ void HLCall::decompile() {
                 arguments.push_back(procDest->getSignature()->
                                 getArgumentExp(arguments.size())->clone());
         }
+#endif
         // init return location
         setIgnoreReturnLoc(false);
     } else {
@@ -1493,12 +1506,10 @@ void HLCall::killReach(StatementSet &reach) {
         std::list<Exp*> *li = procDest->getSignature()->getCallerSave(prog);
         assert(li);
         std::list<Exp*>::iterator ll;
-std::cerr << "Library call: reach before: "; reach.printNums(std::cerr); std::cerr << "\n";
         for (ll = li->begin(); ll != li->end(); ll++) {
             // These statements do not reach the end of the call
             reach.removeIfDefines(*ll);
         }
-std::cerr << "Library call: reach  after: "; reach.printNums(std::cerr); std::cerr << "\n";
         return;
     }
 
@@ -1744,6 +1755,14 @@ void HLCall::setNumArguments(int n) {
     }
 }
 
+// Update the arguments to be in implicit SSA form (e.g. m[esp{1}]{2 3})
+void HLCall::updateArgUses(Statement* def, Exp* left) {
+    int n = arguments.size();
+    for (int i = 0; i < n; i++) {
+        arguments[i] = arguments[i]->updateUses(def, left);
+    }
+}
+
 void HLCall::processConstants(Prog *prog) {
     for (unsigned i = 0; i < arguments.size(); i++) {
         Type *t = getArgumentType(i);
@@ -1978,11 +1997,13 @@ void HLScond::print(std::ostream& os /*= cout*/, bool withDF) {
     os << ")";
     if (bFloat) os << ", float";
     os << std::endl;
+#if 0       // This is always %flags now
     if (pCond) {
         os << "High level: ";
         pCond->print(os);
         os << std::endl;
     }
+#endif
 }
 
 /*==============================================================================

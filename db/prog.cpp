@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.7 $
+ * $Revision: 1.18.2.8 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -175,9 +175,6 @@ PROGMAP::iterator pp;
 std::list<PBB> workList;            // List of BBs still to be processed
 // Set of the same; used for quick membership test
 std::set<PBB> workSet;
-// Sort the BBs into approximatly preorder
-// Note: the ideal order differs for phase 1 and 2
-// This order should be ideal for phase 2, and so-so for phase 1
 for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
     UserProc* proc = (UserProc*)pp->second;
     if (proc->isLib()) continue;

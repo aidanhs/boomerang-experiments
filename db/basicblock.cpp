@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.7 $
+ * $Revision: 1.22.2.8 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1959,6 +1959,7 @@ void BasicBlock::toSSAform() {
     // statement
     StatementSet reachin;
     getReachIn(reachin, 2);
+    StmtSetIter ssi;
     for (std::list<RTL*>::iterator rit = m_pRtls->begin(); 
       rit != m_pRtls->end(); rit++) {
         RTL *rtl = *rit;
@@ -1971,7 +1972,6 @@ void BasicBlock::toSSAform() {
             // assignment expression)
             // Subscript the LHS to point to self as definition
             s->subscriptLeft(s);
-            StmtSetIter ssi;
             for (Statement* rd = reachin.getFirst(ssi); rd;
               rd = reachin.getNext(ssi)) {
                 Exp* left = rd->getLeft();
@@ -1979,20 +1979,31 @@ void BasicBlock::toSSAform() {
                 // Update the expression (*it)'s uses info
                 (*it)->updateUses(rd, left);
             }
-            if (rtl->getKind() == CALL_RTL) {
-                HLCall *call = (HLCall*)rtl;
-                call->calcReachOut(reachin);
-                // To be completed: fix up the parameters
-            }
-            else if (rtl->getKind() == JCOND_RTL) {
-                // Fix up the HL expression
-            }
-            else if (rtl->getKind() == SCOND_RTL) {
-                // HL expression?
-            }
-
             // Update reachin to be the input for the next statement in this BB
             s->calcReachOut(reachin);
+        }
+
+        for (Statement* rd = reachin.getFirst(ssi); rd;
+          rd = reachin.getNext(ssi)) {
+            Exp* left = rd->getLeft();
+            if (rtl->getKind() == CALL_RTL) {
+                HLCall *call = (HLCall*)rtl;
+                call->updateArgUses(rd, left);
+                call->calcReachOut(reachin);
+            }
+#if 0       // Note: we don't seem to use the "high level expression" any more
+            // It always seems to be "opFlags"
+            else if (rtl->getKind() == JCOND_RTL) {
+                // Fix up the HL expression
+                HLJcond* jc = (HLJcond*)rtl;
+                jc->setCondExpr(jc->getCondExpr()->updateUses(rd, left));
+            }
+            else if (rtl->getKind() == SCOND_RTL) {
+                // HL expression
+                HLScond* sc = (HLScond*)rtl;
+                sc->setCondExpr(sc->getCondExpr()->updateUses(rd, left));
+            }
+#endif
         }
     }
 }
