@@ -1,11 +1,12 @@
 #!/bin/bash
-# testOne.sh functional test script $Revision: 1.5 $
-# Call with test platform, test-program, arguments
+# testOne.sh functional test script $Revision: 1.5.2.1 $
+# Call with test platform, test-program [, option, arguments ]
 # e.g. "./testOne.sh pentium hello"
-# or   "./testOne.sh sparc fibo 10" 
+# or   "./testOne.sh sparc fibo -- 10" 
+# Note: at this stage, only one string can be passed as the options, e.g. -O
 echo $* > functest.res
 rm -f functest/$2.c
-./boomerang -o functest test/$1/$2 2>/dev/null >/dev/null
+./boomerang -o functest $3 test/$1/$2 2>/dev/null >/dev/null
 ret=$?
 if [[ ret -ge 128 ]]; then
     echo Result for $1 $2: Boomerang failed with signal $((ret-128))
@@ -33,7 +34,7 @@ else
             echo Result for $1 $2: Compile failed >> functest.res
         else
             rm -f functest.out
-            ./functest.exe $3 $4 $5 $6 $7 $8 $9 >> functest.out 2>&1
+            ./functest.exe $4 $5 $6 $7 $8 $9 >> functest.out 2>&1
             ret=$?
             if [[ ret -ge 128 ]]; then
                 echo Result for $1 $2: Execution terminated with signal \
