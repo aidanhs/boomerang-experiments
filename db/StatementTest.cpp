@@ -4,7 +4,7 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.2 $
+ * $Revision: 1.14.2.3 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -183,7 +183,7 @@ void StatementTest::testFlow () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    2 RET 5\n\n";
+      "00000123    2 RET 5\\1\\\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -241,7 +241,7 @@ void StatementTest::testKill () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    3 RET 6\n\n";
+      "00000123    3 RET 6\\1\\\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -299,7 +299,7 @@ void StatementTest::testUse () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    3 RET 5\n\n";
+      "00000123    3 RET 5\\1\\\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -362,7 +362,7 @@ void StatementTest::testUseOverKill () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    4 RET 6\n\n";
+      "00000123    4 RET 6\\1\\\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -428,7 +428,7 @@ void StatementTest::testUseOverBB () {
       "00000000\n"
       "Ret BB:\n"
       "00000000\n"
-      "00000123    4 RET 6\n\n";
+      "00000123    4 RET 6\\1\\\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -487,7 +487,7 @@ void StatementTest::testUseKill () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    3 RET 6\n\n";
+      "00000123    3 RET 6\\1\\\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
