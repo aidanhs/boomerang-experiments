@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.6 $
+ * $Revision: 1.18.2.7 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -141,16 +141,17 @@ void Prog::analyse() {
 // Do decompilation
 void Prog::decompile() {
 int stmtNumber = 0;
-for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-  it++) {
-    Proc *pProc = *it;
-    if (pProc->isLib()) continue;
-    UserProc *p = (UserProc*)pProc;
-    if (!p->isDecoded()) continue;
+    for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
+         it++) {
+        Proc *pProc = *it;
+        if (pProc->isLib()) continue;
+        UserProc *p = (UserProc*)pProc;
+        if (!p->isDecoded()) continue;
 
-    // Initialise (number, etc) the statements of this proc
-    p->initStatements(stmtNumber);
-}
+        // Initialise (number, etc) the statements of this proc
+        p->initStatements(stmtNumber);
+    }
+
     // First do forward-flow global dataflow
     forwardGlobalDataflow();
 
