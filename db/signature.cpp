@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.81.2.1 $
+ * $Revision: 1.81.2.2 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -1408,11 +1408,10 @@ bool Signature::isAddrOfStackLocal(Prog* prog, Exp *e) {
 	static Exp *sp = Location::regOf(getStackRegister(prog));
 	// first operand must be sp or sp{0}
 	if (sub1->isSubscript()) {
-		Statement* ref = ((RefExp*)sub1)->getRef();
-		Exp* left = ((RefExp*)sub1)->getSubExp1();
-		return *left == *sp && ref == NULL;
-	} else
-		return *sub1 == *sp;
+		if (!((RefExp*)sub1)->isImplicitDef()) return false;
+		sub1 = ((RefExp*)sub1)->getSubExp1();
+	}
+	return *sub1 == *sp;
 }
 
 bool Parameter::operator==(Parameter& other) {

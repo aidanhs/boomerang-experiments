@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.6 $
+ * $Revision: 1.14.2.7 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -635,15 +635,16 @@ DfaLocalConverter::DfaLocalConverter(Type* ty, UserProc* proc) : parentType(ty),
 
 Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
 	// Check if this is an appropriate pattern for local variables	
-	Exp* ret;
 	if (e->isMemOf()) {
 		if (sig->isStackLocal(proc->getProg(), e)) {
 			recur = false;
-			ret = proc->getLocalExp(e, parentType, true);
+			mod = true;			// We've made a modification
+			// Don't change parentType; e is a Location now so postVisit won't expect parentTypt changed
+			return proc->getLocalExp(e, parentType, true);
 		}
-	} else
-		ret = e;
-	parentType = new PointerType(parentType);
+		// When we recurse into the m[...], the type will be changed
+		parentType = new PointerType(parentType);
+	}
 	recur = true;
 	return e;
 }
@@ -653,5 +654,14 @@ Exp* DfaLocalConverter::postVisit(Location* e) {
 		assert(pt);
 		parentType = pt->getPointsTo();
 	}
+	return e;
+}
+
+// This is in the POST visit function, because it's important to process any child expressions first.
+// Otherwise, for m[r28{0} - 12]{0}, you could be adding an implicit assignment with a NULL definition
+// for r28.
+Exp* ImplicitConverter::postVisit(RefExp* e) {
+	if (e->getRef() == NULL)
+		e->setDef(cfg->findImplicitAssign(e->getSubExp1()));
 	return e;
 }

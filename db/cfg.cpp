@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.86.2.4 $
+ * $Revision: 1.86.2.5 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -2233,10 +2233,10 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
 				if (x->isSubscript()) continue;
 				Statement* def;
 				if (Stack[x].empty()) {
-					// If the stack is empty, create or use an existing implicit assignment.
-					// This avoids having to initialise the stack for ALL
-					// variables (not just those that need phi functions)
-					def = findImplicitAssign(x);
+					// If the stack is empty, use a NULL definition. This will be changed into a pointer
+					// to an implicit definition at the start of type analysis, but not until all the m[...]
+					// have stopped changing their expressions (complicates implicit assignments considerably).
+					def = NULL;
 				}
 				else
 					def = Stack[x].top();
@@ -2297,7 +2297,7 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
 			if (a->getMemDepth() != memDepth) continue;
 			Statement* def;
 			if (Stack[a].empty())
-				def = findImplicitAssign(a);
+				def = NULL;				// See comment above
 			else
 				def = Stack[a].top();
 			// "Replace jth operand with a_i"

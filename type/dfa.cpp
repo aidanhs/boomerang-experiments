@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.4 $
+ * $Revision: 1.5.2.5 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -164,7 +164,7 @@ Type* VoidType::meetWith(Type* other, bool& ch) {
 
 Type* FuncType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
-	if (this == other) return this;		// NOTE: at present, compares names as well as types and number of parameters
+	if (*this == *other) return this;		// NOTE: at present, compares names as well as types and number of parameters
 	ch = true;
 	return createUnion(other);
 }
@@ -271,7 +271,7 @@ Type* CompoundType::meetWith(Type* other, bool& ch) {
 		ch = true;
 		return this;
 	}
-	if (this == other) return this;
+	if (*this == *other) return this;
 	// Not compatible structs. Create a union of both complete structs.
 	// NOTE: may be possible to take advantage of some overlaps of the two structures some day.
 	ch = true;
@@ -280,7 +280,7 @@ Type* CompoundType::meetWith(Type* other, bool& ch) {
 
 Type* UnionType::meetWith(Type* other, bool& ch) {
 	if (other->isVoid()) return this;
-	if (this == other) return this;
+	if (*this == *other) return this;
 	ch = true;
 	return createUnion(other);
 }

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.6 $
+ * $Revision: 1.126.2.7 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -268,14 +268,12 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth)
 			LocationSet::iterator rl;
 			for (rl = refs.begin(); rl != refs.end(); rl++) {
 				Exp* e = *rl;
-				if (!e->getNumRefs() == 1) continue;
+				if (!e->isSubscript()) continue;
 				// Can propagate TO this (if memory depths are suitable)
-				Statement* def;
-				def = ((RefExp*)e)->getRef();
-//				if (def == NULL)
-				if (def->isImplicit())
+				if (((RefExp*)e)->isImplicitDef())
 					// Can't propagate statement "0" (implicit assignments)
 					continue;
+				Statement* def = ((RefExp*)e)->getRef();
 				if (def == this)
 					// Don't propagate to self! Can happen with %pc's
 					continue;

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.4 $
+ * $Revision: 1.207.2.5 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -52,6 +52,7 @@
 #include "boomerang.h"
 #include "constraint.h"
 #include "analysis.h"
+#include "visitor.h"
 
 typedef std::map<Statement*, int> RefCounter;
 
@@ -3831,19 +3832,14 @@ void UserProc::readMemo(Memo *mm, bool dec)
 // Before Type Analysis, refs like r28{0} have a NULL Statement pointer. After this, they will point to an
 // implicit assignment for the location. Thus, during and after type analysis, you can find the type of any
 // location by following the reference to the definition
+// Note: you need something recursive to make sure that child subexpressions are processed before parents
+// Example: m[r28{0} - 12]{0} could end up adding an implicit assignment for r28{0} with a null reference!
 void UserProc::addImplicitAssigns() {
 	StatementList stmts;
 	getStatements(stmts);
 	StatementList::iterator it;
-	for (it = stmts.begin(); it != stmts.end(); it++) {
-		LocationSet ls;
-		(*it)->addUsedLocs(ls);
-		LocationSet::iterator ll;
-		for (ll = ls.begin(); ll != ls.end(); ll++) {
-			RefExp* r = (RefExp*)*ll;
-			if (r->isSubscript() && r->getRef() == NULL) {
-				r->setDef(cfg->findImplicitAssign(r->getSubExp1()));
-			}
-		}
-	}
+	ImplicitConverter ic(cfg);
+	StmtModifier sm(&ic);
+	for (it = stmts.begin(); it != stmts.end(); it++)
+		(*it)->accept(&sm);
 }

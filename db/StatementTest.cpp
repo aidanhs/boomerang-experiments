@@ -4,7 +4,7 @@
  *				tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.21.2.2 $
+ * $Revision: 1.21.2.3 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -1037,6 +1037,21 @@ void StatementTest::testAddUsedLocs () {
 	std::ostringstream ost8;
 	l.print(ost8);
 	actual = ost8.str();
+	CPPUNIT_ASSERT_EQUAL(expected, actual);
+
+	// m[r28{0} - 4] := -
+	l.clear();
+	ImplicitAssign* ia = new ImplicitAssign(Location::memOf(
+		new Binary(opMinus,
+			new RefExp(
+				Location::regOf(28),
+				NULL),
+			new Const(4))));
+	std::ostringstream ost9;
+	ia->addUsedLocs(l);
+	l.print(ost9);
+	actual = ost9.str();
+	expected = "r28{0}\n";
 	CPPUNIT_ASSERT_EQUAL(expected, actual);
 
 }

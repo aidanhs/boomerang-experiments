@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.6 $
+ * $Revision: 1.8.2.7 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -425,6 +425,14 @@ public:
 
 		Exp*	preVisit(Location* e, bool& recur);
 		Exp*	postVisit(Location* e);
+};
+
+// Convert any exp{0} with null definition so that the definition points instead to an implicit assignment
+class ImplicitConverter : public ExpModifier {
+		Cfg* cfg;
+public:
+				ImplicitConverter(Cfg* cfg) : cfg(cfg) { }
+		Exp*	postVisit(RefExp* e);
 };
 
 #endif	// #ifndef __VISITOR_H__
