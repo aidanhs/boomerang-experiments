@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.65.4.4 $
+ * $Revision: 1.65.4.5 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -1036,8 +1036,8 @@ public:
 		/*
 		 * Implicit assignments
 		 */
-		Statement* findTheImplicitAssign(Exp* x);		// Find the existing implicit assign for x
 		Statement* findImplicitAssign(Exp* x);			// Find or create an implicit assign for x
+		Statement* findTheImplicitAssign(Exp* x);		// Find the existing implicit assign for x (if any)
 
 		/*
 	 	 * Dominance frontier and SSA code

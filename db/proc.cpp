@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.9 $
+ * $Revision: 1.207.2.10 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -587,10 +587,11 @@ void UserProc::generateCode(HLLCode *hll) {
 	if (!Boomerang::get()->noLocals) {
 //		  while (nameStackLocations())
 //			  replaceExpressionsWithSymbols();
-		if (!DFA_TYPE_ANALYSIS) {
+
+//		if (!DFA_TYPE_ANALYSIS) {
 			while (nameRegisters())
 				replaceExpressionsWithSymbols();
-		}
+//		}
 	}
 	removeUnusedLocals();
 
@@ -1092,11 +1093,11 @@ std::set<UserProc*>* UserProc::decompile() {
 	processConstants();
 	sortParameters();
 
-	if (DFA_TYPE_ANALYSIS)
+//	if (DFA_TYPE_ANALYSIS)
 		// This has to be done fairly late, e.g. after trimming returns. This seems to be something to do with
 		// call statements not defining local variables properly. When -Td is not in force, it is for some reason
 		// delayed until code generation.
-		replaceRegistersWithLocations();
+//		replaceRegistersWithLocations();
 
 	printXML();
 
@@ -1364,9 +1365,11 @@ void UserProc::trimReturns() {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
 				// Make sure that the regsp in this expression is subscripted with a proper implicit assignment
+				// Note that trimReturns() is sometimes called before and after implicit assignments are created,
+				// hence call findTHEimplicitAssign()
 				// NOTE: This assumes simple functions of regsp, e.g. regsp + K, not involving other locations
 				// that need to be subscripted
-				e = e->expSubscriptVar(regsp, cfg->findImplicitAssign(regsp));
+				e = e->expSubscriptVar(regsp, cfg->findTheImplicitAssign(regsp));
 
 				if (!(*e == *theReturnStatement->getReturnExp(i))) {
 					if (VERBOSE)
@@ -2105,15 +2108,17 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 }
 
 Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
+	// Expression r[sp] (build just once per call)
+	Exp* regSP = Location::regOf(signature->getStackRegister(prog));
+	// The implicit definition for r[sp], if any
+	Statement* defSP = cfg->findTheImplicitAssign(regSP);
+	// The expression r[sp]{0}
+	RefExp* refSP0 = new RefExp(regSP, defSP);
+
 	Exp *e = NULL;
-	RefExp* r;
-	Location* reg;
 	if (symbolMap.find(le) == symbolMap.end()) {
 		if (le->getOper() == opMemOf && signature->isOpCompatStackLocal(le->getSubExp1()->getOper()) &&
-				//*le->getSubExp1()->getSubExp1() == *new RefExp(Location::regOf(signature->getStackRegister(prog)), NULL) &&
-				(r = (RefExp*)(le->getSubExp1()->getSubExp1()), r->isSubscript()) &&
-				(reg = (Location*)(r->getSubExp1(), reg->isRegOf())) &&
-				((Const*)reg->getSubExp1())->getInt() == signature->getStackRegister() &&
+				*le->getSubExp1()->getSubExp1() == *refSP0 &&
 				le->getSubExp1()->getSubExp2()->isIntConst()) {
 			int le_n = ((Const*)le->getSubExp1()->getSubExp2())->getInt();
 			// now test all the locals to see if this expression 
@@ -2128,7 +2133,7 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 				assert(ty);
 				int size = ty->getSize() / 8;	 // getSize() returns bits!
 				if (base->getOper() == opMemOf && signature->isOpCompatStackLocal(base->getSubExp1()->getOper()) &&
-						*base->getSubExp1()->getSubExp1() == *new RefExp(Location::regOf(signature->getStackRegister(prog)), NULL) &&
+						*base->getSubExp1()->getSubExp1() == *refSP0 &&
 						base->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
 					int base_n = ((Const*)base->getSubExp1()->getSubExp2()) ->getInt();
 					if (le_n <= base_n && le_n > base_n-size) {

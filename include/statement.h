@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63.2.8 $
+ * $Revision: 1.63.2.9 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -581,8 +581,7 @@ public:
 		// Constructor, subexpression
 				ImplicitAssign(Exp* lhs) : Assignment(lhs) {kind = STMT_IMPASSIGN;}
 		// Constructor, type, and subexpression
-				ImplicitAssign(Type* ty, Exp* lhs)
-				  : Assignment(ty, lhs) {kind = STMT_IMPASSIGN; }
+				ImplicitAssign(Type* ty, Exp* lhs) : Assignment(ty, lhs) {kind = STMT_IMPASSIGN;}
 		// Copy constructor
 				ImplicitAssign(ImplicitAssign& o);
 		// Destructor

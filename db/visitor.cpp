@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.12 $
+ * $Revision: 1.14.2.13 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -105,7 +105,7 @@ bool StmtConscriptSetter::visit(CallStatement* stmt) {
 	n = stmt->getNumReturns();
 	for (i=0; i < n; i++) {
 		Exp* r = stmt->getReturnExp(i);
-		r->accept(&sc);
+		if (r) r->accept(&sc);
 	}
 	curConscript = sc.getLast();
 	return true;

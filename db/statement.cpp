@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.12 $
+ * $Revision: 1.126.2.13 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2914,7 +2914,7 @@ Assign::Assign(Assign& o) : Assignment(lhs->clone()) {
 }
 ImplicitAssign::ImplicitAssign(ImplicitAssign& o) : Assignment(lhs->clone()) {kind = STMT_IMPASSIGN;}
 // The first virtual function (here the destructor) can't be in statement.h file for gcc
-ImplicitAssign::~ImplicitAssign() {}
+ImplicitAssign::~ImplicitAssign() { }
 
 Statement* Assign::clone() {
 	Assign* a = new Assign(type == NULL ? NULL : type->clone(),
@@ -4002,4 +4002,3 @@ void ReturnStatement::regReplace(UserProc* proc) {
 		Exp::doSearch(regOfWildRef, *it, li, false);
 	proc->regReplaceList(li);
 }
-

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.86.2.5 $
+ * $Revision: 1.86.2.6 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -2612,13 +2612,6 @@ void Cfg::undoComputedBB(Statement* stmt) {
 	}
 }
 
-Statement* Cfg::findTheImplicitAssign(Exp* x) {
-	// As per the below, but it's an error if the expression is not found
-	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
-	assert(it != implicitMap.end());
-	return it->second;
-}
-
 Statement* Cfg::findImplicitAssign(Exp* x) {
 	Statement* def;
 	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
@@ -2635,5 +2628,13 @@ Statement* Cfg::findImplicitAssign(Exp* x) {
 		def = it->second;
 	}
 	return def;
+}
+
+Statement* Cfg::findTheImplicitAssign(Exp* x) {
+	// As per the below, but don't create an implicit if it doesn't already exist
+	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
+	if (it == implicitMap.end())
+		return NULL;
+	return it->second;
 }
 
