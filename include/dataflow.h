@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.3 $
+ * $Revision: 1.18.2.4 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -100,8 +100,7 @@ class Statement {
 protected:
     PBB     pbb;  // contains a pointer to the enclosing BB
     UserProc *proc; // procedure containing this statement
-    // The following pointers are initially null, but if non null are
-    // considered valid
+    // The following 2 are soon to be deleted!
     StatementSet uses;          // ud chain: my uses' defs
     StatementSet usedBy;        // du chain: my def's uses
     int     number;             // Statement number for printing
@@ -213,7 +212,7 @@ public:
 
     // statements should be printable (for debugging)
     virtual void print(std::ostream &os) = 0;
-    virtual void printWithUses(std::ostream& os);
+    virtual void printWithUses(std::ostream& os) {print(os);}
             void printAsUse(std::ostream &os)   {os << std::dec << number;}
             void printAsUseBy(std::ostream &os) {os << std::dec << number;}
             void printNum(std::ostream &os)     {os << std::dec << number;}

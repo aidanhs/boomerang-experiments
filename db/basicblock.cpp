@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.3 $
+ * $Revision: 1.22.2.4 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -692,15 +692,15 @@ unsigned BasicBlock::DFTOrder(int& first, int& last) {
 }
 
 /*==============================================================================
- * FUNCTION:        BasicBlock::DFTOrder
- * OVERVIEW:        Traverse this node and recurse on its parents in a reverse 
- *          depth first manner. Records the times at which this node was 
- *          first visited and last visited
- * PARAMETERS:      first - the number of nodes that have been visited
- *                  last - the number of nodes that have been visited for the
- *                    last time during this traversal
- * RETURNS:         the number of nodes (including this one) that were traversed
- *                  from this node
+ * FUNCTION:      BasicBlock::RevDFTOrder
+ * OVERVIEW:      Traverse this node and recurse on its parents in a reverse 
+ *                  depth first manner. Records the times at which this node was 
+ *                  first visited and last visited
+ * PARAMETERS:    first - the number of nodes that have been visited
+ *                last - the number of nodes that have been visited for the
+ *                  last time during this traversal
+ * RETURNS:       the number of nodes (including this one) that were traversed
+ *                from this node
  *============================================================================*/
 unsigned BasicBlock::RevDFTOrder(int& first, int& last) {
     first++;
@@ -1531,6 +1531,40 @@ bool BasicBlock::isPostCall() {
             return true;
     }
     return false;
+}
+
+/*==============================================================================
+ * FUNCTION:        BasicBlock::computeReaches
+ * OVERVIEW:        Computes the reaching definitions for this BB
+ * PARAMETERS:      phase: 1=phase 1, 2=phase 2
+ * RETURNS:         <nothing>
+ *============================================================================*/
+bool BasicBlock::calcReaches(int phase) {
+    bool change = false;
+    StatementSet out;
+    calcReachOut(out, phase);
+    if (!(out == reachOut)) {
+        reachOut = out;          // Copy the set
+        change = true;
+    }
+    return change;
+}
+
+/*==============================================================================
+ * FUNCTION:        BasicBlock::calcAvailable
+ * OVERVIEW:        Computes the available definitions for this BB
+ * PARAMETERS:      phase: 1=phase 1, 2=phase 2
+ * RETURNS:         <nothing>
+ *============================================================================*/
+bool BasicBlock::calcAvailable(int phase) {
+    bool change = false;
+    StatementSet out;
+    calcAvailOut(out, phase);
+    if (!(out == availOut)) {
+        availOut = out;          // Copy the set
+        change = true;
+    }
+    return change;
 }
 
 // Definitions that reach the start of this BB are usually the union of the

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.1 $
+ * $Revision: 1.22.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -424,6 +424,7 @@ public:
 	void getReachInAt(Statement *stmt, StatementSet &reachin, int phase);
 	void getReachIn(StatementSet &reachin, int phase);
 	void calcReachOut(StatementSet &reach, int phase);
+    bool calcReaches(int phase);
     StatementSet &getReachOut() { return reachOut; }
         
     /* As above, for available definitions. These are used for the second
@@ -432,6 +433,7 @@ public:
 	void getAvailInAt(Statement *stmt, StatementSet &availini, int phase);
 	void getAvailIn(StatementSet &availin, int phase);
 	void calcAvailOut(StatementSet &avail, int phase);
+    bool calcAvailable(int phase);
     StatementSet &getAvailOut() { return availOut; }
 
     /* As above, for live locations. These are used for parameters and return
@@ -919,6 +921,7 @@ public:
     void clearCallInterprocEdges();
     void   setReturnInterprocEdges();
     void clearReturnInterprocEdges();
+    void appendBBs(std::list<PBB>& worklist, std::set<PBB>& workset);
 
     /*
      * Virtual Function Call analysis

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39.2.3 $
+ * $Revision: 1.39.2.4 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -536,6 +536,7 @@ bool AssignExp::operator<  (const Exp& o) const {        // Type sensitive
  * PARAMETERS:      Ref to an output stream
  * RETURNS:         <nothing>
  *============================================================================*/
+
 //  //  //  //
 //  Const   //
 //  //  //  //
@@ -619,15 +620,14 @@ void Binary::print(std::ostream& os)
                 os << ", "; 
             p2->print(os);
             return;
-        case opSubscript: {
-            //p1->printr(os); os << "."; p2->print(os);
+
+        case opSubscript:
+            // Here we ignore the StatementSet, because we are in
+            // "abbreviated mode" (see Exp::printWithUses for the full
+            // print function)
             p1->print(os);
-            os << "{";
-            StatementSet* pss = (StatementSet*)p2;
-            pss->printNums(os);
-            os << "}";
             return;
-        }
+
         default:
             break;
     }
@@ -681,6 +681,7 @@ void Binary::print(std::ostream& os)
     p2->printr(os);
 
 }
+
 
 //  //  //  //  //
 //   Terminal   //
@@ -896,6 +897,15 @@ void AssignExp::print(std::ostream& os) {
     p2->print(os);
 }
 
+void AssignExp::printWithUses(std::ostream& os) {
+    os << "*" << std::dec << size << "* ";
+    Exp* p1 = ((Binary*)this)->getSubExp1();
+    p1->printWithUses(os);
+    os << " := ";
+    Exp* p2 = ((Binary*)this)->getSubExp2();
+    p2->printWithUses(os);
+}
+
 void AssignExp::getDefinitions(LocationSet &defs) {
     defs.insert(getLeft());
 }
@@ -914,6 +924,22 @@ char* Exp::prints() {
       debug_buffer[199] = '\0';
       return debug_buffer;
 }
+
+void Exp::printWithUses(std::ostream& os) {
+    if (op == opSubscript) {
+        // opSubscript is a Binary with an ordinary expression (e.g. r[30])
+        // and a pointer to a StatementSet object
+        getSubExp1()->print(os);
+        os << "{";
+        StatementSet* pss = (StatementSet*)getSubExp2();
+        pss->printNums(os);
+        os << "}";
+    }
+    else
+        // Print without the cluttering {statementlist}
+        print(os);
+}
+
 
 /*==============================================================================
  * FUNCTION:        Exp::createDotFile etc
@@ -2700,4 +2726,64 @@ void Ternary::addUsedLocs(LocationSet& used) {
     subExp1->addUsedLocs(used);
     subExp2->addUsedLocs(used);
     subExp3->addUsedLocs(used);
+}
+
+/*==============================================================================
+ * FUNCTION:        Unary::updateUses etc
+ * OVERVIEW:        Update the "uses" information inherent in each Exp
+ * PARAMETERS:      def: ptr to Statement defining a location
+ *                  left: the location being defined
+ * RETURNS:         <nothing>
+ *============================================================================*/
+Exp* Exp::insertSubscript(Statement* def) {
+    // Create a new opSubscript expression with this as the location being
+    // subscripted
+    StatementSet* ss = new StatementSet;
+    Binary* e = new Binary(opSubscript, this, (Exp*)ss);
+    // Insert this element into the set
+    ss->insert(def);
+    return e;
+}
+
+//  //  //  //
+//  Unary   //
+//  //  //  //
+Exp* Unary::updateUses(Statement* def, Exp* left) {
+    if (*left == *this)
+        return insertSubscript(def);
+    subExp1->updateUses(def, left);
+    return this;
+}
+
+//  //  //  //
+//  Binary  //
+//  //  //  //
+Exp* Binary::updateUses(Statement* def, Exp* left) {
+    if (*left == *this)
+        return insertSubscript(def);
+    subExp1->updateUses(def, left);
+    subExp2->updateUses(def, left);
+    return this;            // This won't have changed
+}
+
+//  //  //  //  //
+//  AssignExp   //
+//  //  //  //  //
+Exp* AssignExp::updateUses(Statement* def, Exp* left) {
+    // Same as Binary, but no need to test for equality to left
+    subExp1->updateUses(def, left);
+    subExp2->updateUses(def, left);
+    return this;
+}
+
+//  //  //  //
+// Ternary  //
+//  //  //  //
+Exp* Ternary::updateUses(Statement* def, Exp* left) {
+    if (*left == *this)
+        return insertSubscript(def);
+    subExp1->updateUses(def, left);
+    subExp2->updateUses(def, left);
+    subExp3->updateUses(def, left);
+    return this;
 }

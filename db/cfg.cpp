@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.2 $
+ * $Revision: 1.18.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -686,7 +686,8 @@ void Cfg::sortByFirstDFT()
     m_listBB.sort(BasicBlock::lessFirstDFT);
 #else
     updateVectorBB();
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
         m_vectorBB[(*it)->m_DFTfirst-1] = *it;
     m_listBB.clear();
     for (int i = 0; i < m_vectorBB.size(); i++)
@@ -1406,32 +1407,19 @@ void Cfg::computePostDominators() {
 
 void Cfg::clearDataflow() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); 
-      it != m_listBB.end(); it++)
+      it != m_listBB.end(); it++) {
         (*it)->reachOut.clear();
+        (*it)->availOut.clear();
+    }
 }
-/*==============================================================================
- * FUNCTION:        Cfg::computeReaches
- * OVERVIEW:        Computes the reaching definitions for this CFG
- * PARAMETERS:      <none>
- * RETURNS:         <nothing>
- *============================================================================*/
-bool Cfg::computeReaches(int phase) {
-    bool change, anychange = false;
-    do {
-        change = false;
-        for (std::list<PBB>::iterator it = m_listBB.begin(); 
-          it != m_listBB.end(); it++) {
-            // Note: at present, this is computed in any order; preorder
-            // would be better (for a forwards flow problem)
-            StatementSet out;
-            (*it)->calcReachOut(out, phase);
-            if (!(out == (*it)->reachOut)) {
-                (*it)->reachOut = out;          // Copy the set
-                change = anychange = true;
-            }
-        }
-    } while (change);
-    return anychange;
+
+void Cfg::appendBBs(std::list<PBB>& worklist, std::set<PBB>& workset) {
+    // Append my list of BBs to the worklist
+    worklist.insert(worklist.end(), m_listBB.begin(), m_listBB.end());
+    // Do the same for the workset
+    std::list<PBB>::iterator it;
+    for (it = m_listBB.begin(); it != m_listBB.end(); it++)
+        workset.insert(*it);
 }
 
 bool Cfg::computeAvailable(int phase) {

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.3 $
+ * $Revision: 1.18.2.4 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -129,7 +129,8 @@ void Prog::analyse() {
         if (!p->isDecoded()) continue;
 
         // need to do this somewhere
-        p->getCFG()->sortByAddress();
+        // MVE: I don't think we need to at all
+        //p->getCFG()->sortByAddress();
 
         // decoded userproc.. analyse it
         analysis->analyse(p);
@@ -647,6 +648,20 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 #endif
 }
 
+void updateWorkList(PBB currBB, std::list<PBB>&workList,
+  std::set<PBB>& workSet) {
+    // Insert outedges of currBB into the worklist, unless already there
+    std::vector<PBB>& outs = currBB->getOutEdges();
+    int n = outs.size();
+    for (int i=0; i < n; i++) {
+        PBB currOut = outs[i];
+        if (workSet.find(currOut) != workSet.end()) {
+            workList.push_front(currOut);
+            workSet.insert(currOut);
+        }
+    }
+}
+
 // Calculate global dataflow. The whole program is treated as one large
 // dataflow problem
 // This is done only once (as a global dataflow problem); dataflow may be
@@ -656,9 +671,26 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 // that it defines (possible return locations).
 void Prog::forwardGlobalDataflow() {
     PROGMAP::iterator pp;
-    // First set up for phase 1
+    std::list<PBB> workList;            // List of BBs still to be processed
+    // Set of the same; used for quick membership test
+    std::set<PBB> workSet; 
+    // Sort the BBs into approximatly preorder
+    // Note: the ideal order differs for phase 1 and 2
+    // This order should be ideal for phase 2, and so-so for phase 1
+    for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+        UserProc* proc = (UserProc*)pp->second;
+        if (proc->isLib()) continue;
+        Cfg* cfg = proc->getCFG();
+        cfg->establishDFTOrder();
+        cfg->sortByFirstDFT();
+        // Insert all BBs into the worklist and workset. For many programs,
+        // it would be enough to insert the first BB of main, but some may
+        // have BBs that don't have explicit in-edges
+        cfg->appendBBs(workList, workSet);
+    }
+
+    // Set up for phase 1
 std::cerr << "Global DFA: phase 1\n";
-    interProcDFAphase = 1;
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;
         if (proc->isLib()) continue;
@@ -669,40 +701,38 @@ std::cerr << "Global DFA: phase 1\n";
     }
     bool change;
 int iter=0;
-    do {
-        change = false;
-        for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
-            UserProc* proc = (UserProc*)pp->second;
-            if (proc->isLib()) continue;
-            Cfg* cfg = proc->getCFG();
-            change |= cfg->computeReaches(1);
-            change |= cfg->computeAvailable(1);
-        }
+    while (workList.size()) {
+        PBB currBB = workList.front();
+        workList.erase(workList.begin());
+        workSet.erase(currBB);
+        StatementSet out;
+        change  = currBB->calcReaches(1);   // Reaching definitions
+        change |= currBB->calcAvailable(1); // Available definitions
+        if (change) updateWorkList(currBB, workList, workSet);
 std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
-    } while (change);
+    };
 
     // Phase 2
 std::cerr << "Global DFA: phase 2\n";
-    interProcDFAphase = 2;
+    workSet.clear();            // Should be clear already
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;
         if (proc->isLib()) continue;
-        proc->getCFG()->clearReturnInterprocEdges();
-        proc->getCFG()->setCallInterprocEdges();
+        Cfg* cfg = proc->getCFG();
         // Clear the dataflow info for this proc's cfg
         proc->getCFG()->clearDataflow();
+        cfg->appendBBs(workList, workSet);
     }
 iter=0;
-    do {
-        change = false;
-        for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
-            UserProc* proc = (UserProc*)pp->second;
-            if (proc->isLib()) continue;
-            Cfg* cfg = proc->getCFG();
-            change |= cfg->computeReaches(2);
-        }
+    while (workList.size()) {
+        PBB currBB = workList.front();
+        workList.erase(workList.begin());
+        workSet.erase(currBB);
+        change = currBB->calcReaches(2);   // Reaching definitions
+        // Don't need available definitions in phase 2
+        if (change) updateWorkList(currBB, workList, workSet);
 std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
-    } while (change);
+    };
 
     // For now, stay in phase 2. Going to "standard" ("phase 0") dataflow
     // won't work (I think). MVE
@@ -718,3 +748,4 @@ std::cerr << "Global DFA: phase 0\n";
 #endif
 
 }
+

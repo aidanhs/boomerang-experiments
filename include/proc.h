@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.23.2.2 $
+/* $Revision: 1.23.2.3 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -363,6 +363,8 @@ public:
     bool removeDeadStatements();
     bool propagateAndRemoveStatements();
     //void computeDataflow();       // Recalculate dataflow
+
+    void toSSAform();
 
     // promote the signature if possible
     void promoteSignature();

@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.24.2.3 $
+ * $Revision: 1.24.2.4 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -74,6 +74,7 @@ virtual void print(std::ostream& os) = 0;
     char*    prints();      // Print to string (for debugging)
              // Recursive print: don't want parens at the top level
 virtual void printr(std::ostream& os) = 0;    // Recursive print
+    void     printWithUses(std::ostream& os);
 
     // Display as a dotty graph
     void    createDotFile(char* name);
@@ -225,11 +226,18 @@ virtual Exp* fixSuccessor() {return this;}
 		Exp* killFill();
 
     // Do the work of finding used locations
-    virtual void addUsedLocs(LocationSet& used) {};
+    virtual void addUsedLocs(LocationSet& used) {}
+
+    // Update the "uses" information implicit in expressions
+    // def is a statement defining left (pass left == getLeft(def))
+    virtual Exp* updateUses(Statement* def, Exp* left) {return this;}
 
 	// serialization
 	virtual bool serialize(std::ostream &ouf, int &len) = 0;
 	static Exp *deserialize(std::istream &inf);
+
+protected:
+    Exp* insertSubscript(Statement* def);       // Local function for updateUses
 
 };
 
@@ -277,14 +285,15 @@ public:
 
     void    print(std::ostream& os);
     void    printNoQuotes(std::ostream& os);
+    // Print "recursive" (extra parens not wanted at outer levels)
     void    printr(std::ostream& os) {print (os);}
-    // Nothing to destruct: Don't deallocate the string passed to constructor
 
     void    appendDotFile(std::ofstream& of);
 
 	// serialization
 	virtual bool serialize(std::ostream &ouf, int &len);
 
+    // Nothing to destruct: Don't deallocate the string passed to constructor
 };
 
 /*==============================================================================
@@ -369,6 +378,10 @@ virtual Exp* fixSuccessor();
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used);
 
+    // Update the "uses" information implicit in expressions
+    // def is a statement defining left (pass left == getLeft(def))
+    virtual Exp* updateUses(Statement* def, Exp* left);
+
 	// serialization
 	virtual bool serialize(std::ostream &ouf, int &len);
 
@@ -429,6 +442,10 @@ virtual     ~Binary();
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used);
 
+    // Update the "uses" information implicit in expressions
+    // def is a statement defining left (pass left == getLeft(def))
+    virtual Exp* updateUses(Statement* def, Exp* left);
+
 	// serialization
 	virtual bool serialize(std::ostream &ouf, int &len);
 
@@ -484,6 +501,10 @@ virtual     ~Ternary();
 
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used);
+
+    // Update the "uses" information implicit in expressions
+    // def is a statement defining left (pass left == getLeft(def))
+    virtual Exp* updateUses(Statement* def, Exp* left);
 
 	// serialization
 	virtual bool serialize(std::ostream &ouf, int &len);
@@ -590,29 +611,32 @@ public:
     virtual void getDeadStatements(StatementSet &dead);
 	virtual bool usesExp(Exp *e);
     virtual void addUsedLocs(LocationSet& used);
+    // Update the "uses" information implicit in expressions
+    // def is a statement defining left (pass left == getLeft(def))
+    virtual Exp* updateUses(Statement* def, Exp* left);
 
-
-        virtual bool isDefinition() { return true; }
-        virtual void getDefinitions(LocationSet &defs);
+    virtual bool isDefinition() { return true; }
+    virtual void getDefinitions(LocationSet &defs);
         
         // get how to access this value
-        virtual Exp* getLeft() { return subExp1; }
+    virtual Exp* getLeft() { return subExp1; }
 	virtual Type* getLeftType() { return NULL; }
 
         // get how to replace this statement in a use
         virtual Exp* getRight() { return subExp2; }
 
 	// special print functions
-        //virtual void printAsUse(std::ostream &os);
-        //virtual void printAsUseBy(std::ostream &os);
+    //virtual void printAsUse(std::ostream &os);
+    //virtual void printAsUseBy(std::ostream &os);
+    virtual void printWithUses(std::ostream &os);
 
 	// inline any constants in the statement
 	virtual void processConstants(Prog *prog);
 
-        // general search
-        virtual bool search(Exp* search, Exp*& result) {
-            return Exp::search(search, result);
-        }
+    // general search
+    virtual bool search(Exp* search, Exp*& result) {
+        return Exp::search(search, result);
+    }
 
 	// general search and replace
 	virtual void searchAndReplace(Exp *search, Exp *replace) {
@@ -621,8 +645,8 @@ public:
 	    assert(e == this);
 	}
  
-        // update type for expression
-        virtual Type *updateType(Exp *e, Type *curType);
+    // update type for expression
+    virtual Type *updateType(Exp *e, Type *curType);
 
 protected:
 	virtual void doReplaceUse(Statement *use);

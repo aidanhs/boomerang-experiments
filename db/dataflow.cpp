@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.4 $
+ * $Revision: 1.22.2.5 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -449,29 +449,6 @@ void Statement::updateDfForErase() {
     }
 }
 
-void Statement::printWithUses(std::ostream& os) {
-    print(os);
-    os << "   uses: ";
-    StmtSetIter it;
-    for (Statement* s = uses.getFirst(it); s; s = uses.getNext(it)) {
-        s->printNum(os);
-        os << " ";
-    }
-    os << "   used by: ";
-    for (Statement* s = usedBy.getFirst(it); s; s = usedBy.getNext(it)) {
-        s->printNum(os);
-        os << " ";
-    }
-#if 0       // Note: if you change this, you need to update DataflowTest.cpp!
-    os << "   reach: ";
-    StatementSet reachIn;
-    getReachIn(reachIn);
-    for (Statement* s = reachIn.getFirst(it); s; s = reachIn.getNext(it)) {
-        s->print(os);
-        os << ", ";
-    }
-#endif
-}
 
 /*==============================================================================
  * FUNCTION:        operator<<

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.3 $
+ * $Revision: 1.33.2.4 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1177,7 +1177,7 @@ void UserProc::decompile() {
     }
 
     // compute uses/usedby info
-    computeUses();
+    //computeUses();        // No, now in initStatements and "repaired"
 
     bool change = true;
     if (!Boomerang::get()->noDataflow) {
@@ -1648,35 +1648,22 @@ void UserProc::computeUses() {
         s->calcUseLinks();
 }
 
-
-//
-//  SSA code
-//
-
-#if SSA
-bool UserProc::isSSAForm() {
-    LocationSet defs;
-    // TODO: add params to defs
-    return cfg->getSSADefs(defs);
-}
-
-void UserProc::transformToSSAForm() {
-    LocationSet defs;
-    // TODO: add params to defs
-    cfg->SSATransform(defs);
-    // minimise the SSA form
-    do cfg->simplify();
-    while (cfg->minimiseSSAForm());
-}
-
-void UserProc::transformFromSSAForm() {
-    cfg->revSSATransform();
-}
-#endif
-
 void UserProc::getReturnSet(LocationSet &ret)
 {
     if (returnSet.size()) {
         ret = returnSet;
     }
+}
+
+//
+//  SSA code
+//
+
+void UserProc::toSSAform() {
+    StatementList stmts;
+    getStatements(stmts);
+    StmtListIter it;
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        ;
+
 }
