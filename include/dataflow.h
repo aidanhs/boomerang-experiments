@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.5 $
+ * $Revision: 1.18.2.6 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -211,7 +211,7 @@ public:
     virtual void propagateToAll();
 
     // replaces a use of the given statement with an expression
-    virtual void replaceUse(Statement *use);
+            void replaceUse(Statement *use);
 
     // statements should be printable (for debugging)
     virtual void print(std::ostream &os, bool withUses = false) = 0;

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.6 $
+ * $Revision: 1.22.2.7 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -97,6 +97,7 @@ void Statement::calcUseLinks() {
 
 // replace a use in this statement
 void Statement::replaceUse(Statement *use) {
+#if 0
     if (VERBOSE) {
         std::cerr << "replace ";
         use->printAsUse(std::cerr);
@@ -129,10 +130,12 @@ void Statement::replaceUse(Statement *use) {
         // They now point to this
         s->usedBy.insert(this);
     }
+#endif
 
     // do the replacement
     doReplaceUse(use);
 
+#if 0
     // remove any uses that are not actually used by this statement
     bool change = true;
     while (change) {
@@ -152,6 +155,7 @@ void Statement::replaceUse(Statement *use) {
         printAsUse(std::cerr);
         std::cerr << std::endl;
     }
+#endif
 }
 
 /* Get everything that reaches this assignment.
@@ -460,7 +464,7 @@ void Statement::updateDfForErase() {
  *============================================================================*/
 std::ostream& operator<<(std::ostream& os, Statement* s) {
     if (s == NULL) {os << "NULL "; return os;}
-    s->print(os);
+    s->print(os, true);
     return os;
 }
 

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.5 $
+ * $Revision: 1.18.2.6 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -168,6 +168,35 @@ for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
         // Put this proc into implicit SSA form
         p->toSSAform();
     }
+
+#if 0
+PROGMAP::iterator pp;
+std::list<PBB> workList;            // List of BBs still to be processed
+// Set of the same; used for quick membership test
+std::set<PBB> workSet;
+// Sort the BBs into approximatly preorder
+// Note: the ideal order differs for phase 1 and 2
+// This order should be ideal for phase 2, and so-so for phase 1
+for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+    UserProc* proc = (UserProc*)pp->second;
+    if (proc->isLib()) continue;
+    Cfg* cfg = proc->getCFG();
+    cfg->appendBBs(workList, workSet);
+}
+while (workList.size()) {
+    PBB currBB = workList.front();
+    workList.erase(workList.begin());
+    std::list<RTL*>* rtls = currBB->getRTLs();
+    for (std::list<RTL*>::iterator rit = rtls->begin();
+      rit != rtls->end(); rit++) {
+        RTL *rtl = *rit;
+        for (std::list<Exp*>::iterator ee = rtl->getList().begin();
+          ee != rtl->getList().end(); ee++)
+            (*ee)->check();
+    }
+}
+std::cerr << "Checked!\n";
+#endif
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
       it++) {

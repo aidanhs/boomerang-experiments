@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.4 $
+ * $Revision: 1.33.2.5 $
  * 17 May 02 - Mike: Split off from rtl.cc (was getting too large)
  * 26 Nov 02 - Mike: Generate code for HlReturn with semantics (eg SPARC RETURN)
  * 26 Nov 02 - Mike: In getReturnLoc test for null procDest
@@ -1493,10 +1493,12 @@ void HLCall::killReach(StatementSet &reach) {
         std::list<Exp*> *li = procDest->getSignature()->getCallerSave(prog);
         assert(li);
         std::list<Exp*>::iterator ll;
+std::cerr << "Library call: reach before: "; reach.printNums(std::cerr); std::cerr << "\n";
         for (ll = li->begin(); ll != li->end(); ll++) {
             // These statements do not reach the end of the call
             reach.removeIfDefines(*ll);
         }
+std::cerr << "Library call: reach  after: "; reach.printNums(std::cerr); std::cerr << "\n";
         return;
     }
 

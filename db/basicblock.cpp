@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.5 $
+ * $Revision: 1.22.2.6 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1011,7 +1011,7 @@ void BasicBlock::emitGotoAndLabel(HLLCode *hll, int indLevel, PBB dest)
 {
     // is this a goto to the ret block?
     if (dest->getType() == RET) { // WAS: check about size of ret bb
-	hll->AddReturnStatement(indLevel, dest->getReturnVal());
+        hll->AddReturnStatement(indLevel, dest->getReturnVal());
     } else { 
         if (loopHead && (loopHead == dest || loopHead->loopFollow == dest)) {
             if (loopHead == dest)
@@ -1081,13 +1081,13 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
             WriteBB(hll, indLevel);
             return;
         } else {
-	    // unset its traversed flag
-	    traversed = UNTRAVERSED;
+            // unset its traversed flag
+            traversed = UNTRAVERSED;
 
-	    emitGotoAndLabel(hll, indLevel, this);
-	    return;
+            emitGotoAndLabel(hll, indLevel, this);
+            return;
         }
-	
+        
     switch(sType) {
         case Loop:
         case LoopCond:
@@ -1109,8 +1109,8 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
                 }
                 hll->AddPretestedLoopHeader(indLevel, cond);
 
-		// write the code for the body of the loop
-		PBB loopBody = (m_OutEdges[BELSE] == loopFollow) ? 
+                // write the code for the body of the loop
+                PBB loopBody = (m_OutEdges[BELSE] == loopFollow) ? 
                                 m_OutEdges[BTHEN] : m_OutEdges[BELSE];
                 loopBody->generateCode(hll, indLevel + 1, latchNode, 
                     followSet, gotoSet);
@@ -1162,7 +1162,7 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
                         latchNode->traversed = DFS_CODEGEN;
                         latchNode->WriteBB(hll, indLevel+1);
                     }
-			
+                        
                     hll->AddPosttestedLoopEnd(indLevel, getCond());
                 } else {
                     assert(lType == Endless);
@@ -1216,18 +1216,18 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
 
                 if (usType == Structured)
                     followSet.push_back(condFollow);
-	
+        
                 // Otherwise, for a jump into/outof a loop body, the follow is 
                 // added to the goto set.  The temporary follow is set for any 
                 // unstructured conditional header branch that is within the 
                 // same loop and case.
-		else {
-		    if (usType == JumpInOutLoop) {
-		        // define the loop header to be compared against
-			PBB myLoopHead = (sType == LoopCond ? this : loopHead);
+                else {
+                    if (usType == JumpInOutLoop) {
+                        // define the loop header to be compared against
+                            PBB myLoopHead = (sType == LoopCond ? this : loopHead);
                         gotoSet.push_back(condFollow);
                         gotoTotal++;
-	
+        
                         // also add the current latch node, and the loop header
                         // of the follow if they exist
                         if (latch) {
@@ -1282,7 +1282,7 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
                 if (succ->traversed == DFS_CODEGEN || 
                     (loopHead && succ == loopHead->loopFollow))
                     emitGotoAndLabel(hll, indLevel + 1, succ);
-                else	
+                else        
                     succ->generateCode(hll, indLevel + 1, latch, followSet, 
                                     gotoSet);
 
@@ -1303,7 +1303,7 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
 
                     // generate the closing bracket
                     hll->AddIfElseCondEnd(indLevel);
-               	} else {
+                       } else {
                     // generate the closing bracket
                     hll->AddIfCondEnd(indLevel);
                 }
@@ -1346,7 +1346,7 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
                 // original follow
                 if (!tmpCondFollow)
                     tmpCondFollow = condFollow;
-			
+                        
                 if (tmpCondFollow->traversed == DFS_CODEGEN)
                     emitGotoAndLabel(hll, indLevel, tmpCondFollow);
                 else
@@ -1354,8 +1354,8 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
                         followSet, gotoSet);
             }
             break;
-	} 
-	case Seq:
+        } 
+        case Seq:
             // generate code for the body of this block
             WriteBB(hll, indLevel);
 
@@ -1382,16 +1382,16 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
             PBB child = m_OutEdges[0];
             if (child->traversed == DFS_CODEGEN || 
                 ((child->loopHead != loopHead) && 
-		 (!child->allParentsGenerated() || 
+                 (!child->allParentsGenerated() || 
                   isIn(followSet, child))) ||
-	        (latch && latch->loopHead->loopFollow == child) ||
-		!(caseHead == child->caseHead || 
+                (latch && latch->loopHead->loopFollow == child) ||
+                !(caseHead == child->caseHead || 
                   (caseHead && child == caseHead->condFollow)))
                 emitGotoAndLabel(hll, indLevel, m_OutEdges[0]);
             else
                 m_OutEdges[0]->generateCode(hll, indLevel, latch,
                      followSet, gotoSet);
-	    break;
+            break;
     }
 }
 
@@ -1590,12 +1590,17 @@ void BasicBlock::getReachIn(StatementSet &reachin, int phase) {
                 PBB inEdge = m_InEdges[i];
                 if (inEdge->m_nodeType == CALL) {
                     Proc* dest = inEdge->getDestProc();
-                    if (dest->isLib()) continue;        // Ignore lib calls
                         // MVE: check that return locations are handled
-                    StatementSet temp(inEdge->reachOut);
-                    PBB exitBlock = ((UserProc*)dest)->getCFG()->getExitBB();
-                    temp.makeDiff(exitBlock->availOut);
-                    reachin.makeUnion(temp);
+                    if (dest->isLib()) {
+                        // Just union them in, as per any regular in-edge
+                        reachin.makeUnion(inEdge->reachOut);
+                    } else {
+                        StatementSet temp(inEdge->reachOut);
+                        PBB exitBlock =
+                          ((UserProc*)dest)->getCFG()->getExitBB();
+                        temp.makeDiff(exitBlock->availOut);
+                        reachin.makeUnion(temp);
+                    }
                 } else
                     // Just union it in: either from a return edge, or from
                     // an intra-procedural jump, flow-through (etc) edge
@@ -1634,7 +1639,11 @@ void BasicBlock::getReachIn(StatementSet &reachin, int phase) {
 void BasicBlock::doAvail(StatementSet& availSet, PBB inEdge) {
     if (inEdge->m_nodeType == CALL) {
         Proc* dest = inEdge->getDestProc();
-        if (dest->isLib()) return;        // Ignore lib calls
+        if (dest->isLib()) {
+            // Treat lib calls like any ordinary in-edge
+            availSet = inEdge->availOut;
+            return;
+        }
         // AVAILOUT[call]
         availSet = inEdge->availOut;
         PBB exitBlock = ((UserProc*)dest)->getCFG()->getExitBB();
@@ -1819,11 +1828,11 @@ void BasicBlock::setRevOrder(std::vector<PBB> &order)
     // Set this node as having been traversed during the post domimator 
     // DFS ordering traversal
     traversed = DFS_PDOM;
-	
+        
     // recurse on unvisited children 
     for (unsigned int i = 0; i < m_InEdges.size(); i++)
-	if (m_InEdges[i]->traversed != DFS_PDOM)
-	    m_InEdges[i]->setRevOrder(order);
+        if (m_InEdges[i]->traversed != DFS_PDOM)
+            m_InEdges[i]->setRevOrder(order);
 
     // add this node to the ordering structure and record the post dom. order
     // of this node as its index within this ordering structure
@@ -1923,7 +1932,7 @@ bool BasicBlock::inLoop(PBB header, PBB latch)
    assert(header == latch || 
           ((header->loopStamps[0] > latch->loopStamps[0] && 
             latch->loopStamps[1] > header->loopStamps[1]) ||
-	  (header->loopStamps[0] < latch->loopStamps[0] && 
+          (header->loopStamps[0] < latch->loopStamps[0] && 
            latch->loopStamps[1] < header->loopStamps[1])));
    // this node is in the loop if it is the latch node OR
    // this node is within the header and the latch is within this when using 

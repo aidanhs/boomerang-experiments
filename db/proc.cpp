@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.5 $
+ * $Revision: 1.33.2.6 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1185,11 +1185,8 @@ void UserProc::decompile() {
             change = false;
             //recalcDataflow();
             if (VERBOSE) print(std::cerr, true);
-            bool propagate;
-            do {
-                propagate = propagateAndRemoveStatements();
-                change |= propagate;
-            } while (propagate);
+            propagateStatements();
+            if (VERBOSE) print(std::cerr, true);
             if (!Boomerang::get()->noRemoveNull) {
                 change |= removeNullStatements();
                 change |= removeDeadStatements();
@@ -1608,6 +1605,36 @@ bool UserProc::propagateAndRemoveStatements() {
         }
     }
     return change;
+}
+
+void UserProc::propagateStatements() {
+    StatementList stmts;
+    getStatements(stmts);
+    // propagate any statements that can be
+    StmtListIter it;
+    int oldNumProp, numProp = 0;
+    do {
+        oldNumProp = numProp;
+        numProp = 0;
+        for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
+            LocationSet exps;
+            s->addUsedLocs(exps);
+            LocSetIter ll;
+            for (Exp* e = exps.getFirst(ll); e; e = exps.getNext(ll)) {
+                if (e->getNumUses() == 1) {
+                    // Can propagate TO this statement
+                    Statement* def = ((UsesExp*)e)->getFirstUses();
+                    s->replaceUse(def);
+                    numProp++;
+                    if (VERBOSE) {
+                        std::cerr << "Propagating " << def->getNumber() <<
+                          " into " << s->getNumber() << ", result is " << s <<
+                          "\n";
+                    }
+                }
+            }
+        }
+    } while (numProp != oldNumProp);
 }
 
 void UserProc::promoteSignature() {
