@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.1 $
+ * $Revision: 1.238.2.2 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1026,6 +1026,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			//trimParameters(depth);
 		}
 
+#if 0
 		// if we've added new parameters, need to do propagations up to this depth.  it's a recursive function thing.
 		if (nparams != signature->getNumParams()) {
 			for (int depth_tmp = 0; depth_tmp < depth; depth_tmp++) {
@@ -1047,6 +1048,8 @@ std::set<UserProc*>* UserProc::decompile() {
 				LOG << "=== End Debug Print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 			}
 		}
+#endif
+
 		// replacing expressions with Parameters as we go
 		if (!Boomerang::get()->noParameterNames) {
 			replaceExpressionsWithParameters(df, depth);
@@ -3224,7 +3227,7 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 							if (DEBUG_PROOF)
 								LOG << "using proven (or induction) for " << call->getDestProc()->getName() << " " 
 									<< r->getSubExp1() << " = " << right << "\n";
-							right = call->substituteParams(right);
+							right = call->localiseExp(right);
 							if (DEBUG_PROOF)
 								LOG << "right with subs: " << right << "\n";
 							query->setSubExp1(right);

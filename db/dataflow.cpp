@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.2 $
+ * $Revision: 1.43.2.3 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -410,12 +410,12 @@ void Collector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& 
 	}
 }
 
-// Find the definition for e that reaches this Collector. If none reaches here, return e{-}
+// Find the definition for e that reaches this Collector. If none reaches here, return NULL
 RefExp* Collector::findDef(Exp* e) {
 	RefExp re(e, (Statement*)-1);		// Wrap in a definition with a wild definition
 	std::set<RefExp*, lessExpStar>::iterator it = locs.find(&re);
 	if (it == locs.end())
-		return new RefExp(e, NULL);		// Not explicitly defined here
+		return NULL;					// Not explicitly defined here
 	return *it;
 }
 

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.1 $
+ * $Revision: 1.76.2.2 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1019,8 +1019,9 @@ virtual bool		accept(StmtModifier* visitor);
 		std::vector<ReturnInfo>& getReturns() {return returns;}
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
-		// Substitute the various components of expression e with the appropriate actual arguments
-		Exp			*substituteParams(Exp *e);
+		// Localise the various components of expression e with reaching definitions to this call
+		// Was called substituteParams
+		Exp			*localiseExp(Exp *e);
 		void		addArgument(Exp *e, UserProc* proc);
 		Exp*		findDefFor(Exp* e);			// Find the reaching definition for expression e
 		Exp*		getArgumentExp(int i);

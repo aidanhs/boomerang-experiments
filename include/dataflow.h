@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.2 $
+ * $Revision: 1.39.2.3 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -124,7 +124,7 @@ public:
 		void		clear() {locs.clear();}
 
 		/**
-		 * Find the definition for a location
+		 * Find the definition for a location. If not found, return NULL
 		 */
 		RefExp*		findDef(Exp* e);
 

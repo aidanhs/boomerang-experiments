@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.1 $
+ * $Revision: 1.148.2.2 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1370,10 +1370,10 @@ Exp *CallStatement::getProven(Exp *e) {
 	return NULL;
 }
 
-// Substitute the various components of expression e with the appropriate reaching definitions
-// Used in fixCallRefs (via the CallRefsFixer). Locations defined in this call are replaced with their proven values,
+// Substitute the various components of expression e with the appropriate reaching definitions.
+// Used in e.g. fixCallRefs (via the CallRefsFixer). Locations defined in this call are replaced with their proven values,
 // which are in terms of the initial values at the start of the call (reaching definitions at the call)
-Exp *CallStatement::substituteParams(Exp *e) {
+Exp *CallStatement::localiseExp(Exp *e) {
 	e = e->clone();
 	LocationSet locs;
 	e->addUsedLocs(locs);
@@ -1396,9 +1396,13 @@ Exp *CallStatement::substituteParams(Exp *e) {
 		if (!(*xx)->isSubscript())
 			continue;										// Could be e.g. m[x{y} + K]
 		Statement* def = ((RefExp*)*xx)->getDef();
+		Exp* base = ((RefExp*)*xx)->getSubExp1();
 		if (def && def->isCall()) {
-			Exp* r = ((CallStatement*)def)->findDefFor(*xx);
-			e = e->searchReplaceAll(*xx, r, ch);
+			Exp* r = ((CallStatement*)def)->findDefFor(base);
+			if (r)
+				e = e->searchReplaceAll(*xx, r, ch);
+			else
+				e = new RefExp(base, NULL);					// Change it to loc{-}
 		}
 	}
 	return e->simplifyArith()->simplify();
@@ -1406,9 +1410,8 @@ Exp *CallStatement::substituteParams(Exp *e) {
 
 // Find the definition for the given expression, using the embedded Collector object
 // Was called findArgument(), and used implicit arguments and signature parameters
+// Note: must only operator on unsubscripted locations, otherwise it is invalid
 Exp* CallStatement::findDefFor(Exp *e) {
-	if (e->isSubscript())
-		e = ((RefExp*)e)->getSubExp1();
 	return col.findDef(e);
 #if 0
 	int n = -1;
@@ -1446,24 +1449,24 @@ Exp* CallStatement::findDefFor(Exp *e) {
 #endif
 }
 
-void CallStatement::addArgument(Exp *e, UserProc* proc)
-{
+void CallStatement::addArgument(Exp *e, UserProc* proc) {
 	// Process the argument. For example, given m[esp+4], it might be needed to localise as m[esp{17}+4], then get
 	// substituted to m[esp{-}-16], then localised again to m[esp{-}-16]{16}, then substituted again into r24{14}
 	// (examples from test/pentium/fibo)
+	e = localiseExp(e);						// Localise for this call (first time)
+	arguments.push_back(e);
 	int depth = e->getMemDepth();
 	StatementSet empty;
 	Exp* old_e;
 	do {									// Repeat until no change
-		old_e = e->clone();
-		e = substituteParams(e);			// Localise for this call
+		old_e = arguments.back()->clone();
 		for (int d=0; d <= depth; d++)
-			//e = proc->propagateToExp(e, d);	// Propagate into the current expression
-			;
-	} while (!(*e == *old_e));
-	arguments.push_back(e);
-	// These expressions can end up becoming locals
-	Location *l = dynamic_cast<Location*>(e);
+			propagateTo(-1, empty, d);		// Propagate into all args etc
+		Exp*& er = arguments.back();
+		er = localiseExp(er);				// Localise again
+	} while (!(*arguments.back() == *old_e));
+	// These expressions can end up becoming locals (?)
+	Location *l = dynamic_cast<Location*>(arguments.back());
 	if (l)
 		l->setProc(proc);
 }
@@ -1984,9 +1987,7 @@ bool CallStatement::convertToDirect() {
 				newimpargs[i] =
 					sig->getImplicitParamExp(i)->clone();
 				if (newimpargs[i]->getOper() == opMemOf) {
-					newimpargs[i]->refSubExp1() = 
-						substituteParams(newimpargs[i]->
-						getSubExp1());
+					newimpargs[i]->refSubExp1() = localiseExp(newimpargs[i]-> getSubExp1());
 				}
 			}
 		}
@@ -2009,8 +2010,7 @@ bool CallStatement::convertToDirect() {
 				Exp* parami = sig->getParamExp(i);
 				newargs[i] = parami->clone();
 				if (newargs[i]->getOper() == opMemOf) {
-					newargs[i]->refSubExp1() = 
-						substituteParams(newargs[i]->getSubExp1());
+					newargs[i]->refSubExp1() = localiseExp(newargs[i]->getSubExp1());
 				}
 			}
 		}

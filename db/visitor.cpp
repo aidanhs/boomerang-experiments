@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.1 $
+ * $Revision: 1.23.2.2 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -166,8 +166,8 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 		// Get the right had side of the proven expression (e.g. from r28 = r28 + 4, get r28 + 4)
 		Exp *e = call->getProven(r->getSubExp1());
 		if (e) {
-			// Express e in terms of the arguments passed to this call
-			e = call->substituteParams(e);
+			// Express e in terms of the definitions reaching the call
+			e = call->localiseExp(e);
 			assert(e);
 			if (VERBOSE)
 				LOG << "fixcall refs replacing " << r << " with " << e << "\n";
