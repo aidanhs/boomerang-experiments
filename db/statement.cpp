@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.10 $
+ * $Revision: 1.126.2.11 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1561,11 +1561,6 @@ Exp* CallStatement::getReturnLoc() {
 	return NULL;
 }
 
-Type* CallStatement::getLeftType() {
-	if (procDest == NULL)
-		return new VoidType();
-	return procDest->getSignature()->getReturnType();
-}
 #endif
 
 /*==============================================================================
@@ -3938,5 +3933,60 @@ void PhiAssign::simplifyRefs() {
 		}
 		uu++;
 	}
+}
+
+static Exp* regOfWild = Location::regOf(new Terminal(opWild));
+static Exp* regOfWildRef = new RefExp(regOfWild, (Statement*)-1);
+
+void Assignment::regReplace(UserProc* proc) {
+	if (! (*lhs == *regOfWild)) return;
+	std::list<Exp**> li;
+	Exp* tmp = new RefExp(lhs, this);
+	// Make a temporary reference for the LHS
+	li.push_front(&tmp);
+	proc->regReplaceList(li);
+	lhs = tmp;
+}
+void Assign::regReplace(UserProc* proc) {
+	std::list<Exp**> li;
+	Exp::doSearch(regOfWildRef, rhs, li, false);
+	proc->regReplaceList(li);
+	// Now process the LHS
+	Assignment::regReplace(proc);
+}
+void GotoStatement::regReplace(UserProc* proc) {
+	std::list<Exp**> li;
+	Exp::doSearch(regOfWildRef, pDest, li, false);
+	proc->regReplaceList(li);
+}
+void BranchStatement::regReplace(UserProc* proc) {
+	std::list<Exp**> li;
+	Exp::doSearch(regOfWildRef, pDest, li, false);
+	Exp::doSearch(regOfWildRef, pCond, li, false);
+	proc->regReplaceList(li);
+}
+void CaseStatement::regReplace(UserProc* proc) {
+	std::list<Exp**> li;
+	Exp::doSearch(regOfWildRef, pSwitchInfo->pSwitchVar, li, false);
+	proc->regReplaceList(li);
+}
+void CallStatement::regReplace(UserProc* proc) {
+	std::list<Exp**> li;
+	Exp::doSearch(regOfWildRef, pDest, li, false);
+	std::vector<Exp*>::iterator it;
+	for (it = arguments.begin(); it != arguments.end(); it++)
+		Exp::doSearch(regOfWildRef, *it, li, false);
+	for (it = implicitArguments.begin(); it != implicitArguments.end(); it++)
+		Exp::doSearch(regOfWildRef, *it, li, false);
+	for (it = returns.begin(); it != returns.end(); it++)
+		if (*it) Exp::doSearch(regOfWildRef, *it, li, false);
+	proc->regReplaceList(li);
+}
+void ReturnStatement::regReplace(UserProc* proc) {
+	std::list<Exp**> li;
+	std::vector<Exp*>::iterator it;
+	for (it = returns.begin(); it != returns.end(); it++)
+		Exp::doSearch(regOfWildRef, *it, li, false);
+	proc->regReplaceList(li);
 }
 

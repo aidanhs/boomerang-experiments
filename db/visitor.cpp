@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.10 $
+ * $Revision: 1.14.2.11 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -472,6 +472,29 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 	return true;				// Continue the recursion
 }
 
+bool UsedLocsVisitor::visit(ReturnStatement* s, bool& override) {
+	// For the final pass, only consider the first return
+	int n = s->getNumReturns();
+	if (final) {
+		if (n != 0) {
+			Exp* r = NULL;
+			// Find the first non null return
+			for (int i = 0; r == NULL && i < n; i++) {
+				r = s->getReturnExp(i);			
+				r->accept(ev);
+			}
+		}
+	} else {
+		// Otherwise, consider all returns. If of form m[x] then x is used
+		for (int i=0; i < n; i++) {
+			Exp* r = s->getReturnExp(i);
+			if (r) r->accept(ev);
+		} 
+	}
+	override = true;			// Don't do the normal accept logic
+	return true;				// Continue the recursion
+}
+
 bool UsedLocsVisitor::visit(BoolAssign* s, bool& override) {
 	Exp* pCond = s->getCondExpr();
 	if (pCond)
@@ -637,3 +660,4 @@ Exp* ImplicitConverter::postVisit(RefExp* e) {
 		e->setDef(cfg->findImplicitAssign(e->getSubExp1()));
 	return e;
 }
+

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.8 $
+ * $Revision: 1.5.2.9 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -245,6 +245,28 @@ Type* PointerType::meetWith(Type* other, bool& ch) {
 		if (pointsToAlpha() && !otherPtr->pointsToAlpha()) {
 			setPointsTo(otherPtr->getPointsTo());
 			ch = true;
+		} else {
+			// We have a meeting of two pointers. First, see if the base types will meet
+			bool baseCh = false;
+			Type* thisBase = getPointsTo();
+			Type* otherBase = otherPtr->getPointsTo();
+			if (otherBase->isPointer()) {
+				// Don't recurse infinately. Just union the pointers
+				ch = true;
+				return createUnion(other);
+			}
+			thisBase = thisBase->meetWith(otherBase, baseCh);
+			if (thisBase->isUnion()) {
+				// The bases did not meet successfully. Union the pointers.
+				ch = true;
+				return createUnion(other);
+			} else {
+				// The bases did meet successfully. Return a pointer to this possibly changed type.
+				if (baseCh) {
+					ch = true;
+					setPointsTo(thisBase);
+				}
+			}
 		}
 		return this;
 	}
@@ -331,7 +353,7 @@ Type* Type::createUnion(Type* other) {
 void CallStatement::dfaTypeAnalysis(bool& ch) {
 	Signature* sig = procDest->getSignature();
 	Prog* prog = procDest->getProg();
-	// Iterate through the parameters
+	// Iterate through the arguments
 	int n = sig->getNumParams();
 	for (int i=0; i < n; i++) {
 		Exp* e = getArgumentExp(i);
@@ -418,7 +440,8 @@ void Assignment::dfaTypeAnalysis(bool& ch) {
 }
 
 void BranchStatement::dfaTypeAnalysis(bool& ch) {
-	// Not implemented yet
+	pCond->descendType(new BooleanType(), ch);
+	// Not fully implemented yet?
 }
 
 void BoolAssign::dfaTypeAnalysis(bool& ch) {
@@ -658,6 +681,12 @@ void Binary::descendType(Type* parentType, bool& ch) {
 			tb = tb->meetWith(deltaSubtractor(parentType, ta), ch);
 			subExp2->descendType(tb, ch);
 			break;
+		case opGtrUns:	case opLessUns:
+		case opGtrEqUns:case opLessEqUns:
+			ta = ta->meetWith(new IntegerType(32, -1), ch);
+			subExp1->descendType(ta, ch);
+			tb = tb->meetWith(new IntegerType(32, -1), ch);
+			subExp2->descendType(tb, ch);
 		default:
 			// Many more cases to implement
 			break;

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.7 $
+ * $Revision: 1.207.2.8 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -603,9 +603,14 @@ Proc *Proc::getFirstCaller() {
  *					uNative - Native address of entry point of procedure
  * RETURNS:			<nothing>
  *============================================================================*/
-LibProc::LibProc(Prog *prog, std::string& name, ADDRESS uNative) : 
-	Proc(prog, uNative, NULL) {
-	signature = prog->getLibSignature(name.c_str());
+LibProc::LibProc(Prog *prog, std::string& name, ADDRESS uNative) : Proc(prog, uNative, NULL) {
+	Signature* sig = prog->getLibSignature(name.c_str());
+	if (sig->hasEllipsis())
+		// Clone the signature, since every call could have a different signature.
+		// Important when killEllipsis called, for example, or more parameters are added to a signature
+		signature = sig->clone();
+	else
+		signature = sig;			// OK to use the library signature... I hope
 }
 
 LibProc::~LibProc()
@@ -858,8 +863,10 @@ void UserProc::generateCode(HLLCode *hll) {
 	if (!Boomerang::get()->noLocals) {
 //		  while (nameStackLocations())
 //			  replaceExpressionsWithSymbols();
-		while (nameRegisters())
-			replaceExpressionsWithSymbols();
+		if (!DFA_TYPE_ANALYSIS) {
+			while (nameRegisters())
+				replaceExpressionsWithSymbols();
+		}
 	}
 	removeUnusedLocals();
 
@@ -1338,6 +1345,8 @@ std::set<UserProc*>* UserProc::decompile() {
 		while (ellipsisProcessing());
 		if (VERBOSE || DEBUG_TA)
 			LOG << "=== End Type Analysis for " << getName() << " ===\n";
+
+		replaceRegistersWithLocations();
 	}
 
 	if (!Boomerang::get()->noParameterNames) {
@@ -2637,9 +2646,9 @@ bool UserProc::nameStackLocations() {
 	return found;
 }
 
+// Deprecated. Eventually replace with replaceRegistersWithLocations()
 bool UserProc::nameRegisters() {
-	Exp *match = Location::regOf(new Terminal(opWild));
-	if (match == NULL) return false;
+	static Exp *match = Location::regOf(new Terminal(opWild));
 	bool found = false;
 
 	StatementList stmts;
@@ -2671,8 +2680,34 @@ bool UserProc::nameRegisters() {
 #endif
 		}
 	}
-	delete match;
 	return found;
+}
+
+void UserProc::regReplaceList(std::list<Exp**>& li) {
+	std::list<Exp**>::iterator it;
+	for (it = li.begin(); it != li.end(); it++) {
+		Exp* reg = ((RefExp*)**it)->getSubExp1();
+		Statement* def = ((RefExp*)**it)->getRef();
+		Type *ty = def->getType();
+		// MVE: Might make sense to use some other map for this, and get rid of data member symbolMap
+		if (symbolMap.find(reg) == symbolMap.end()) {
+			symbolMap[reg] = newLocal(ty);
+			std::string name = ((Const*)symbolMap[reg]->getSubExp1())->getStr();
+			locals[name] = ty;
+			if (VERBOSE)
+				LOG << "replacing all " << reg << " with " << name << ", type " << ty->getCtype() << "\n";
+		}
+		// Now replace it in the IR
+		**it = symbolMap[reg];
+	}
+}
+
+void UserProc::replaceRegistersWithLocations() {
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (it = stmts.begin(); it != stmts.end(); it++)
+		(*it)->regReplace(this);
 }
 
 bool UserProc::removeNullStatements() {
@@ -2884,7 +2919,7 @@ void UserProc::removeUnusedLocals() {
 	for (ss = stmts.begin(); ss != stmts.end(); ss++) {
 		Statement* s = *ss;
 		LocationSet refs;
-		s->addUsedLocs(refs);
+		s->addUsedLocs(refs, true);
 		LocationSet::iterator rr;
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			Exp* r = *rr;

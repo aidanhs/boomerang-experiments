@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.114.2.5 $
+ * $Revision: 1.114.2.6 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -224,42 +224,39 @@ virtual int getArity() {return 0;}		// Overridden for Unary, Binary, etc
 	// a list of variable bindings, otherwise returns NULL
 	virtual Exp *match(Exp *pattern);
 
-	//	//	//	//	//	//	//
-	//	Search and Replace	//
-	//	//	//	//	//	//	//
+		//	//	//	//	//	//	//
+		//	Search and Replace	//
+		//	//	//	//	//	//	//
 	
-	// Search for Exp *search in this Exp. If found, return true and return
-	// a ref to the matching expression in result (useful with wildcards).
-	virtual bool search(Exp* search, Exp*& result);
+		// Search for Exp *search in this Exp. If found, return true and return
+		// a ptr to the matching expression in result (useful with wildcards).
+virtual bool	search(Exp* search, Exp*& result);
 
-	// Search for Exp search in this Exp. For each found, add
-	// a ptr to the matching expression in result (useful with wildcards).	  
-	// Does NOT clear result on entry
-	bool	searchAll(Exp* search, std::list<Exp*>& result);
+		// Search for Exp search in this Exp. For each found, add
+		// a ptr to the matching expression in result (useful with wildcards).	  
+		// Does NOT clear result on entry
+		bool	searchAll(Exp* search, std::list<Exp*>& result);
 
-	// Search this Exp for *search; if found, replace with *replace
-	Exp* searchReplace (Exp* search, Exp* replace, bool& change);
+		// Search this Exp for *search; if found, replace with *replace
+		Exp*	searchReplace (Exp* search, Exp* replace, bool& change);
 
-	// Search *pSrc for *search; for all occurrences, replace with *replace
-	Exp* searchReplaceAll(Exp* search, Exp* replace, bool& change,
-		bool once = false);
+		// Search *pSrc for *search; for all occurrences, replace with *replace
+		Exp*	searchReplaceAll(Exp* search, Exp* replace, bool& change, bool once = false);
 
-	// Not for public use. Search for subexpression matches.
-		void doSearch(Exp* search, Exp*& pSrc, std::list<Exp**>& li, bool once);
+		// Mostly not for public use. Search for subexpression matches.
+static	void	doSearch(Exp* search, Exp*& pSrc, std::list<Exp**>& li, bool once);
 
-	// As above.
-virtual void doSearchChildren(Exp* search, std::list<Exp**>& li,
-		  bool once);
+		// As above.
+virtual void	doSearchChildren(Exp* search, std::list<Exp**>& li, bool once);
 
-	//	//	//	//	//	//	//
-	//	  Sub expressions	//
-	//	//	//	//	//	//	//
+		//	//	//	//	//	//	//
+		//	  Sub expressions	//
+		//	//	//	//	//	//	//
 	
-	// These are here so we can (optionally) prevent code clutter.
-	// Using a *Exp (that is known to be a Binary* say), you can just
-	// directly call getSubExp2.
-	// However, you can still choose to cast from Exp* to Binary* etc.
-	// and avoid the virtual call
+		// These are here so we can (optionally) prevent code clutter.
+		// Using a *Exp (that is known to be a Binary* say), you can just
+		// directly call getSubExp2.
+		// However, you can still choose to cast from Exp* to Binary* etc. and avoid the virtual call
 virtual Exp*	getSubExp1() {return 0;}
 virtual Exp*	getSubExp2() {return 0;}
 virtual Exp*	getSubExp3() {return 0;}
@@ -270,8 +267,8 @@ virtual void	setSubExp1(Exp* e) {};
 virtual void	setSubExp2(Exp* e) {};
 virtual void	setSubExp3(Exp* e) {};
 
-	// Get the memory nesting depth. Non mem-ofs return 0; m[m[x]] returns 2
-virtual int getMemDepth() {return 0;}
+		// Get the memory nesting depth. Non mem-ofs return 0; m[m[x]] returns 2
+virtual int		getMemDepth() {return 0;}
 
 		//	//	//	//	//	//	//
 		//	Guarded assignment	//

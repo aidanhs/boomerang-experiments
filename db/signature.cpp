@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.81.2.4 $
+ * $Revision: 1.81.2.5 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -1099,67 +1099,6 @@ void Signature::printToLog()
 void Signature::getInternalStatements(StatementList &stmts)
 {
 }
-
-// No longer used; may be used again in future
-#if 0
-void Signature::analyse(UserProc *p) {
-	if (VERBOSE) {
-		std::cerr << "accepted promotion" << std::endl;
-		std::cerr << "searching for creation of return value" << std::endl;
-	}
-	StatementList internal;
-	//p->getInternalStatements(internal);
-	StmtListIter it;
-	for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
-		if (s->getLeft() && *s->getLeft() == *getReturnExp() &&
-			s->getRight() && !(*s->getLeft() == *s->getRight())) {
-			if (VERBOSE) {
-				std::cerr << "found: ";
-				s->printAsUse(std::cerr);
-				std::cerr << std::endl;
-			}
-			//p->eraseInternalStatement(s);
-			p->getCFG()->setReturnVal(s->getRight()->clone());
-			updateParams(p, s);
-			setReturnType(new IntegerType());
-		}
-	}
-	StmtSetIter ll;
-	StatementSet& lout = *p->getCFG()->getReachExit();
-	for (Statement* s = lout.getFirst(ll); s; s = lout.getNext(ll)) {
-		if (s->getLeft() && *s->getLeft() == *getReturnExp()) {
-			if (VERBOSE) {
-				std::cerr << "found: ";
-				s->printAsUse(std::cerr);
-				std::cerr << std::endl;
-			}
-			p->getCFG()->setReturnVal(s->getLeft()->clone());
-			CallStatement *call = dynamic_cast<CallStatement*>(s);
-			Type *ty = NULL;
-			if (call)
-				ty = call->getLeftType();
-			if (call && ty)
-				setReturnType(ty->clone());
-			else
-				setReturnType(new IntegerType());
-		}
-	}
-	if (VERBOSE)
-		std::cerr << "searching for parameters in statements" << std::endl;
-	StatementList stmts;
-	p->getStatements(stmts);
-	StmtListIter si;
-	for (Statement* s = stmts.getFirst(si); s; s = stmts.getNext(si)) {
-		if (VERBOSE) std::cerr << "updateParameters for " << s << std::endl;
-		updateParams(p, s);
-	}
-/*	  std::cerr << "searching for parameters in internals" << std::endl;
-	internal.clear();
-	p->getInternalStatements(internal);
-	for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
-	updateParams(p, s, false); */
-}
-#endif
 
 // Note: the below few functions require reaching definitions.
 // Likely can't be used

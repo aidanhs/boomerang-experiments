@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.103.2.2 $
+/* $Revision: 1.103.2.3 $
 */
 
 #ifndef _PROC_H_
@@ -454,6 +454,7 @@ public:
     void numberStatements(int& stmtNum);
     void numberPhiStatements(int& stmtNum);
     bool nameStackLocations();
+	bool replaceReg(Exp* match, Exp* e, Statement* def);		// Helper function for nameRegisters()
     bool nameRegisters();
     void removeRedundantPhis();
     void trimReturns();
@@ -495,6 +496,10 @@ public:
 	// Trim parameters to procedure calls with ellipsis (...). Also add types for ellipsis parameters, if any
 	// Returns true if any signature types so added
 	bool ellipsisProcessing();
+	// Convert registers to locations (does not need multiple passes, or to call replaceExpressionsWithSymbols)
+	void	replaceRegistersWithLocations();
+	// This is a helper function for the above
+	void	regReplaceList(std::list<Exp**>& li);
 
 	// For the final pass of removing returns that are never used
 	typedef std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;

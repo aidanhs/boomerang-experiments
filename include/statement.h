@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63.2.6 $
+ * $Revision: 1.63.2.7 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -207,9 +207,6 @@ virtual void	getDefinitions(LocationSet &def) {}
 	// defined by this statement (if this statement is propogatable)
 virtual Exp*	getLeft() = 0;
 
-	// returns a type for the left
-// virtual Type* getLeftType() = 0;
-
 	// returns an expression that would be used to replace this statement
 	// in a use
 virtual Exp*	getRight() = 0;
@@ -259,6 +256,9 @@ virtual void	genConstraints(LocationSet& cons) {}
 
 		// Data flow based type analysis
 virtual	void	dfaTypeAnalysis(bool& ch) {}
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc) = 0;
 
 //	//	//	//	//	//	//	//	//	//
 //									//
@@ -364,7 +364,6 @@ virtual void	getDefinitions(LocationSet &defs);
 		
 	// get how to access this value
 virtual Exp*	getLeft() { return lhs; }
-// virtual Type* getLeftType() { return NULL; }
 
 		// set the lhs to something new
 		void	setLeft(Exp* e)	 { lhs = e; }
@@ -392,6 +391,9 @@ virtual void	genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
 		void	dfaTypeAnalysis(bool& ch);
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
 
 protected:
 virtual bool	doReplaceRef(Exp* from, Exp* to);
@@ -443,9 +445,6 @@ virtual void	print(std::ostream& os);
 virtual bool	usesExp(Exp *e);
 virtual bool	isDefinition() { return true; }
 		
-	// get how to access this value
-virtual Exp*	getLeft() { return lhs; }
-
 	// inline any constants in the statement
 virtual void	processConstants(Prog *prog);
 
@@ -479,6 +478,9 @@ virtual void	genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
 		void	dfaTypeAnalysis(bool& ch);
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
 
 protected:
 virtual bool	doReplaceRef(Exp* from, Exp* to);
@@ -749,12 +751,14 @@ virtual void	simplify();
 	// Statement virtual functions
 virtual bool	isDefinition() { return false;}
 virtual Exp*	getLeft() {return NULL;}
-virtual Type*	getLeftType() {return NULL;};
 virtual Exp*	getRight() {return NULL;}
 virtual bool	usesExp(Exp*) {return false;}
 virtual void	processConstants(Prog*) {}
 virtual void	fromSSAform(igraph&) {}
 virtual bool	doReplaceRef(Exp*, Exp*) {return false;}
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
 
 	friend class XMLProgParser;
 };		// class GotoStatement
@@ -764,6 +768,11 @@ virtual bool	doReplaceRef(Exp*, Exp*) {return false;}
  * BranchStatement has a condition Exp in addition to the destination of the jump.
  *============================================================================*/
 class BranchStatement: public GotoStatement {
+	BRANCH_TYPE jtCond;			// The condition for jumping
+	Exp*		pCond;			// The Exp representation of the high level
+								// condition: e.g., r[8] == 5
+	bool		bFloat;			// True if uses floating point CC
+
 public:
 				BranchStatement();
 virtual			~BranchStatement();
@@ -826,7 +835,6 @@ virtual bool	isDefinition() { return false; }
 
 		// get how to access this value
 virtual Exp*	getLeft() { return NULL; }
-virtual Type*	getLeftType() { return NULL; }
 
 		// get how to replace this statement in a use
 virtual Exp*	getRight() { return pCond; }
@@ -843,14 +851,11 @@ virtual void	genConstraints(LocationSet& cons);
 		// Data flow based type analysis
 		void	dfaTypeAnalysis(bool& ch);
 
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
+
 protected:
 virtual bool	doReplaceRef(Exp* from, Exp* to);
-
-private:
-	BRANCH_TYPE jtCond;			// The condition for jumping
-	Exp*		pCond;			// The Exp representation of the high level
-								// condition: e.g., r[8] == 5
-	bool		bFloat;			// True if uses floating point CC
 
 	friend class XMLProgParser;
 };		// class BranchStatement
@@ -917,6 +922,9 @@ public:
 virtual void	simplify();
 
 virtual void	fromSSAform(igraph& ig);
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
 
 	friend class XMLProgParser;
 };			// class CaseStatement
@@ -1025,6 +1033,9 @@ virtual void	genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
 		void	dfaTypeAnalysis(bool& ch);
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
 
 		// code generation
 virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
@@ -1147,6 +1158,9 @@ virtual bool	doReplaceRef(Exp* from, Exp* to);
 		void	setRetAddr(ADDRESS r) {retAddr = r;}
 
 virtual void	dfaTypeAnalysis(bool& ch);
+
+		// Replace registers with locals
+virtual	void	regReplace(UserProc* proc);
 
 		Type*	getType() {return type;}			// TEMPORARY
 		void	setType(Type* ty) {type = ty;}
