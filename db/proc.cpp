@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.190.2.4 $
+ * $Revision: 1.190.2.5 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3363,7 +3363,7 @@ void UserProc::addCallees(std::set<UserProc*>& callees) {
 
 void UserProc::typeAnalysis(Prog* prog) {
     if (DEBUG_TA)
-        LOG << "Procedure " << getName() << "\n";
+        LOG << "Type Analysis for Procedure " << getName() << "\n";
     Constraints consObj;
     LocationSet cons;
     StatementList stmts;
@@ -3442,6 +3442,11 @@ void UserProc::typeAnalysis(Prog* prog) {
             }
         }
     }
+
+    // Clear the conscripts. These confuse the fromSSA logic, causing
+    // infinite loops
+    for (ss = stmts.begin(); ss != stmts.end(); ss++)
+        (*ss)->clearConscripts();
 }
 
 bool UserProc::searchAndReplace(Exp *search, Exp *replace)

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.74.2.2 $
+ * $Revision: 1.74.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -2341,7 +2341,23 @@ void Cfg::findInterferences(igraph& ig, int& tempNum) {
         workSet.erase(currBB);
         // Calculate live locations and interferences
         change = currBB->calcLiveness(ig, tempNum);
-        if (change) updateWorkListRev(currBB, workList, workSet);
+        if (change) {
+            if (DEBUG_LIVENESS) {
+                LOG << "Revisiting BB ending with stmt ";
+                Statement* last = NULL;
+                if (currBB->m_pRtls->size()) {
+                    RTL* lastRtl = currBB->m_pRtls->back();
+                    std::list<Statement*>& lst = lastRtl->getList();
+                    if (lst.size()) last = lst.back();
+                }
+                if (last)
+                    LOG << last->getNumber();
+                else
+                    LOG << "<none>";
+                LOG << " due to change (tempNum now " << tempNum << ")\n";
+            }
+            updateWorkListRev(currBB, workList, workSet);
+        }
     }
 }
 

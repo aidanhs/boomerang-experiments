@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.5 $
+ * $Revision: 1.112.2.6 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -3176,9 +3176,14 @@ void BranchStatement::genConstraints(LocationSet& cons) {
 }
 
 int Statement::setConscripts(int n) {
-    StmtSetConscripts ssc(n);
+    StmtSetConscripts ssc(n, false);
     accept(&ssc);
     return ssc.getLast();
+}
+
+void Statement::clearConscripts() {
+    StmtSetConscripts ssc(0, true);
+    accept(&ssc);
 }
 
 bool Statement::stripRefs() {

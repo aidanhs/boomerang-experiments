@@ -4,7 +4,7 @@
  *              tests the Exp and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.24.2.2 $
+ * $Revision: 1.24.2.3 $
  *
  * 05 Apr 02 - Mike: Fixed problems caused by lack of clone() calls
  * 09 Apr 02 - Mike: Compare, searchReplace
@@ -917,7 +917,7 @@ void ExpTest::testList () {
 
     // 1 element list
     l1 = new Binary(opList,
-        new Unary(opParam, new Const("a")),
+        new Location(opParam, new Const("a"), NULL),
         new Terminal(opNil));
     o1 << l1;
     std::string expected1("a");
@@ -927,9 +927,9 @@ void ExpTest::testList () {
 
     // 2 element list
     l2 = new Binary(opList,
-        new Unary(opParam, new Const("a")),
+        new Location(opParam, new Const("a"), NULL),
         new Binary(opList,
-            new Unary(opParam, new Const("b")),
+            new Location(opParam, new Const("b"), NULL),
             new Terminal(opNil)));
     o2 << l2;
     std::string expected2("a, b");
@@ -939,11 +939,11 @@ void ExpTest::testList () {
 
     // 3 element list
     l3 = new Binary(opList,
-        new Unary(opParam, new Const("a")),
+        new Location(opParam, new Const("a"), NULL),
         new Binary(opList,
-            new Unary(opParam, new Const("b")),
+            new Location(opParam, new Const("b"), NULL),
             new Binary(opList,
-                new Unary(opParam, new Const("c")),
+                new Location(opParam, new Const("c"), NULL),
                 new Terminal(opNil))));
     o3 << l3;
     std::string expected3("a, b, c");
@@ -953,13 +953,13 @@ void ExpTest::testList () {
 
     // 4 element list
     l4 = new Binary(opList,
-        new Unary(opParam, new Const("a")),
+        new Location(opParam, new Const("a"), NULL),
         new Binary(opList,
-            new Unary(opParam, new Const("b")),
+            new Location(opParam, new Const("b"), NULL),
             new Binary(opList,
-                new Unary(opParam, new Const("c")),
+                new Location(opParam, new Const("c"), NULL),
                 new Binary(opList,
-                    new Unary(opParam, new Const("d")),
+                    new Location(opParam, new Const("d"), NULL),
                     new Terminal(opNil)))));
     o4 << l4;
     std::string expected4("a, b, c, d");
@@ -975,14 +975,14 @@ void ExpTest::testList () {
 void ExpTest::testParen () {
     Assign a(
         Location::regOf(
-            new Unary(opParam, new Const("rd"))),
+            new Location(opParam, new Const("rd"), NULL)),
         new Binary(opBitAnd,
             Location::regOf(
-                new Unary(opParam, new Const("rs1"))),
+                new Location(opParam, new Const("rs1"), NULL)),
             new Binary(opMinus,
                 new Binary(opMinus,
                     new Const(0),
-                    new Unary(opParam, new Const("reg_or_imm"))),
+                    new Location(opParam, new Const("reg_or_imm"), NULL)),
                 new Const(1))));
     std::string expected("   0 ** r[rd] := r[rs1] & ((0 - reg_or_imm) - 1)");
     std::ostringstream o;
@@ -1191,22 +1191,36 @@ void ExpTest::testSetConscripts() {
         Location::memOf(
             new Const(1000), NULL),
         new Const(1000));
-    e->setConscripts(0);
+    e->setConscripts(0, false);
     std::string expected("m[1000\\1\\] + 1000\\2\\");
     std::ostringstream actual;
     actual << e;
     CPPUNIT_ASSERT_EQUAL(expected, actual.str());
+
+    // Clear them
+    e->setConscripts(0, true);
+    expected = "m[1000] + 1000";
+    std::ostringstream actual1;
+    actual1 << e;
+    CPPUNIT_ASSERT_EQUAL(expected, actual1.str());
 
     // m[r28 + 1000]
     e = Location::memOf(
         new Binary(opPlus,
             Location::regOf(28),
             new Const(1000)));
-    e->setConscripts(0);
+    e->setConscripts(0, false);
     expected = "m[r28 + 1000\\1\\]";
     std::ostringstream act2;
     act2 << e;
     CPPUNIT_ASSERT_EQUAL(expected, act2.str());
+
+    // Clear
+    e->setConscripts(0, true);
+    expected = "m[r28 + 1000]";
+    std::ostringstream act3;
+    act3 << e;
+    CPPUNIT_ASSERT_EQUAL(expected, act3.str());
 }
 
 /*==============================================================================

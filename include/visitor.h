@@ -9,7 +9,7 @@
  *             and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.5.2.3 $
+ * $Revision: 1.5.2.4 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *   for searching: they have the capability of stopping the recursion,
@@ -105,12 +105,15 @@ public:
     // All others inherit and visit their children
 };
 
-// This class visits subexpressions, and if a Const, sets a new conscript
+// This class visits subexpressions, and if a Const, sets or clears a new
+// conscript
 class SetConscripts : public ExpVisitor {
     int     curConscript;
     bool    bInLocalGlobal;     // True when inside a local or global
+    bool    bClear;             // True when clearing, not setting
 public:
-            SetConscripts(int n) : bInLocalGlobal(false)
+            SetConscripts(int n, bool bClear)
+              : bInLocalGlobal(false), bClear(bClear)
                 {curConscript = n;}
     int     getLast() {return curConscript;}
     virtual bool visit(Const* e);
@@ -197,8 +200,10 @@ public:
 
 class StmtSetConscripts : public StmtVisitor {
     int     curConscript;
+    bool    bClear;
 public:
-                 StmtSetConscripts(int n) {curConscript = n;}
+                 StmtSetConscripts(int n, bool bClear)
+                   : curConscript(n), bClear(bClear) {}
     int          getLast() {return curConscript;}
 
     virtual bool visit(Assign *stmt);

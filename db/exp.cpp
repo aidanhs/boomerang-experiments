@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149.2.4 $
+ * $Revision: 1.149.2.5 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -1087,7 +1087,8 @@ void Ternary::print(std::ostream& os, bool withUses) {
 // TypedExp //
 //  //  //  //
 void TypedExp::print(std::ostream& os, bool withUses) {
-    os << "*" << std::dec << type->getSize() << "* ";
+    os << " ";
+    type->starPrint(os);
     Exp* p1 = ((Ternary*)this)->getSubExp1();
     p1->print(os, withUses);
 }
@@ -2847,8 +2848,10 @@ void PhiExp::simplifyRefs()
                 if (VERBOSE) {
                     int n = 0;
                     if (*uu) n = (*uu)->getNumber();
-                    LOG << n << " in phi at " << stmt->getNumber() 
-                        << " result is: " << stmt << "\n";
+                    LOG << n << " in phi at " <<
+                      ((stmt == NULL) ? 0 : stmt->getNumber()) <<
+                      " result is: " <<
+                      ((stmt == NULL) ? "NULL" : stmt->prints()) << "\n";
                     
                 }
             }
@@ -3438,6 +3441,7 @@ Exp* Binary::genConstraints(Exp* result) {
                 // Result can only be float
                 return new Terminal(opFalse);
 
+            // MVE: what about sizes?
             FloatType* ft = new FloatType();
             TypeVal* ftv = new TypeVal(ft);
             res = constrainSub(ftv, ftv);
@@ -3445,12 +3449,29 @@ Exp* Binary::genConstraints(Exp* result) {
                 // Also constrain the result
                 res = new Binary(opAnd, res,
                     new Binary(opEquals, result->clone(), ftv));
-            else
-                ;//delete ftv;     // Also ;//deletes ft
             return res;
             break;
         }
 
+        case opBitAnd:
+        case opBitOr:
+        case opBitXor: {
+            if (restrictTo && !restrictTo->isInteger())
+                // Result can only be integer
+                return new Terminal(opFalse);
+
+            // MVE: What about sizes?
+            IntegerType* it = new IntegerType();
+            TypeVal* itv = new TypeVal(it);
+            res = constrainSub(itv, itv);
+            if (!restrictTo)
+                // Also constrain the result
+                res = new Binary(opAnd, res,
+                    new Binary(opEquals, result->clone(), itv));
+            return res;
+            break;
+        }
+            
         case opPlus: {
             // A pointer to anything
             Type* ptrType = PointerType::newPtrAlpha();
@@ -3523,7 +3544,7 @@ Exp* Binary::genConstraints(Exp* result) {
             if (res) return res->simplify();
             else return new Terminal(opFalse);
         }
-            
+
                 
         default:
             break;
@@ -3884,8 +3905,8 @@ UserProc* Exp::findProc() {
     return gpv.getProc();
 }
 
-void Exp::setConscripts(int n) {
-    SetConscripts sc(n);
+void Exp::setConscripts(int n, bool bClear) {
+    SetConscripts sc(n, bClear);
     accept(&sc);
 }
 

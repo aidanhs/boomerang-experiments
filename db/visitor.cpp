@@ -7,7 +7,7 @@
  *             classes.
  *============================================================================*/
 /*
- * $Revision: 1.6.2.2 $
+ * $Revision: 1.6.2.3 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -38,8 +38,12 @@ bool GetProcVisitor::visit(Location* l, bool& override) {
 // SetConscripts class
 
 bool SetConscripts::visit(Const* c) {
-    if (!bInLocalGlobal)
-        c->setConscript(++curConscript);
+    if (!bInLocalGlobal) {
+        if (bClear)
+            c->setConscript(0);
+        else
+            c->setConscript(++curConscript);
+    }
     bInLocalGlobal = false;
     return true;       // Continue recursion
 }
@@ -59,7 +63,7 @@ bool StmtVisitor::visit(RTL* rtl) {
 } 
 
 bool StmtSetConscripts::visit(Assign* stmt) {
-    SetConscripts sc(curConscript);
+    SetConscripts sc(curConscript, bClear);
     stmt->getLeft()->accept(&sc);
     stmt->getRight()->accept(&sc);
     curConscript = sc.getLast();
@@ -67,7 +71,7 @@ bool StmtSetConscripts::visit(Assign* stmt) {
 }
 
 bool StmtSetConscripts::visit(CallStatement* stmt) {
-    SetConscripts sc(curConscript);
+    SetConscripts sc(curConscript, bClear);
     std::vector<Exp*> args;
     args = stmt->getArguments();
     int i, n = args.size();
@@ -83,7 +87,7 @@ bool StmtSetConscripts::visit(CallStatement* stmt) {
 }
 
 bool StmtSetConscripts::visit(CaseStatement* stmt) {
-    SetConscripts sc(curConscript);
+    SetConscripts sc(curConscript, bClear);
     SWITCH_INFO* si = stmt->getSwitchInfo();
     if (si) {
         si->pSwitchVar->accept(&sc);
@@ -93,7 +97,7 @@ bool StmtSetConscripts::visit(CaseStatement* stmt) {
 }
 
 bool StmtSetConscripts::visit(ReturnStatement* stmt) {
-    SetConscripts sc(curConscript);
+    SetConscripts sc(curConscript, bClear);
     int n = stmt->getNumReturns();
     for (int i=0; i < n; i++) {
         Exp* r = stmt->getReturnExp(i);
@@ -104,7 +108,7 @@ bool StmtSetConscripts::visit(ReturnStatement* stmt) {
 }
 
 bool StmtSetConscripts::visit(BoolStatement* stmt) {
-    SetConscripts sc(curConscript);
+    SetConscripts sc(curConscript, bClear);
     stmt->getCondExpr()->accept(&sc);
     stmt->getDest()->accept(&sc);
     curConscript = sc.getLast();

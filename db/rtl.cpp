@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.26.2.2 $
+ * $Revision: 1.26.2.3 $
  * 
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
@@ -638,8 +638,8 @@ Statement* RTL::getHlStmt() {
     return NULL;
 }
 
-int RTL::setConscripts(int n) {
-    StmtSetConscripts ssc(n);
+int RTL::setConscripts(int n, bool bClear) {
+    StmtSetConscripts ssc(n, bClear);
     accept(&ssc);
     return ssc.getLast();
 }

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.78.2.4 $
+ * $Revision: 1.78.2.5 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1562,7 +1562,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
                         if (ty)
                             s->getProc()->setLocalType(local.c_str(), ty);
                         s->getProc()->setLocalExp(local.c_str(), u);
-                        if (VERBOSE || Boomerang::get()->debugLiveness) {
+                        if (VERBOSE || DEBUG_LIVENESS) {
                             LOG << "Interference of " << dr << " with " << u <<
                             ", assigned " << local.c_str();
                             if (ty)
@@ -1580,7 +1580,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
                     // blah := r24{2} + r24{3}
                     liveLocs.insert(u);
             }
-            if (Boomerang::get()->debugLiveness)
+            if (DEBUG_LIVENESS)
                 LOG << " ## Liveness: at top of " << s <<
                   ", liveLocs is " << liveLocs.prints() << "\n";
         }
@@ -1621,7 +1621,7 @@ void BasicBlock::getLiveOut(LocationSet &liveout) {
             // This will leak
             RefExp* r = new RefExp((*it)->getLeft()->clone(), def);
             liveout.insert(r);
-            if (Boomerang::get()->debugLiveness)
+            if (DEBUG_LIVENESS)
                 LOG << " ## Liveness: adding " << r <<
                   " due to ref to phi " << *it << " in BB at " << 
                   getLowAddr() << "\n";

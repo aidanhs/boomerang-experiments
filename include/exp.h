@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.4 $
+ * $Revision: 1.105.2.5 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -325,7 +325,8 @@ virtual Exp* simplifyConstraint() {return this;}
     virtual Exp* accept(ExpModifier* v) = 0;
     void         fixLocationProc(UserProc* p);
     UserProc*    findProc();
-    void         setConscripts(int n);  // Set the constant subscripts
+    // Set or clear the constant subscripts
+    void         setConscripts(int n, bool bClear);
     Exp*         stripRefs();           // Strip all references
     // Subscript all e in this Exp with statement def:
     Exp*         expSubscriptVar(Exp* e, Statement* def);

@@ -21,7 +21,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.47.2.2 $
+ * $Revision: 1.47.2.3 $
  * 08 Apr 02 - Mike: Mods for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  * 25 Jul 03 - Mike: RTL now a list of Statements
@@ -165,8 +165,8 @@ public:
     // Print to std::cerr (mainly for debugging)
     char* prints();
 
-    // Set all the "constant subscripts" (conscripts) in this RTL
-    int     setConscripts(int n);
+    // Set or clear all the "constant subscripts" (conscripts) in this RTL
+    int     setConscripts(int n, bool bClear);
 protected:
 
     friend class XMLProgParser;

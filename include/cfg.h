@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.60.2.2 $
+ * $Revision: 1.60.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -39,6 +39,8 @@
 
 //#include "bitset.h"     // Saves time. Otherwise, any implementation file that 
                         // defines say a BB, will need to #include this file
+
+#define DEBUG_LIVENESS  (Boomerang::get()->debugLiveness)
 
 class Proc;
 class UserProc;

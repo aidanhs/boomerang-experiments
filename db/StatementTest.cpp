@@ -4,18 +4,14 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.3 $
+ * $Revision: 1.14.2.4 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
  */
 
-#ifndef BOOMDIR
-#error Must define BOOMDIR
-#endif
-
-#define HELLO_PENTIUM       BOOMDIR "/test/pentium/hello"
-#define FIB_PENTIUM        BOOMDIR "/test/pentium/fib"
+#define HELLO_PENTIUM      "test/pentium/hello"
+#define FIB_PENTIUM        "test/pentium/fib"
 
 #include "StatementTest.h"
 #include "cfg.h"
@@ -183,7 +179,7 @@ void StatementTest::testFlow () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    2 RET 5\\1\\\n\n";
+      "00000123    2 RET 5\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -241,7 +237,7 @@ void StatementTest::testKill () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    3 RET 6\\1\\\n\n";
+      "00000123    3 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -299,7 +295,7 @@ void StatementTest::testUse () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    3 RET 5\\1\\\n\n";
+      "00000123    3 RET 5\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -362,7 +358,7 @@ void StatementTest::testUseOverKill () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    4 RET 6\\1\\\n\n";
+      "00000123    4 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -428,7 +424,7 @@ void StatementTest::testUseOverBB () {
       "00000000\n"
       "Ret BB:\n"
       "00000000\n"
-      "00000123    4 RET 6\\1\\\n\n";
+      "00000123    4 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -487,7 +483,7 @@ void StatementTest::testUseKill () {
       "Fall BB:\n"
       "00000000\n"
       "Ret BB:\n"
-      "00000123    3 RET 6\\1\\\n\n";
+      "00000123    3 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -794,8 +790,8 @@ void StatementTest::testClone () {
                 Location::regOf(9),
                 new Const(99)));
     Assign* a2 = new Assign(new IntegerType(16),
-            new Unary(opParam, new Const("x")),
-            new Unary(opParam, new Const("y")));
+            new Location(opParam, new Const("x"), NULL),
+            new Location(opParam, new Const("y"), NULL));
     Statement* c1 = a1->clone();
     Statement* c2 = a2->clone();
     std::ostringstream o1, o2;
