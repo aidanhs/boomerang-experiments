@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.119 $
+ * $Revision: 1.119.2.1 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1312,7 +1312,7 @@ void CaseStatement::simplify() {
  * RETURNS:			 <nothing>
  *============================================================================*/
 CallStatement::CallStatement(int returnTypeSize /*= 0*/):  
-	  returnTypeSize(returnTypeSize), returnAfterCall(false) {
+	  returnTypeSize(returnTypeSize), returnType(NULL), returnAfterCall(false) {
 	kind = STMT_CALL;
 	procDest = NULL;
 }
@@ -2933,7 +2933,7 @@ void PhiAssign::print(std::ostream& os) {
 	if (n != 0) {
 		StatementVec::iterator it;
 		for (int i = 0; i < n; i++) {
-			Statement* def = stmtVec.getAt(i);
+			Statement* def = stmtVec[i];
 			if (def == NULL) continue;
 			Exp* left = def->getLeft();
 			if (left == NULL) continue;
@@ -3623,7 +3623,7 @@ bool PhiAssign::hasGlobalFuncParam()
 {
 	unsigned n = stmtVec.size();
 	for (unsigned i = 0; i < n; i++) {
-		Statement* u = stmtVec.getAt(i);
+		Statement* u = stmtVec[i];
 		if (u == NULL) continue;
 		Exp *right = u->getRight();
 		if (right == NULL)
@@ -3730,3 +3730,48 @@ void PhiAssign::simplifyRefs() {
 	}
 }
 
+
+void CallStatement::dfaTypeAnalysis(bool& ch) {
+	if (procDest && procDest->isLib()) {
+		Signature* sig = procDest->getSignature();
+		// Iterate through the parameters
+		// Not implemented yet
+	}
+}
+
+// For x0 := phi(x1, x2, ...) want
+// Ex0 := Ex0 meet (Ex1 meet Ex2 meet ...)
+// Ex1 := Ex1 meet Ex0
+// Ex2 := Ex1 meet Ex0
+// ...
+void PhiAssign::dfaTypeAnalysis(bool& ch) {
+	unsigned i, n = stmtVec.size();
+	Type* meetOfPred = stmtVec[0]->getType();
+	for (i=1; i < n; i++)
+		meetOfPred->meetWith(stmtVec[i]->getType(), ch);
+	type->meetWith(meetOfPred, ch);
+	for (i=0; i < n; i++) {
+		bool thisCh = false;
+		Type* res = stmtVec[i]->getType()->meetWith(type, thisCh);
+		if (thisCh) {
+			stmtVec[i]->setType(res);
+			ch = true;
+		}
+	}
+}
+
+void Assign::dfaTypeAnalysis(bool& ch) {
+	// Not implemented yet
+}
+
+void BranchStatement::dfaTypeAnalysis(bool& ch) {
+	// Not implemented yet
+}
+
+void BoolAssign::dfaTypeAnalysis(bool& ch) {
+	// Not implemented yet
+}
+
+void ReturnStatement::dfaTypeAnalysis(bool& ch) {
+	// Not implemented yet
+}

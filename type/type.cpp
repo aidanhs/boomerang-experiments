@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.29.2.1 $
+ * $Revision: 1.29.2.2 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -1360,3 +1360,27 @@ void UnionType::addType(Type *n, const char *str) {
 		names.push_back(str);
 	}
 }
+
+// Return true if this is a superstructure of other, i.e. we have the same types at the same offsets as other
+bool CompoundType::isSuperStructOf(Type* other) {
+	if (!other->isCompound()) return false;
+	CompoundType* otherCmp = other->asCompound();
+	unsigned n = otherCmp->types.size();
+	if (n > types.size()) return false;
+	for (unsigned i=0; i < n; i++)
+		if (otherCmp->types[i] != types[i]) return false;
+	return true;
+}
+
+// Return true if this is a substructure of other, i.e. other has the same types at the same offsets as this
+bool CompoundType::isSubStructOf(Type* other) {
+	if (!other->isCompound()) return false;
+	CompoundType* otherCmp = other->asCompound();
+	unsigned n = types.size();
+	if (n > otherCmp->types.size()) return false;
+	for (unsigned i=0; i < n; i++)
+		if (otherCmp->types[i] != types[i]) return false;
+	return true;
+}
+
+

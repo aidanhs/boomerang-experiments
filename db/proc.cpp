@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.201.2.1 $
+ * $Revision: 1.201.2.2 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3508,9 +3508,19 @@ if (!cc->first->isTypeOf()) continue;
 }
 
 void UserProc::dfaTypeAnalysis(Prog* prog) {
-
-
-
+	// What's prog for?
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (int i=0; i < 20; i++) {
+		bool ch = false;
+		for (it = stmts.begin(); it != stmts.end(); it++) {
+			Statement* s = *it;
+			s->dfaTypeAnalysis(ch);	  
+		}
+		if (!ch) return;
+	}
+	LOG << "**** Iteration limit exceeded for dfaTypeAnalysis of procedure " << getName() << " ****\n";
 }
 
 

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.1 $
+ * $Revision: 1.33.2.2 $
  *
  * 20 Mar 01 - Mike: Added operator*= (compare, ignore sign, and consider all
  *					floats > 64 bits to be the same
@@ -120,15 +120,14 @@ virtual bool isComplete() {return true;}
 virtual Type* clone() const = 0;
 
 	// Comparisons
-virtual bool	operator==(const Type& other) const = 0;// Considers sign
-virtual bool	operator!=(const Type& other) const;	// Considers sign
-//virtual bool	  operator-=(const Type& other) const = 0;// Ignores sign
-virtual bool	operator< (const Type& other) const = 0;// Considers sign
-		bool	operator*=(const Type& other) const {	// Consider only
-					return id == other.id;}				 // broad type
-virtual Exp *match(Type *pattern);
-	// Merge one type with another, e.g. size16 with integer-of-size-0
-	// -> int16
+virtual bool	operator==(const Type& other) const = 0;	// Considers sign
+virtual bool	operator!=(const Type& other) const;		// Considers sign
+//virtual bool	  operator-=(const Type& other) const = 0;	// Ignores sign
+virtual bool	operator< (const Type& other) const = 0;	// Considers sign
+		bool	operator*=(const Type& other) const {		// Consider only
+					return id == other.id;}				 	// broad type
+virtual Exp		*match(Type *pattern);
+	// Merge one type with another, e.g. size16 with integer-of-size-0 -> int16
 virtual Type*	mergeWith(Type* other) { assert(0); return 0; }
 
 	// Acccess functions
@@ -140,7 +139,7 @@ virtual void	setSize(int sz) {assert(0);}
 	// for lack of sign information. When final, choose a signedness etc
 virtual const char *getCtype(bool complete = false) const = 0;
 		// Print in *i32* format
-void	starPrint(std::ostream& os);
+		void	starPrint(std::ostream& os);
 
 virtual std::string getTempName() const; // Get a temporary name for the type
 
@@ -154,12 +153,12 @@ static	void	clearNamedTypes() { namedTypes.clear(); }
 		virtual void readMemo(Memo *m, bool dec) { }
 
 				// For data-flow-based type analysis only: implement the meet operator
-virtual Type*	meetWith(Type* other) = 0;
+virtual Type*	meetWith(Type* other, bool& ch) = 0;
 		Type*	createUnion(Type* other);		// Create a union of this Type and other
 
 protected:
 	friend class XMLProgParser;
-};
+};	// class Type
 
 class VoidType : public Type {
 public:
@@ -178,7 +177,7 @@ virtual int		getSize() const;
 
 virtual const char *getCtype(bool full = true) const;
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -211,7 +210,7 @@ virtual const char *getCtype(bool full = true) const;
 		virtual Memo *makeMemo(int mId);
 		virtual void readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -219,23 +218,23 @@ protected:
 
 class IntegerType : public Type {
 private:
-	int			size;				// Size in bits, e.g. 16
-	int			signedness;			// pos=signed, neg=unsigned, 0=unknown or
+		int		size;				// Size in bits, e.g. 16
+		int		signedness;			// pos=signed, neg=unsigned, 0=unknown or
 									// evenly matched
 
 public:
 	IntegerType(int sz = 32, int sign = 0);
-virtual ~IntegerType();
-virtual bool isInteger() const { return true; }
-virtual bool isComplete() {return signedness != 0 && size != 0;}
+virtual 		~IntegerType();
+virtual bool	isInteger() const { return true; }
+virtual bool	isComplete() {return signedness != 0 && size != 0;}
 
-virtual Type* clone() const;
+virtual Type*	clone() const;
 
 virtual bool	operator==(const Type& other) const;
 //virtual bool	  operator-=(const Type& other) const;
 virtual bool	operator< (const Type& other) const;
 virtual Type*	mergeWith(Type* other);
-virtual Exp *match(Type *pattern);
+virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 virtual void	setSize(int sz) {size = sz;}
@@ -254,30 +253,30 @@ virtual const char *getCtype(bool full = true) const;
 
 virtual std::string getTempName() const;
 
-		virtual Memo *makeMemo(int mId);
-		virtual void readMemo(Memo *m, bool dec);
+virtual Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
-};
+};	// class IntegerType
 
 class FloatType : public Type {
 private:
-	int			size;				// Size in bits, e.g. 16
+		int		size;				// Size in bits, e.g. 16
 
 public:
-	FloatType(int sz = 64);
-virtual ~FloatType();
-virtual bool isFloat() const { return true; }
+				FloatType(int sz = 64);
+virtual 		~FloatType();
+virtual bool	isFloat() const { return true; }
 
-virtual Type* clone() const;
+virtual Type*	clone() const;
 
 virtual bool	operator==(const Type& other) const;
 //virtual bool	  operator-=(const Type& other) const;
 virtual bool	operator< (const Type& other) const;
-virtual Exp *match(Type *pattern);
+virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 virtual void	setSize(int sz) {size = sz;}
@@ -286,14 +285,14 @@ virtual const char *getCtype(bool full = true) const;
 
 virtual std::string getTempName() const;
 
-		virtual Memo *makeMemo(int mId);
-		virtual void readMemo(Memo *m, bool dec);
+virtual Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
-};
+};	// class FloatType
 
 class BooleanType : public Type {
 public:
@@ -312,7 +311,7 @@ virtual int		getSize() const;
 
 virtual const char *getCtype(bool full = true) const;
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -335,7 +334,7 @@ virtual int		getSize() const;
 
 virtual const char *getCtype(bool full = true) const;
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -343,105 +342,105 @@ protected:
 
 class PointerType : public Type {
 private:
-	Type *points_to;
+		Type	*points_to;
 
 public:
-	PointerType(Type *p);
-virtual ~PointerType();
-virtual bool isPointer() const { return true; }
-	void setPointsTo(Type *p) { points_to = p; }
-		Type *getPointsTo() { return points_to; }
-static	PointerType* newPtrAlpha();
-		bool pointsToAlpha();
+				PointerType(Type *p);
+virtual			~PointerType();
+virtual bool	isPointer() const { return true; }
+		void	setPointsTo(Type *p) { points_to = p; }
+		Type	*getPointsTo() { return points_to; }
+static PointerType* newPtrAlpha();
+		bool	pointsToAlpha();
 
-virtual Type* clone() const;
+virtual Type*	clone() const;
 
 virtual bool	operator==(const Type& other) const;
 //virtual bool	  operator-=(const Type& other) const;
 virtual bool	operator< (const Type& other) const;
-virtual Exp *match(Type *pattern);
+virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 virtual void	setSize(int sz) {assert(sz == STD_SIZE);}
 
 virtual const char *getCtype(bool full = true) const;
 
-		virtual Memo *makeMemo(int mId);
-		virtual void readMemo(Memo *m, bool dec);
+virtual Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
-};
+};	// class PointerType
 
 class ArrayType : public Type {
 private:
-	Type *base_type;
-	unsigned length;
+		Type	*base_type;
+		unsigned length;
 
 public:
-	ArrayType(Type *p, unsigned length);
-	ArrayType(Type *p);
-virtual ~ArrayType();
-virtual bool isArray() const { return true; }
-		Type *getBaseType() { return base_type; }
-		void setBaseType(Type *b) { base_type = b; }
-		void fixBaseType(Type *b);
+				ArrayType(Type *p, unsigned length);
+				ArrayType(Type *p);
+virtual 		~ArrayType();
+virtual bool	isArray() const { return true; }
+		Type	*getBaseType() { return base_type; }
+		void	setBaseType(Type *b) { base_type = b; }
+		void	fixBaseType(Type *b);
 		unsigned getLength() { return length; }
-		void setLength(unsigned n) { length = n; }
-		bool isUnbounded();
+		void	setLength(unsigned n) { length = n; }
+		bool	isUnbounded();
 
-virtual Type* clone() const;
+virtual Type*	clone() const;
 
 virtual bool	operator==(const Type& other) const;
 //virtual bool	  operator-=(const Type& other) const;
 virtual bool	operator< (const Type& other) const;
-virtual Exp *match(Type *pattern);
+virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 
 virtual const char *getCtype(bool full = true) const;
 
-		virtual Memo *makeMemo(int mId);
-		virtual void readMemo(Memo *m, bool dec);
+virtual	Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
 	ArrayType() : Type(eArray), base_type(NULL), length(0) { }
-};
+};	// class ArrayType
 
 class NamedType : public Type {
 private:
-	std::string name;
-	static int nextAlpha;
+		std::string name;
+		static int nextAlpha;
 
 public:
-	NamedType(const char *name);
-virtual ~NamedType();
-virtual bool isNamed() const { return true; }
+				NamedType(const char *name);
+virtual 		~NamedType();
+virtual bool	isNamed() const { return true; }
 		const char *getName() { return name.c_str(); }
-		Type *resolvesTo() const;
+		Type	*resolvesTo() const;
 		// Get a new type variable, e.g. alpha0, alpha55
 static	NamedType *getAlpha();
 
-virtual Type* clone() const;
+virtual Type*	clone() const;
 
 virtual bool	operator==(const Type& other) const;
 //virtual bool	  operator-=(const Type& other) const;
 virtual bool	operator< (const Type& other) const;
-virtual Exp *match(Type *pattern);
+virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 
 virtual const char *getCtype(bool full = true) const;
 
-		virtual Memo *makeMemo(int mId);
-		virtual void readMemo(Memo *m, bool dec);
+virtual Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -450,27 +449,27 @@ protected:
 // The compound type represents structures, not unions
 class CompoundType : public Type {
 private:
-	std::vector<Type*> types;
-	std::vector<std::string> names;
+		std::vector<Type*> types;
+		std::vector<std::string> names;
 
 public:
-	CompoundType();
-virtual ~CompoundType();
-virtual bool isCompound() const { return true; }
+				CompoundType();
+virtual			~CompoundType();
+virtual bool	isCompound() const { return true; }
 
 		void addType(Type *n, const char *str) { 
-			types.push_back(n); 
-			names.push_back(str);
+					types.push_back(n); 
+					names.push_back(str);
 		}
-		int getNumTypes() { return types.size(); }
-		Type *getType(int n) { assert(n < getNumTypes()); return types[n]; }
-		Type *getType(const char *nam);
+		int		getNumTypes() { return types.size(); }
+		Type	*getType(int n) { assert(n < getNumTypes()); return types[n]; }
+		Type	*getType(const char *nam);
 		const char *getName(int n) { assert(n < getNumTypes()); return names[n].c_str(); }
-		Type *getTypeAtOffset(int n);
+		Type	*getTypeAtOffset(int n);
 		const char *getNameAtOffset(int n);
-		int getOffsetTo(int n);
-		int getOffsetTo(const char *member);
-		int getOffsetRemainder(int n);
+		int		getOffsetTo(int n);
+		int		getOffsetTo(const char *member);
+		int		getOffsetRemainder(int n);
 
 virtual Type* clone() const;
 
@@ -483,10 +482,13 @@ virtual int		getSize() const;
 
 virtual const char *getCtype(bool full = true) const;
 
-		virtual Memo *makeMemo(int mId);
-		virtual void readMemo(Memo *m, bool dec);
+		bool	isSuperStructOf(Type* other);		// True if this is is a superstructure of other
+		bool	isSubStructOf(Type* other);			// True if this is is a substructure of other
 
-virtual Type*	meetWith(Type* other);
+virtual Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
+
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -523,7 +525,7 @@ virtual const char *getCtype(bool full = true) const;
 		virtual Memo *makeMemo(int mId);
 		virtual void readMemo(Memo *m, bool dec);
 
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 protected:
 	friend class XMLProgParser;
@@ -549,7 +551,7 @@ virtual void	setSize(int sz) {size = sz;}
 virtual bool	isSize() const { return true; }
 virtual bool	isComplete() {return false;}	// Basic type is unknown
 virtual const char* getCtype(bool full = true) const;
-virtual Type*	meetWith(Type* other);
+virtual Type*	meetWith(Type* other, bool& ch);
 
 };	// class SizeType
 
