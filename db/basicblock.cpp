@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.2 $
+ * $Revision: 1.22.2.3 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -451,7 +451,7 @@ void BasicBlock::print(std::ostream& os, bool withDF) {
         Statement* s = reachin.getFirst(it);
         while (s) {
             s->printAsUse(os);
-            os << ", ";
+            os << " ";
             s = reachin.getNext(it);
         }
     }

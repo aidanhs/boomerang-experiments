@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.2 $
+ * $Revision: 1.18.2.3 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -25,6 +25,7 @@
 
 #include <set>
 #include <list>
+#include <ostream>
 
 class Exp;
 class BasicBlock;
@@ -62,6 +63,7 @@ public:
     bool operator==(const StatementSet& o) const // Compare
         { return sset == o.sset;}
     void prints();                          // Print to std::cerr (for debug)
+    void printNums(std::ostream& os);       // Print statements as numbers
 };
 
 // Ugh - we also need lists of Statements for the internal statements
@@ -96,19 +98,20 @@ public:
  */
 class Statement {
 protected:
-    PBB pbb;  // contains a pointer to the enclosing BB
+    PBB     pbb;  // contains a pointer to the enclosing BB
     UserProc *proc; // procedure containing this statement
     // The following pointers are initially null, but if non null are
     // considered valid
     StatementSet uses;          // ud chain: my uses' defs
     StatementSet usedBy;        // du chain: my def's uses
+    int     number;             // Statement number for printing
 public:
 
-    Statement() : pbb(NULL), proc(NULL) { }
+    Statement() : pbb(NULL), proc(NULL), number(0) { }
     virtual ~Statement() {
     }
 
-    void setProc(UserProc *p) { proc = p; }
+    void        setProc(UserProc *p) { proc = p; }
 
     // calculates the reaching definitions set after this statement
     virtual void calcReachOut(StatementSet &reachout);
@@ -211,8 +214,9 @@ public:
     // statements should be printable (for debugging)
     virtual void print(std::ostream &os) = 0;
     virtual void printWithUses(std::ostream& os);
-    virtual void printAsUse(std::ostream &os) = 0;
-    virtual void printAsUseBy(std::ostream &os) = 0;
+            void printAsUse(std::ostream &os)   {os << std::dec << number;}
+            void printAsUseBy(std::ostream &os) {os << std::dec << number;}
+            void printNum(std::ostream &os)     {os << std::dec << number;}
             char* prints();      // For use in a debugger
 
     // inline / decode any constants in the statement
@@ -226,6 +230,9 @@ public:
 
     // update the type information for an expression in this statement
     virtual Type *updateType(Exp *e, Type *curType) = 0;
+
+    // update the statement number
+    void    setNumber(int num) {number = num;}
 
 protected:
     virtual void doReplaceUse(Statement *use) = 0;

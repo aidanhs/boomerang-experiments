@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.2 $
+ * $Revision: 1.33.2.3 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -900,7 +900,7 @@ void UserProc::print(std::ostream &out, bool withDF) {
 }
 
 // initialise all statements
-void UserProc::initStatements() {
+void UserProc::initStatements(int& stmtNum) {
     if (stmts_init)
         return;         // Already done
     stmts_init = true;  // Only do this once
@@ -916,11 +916,13 @@ void UserProc::initStatements() {
                 if (e == NULL) continue;
                 e->setProc(this);
                 e->setBB(bb);
+                e->setNumber(++stmtNum);
             }
             if (rtl->getKind() == CALL_RTL) {
                 HLCall *call = (HLCall*)rtl;
                 call->setProc(this);   // Different statement to its assignments
                 call->setBB(bb);
+                call->setNumber(++stmtNum);
                 StatementList &internal = call->getInternalStatements();
                 StmtListIter it1;
                 for (Statement* s1 = internal.getFirst(it1); s1;
@@ -933,6 +935,7 @@ void UserProc::initStatements() {
                 HLJcond *jcond = (HLJcond*)rtl;
                 jcond->setProc(this);
                 jcond->setBB(bb);
+                jcond->setNumber(++stmtNum);
             }
         }
     }

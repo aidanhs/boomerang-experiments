@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.2 $
+ * $Revision: 1.22.2.3 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -454,13 +454,13 @@ void Statement::printWithUses(std::ostream& os) {
     os << "   uses: ";
     StmtSetIter it;
     for (Statement* s = uses.getFirst(it); s; s = uses.getNext(it)) {
-        s->printAsUse(os);
-        os << ", ";
+        s->printNum(os);
+        os << " ";
     }
     os << "   used by: ";
     for (Statement* s = usedBy.getFirst(it); s; s = usedBy.getNext(it)) {
-        s->printAsUseBy(os);
-        os << ", ";
+        s->printNum(os);
+        os << " ";
     }
 #if 0       // Note: if you change this, you need to update DataflowTest.cpp!
     os << "   reach: ";
@@ -605,6 +605,18 @@ void StatementSet::prints() {
         std::cerr << *it << ",\t";
     std::cerr << "\n";
 }
+
+// Print just the numbers to stream os
+void StatementSet::printNums(std::ostream& os) {
+    StmtSetIter it;
+    os << std::dec;
+    for (it = sset.begin(); it != sset.end(); ) {
+        os << *it;
+        if (++it != sset.end())
+            os << " ";
+    }
+}
+
 
 //
 // LocationSet methods

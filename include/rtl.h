@@ -21,7 +21,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.19.2.1 $
+ * $Revision: 1.19.2.2 $
  * 08 Apr 02 - Mike: Mods for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  */
@@ -382,8 +382,8 @@ public:
     virtual Exp* getRight() { return pCond; }
 
     // special print functions
-    virtual void printAsUse(std::ostream &os);
-    virtual void printAsUseBy(std::ostream &os);
+    //virtual void printAsUse(std::ostream &os);
+    //virtual void printAsUseBy(std::ostream &os);
 
     // inline any constants in the statement
     virtual void processConstants(Prog *prog);
@@ -560,8 +560,8 @@ public:
     virtual Exp* getRight() { return NULL; }
 
     // special print functions
-    virtual void printAsUse(std::ostream &os);
-    virtual void printAsUseBy(std::ostream &os);
+    //virtual void printAsUse(std::ostream &os);
+    //virtual void printAsUseBy(std::ostream &os);
 
     // inline any constants in the statement
     virtual void processConstants(Prog *prog);
@@ -736,8 +736,8 @@ public:
     virtual Exp* getRight() { return getCondExpr(); }
     virtual bool usesExp(Exp *e);
     virtual void print(std::ostream &os) { print(os, false); }
-    virtual void printAsUse(std::ostream &os);
-    virtual void printAsUseBy(std::ostream &os);
+    //virtual void printAsUse(std::ostream &os);
+    //virtual void printAsUseBy(std::ostream &os);
     virtual void processConstants(Prog *prog);
     virtual bool search(Exp *search, Exp *&result);
     virtual void searchAndReplace(Exp *search, Exp *replace);

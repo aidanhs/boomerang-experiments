@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.24.2.2 $
+ * $Revision: 1.24.2.3 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -30,7 +30,7 @@
 #include "operator.h"   // Declares the OPER enum
 #include "types.h"      // For ADDRESS, etc
 #include "type.h"       // The Type class for typed expressions
-#include "dataflow.h"   // Exp derived from Statement
+#include "dataflow.h"   // AssignExp derived from Statement
 
 class UseSet;
 class DefSet;
@@ -603,8 +603,8 @@ public:
         virtual Exp* getRight() { return subExp2; }
 
 	// special print functions
-        virtual void printAsUse(std::ostream &os);
-        virtual void printAsUseBy(std::ostream &os);
+        //virtual void printAsUse(std::ostream &os);
+        //virtual void printAsUseBy(std::ostream &os);
 
 	// inline any constants in the statement
 	virtual void processConstants(Prog *prog);

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39.2.2 $
+ * $Revision: 1.39.2.3 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -619,9 +619,15 @@ void Binary::print(std::ostream& os)
                 os << ", "; 
             p2->print(os);
             return;
-        case opSubscript:
-            p1->printr(os); os << "."; p2->print(os);
+        case opSubscript: {
+            //p1->printr(os); os << "."; p2->print(os);
+            p1->print(os);
+            os << "{";
+            StatementSet* pss = (StatementSet*)p2;
+            pss->printNums(os);
+            os << "}";
             return;
+        }
         default:
             break;
     }
@@ -892,14 +898,6 @@ void AssignExp::print(std::ostream& os) {
 
 void AssignExp::getDefinitions(LocationSet &defs) {
     defs.insert(getLeft());
-}
-
-void AssignExp::printAsUse(std::ostream &os) {
-    print(os);
-}
-
-void AssignExp::printAsUseBy(std::ostream &os) {
-    print(os);
 }
 
 /*==============================================================================

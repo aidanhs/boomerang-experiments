@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.2 $
+ * $Revision: 1.33.2.3 $
  * 17 May 02 - Mike: Split off from rtl.cc (was getting too large)
  * 26 Nov 02 - Mike: Generate code for HlReturn with semantics (eg SPARC RETURN)
  * 26 Nov 02 - Mike: In getReturnLoc test for null procDest
@@ -198,9 +198,10 @@ void HLJump::print(std::ostream& os /*= cout*/, bool withDF) {
         RTL::print(os, withDF);
 
     os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
-    os << " ";
+    os << " " << std::setfill(' ');
+    os << "     ";                  // Where the statement number would be
     if (getKind() == RET_RTL) {
-        os << "RET\n";             // RET is a special case of a JUMP_RTL
+        os << "RET\n";              // RET is a special case of a JUMP_RTL
         return;
     }
 
@@ -560,7 +561,8 @@ void HLJcond::print(std::ostream& os /*= cout*/, bool withDF) {
     if (expList.size() != 0)
         RTL::print(os, withDF);
     os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
-    os << " ";
+    os << " " << std::setfill(' ');
+    os << std::setw(4) << std::dec << number << " ";
     os << "JCOND ";
     if (pDest == NULL)
         os << "*no dest*";
@@ -675,6 +677,7 @@ bool HLJcond::usesExp(Exp *e) {
 }
 
 // special print functions
+#if 0
 void HLJcond::printAsUse(std::ostream &os) {
     os << "JCOND ";
     if (pCond)
@@ -690,6 +693,7 @@ void HLJcond::printAsUseBy(std::ostream &os) {
     else
         os << "<empty cond>";
 }
+#endif
 
 // process any constants in the statement
 void HLJcond::processConstants(Prog *prog) {
@@ -1157,7 +1161,8 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
         RTL::print(os, withDF);
 
     os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
-    os << " ";
+    os << " " << std::setfill(' ');
+    os << std::dec << std::setw(4) << number << " ";    // Statement number
 
     // Print the return location if there is one
     if (getReturnLoc() != NULL)
@@ -1440,6 +1445,7 @@ return;
     }
 }
 
+#if 0
 void HLCall::printAsUse(std::ostream &os) {
     // Print the return location if there is one
     if (getReturnLoc() != NULL)
@@ -1467,7 +1473,7 @@ void HLCall::printAsUse(std::ostream &os) {
 void HLCall::printAsUseBy(std::ostream &os) {
     printAsUse(os);
 }
-
+#endif
 
 void HLCall::killReach(StatementSet &reach) {
     if (procDest == NULL) {
@@ -1940,7 +1946,8 @@ void HLScond::setCondExpr(Exp* pss) {
  *============================================================================*/
 void HLScond::print(std::ostream& os /*= cout*/, bool withDF) {
     os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
-    os << " ";
+    os << " " << std::setfill(' ');
+    os << std::setw(4) << number << " ";
     os << "SCOND ";
     getDest()->print(os);
     os << " := CC(";
@@ -2108,6 +2115,7 @@ bool HLScond::usesExp(Exp *e)
         ((Unary*)pDest)->getSubExp1()->search(e, where)));
 }
 
+#if 0
 void HLScond::printAsUse(std::ostream &os)
 {
     os << "SCOND ";
@@ -2123,6 +2131,7 @@ void HLScond::printAsUseBy(std::ostream &os)
 {
     printAsUse(os);
 }
+#endif
 
 void HLScond::processConstants(Prog *prog)
 {
