@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.70.2.3 $
+# $Revision: 1.70.2.4 $
 # 21 Aug 02 - Icer: added codegen/chllcode.cpp to the build process
 #		    by adding it in STATIC_OBJ
 # 20 Aug 02 - Icer: removed test from all, test code is broken
@@ -15,6 +15,7 @@
 # 20 May 02 - Trent: Created
 # 31 May 02 - Mike: Make lib directory if needed
 # 15 Jul 01 - Mike: Added static target
+# 20 Jul 04 - Mike: Removed BOOMDIR
 
 # Front end
 MACHS     = sparc pentium
@@ -25,8 +26,13 @@ MACH_FE_SRC=$(patsubst %, frontend/%frontend.cpp, $(MACHS))
 MACH_FE_OBJ=$(patsubst %, frontend/%frontend.o, $(MACHS))
 
 
+<<<<<<< Makefile.in
 C = gcc -g -Wall -O0
 CC = g++ -g -Wall -O0
+=======
+C = gcc -Wall -g -O4
+CC = g++ -Wall -g -O4
+>>>>>>> 1.72
 CXX=$(CC)
 
 # HOST_GNU_LD is true if the linker on this host machine is GNU
@@ -35,13 +41,10 @@ HOST_GNU_LD = @HOST_GNU_LD@
 BISONPP=@BISONPP@
 FLEXPP=@FLEXPP@
 
-BOOMDIR="$(shell pwd)"
-BOOMSET=-DBOOMDIR=\"$(BOOMDIR)\"
-LIBDIR=$(BOOMDIR)/lib
 ifeq ($(HOST_GNU_LD), yes)
-RUNPATH=-Wl,-rpath -Wl,$(LIBDIR)
+RUNPATH=-Wl,-rpath -Wl,"lib"
 else # Assume Solaris
-RUNPATH=-R$(LIBDIR)
+RUNPATH=-R"lib"
 endif
 
 .PHONY: test clean all static
@@ -161,20 +164,15 @@ $(MACH_SRC): frontend/%decoder.cpp : frontend/machine/%/core.spec \
 #
 # Extra flags
 #
-db/prog.o:					EXTRA = $(BOOMSET) -Icodegen -Ic
-frontend/frontend.o:		EXTRA = $(BOOMSET) -Ic
-frontend/FrontSparcTest.o:	EXTRA = $(BOOMSET)
-frontend/FrontPentTest.o:	EXTRA = $(BOOMSET)
-analysis/AnalysisTest.o:	EXTRA = $(BOOMSET) -Ifrontend
-c/CTest.o:	                EXTRA = $(BOOMSET)
-db/ProgTest.o:				EXTRA = $(BOOMSET) -Ifrontend
-db/ProcTest.o:				EXTRA = $(BOOMSET) -Ifrontend
-db/ParserTest.o:			EXTRA = $(BOOMSET)
-db/ExpTest.o:				EXTRA = $(BOOMSET)
-db/RtlTest.o:               EXTRA = $(BOOMSET) -Ifrontend
-db/StatementTest.o:			EXTRA = $(BOOMSET) -Ifrontend
-db/CfgTest.o:               EXTRA = $(BOOMSET) -Ifrontend
-type/TypeTest.o:            EXTRA = $(BOOMSET) -Ifrontend
+db/prog.o:					EXTRA = -Icodegen -Ic
+frontend/frontend.o:		EXTRA = -Ic
+analysis/AnalysisTest.o:	EXTRA = -Ifrontend
+db/ProgTest.o:				EXTRA = -Ifrontend
+db/ProcTest.o:				EXTRA = -Ifrontend
+db/RtlTest.o:               EXTRA = -Ifrontend
+db/StatementTest.o:			EXTRA = -Ifrontend
+db/CfgTest.o:               EXTRA = -Ifrontend
+type/TypeTest.o:            EXTRA = -Ifrontend
 
 # Compile ordinary files
 $(STATIC_OBJS): %.o : %.cpp
