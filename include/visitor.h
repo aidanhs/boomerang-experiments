@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.4 $
+ * $Revision: 1.8.2.5 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -30,7 +30,7 @@
 /*
  * The ExpVisitor class is used to iterate over all subexpressions in
  * an expression. It contains methods for each kind of subexpression found
- * in an and can be used to eliminate switch statements.
+ * and can be used to eliminate switch statements.
  */
 
 #ifndef __VISITOR_H__
@@ -67,8 +67,8 @@ public:
 	virtual ~ExpVisitor() { }
 
 	// visitor functions,
-	// return true to continue iterating through the expression
-	// Note: you only need to override the ones that "do something"
+	// return false to abandon iterating through the expression (terminate the search)
+	// Set override true to not do the usual recursion into children
 virtual bool visit(Unary *e,	bool& override) {override = false; return true;}
 virtual bool visit(Binary *e,	bool& override) {override = false; return true;}
 virtual bool visit(Ternary *e,	bool& override) {override = false; return true;}
@@ -226,15 +226,15 @@ public:
 				 StmtExpVisitor(ExpVisitor* v) {
 					ev = v;}
 	virtual		 ~StmtExpVisitor() {}
-	virtual bool visit(Assign *stmt, bool& override);
-	virtual bool visit(PhiAssign *stmt, bool& override);
-	virtual bool visit(ImplicitAssign *stmt, bool& override);
-	virtual bool visit(BoolAssign *stmt, bool& override);
-	virtual bool visit(GotoStatement *stmt, bool& override);
-	virtual bool visit(BranchStatement *stmt, bool& override);
-	virtual bool visit(CaseStatement *stmt, bool& override);
-	virtual bool visit(CallStatement *stmt, bool& override);
-	virtual bool visit(ReturnStatement *stmt, bool& override);
+	virtual bool visit(         Assign *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(      PhiAssign *stmt, bool& override) {override = false; return true;}
+	virtual bool visit( ImplicitAssign *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(     BoolAssign *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(  GotoStatement *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(BranchStatement *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(  CaseStatement *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(  CallStatement *stmt, bool& override) {override = false; return true;}
+	virtual bool visit(ReturnStatement *stmt, bool& override) {override = false; return true;}
 };
 
 // StmtModifier is a class that visits all statements in an RTL, and for
@@ -403,7 +403,7 @@ class StmtConstCaster : public StmtVisitor {
 	ExpConstCaster* ecc;
 public:
 				StmtConstCaster(ExpConstCaster* ecc) : ecc(ecc) {}
-virtual		~StmtConstCaster() {};
+virtual			~StmtConstCaster() {};
 
 virtual bool visit(Assign *stmt);
 virtual bool visit(PhiAssign *stmt);

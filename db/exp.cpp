@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.162.2.4 $
+ * $Revision: 1.162.2.5 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -3721,10 +3721,11 @@ bool  FlagDef::accept(ExpVisitor* v) {
 	if (ret) ret = subExp1->accept(v);
 	return ret;
 }
-bool   RefExp::accept(ExpVisitor* v) {
+bool RefExp::accept(ExpVisitor* v) {
 	bool override, ret = v->visit(this, override);
 	if (override) return ret;
-	if (ret) ret = subExp1->accept(v); return ret;
+	if (ret) ret = subExp1->accept(v);
+	return ret;
 }
 bool Location::accept(ExpVisitor* v) {
 	bool override, ret = v->visit(this, override);

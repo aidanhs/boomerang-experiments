@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.2 $
+ * $Revision: 1.5.2.3 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -333,13 +333,13 @@ void CallStatement::dfaTypeAnalysis(bool& ch) {
 			// A subscripted location. Find the definition
 			RefExp* r = (RefExp*)e;
 			Statement* def = r->getRef();
-			// assert(def);			// Soon!
-if (def == NULL) continue;
+			assert(def);
 			Type* tParam = def->getType();
 			assert(tParam);
 			Type* oldTparam = tParam;
 			tParam = tParam->meetWith(t, ch);
-			def->setType(tParam);
+			// Set the type of def, and if r is a memof, handle the memof operand
+			r->descendType(tParam, ch);
 			if (DEBUG_TA && tParam != oldTparam)
 				LOG << "Type of " << r << " changed from " << oldTparam->getCtype() << " to " <<
 					tParam->getCtype() << "\n";
@@ -359,6 +359,15 @@ if (def == NULL) continue;
 					LOG << "Changed argument " << i << " was " << old << ", result is " << this << "\n";
 			}
 		}
+	}
+	// The destination is a pointer to a function with this function's signature (if any)
+	if (pDest) {
+		Signature* sig;
+		if (procDest)
+			sig = procDest->getSignature();
+		else
+			sig = NULL;
+		pDest->descendType(new FuncType(sig), ch);
 	}
 }
 

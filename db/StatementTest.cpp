@@ -4,7 +4,7 @@
  *				tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.21.2.1 $
+ * $Revision: 1.21.2.2 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -63,6 +63,7 @@ void StatementTest::registerTests(CppUnit::TestSuite* suite) {
 	MYTEST(testSubscriptVars);
 	MYTEST(testCallRefsFixer);
 	MYTEST(testStripSizes);
+	MYTEST(testFindConstants);
 }
 
 int StatementTest::countTestCases () const
@@ -1288,5 +1289,29 @@ void StatementTest::testStripSizes () {
 	std::ostringstream ost;
 	ost << s;
 	actual = ost.str();
+	CPPUNIT_ASSERT_EQUAL(expected, actual);
+}
+
+/*==============================================================================
+ * FUNCTION:		StatementTest::testFindConstants
+ * OVERVIEW:		Test the visitor code that finds constants
+ *============================================================================*/
+void StatementTest::testFindConstants () {
+	Statement* a = new Assign(
+		Location::regOf(24),
+		new Binary(opPlus,
+			new Const(3),
+			new Const(4)));
+	std::list<Const*> lc;
+	a->findConstants(lc);
+	std::list<Const*>::iterator it;
+	std::ostringstream ost1;
+	for (it = lc.begin(); it != lc.end(); ) {
+		ost1 << *it;
+		if (++it != lc.end())
+			ost1 << ", ";
+	}
+	std::string actual = ost1.str();
+	std::string expected("3, 4");
 	CPPUNIT_ASSERT_EQUAL(expected, actual);
 }

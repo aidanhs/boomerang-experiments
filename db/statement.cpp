@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.4 $
+ * $Revision: 1.126.2.5 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -901,7 +901,7 @@ Statement* BranchStatement::clone() {
 	return ret;
 }
 
-// visit this rtl
+// visit this stmt
 bool BranchStatement::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
@@ -1243,7 +1243,7 @@ Statement* CaseStatement::clone() {
 	return ret;
 }
 
-// visit this rtl
+// visit this stmt
 bool CaseStatement::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
@@ -1766,7 +1766,7 @@ Statement* CallStatement::clone() {
 	return ret;
 }
 
-// visit this rtl
+// visit this stmt
 bool CallStatement::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
@@ -2551,7 +2551,7 @@ Statement* ReturnStatement::clone() {
 	return ret;
 }
 
-// visit this rtl
+// visit this stmt
 bool ReturnStatement::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
@@ -3649,7 +3649,8 @@ bool CallStatement::accept(StmtExpVisitor* v) {
 	  it++)
 		ret = (*it)->accept(v->ev);
 	for (it = returns.begin(); ret && it != returns.end(); it++)
-		ret = (*it)->accept(v->ev);
+		if (*it)			// Can be NULL now to line up with other returns
+			ret = (*it)->accept(v->ev);
 	return ret;
 }
 
@@ -3745,7 +3746,7 @@ bool CallStatement::accept(StmtModifier* v) {
 	  it++)
 		*it = (*it)->accept(v->mod);
 	for (it = returns.begin(); recur && it != returns.end(); it++)
-		if (*it)
+		if (*it)			// Can be NULL now; just ignore
 			*it = (*it)->accept(v->mod);
 	return true;
 }
@@ -3794,10 +3795,14 @@ void Statement::subscriptVar(Exp* e, Statement* def /*, Cfg* cfg */) {
 // Find all constants in this Statement
 void Statement::findConstants(std::list<Const*>& lc) {
 if (kind == STMT_CALL)
- std::cerr << "HACK!\n";
+  std::cerr << "HACK!\n";
 	ConstFinder cf(lc);
 	StmtConstFinder scf(&cf);
 	accept(&scf);
+if (kind == STMT_CALL) {
+  std::cerr << "findConstants in call " << this << ":\n";
+  std::list<Const*>::iterator ll; for (ll=lc.begin(); ll != lc.end(); ll++) std::cerr << *ll << ", "; std::cerr << "\n";	// HACK!
+}
 }
 
 // Convert this PhiAssignment to an ordinary Assignment
