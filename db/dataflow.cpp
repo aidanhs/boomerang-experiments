@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.3 $
+ * $Revision: 1.43.2.4 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -408,6 +408,7 @@ void Collector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& 
 		RefExp* re = new RefExp(it->first->clone(), it->second.top());
 		locs.insert(re);
 	}
+	initialised = true;
 }
 
 // Find the definition for e that reaches this Collector. If none reaches here, return NULL

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.3 $
+ * $Revision: 1.238.2.4 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1026,7 +1026,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			//trimParameters(depth);
 		}
 
-#if 0
+#if 0	// No need to do a whole propagation phase any more; addArguments does the propagation now
 		// if we've added new parameters, need to do propagations up to this depth.  it's a recursive function thing.
 		if (nparams != signature->getNumParams()) {
 			for (int depth_tmp = 0; depth_tmp < depth; depth_tmp++) {
@@ -2329,8 +2329,7 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 			ty = new IntegerType();
 
 		if (ty) {
-			// the default of just assigning an int type is bad.. 
-			// if the locals is not an int then assigning it this type 
+			// the default of just assigning an int type is bad..  if the locals is not an int then assigning it this type 
 			// early results in aliases to this local not being recognised 
 			e = newLocal(ty->clone());
 			symbolMap[le->clone()] = e;
@@ -2893,13 +2892,11 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 			}
 			// if (s->getLeft()->getOper() == opParam) {
 				// we actually want to remove this if no-one is using it
-				// otherwise we'll create an interference that we can't
-				// handle
+				// otherwise we'll create an interference that we can't handle
 				//ll++;
 				//continue;
 			// }
-			if (s->getLeft()->getOper() == opMemberAccess ||
-				s->getLeft()->getOper() == opArraySubscript) {
+			if (s->getLeft()->getOper() == opMemberAccess || s->getLeft()->getOper() == opArraySubscript) {
 				// can't say with these
 				ll++;
 				continue;
@@ -3348,8 +3345,7 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 	return query->getOper() == opTrue;
 }
 
-// Get the set of locations defined by this proc. In other words, the define set,
-// currently called returns
+// Get the set of locations defined by this proc. In other words, the define set, currently called returns
 void UserProc::getDefinitions(LocationSet& ls) {
 	int n = signature->getNumReturns();
 	for (int j=0; j < n; j++) {
@@ -3374,9 +3370,8 @@ void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
 			LOG << "(null)";
 		LOG << " at " << def->getNumber() << " in " << getName() << "\n";
 	}
-	// we want to count the return that corresponds to this loc
-	// this can be a different expression to loc because replacements
-	// are done in the call's return list as part of decompilation
+	// We want to count the return that corresponds to this loc. This can be a different expression to loc because
+	// replacements are done in the call's return list as part of decompilation
 	int n = call->findReturn(loc);
 	if (n != -1) {
 		Exp *ret = NULL;

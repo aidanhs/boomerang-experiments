@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.2 $
+ * $Revision: 1.23.2.3 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -587,5 +587,30 @@ void StmtImplicitConverter::visit(PhiAssign* s, bool& recur) {
 		if (uu->def == NULL)
 			uu->def = cfg->findImplicitAssign(uu->e);
 	recur = false;		// Already done LHS
+}
+
+// Localiser. Subscript a location with the definitions that reach the call, or with {-} if none
+Exp* Localiser::preVisit(RefExp* e, bool& recur) {
+	recur = false;				// Don't recurse into already subscripted variables
+	return e;
+}
+
+Exp* Localiser::preVisit(Location* e, bool& recur) {
+	int d = e->getMemDepth();
+	if (d <= depth)				// Don't recurse if depth already too low, or equal
+		recur = false;
+	return e;
+}
+
+Exp* Localiser::postVisit(Location* e) {
+	int d = e->getMemDepth();
+	if (d != depth && depth != -1) return e;	// Only subscript at the requested depth, or any if depth == -1
+	Exp* r = call->findDefFor(e);
+	Exp* ret;
+	if (r)
+		ret = r->clone();
+	else
+		ret = new RefExp(e, NULL);				// No definition reaches, so subscript with {-}
+	return ret;
 }
 

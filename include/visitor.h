@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.1 $
+ * $Revision: 1.13.2.2 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -415,6 +415,17 @@ class StmtImplicitConverter : public StmtModifier {
 public:
 					StmtImplicitConverter(ImplicitConverter* ic, Cfg* cfg) : StmtModifier(ic), cfg(cfg) { }
 virtual void		visit(	    PhiAssign *s, bool& recur);
+};
+
+class Localiser : public ExpModifier {
+		CallStatement* call;					// The call to localise to
+		int			depth;						// Depth to allow localisation at
+public:
+					Localiser(CallStatement* call, int depth) : call(call), depth(depth) { }
+		Exp*		preVisit(RefExp* e, bool& recur);
+		Exp*		preVisit(Location* e, bool& recur);
+		Exp*		postVisit(Location* e);
+
 };
 
 #endif	// #ifndef __VISITOR_H__

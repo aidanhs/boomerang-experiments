@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.2 $
+ * $Revision: 1.148.2.3 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1373,23 +1373,15 @@ Exp *CallStatement::getProven(Exp *e) {
 // Substitute the various components of expression e with the appropriate reaching definitions.
 // Used in e.g. fixCallRefs (via the CallRefsFixer). Locations defined in this call are replaced with their proven values,
 // which are in terms of the initial values at the start of the call (reaching definitions at the call)
-Exp *CallStatement::localiseExp(Exp *e) {
-	e = e->clone();
-	LocationSet locs;
-	e->addUsedLocs(locs);
-	LocationSet::iterator xx;
-	bool change = false, ch;
-	for (xx = locs.begin(); xx != locs.end(); xx++) {		// For each used location in e
-		Exp *r = findDefFor(*xx);							// See if it is an argument of the call
-		if (r) {
-			e = e->searchReplaceAll(*xx, r, ch);
-			change |= ch;
-		}
-	}
-	if (!change) return e;
+Exp* CallStatement::localiseExp(Exp* e, int depth /* = -1 */) {
+	if (!col.isInitialised()) return e;						// Don't attempt to subscript if the data flow not started yet
+	Localiser l(this, depth);
+	e = e->accept(&l);
 
 	// Now check if e happens to have components that are references to other call statements
 	// Example: test/pentium/fib: r29 needs to get through 2 call statements to the original def
+	LocationSet locs;
+	LocationSet::iterator xx;
 	locs.clear();
 	e->addUsedLocs(locs);
 	for (xx = locs.begin(); xx != locs.end(); xx++) {		// For each used location in e
@@ -1398,11 +1390,9 @@ Exp *CallStatement::localiseExp(Exp *e) {
 		Statement* def = ((RefExp*)*xx)->getDef();
 		Exp* base = ((RefExp*)*xx)->getSubExp1();
 		if (def && def->isCall()) {
-			Exp* r = ((CallStatement*)def)->findDefFor(base);
-			if (r)
-				e = e->searchReplaceAll(*xx, r, ch);
-			else
-				e = new RefExp(base, NULL);					// Change it to loc{-}
+			Exp* r = ((CallStatement*)def)->localiseExp(base);
+			bool ch;
+			e = e->searchReplaceAll(*xx, r, ch);
 		}
 	}
 	return e->simplifyArith()->simplify();
@@ -1453,18 +1443,15 @@ void CallStatement::addArgument(Exp *e, UserProc* proc) {
 	// Process the argument. For example, given m[esp+4], it might be needed to localise as m[esp{17}+4], then get
 	// substituted to m[esp{-}-16], then localised again to m[esp{-}-16]{16}, then substituted again into r24{14}
 	// (examples from test/pentium/fibo)
-	e = localiseExp(e);						// Localise for this call (first time)
-	arguments.push_back(e);
+	e = e->clone();							// Don't modify parameter
 	int depth = e->getMemDepth();
+	arguments.push_back(e);
+	Exp*& er = arguments.back();
 	StatementSet empty;
-	Exp* old_e;
-	do {									// Repeat until no change
-		old_e = arguments.back()->clone();
-		for (int d=0; d <= depth; d++)
-			propagateTo(-1, empty, d);		// Propagate into all args etc
-		Exp*& er = arguments.back();
-		er = localiseExp(er);				// Localise again
-	} while (!(*arguments.back() == *old_e));
+	for (int d=0; d <= depth; d++) {
+		er = localiseExp(er, d);		// Localise for this call, depth d
+		propagateTo(-1, empty, d);		// Propagate into all args etc, depth d
+	}
 	// These expressions can end up becoming locals (?)
 	Location *l = dynamic_cast<Location*>(arguments.back());
 	if (l)

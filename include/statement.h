@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.2 $
+ * $Revision: 1.76.2.3 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1021,7 +1021,8 @@ virtual bool		accept(StmtModifier* visitor);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
 		// Was called substituteParams
-		Exp			*localiseExp(Exp *e);
+		Exp			*localiseExp(Exp *e, int depth);					// Restrict to given depth
+		Exp			*localiseExp(Exp *e) {return localiseExp(e, -1);}	// Do all depths at once
 		void		addArgument(Exp *e, UserProc* proc);
 		Exp*		findDefFor(Exp* e);			// Find the reaching definition for expression e
 		Exp*		getArgumentExp(int i);

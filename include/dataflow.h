@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.3 $
+ * $Revision: 1.39.2.4 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -107,12 +107,26 @@ public:
  * Collector class. This class collects all definitions that reach the statement that contains this collector.
  */
 class Collector {
-
+		/*
+		 * True if initialised. When not initialised, callees should not subscript parameters inserted into the associated
+		 * CallStatement
+		 */
+		bool		initialised;
 		/*
 		 * The set of locations. Use lessExpStar to compare properly
 		 */
 		std::set<RefExp*, lessExpStar>	locs;
 public:
+		/*
+		 * Constructor
+		 */
+					Collector() : initialised(false) { }
+
+		/*
+		 * Return true if initialised
+		 */
+		bool		isInitialised() {return initialised;}
+
 		/*
 		 * Update the locations with the current set of reaching definitions
 		 */
@@ -121,7 +135,7 @@ public:
 		/*
 		 * Clear the location set
 		 */
-		void		clear() {locs.clear();}
+		void		clear() {locs.clear(); initialised = false;}
 
 		/**
 		 * Find the definition for a location. If not found, return NULL
