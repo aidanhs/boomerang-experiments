@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.12.2.6 $
+ * $Revision: 1.12.2.7 $
  *
  * 22 Aug 03 - Mike: Created
  */
@@ -420,6 +420,10 @@ LOG << " $$ d is " << d << ", rem1 is " << ((rem1==0)?"NULL":rem1->prints()) << 
         bool unified = true;
         while ((c = nextConjunct(rem2)) != NULL) {
 LOG << "   $$ c is " << c << ", rem2 is " << ((rem2==0)?"NULL":rem2->prints()) << " $$\n";
+            if (c->isFalse()) {
+                unified = false;
+                break;
+            }
             assert(c->isEquality());
             Exp* lhs = ((Binary*)c)->getSubExp1();
             Exp* rhs = ((Binary*)c)->getSubExp2();

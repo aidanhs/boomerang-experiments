@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /* 
- * $Revision: 1.12.2.1 $
+ * $Revision: 1.12.2.2 $
  * 08 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -221,9 +221,10 @@ bool isFuncPrologue(ADDRESS hostPC);
 
 // This one is X86 specific
 #define SETS(name, dest, cond) \
-    result.rtl = new RTL(pc, stmts); \
     BoolAssign* bs = new BoolAssign(8); \
     bs->setLeftFromList(stmts); \
+    stmts->clear();  \
+    result.rtl = new RTL(pc, stmts); \
     result.rtl->appendStmt(bs); \
     bs->setCondType(cond); \
     result.numBytes = 3; \
