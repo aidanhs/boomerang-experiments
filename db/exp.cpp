@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39.2.7 $
+ * $Revision: 1.39.2.8 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -2587,10 +2587,12 @@ void AssignExp::doReplaceUse(Statement *use) {
     bool changeright = false;
     subExp2 = subExp2->searchReplaceAll(left, right, changeright);
     bool changeleft = false;
-    if (subExp1->isMemOf()) {
-        Exp *e = subExp1->getSubExp1()->clone();
+    Exp* baseSub1 = subExp1;
+    if (left->isSubscript()) baseSub1 = ((UsesExp*)subExp1)->getSubExp1();
+    if (baseSub1->isMemOf()) {
+        Exp *e = baseSub1->getSubExp1()->clone();
         e = e->searchReplaceAll(left, right, changeleft);
-        subExp1->setSubExp1(e);
+        baseSub1->setSubExp1(e);
     }
     // The below assertion can fail when dataflow caching is used. For example,
     // the pentium stuff with ebp and esp causes a substitution into r29 = r29
