@@ -574,7 +574,7 @@ int Boomerang::commandLine(int argc, const char **argv)
 			case 't': traceDecoder = true; break;
 			case 'T':
 				if (argv[i][2] == 'c')
-					dfaTypeAnalysis = true;		// -Tc: use old constraint-based type analysis
+					conTypeAnalysis = true;		// -Tc: use old constraint-based type analysis
 				else if (argv[i][2] == 'd')
 					dfaTypeAnalysis = true;		// -Td: use data-flow-based type analysis
 				break;
