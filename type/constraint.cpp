@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.12.2.5 $
+ * $Revision: 1.12.2.6 $
  *
  * 22 Aug 03 - Mike: Created
  */
@@ -550,4 +550,24 @@ void Constraints::alphaSubst() {
         *it = (*it)->searchReplaceAll(alpha, val, change);
         *it = (*it)->simplifyConstraint();
     }
+}
+
+void Constraints::print(std::ostream& os) {
+    os << "\n" << std::dec << (int)disjunctions.size() << " disjunctions: ";
+    std::list<Exp*>::iterator dd;
+    for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++)
+        os << *dd << ",\n";
+    os << "\n";
+    os << (int)fixed.size() << " fixed: ";
+    fixed.print(os);
+    os << (int)equates.size() << " equates: ";
+    equates.print(os);
+}
+
+char* Constraints::prints() {
+    std::ostringstream ost;
+    print(ost);
+    strncpy(debug_buffer, ost.str().c_str(), 999);
+    debug_buffer[999] = '\0';
+    return debug_buffer;
 }

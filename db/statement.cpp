@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.9 $
+ * $Revision: 1.112.2.10 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2515,7 +2515,9 @@ BoolStatement::~BoolStatement() {
  *                    condition codes
  * RETURNS:         a semantic string
  *============================================================================*/
+void hack() {std::cerr << "Bool HACK!\n";}
 void BoolStatement::setCondType(BRANCH_TYPE cond, bool usesFloat /*= false*/) {
+hack();
     jtCond = cond;
     bFloat = usesFloat;
     setCondExpr(new Terminal(opFlags));
