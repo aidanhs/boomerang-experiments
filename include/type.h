@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.2 $
+ * $Revision: 1.33.2.3 $
  *
  * 20 Mar 01 - Mike: Added operator*= (compare, ignore sign, and consider all
  *					floats > 64 bits to be the same
@@ -137,9 +137,10 @@ virtual void	setSize(int sz) {assert(0);}
 	// Print and format functions
 	// Get the C type, e.g. "unsigned int". If not final, include comment
 	// for lack of sign information. When final, choose a signedness etc
-virtual const char *getCtype(bool complete = false) const = 0;
+virtual const char *getCtype(bool final = false) const = 0;
 		// Print in *i32* format
 		void	starPrint(std::ostream& os);
+		const char*	prints();			// For debugging
 
 virtual std::string getTempName() const; // Get a temporary name for the type
 
@@ -175,7 +176,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual Type*	meetWith(Type* other, bool& ch);
 
@@ -202,7 +203,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 // Split the C type into return and parameter parts
 		void	getReturnAndParam(const char*& ret, const char*& param);
@@ -249,7 +250,7 @@ virtual void	setSize(int sz) {size = sz;}
 
 // Get the C type as a string. If full, output comments re the lack of sign
 // information (in IntegerTypes).
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual std::string getTempName() const;
 
@@ -281,7 +282,7 @@ virtual Exp		*match(Type *pattern);
 virtual int		getSize() const;
 virtual void	setSize(int sz) {size = sz;}
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual std::string getTempName() const;
 
@@ -309,7 +310,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual Type*	meetWith(Type* other, bool& ch);
 
@@ -332,7 +333,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual Type*	meetWith(Type* other, bool& ch);
 
@@ -363,7 +364,7 @@ virtual Exp		*match(Type *pattern);
 virtual int		getSize() const;
 virtual void	setSize(int sz) {assert(sz == STD_SIZE);}
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual Memo	*makeMemo(int mId);
 virtual void	readMemo(Memo *m, bool dec);
@@ -400,7 +401,7 @@ virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual	Memo	*makeMemo(int mId);
 virtual void	readMemo(Memo *m, bool dec);
@@ -435,7 +436,7 @@ virtual Exp		*match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 virtual Memo	*makeMemo(int mId);
 virtual void	readMemo(Memo *m, bool dec);
@@ -480,7 +481,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 		bool	isSuperStructOf(Type* other);		// True if this is is a superstructure of other
 		bool	isSubStructOf(Type* other);			// True if this is is a substructure of other
@@ -520,7 +521,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int		getSize() const;
 
-virtual const char *getCtype(bool full = true) const;
+virtual const char *getCtype(bool final = false) const;
 
 		virtual Memo *makeMemo(int mId);
 		virtual void readMemo(Memo *m, bool dec);
@@ -550,7 +551,7 @@ virtual int		getSize() const;
 virtual void	setSize(int sz) {size = sz;}
 virtual bool	isSize() const { return true; }
 virtual bool	isComplete() {return false;}	// Basic type is unknown
-virtual const char* getCtype(bool full = true) const;
+virtual const char* getCtype(bool final = false) const;
 virtual Type*	meetWith(Type* other, bool& ch);
 
 };	// class SizeType

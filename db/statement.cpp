@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.119.2.1 $
+ * $Revision: 1.119.2.2 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1304,7 +1304,8 @@ void CaseStatement::simplify() {
  *		CallStatement methods
  **********************************/
 
-/*============================================================================== * FUNCTION:		 CallStatement::CallStatement
+/*==============================================================================
+ * FUNCTION:		 CallStatement::CallStatement
  * OVERVIEW:		 Constructor for a call that we have extra information
  *					 for and is part of a prologue.
  * PARAMETERS:		 returnTypeSize - the size of a return union, struct or quad
@@ -2728,6 +2729,8 @@ void BoolAssign::setLeftFromList(std::list<Statement*>* stmts) {
 // Assign //
 //	//	//	//
 
+Assignment::Assignment(Exp* lhs) : type(new VoidType), lhs(lhs) {}
+Assignment::Assignment(Type* ty, Exp* lhs) : type(ty), lhs(lhs) {}
 Assignment::~Assignment() {}
 
 Assign::Assign(Exp* lhs, Exp* rhs)
@@ -3596,11 +3599,18 @@ void Statement::subscriptVar(Exp* e, Statement* def) {
 	accept(&ss);
 }
 
+// Find all constants in this Statement
+void Statement::findConstants(std::list<Const*>& lc) {
+	ConstFinder cf(lc);
+	StmtConstFinder scf(&cf);
+	accept(&scf);
+}
+
 // Convert this PhiAssignment to an ordinary Assignment
 // Hopefully, this is the only place that Statements change from one form
 // to another.
 // All throughout the code, we assume that the addresses of Statement objects
-// do not change, so we need this slight hack
+// do not change, so we need this slight hack to overwrite one object with another
 void PhiAssign::convertToAssign(Exp* rhs) {
 	Assign* a = new Assign(type, lhs, rhs);
 	a->setNumber(number);
@@ -3732,10 +3742,35 @@ void PhiAssign::simplifyRefs() {
 
 
 void CallStatement::dfaTypeAnalysis(bool& ch) {
-	if (procDest && procDest->isLib()) {
-		Signature* sig = procDest->getSignature();
-		// Iterate through the parameters
-		// Not implemented yet
+	Signature* sig = procDest->getSignature();
+	// Iterate through the parameters
+	int n = sig->getNumParams();
+	for (int i=0; i < n; i++) {
+		Exp* e = getArgumentExp(i);
+		Type* t = sig->getParamType(i);
+std::cerr << "CallStatement::dfaTypeAnalysis: expression " << e << " and type " << (t ? t->getCtype() : "NULL") << "\n";
+		Const* c;
+		if (e->isSubscript()) {
+			// A subscripted location. Find the definition
+			RefExp* r = (RefExp*)e;
+			Statement* def = r->getRef();
+			// assert(def);			// Soon!
+if (def) {
+			Type* tParam = def->getType();
+			assert(tParam);
+			Type* oldTparam = tParam;
+			tParam = tParam->meetWith(t, ch);
+			def->setType(tParam);
+			if (DEBUG_TA && tParam != oldTparam)
+				LOG << "Type of " << r << " changed from " << oldTparam->getCtype() << " to " <<
+					tParam->getCtype() << "\n";
+}
+		} else if ((c = dynamic_cast<Const*>(e)) != NULL) {
+			// A constant.
+			Type* oldConType = c->getType();
+			c->setType(t);
+			ch |= (t != oldConType);
+		}
 	}
 }
 
@@ -3761,7 +3796,12 @@ void PhiAssign::dfaTypeAnalysis(bool& ch) {
 }
 
 void Assign::dfaTypeAnalysis(bool& ch) {
-	// Not implemented yet
+	// Needs much more work!
+	if (rhs->isIntConst()) {
+		Const* c = (Const*)rhs;
+		type = type->meetWith(c->getType(), ch);
+		c->setType(c->getType()->meetWith(type, ch));
+	}
 }
 
 void BranchStatement::dfaTypeAnalysis(bool& ch) {

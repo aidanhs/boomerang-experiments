@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.1.2.2 $
+ * $Revision: 1.1.2.3 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -44,7 +44,7 @@ bool max(int a, int b) {		// Faster to write than to find the #include for
 
 Type* VoidType::meetWith(Type* other, bool& ch) {
 	// void meet x = x
-	ch = true;
+	ch |= !other->isVoid();
 	return other;
 }
 
@@ -102,7 +102,9 @@ Type* CharType::meetWith(Type* other, bool& ch) {
 }
 
 Type* PointerType::meetWith(Type* other, bool& ch) {
-	if (isPointer()) {
+	if (other->isVoid()) return this;
+	if (other->isSize() && ((SizeType*)other)->getSize() == STD_SIZE) return this;
+	if (other->isPointer()) {
 		PointerType* otherPtr = other->asPointer();
 		if (pointsToAlpha() && !otherPtr->pointsToAlpha()) {
 			setPointsTo(otherPtr->getPointsTo());

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.29.2.2 $
+ * $Revision: 1.29.2.3 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -799,6 +799,9 @@ const char* SizeType::getCtype(bool final) const {
 	return strdup(ost.str().c_str());
 }
 
+const char* Type::prints() {
+	return getCtype(false);			// For debugging
+}
 
 std::map<std::string, Type*> Type::namedTypes;
 
@@ -1107,7 +1110,7 @@ bool Type::resolvesToCompound()
 }
 
 bool Type::isPointerToAlpha() {
-	return isPointer() && ((PointerType*)this)->pointsToAlpha();
+	return isPointer() && asPointer()->pointsToAlpha();
 }
 
 void Type::starPrint(std::ostream& os) {
@@ -1116,20 +1119,22 @@ void Type::starPrint(std::ostream& os) {
 
 // A crude shortcut representation of a type
 std::ostream& operator<<(std::ostream& os, Type* t) {
-	if (t == NULL) return os;
+	if (t == NULL) return os << '0';
 	switch (t->getId()) {
+		case eVoid:	os << 'v'; break;
 		case eInteger: {
 			int sg = ((IntegerType*)t)->getSignedness();
 			// 'j' for either i or u, don't know which
 			os << (sg == 0 ? 'j' : sg>0 ? 'i' : 'u');
-			os << std::dec << ((IntegerType*)t)->getSize();
+			os << std::dec << t->asInteger()->getSize();
 			break;
 		}
 		case eFloat:
 			os << 'f';
-			os << std::dec << ((FloatType*)t)->getSize();
+			os << std::dec << t->asFloat()->getSize();
 			break;
 		case eChar: os << 'c'; break;
+		case ePointer: os << t->asPointer()->getPointsTo() << '*'; break;
 		case eBoolean: os << 'b'; break;
 		case eSize: os << std::dec << t->getSize(); break;
 		default:

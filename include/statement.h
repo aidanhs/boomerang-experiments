@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.60.2.1 $
+ * $Revision: 1.60.2.2 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -30,10 +30,10 @@
 						 /		 \
 						/		  \
 			 GotoStatement	Assignment (abstract)
- BranchStatement__/			/	/ \	  \
- ReturnStatement_/	   Assign  /   \  PhiAssign
- CallStatement__/	ImplicitAssign BoolAssign
- CaseStatement_/
+ BranchStatement__/			/	/|\	  \
+ ReturnStatement_/	   Assign  / | \  PhiAssign
+ CallStatement__/ ImplicitAssign |  BoolAssign
+ CaseStatement_/			SigmaAssign (soon)
 */
 
 #include <vector>
@@ -54,6 +54,7 @@ class Prog;
 class Proc;
 class UserProc;
 class Exp;
+class Const;
 class RefExp;
 class Cfg;
 class Type;
@@ -218,18 +219,6 @@ virtual Exp*	getRight() = 0;
 	// returns true if this statement uses the given expression
 virtual bool	usesExp(Exp *e) = 0;
 
-	// Adds (inserts) all locations (registers or memory etc) used by this
-	// statement
-	void		addUsedLocs(LocationSet& used, bool final = false);
-	void		fixCallRefs();
-
-
-	// replaces a use of the given statement with an expression
-	bool		replaceRef(Statement *use);
-	// special version of the above for the "special hack"
-	// (see Proc::propagateStatements, where numUses == 2)
-	void		specialReplaceRef(Statement* def);
-
 	// statements should be printable (for debugging)
 virtual void	print(std::ostream &os) = 0;
 		void	printAsUse(std::ostream &os)   {os << std::dec << number;}
@@ -267,15 +256,36 @@ virtual void	simplifyAddr() {}
 		// Only Assign overrides at present
 virtual void	fixSuccessor() {}
 
-		// Generate constraints
+		// Generate constraints (for constraint based type analysis)
 virtual void	genConstraints(LocationSet& cons) {}
+
+		// Data flow based type analysis
+virtual	void	dfaTypeAnalysis(bool& ch) {}
+
+//	//	//	//	//	//	//	//	//	//
+//									//
+//	Statement visitation functions	//
+//									//
+//	//	//	//	//	//	//	//	//	//
+
+	// Adds (inserts) all locations (registers or memory etc) used by this
+	// statement
+		void	addUsedLocs(LocationSet& used, bool final = false);
+		void	fixCallRefs();
+
+
+		// replaces a use of the given statement with an expression
+		bool	replaceRef(Statement *use);
+		// special version of the above for the "special hack"
+		// (see Proc::propagateStatements, where numUses == 2)
+		void		specialReplaceRef(Statement* def);
+
+		// Find all constants in this statement
+		void	findConstants(std::list<Const*>& lc);
 
 		// Set or clear the constant subscripts (using a visitor)
 		int		setConscripts(int n);
 		void	clearConscripts();
-
-		// Data flow based type analysis
-virtual	void	dfaTypeAnalysis(bool& ch) {}
 
 		// Strip all references and phis (using a visitor). Returns true if the
 		// statement was a phi (and to be deleted)
@@ -290,11 +300,14 @@ virtual	void	dfaTypeAnalysis(bool& ch) {}
 		// Cast the constant num to type ty. If a change was made, return true
 		bool	castConst(int num, Type* ty);
 
+		// End Statement visitation functions
+
+
 		// Get the type for the given expression in this statement
 		Type	*getTypeFor(Exp *e, Prog *prog);
 
-		Type*	getType() {assert(0);}				// Assignment and 
-		void	setType(Type* t) {assert(0);}		// CallStatement override
+virtual	Type*	getType() {return NULL;}			// Assignment and 
+virtual	void	setType(Type* t) {assert(0);}		// CallStatement override
 
 protected:
 		// Returns true if an indirect call is converted to direct:
@@ -323,9 +336,9 @@ protected:
 	Exp*		lhs;		// The left hand side
 public:
 	// Constructor, subexpression
-				Assignment(Exp* lhs) : type(NULL), lhs(lhs) {}
+				Assignment(Exp* lhs);
 	// Constructor, type, and subexpression
-				Assignment(Type* ty, Exp* lhs) : type(ty), lhs(lhs) {}
+				Assignment(Type* ty, Exp* lhs);
 	// Destructor
 virtual			~Assignment();
 
@@ -340,8 +353,8 @@ virtual bool	accept(StmtModifier* visitor) = 0;
 virtual void	print(std::ostream& os) = 0;
 
 		// Get and set the type
-		Type*	getType() {return type;}
-		void	setType(Type* ty) {type = ty;}
+virtual	Type*	getType() {return type;}
+virtual	void	setType(Type* ty) {type = ty;}
 
 virtual bool	usesExp(Exp *e);	   // PhiExp and ImplicitExp don't override
 
@@ -1037,8 +1050,8 @@ virtual void	fromSSAform(igraph& ig);
 		// Insert actual arguments to match formal parameters
 		void	insertArguments(StatementSet& rs);
 
-		Type*	getType() {return returnType;}		// MVE: TEMPORARY
-		void	setType(Type* t) { returnType = t;}	// MVE: TEMPORARY
+virtual	Type*	getType() {return returnType;}		// MVE: TEMPORARY
+virtual	void	setType(Type* t) { returnType = t;}	// MVE: TEMPORARY
 
 protected:
 virtual bool	doReplaceRef(Exp* from, Exp* to);
