@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.1 $
+ * $Revision: 1.5.2.2 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -23,12 +23,121 @@
 #include "boomerang.h"
 #include "signature.h"
 #include "exp.h"
+#include "prog.h"
+#include "util.h"
 #include <sstream>
 
 static int nextUnionNumber = 0;
 
 int max(int a, int b) {		// Faster to write than to find the #include for
 	return a>b ? a : b;
+}
+
+#define DFA_ITER_LIMIT 20
+
+void UserProc::dfaTypeAnalysis() {
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	bool ch;
+	int iter;
+	for (iter = 1; iter <= DFA_ITER_LIMIT; iter++) {
+		ch = false;
+		for (it = stmts.begin(); it != stmts.end(); it++) {
+			(*it)->dfaTypeAnalysis(ch);	  
+		}
+		if (!ch)
+			// No more changes: round robin algorithm terminates
+			break;
+	}
+	if (ch)
+		LOG << "**** Iteration limit exceeded for dfaTypeAnalysis of procedure " << getName() << " ****\n";
+
+	if (DEBUG_TA) {
+		LOG << "\n *** Results for Data flow based Type Analysis for " << getName() << " ***\n";
+		LOG << iter << " iterations\n";
+		for (it = stmts.begin(); it != stmts.end(); it++) {
+			Statement* s = *it;
+			LOG << s << "\n";			// Print the statement; has dest type
+			// Now print type for each constant in this Statement
+			std::list<Const*> lc;
+			std::list<Const*>::iterator cc;
+			s->findConstants(lc);
+			if (lc.size()) {
+				LOG << "       ";
+				for (cc = lc.begin(); cc != lc.end(); cc++)
+					LOG << (*cc)->getType()->getCtype() << " " << *cc << "  ";
+				LOG << "\n";
+			}
+		}
+		LOG << "\n *** End results for Data flow based Type Analysis for " << getName() << " ***\n\n";
+	}
+
+	// Now use the type information gathered
+	Prog* prog = getProg();
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		Statement* s = *it;
+		//Type* t = s->getType();
+		// Locations
+		// ...
+		// Constants
+		std::list<Const*>lc;
+		s->findConstants(lc);
+		std::list<Const*>::iterator cc;
+		for (cc = lc.begin(); cc != lc.end(); cc++) {
+			Const* con = (Const*)*cc;
+			Type* t = con->getType();
+			int val = con->getInt();
+			if (t && t->isPointer()) {
+				PointerType* pt = t->asPointer();
+				if (pt->getPointsTo()->resolvesToChar()) {
+					// Convert to a string	MVE: check for read-only?
+					// Also, distinguish between pointer to one char, and ptr to many?
+					char* str = prog->getStringConstant(val, true);
+					if (str) {
+						// Make a string
+						con->setStr(escapeStr(str));
+						con->setOper(opStrConst);
+					}
+				} else if (pt->getPointsTo()->resolvesToInteger()) {
+					ADDRESS addr = (ADDRESS) con->getInt();
+					prog->globalUsed(addr);
+					const char *gloName = prog->getGlobalName(addr);
+					if (gloName) {
+						ADDRESS r = addr - prog->getGlobalAddr((char*)gloName);
+						Exp *ne;
+						if (r) {
+							Location *g = Location::global(strdup(gloName), this);
+							ne = Location::memOf(
+								new Binary(opPlus,
+									new Unary(opAddrOf, g),
+									new Const(r)), this);
+						} else {
+							Type *ty = prog->getGlobalType((char*)gloName);
+							if (s->isAssign() && ((Assign*)s)->getType()) {
+								int bits = ((Assign*)s)->getType()->getSize();
+								if (ty == NULL || ty->getSize() == 0)
+									prog->setGlobalType((char*)gloName, new IntegerType(bits));
+							}
+							Location *g = Location::global(strdup(gloName), this);
+							if (ty && ty->isArray()) 
+								ne = new Binary(opArraySubscript, g, new Const(0));
+							else 
+								ne = g;
+						}
+						Exp* memof = Location::memOf(con);
+						s->searchAndReplace(memof->clone(), ne);
+					}
+				}
+			}
+		}
+	}
+
+	if (VERBOSE) {
+		LOG << "*** After application of DFA Type Analysis for " << getName() << " ***\n";
+		printToLog();
+		LOG << "*** End application of DFA Type Analysis for " << getName() << " ***\n";
+	}
 }
 
 // This is the core of the data-flow-based type analysis algorithm: implementing the meet operator.
@@ -265,7 +374,7 @@ void PhiAssign::dfaTypeAnalysis(bool& ch) {
 		if (stmtVec[i] && stmtVec[i]->getType())
 			meetOfPred = meetOfPred->meetWith(stmtVec[i]->getType(), ch);
 	type = type->meetWith(meetOfPred, ch);
-	for (i=0; i < n; i++) 
+	for (i=0; i < n; i++) {
 		if (stmtVec[i] && stmtVec[i]->getType()) {
 			bool thisCh = false;
 			Type* res = stmtVec[i]->getType()->meetWith(type, thisCh);
@@ -274,12 +383,21 @@ void PhiAssign::dfaTypeAnalysis(bool& ch) {
 				ch = true;
 			}
 		}
+	}
+	Assignment::dfaTypeAnalysis(ch);		// Handle the LHS
 }
 
 void Assign::dfaTypeAnalysis(bool& ch) {
 	Type* tr = rhs->ascendType();
 	type = type->meetWith(tr, ch);
 	rhs->descendType(type, ch);
+	Assignment::dfaTypeAnalysis(ch);		// Handle the LHS
+}
+
+void Assignment::dfaTypeAnalysis(bool& ch) {
+	if (lhs->isMemOf())
+		// Push down the fact that the memof is a pointer to the assignment type
+		lhs->descendType(type, ch);
 }
 
 void BranchStatement::dfaTypeAnalysis(bool& ch) {
@@ -476,6 +594,17 @@ Type* Terminal::ascendType() {
 }
 
 Type* Unary::ascendType() {
+	Type* ta = subExp1->ascendType();
+	switch (op) {
+		case opMemOf:
+			if (ta->isPointer())
+				return ta->asPointer()->getPointsTo();
+			else
+				return new VoidType();		// NOT SURE! Really should be bottom
+			break;
+		default:
+			break;
+	}
 	return new VoidType;
 }
 
@@ -519,10 +648,10 @@ void Binary::descendType(Type* parentType, bool& ch) {
 }
 
 void RefExp::descendType(Type* parentType, bool& ch) {
-if (def == NULL) return;
 	Type* oldType = def->getType();
 	def->setType(parentType);
 	ch |= oldType != parentType;
+	subExp1->descendType(parentType, ch);
 }
 
 void Const::descendType(Type* parentType, bool& ch) {
@@ -531,6 +660,13 @@ void Const::descendType(Type* parentType, bool& ch) {
 }
 
 void Unary::descendType(Type* parentType, bool& ch) {
+	switch (op) {
+		case opMemOf:
+			subExp1->descendType(new PointerType(parentType), ch);
+			break;
+		default:
+			break;
+	}
 }
 
 void Ternary::descendType(Type* parentType, bool& ch) {

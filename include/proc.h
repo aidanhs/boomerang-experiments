@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.103 $
+/* $Revision: 1.103.2.1 $
 */
 
 #ifndef _PROC_H_
@@ -545,10 +545,11 @@ public:
 
 #endif
 
-	void getDefinitions(LocationSet &defs);
+	void		getDefinitions(LocationSet &defs);
+	void		addImplicitAssigns();
 
-	virtual Memo *makeMemo(int mId);
-	virtual void readMemo(Memo *m, bool dec);
+virtual Memo	*makeMemo(int mId);
+virtual void	readMemo(Memo *m, bool dec);
 
 private:
 	/*

@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.3 $
+ * $Revision: 1.14.2.4 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -491,13 +491,15 @@ bool UsedLocsVisitor::visit(BoolAssign* s, bool& override) {
 // Expression subscripter
 //
 Exp* ExpSubscripter::preVisit(Location* e, bool& recur) {
-	if (search == NULL || *e == *search) {
-		recur = e->isMemOf();	// Don't double subscript unless m[...]
+	if (/* search == NULL || */ *e == *search) {
+		recur = e->isMemOf();			// Don't double subscript unless m[...]
+		return new RefExp(e, def);		// Was replaced by postVisit below
 	}
 	recur = true;
 	return e;
 }
 
+#if 0
 Exp* ExpSubscripter::postVisit(Location* e) {
 	Exp* ret;
 	if (search == NULL || *e == *search) {
@@ -512,11 +514,15 @@ Exp* ExpSubscripter::postVisit(Location* e) {
 		ret = e;
 	return ret;
 }
+#endif
 
 Exp* ExpSubscripter::preVisit(Terminal* e) {
+#if 0
 	if (search == NULL)
 		return new RefExp(e, cfg->findImplicitAssign(e));
-	else if (*e == *search)
+	else
+#endif
+	if (*e == *search)
 		return new RefExp(e, def);
 	return e;
 }
@@ -739,8 +745,11 @@ bool StmtExpVisitor::visit(CallStatement *stmt, bool& override) {
 		impargs[i]->accept(ev);
 	std::vector<Exp*>& returns = stmt->getReturns();
 	n = returns.size();
-	for (i=0; i < n; i++)
-		returns[i]->accept(ev);
+	for (i=0; i < n; i++) {
+		// These can be NULL now, to maintain the one-to-one correspondence between these and others
+		if (returns[i])
+			returns[i]->accept(ev);
+	}
 	override = false; return true;
 }
 bool StmtExpVisitor::visit(ReturnStatement *stmt, bool& override) {
@@ -757,5 +766,7 @@ bool ConstFinder::visit(Const* e) {
 	return true;
 }
 bool ConstFinder::visit(Location* e, bool& override) {
+	if (e->isRegOf())
 		return false;		// Don't treat register numbers as typable constants
+	return true;			// However, we DO want to see constants in memofs
 }

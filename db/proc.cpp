@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.2 $
+ * $Revision: 1.207.2.3 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1296,17 +1296,6 @@ std::set<UserProc*>* UserProc::decompile() {
 		return decompile();	 // Restart decompiling this proc
 	}
 
-	// Data flow based type analysis
-	if (DFA_TYPE_ANALYSIS) {
-		if (VERBOSE || DEBUG_TA)
-			LOG << "=== Start Data-flow-based Type Analysis ===\n";
-		do
-			dfaTypeAnalysis();
-		while (ellipsisProcessing());
-		if (VERBOSE || DEBUG_TA)
-			LOG << "=== End Type Analysis ===\n";
-	}
-
 	// Only remove unused statements after decompiling as much as possible of
 	// the proc
 	for (depth = 0; depth <= maxDepth; depth++) {
@@ -1333,11 +1322,28 @@ std::set<UserProc*>* UserProc::decompile() {
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
 
+	// Data flow based type analysis
+	// Want to be after all propagation, but before converting expressions to locals etc
+	if (DFA_TYPE_ANALYSIS) {
+		if (VERBOSE || DEBUG_TA)
+			LOG << "=== Start Data-flow-based Type Analysis for " << getName() << " ===\n";
+
+		// Now we need to add the implicit assignments. Doing this earlier is extremely problematic, because
+		// of all the m[...] that change their sorting order as their arguments get subscripted or propagated into
+		addImplicitAssigns();
+
+		do
+			dfaTypeAnalysis();
+		while (ellipsisProcessing());
+		if (VERBOSE || DEBUG_TA)
+			LOG << "=== End Type Analysis for " << getName() << " ===\n";
+	}
+
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
 			replaceExpressionsWithParameters(i);
 			replaceExpressionsWithLocals(true);
-			cfg->renameBlockVars(0, i, true);
+			cfg->renameBlockVars(0, i, true);		// MVE: is this really needed?
 		}
 		trimReturns();
 		fixCallRefs();
@@ -1625,7 +1631,7 @@ void UserProc::trimReturns() {
 			if (*e == *regsp) {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
-				e = e->expSubscriptAllImp(cfg);
+				e = e->expSubscriptAllImp(/*cfg*/);
 
 				if (!(*e == *theReturnStatement->getReturnExp(i))) {
 					if (VERBOSE)
@@ -1837,11 +1843,11 @@ void UserProc::trimParameters(int depth) {
 	for (i = 0; i < nparams; i++) {
 		referenced[i] = false;
 		// We want the 
-		params.push_back(signature->getParamExp(i)->clone()->expSubscriptAllImp(cfg));
+		params.push_back(signature->getParamExp(i)->clone()->expSubscriptAllImp(/*cfg*/));
 	}
 	for (i = 0; i < signature->getNumImplicitParams(); i++) {
 		referenced[i + nparams] = false;
-		params.push_back(signature->getImplicitParamExp(i)->clone()->expSubscriptAllImp(cfg));
+		params.push_back(signature->getImplicitParamExp(i)->clone()->expSubscriptAllImp(/*cfg*/));
 	}
 
 	std::set<Statement*> excluded;
@@ -1970,7 +1976,7 @@ void UserProc::addReturn(Exp *e)
 {
 	Exp *e1 = e->clone();
 	if (e1->getOper() == opMemOf) {
-		e1->refSubExp1() = e1->getSubExp1()->expSubscriptAllImp(cfg);
+		e1->refSubExp1() = e1->getSubExp1()->expSubscriptAllImp(/*cfg*/);
 	}
 	if (theReturnStatement)
 		theReturnStatement->addReturn(e1);
@@ -2340,7 +2346,7 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 		for (int i = 0; i < signature->getNumParams(); i++) {
 			if (depth < 0 || signature->getParamExp(i)->getMemDepth() == depth) {
 				Exp *r = signature->getParamExp(i)->clone();
-				r = r->expSubscriptAllImp(cfg);
+				r = r->expSubscriptAllImp(/*cfg*/);
 				// Remove the outer {0}, for where it appears on the LHS, and because we want to have param1{0}
 				assert(r->isSubscript());	// There should always be one
 				// if (r->getOper() == opSubscript)
@@ -3145,7 +3151,7 @@ bool UserProc::prove(Exp *query)
 	query->getSubExp2()->addUsedLocs(locs);
 	LocationSet::iterator xx;
 	for (xx = locs.begin(); xx != locs.end(); xx++) {
-		query->refSubExp2() = query->getSubExp2()->expSubscriptVarImp(*xx, cfg);
+		query->refSubExp2() = query->getSubExp2()->expSubscriptVarImp(*xx /*, cfg */ );
 	}
 
 	if (query->getSubExp1()->getOper() != opSubscript) {
@@ -3592,83 +3598,6 @@ if (!cc->first->isTypeOf()) continue;
 	}
 }
 
-#define DFA_ITER_LIMIT 20
-
-void UserProc::dfaTypeAnalysis() {
-	StatementList stmts;
-	getStatements(stmts);
-	StatementList::iterator it;
-	bool ch;
-	int iter;
-	for (iter = 1; iter <= DFA_ITER_LIMIT; iter++) {
-		ch = false;
-		for (it = stmts.begin(); it != stmts.end(); it++) {
-			(*it)->dfaTypeAnalysis(ch);	  
-		}
-		if (!ch)
-			// No more changes: round robin algorithm terminates
-			break;
-	}
-	if (ch)
-		LOG << "**** Iteration limit exceeded for dfaTypeAnalysis of procedure " << getName() << " ****\n";
-
-	if (DEBUG_TA) {
-		LOG << "\n *** Results for Data flow based Type Analysis ***\n";
-		LOG << iter << " iterations\n";
-		for (it = stmts.begin(); it != stmts.end(); it++) {
-			Statement* s = *it;
-			LOG << s << "\n";			// Print the statement; has dest type
-			// Now print type for each constant in this Statement
-			std::list<Const*> lc;
-			std::list<Const*>::iterator cc;
-			s->findConstants(lc);
-			if (lc.size()) {
-				LOG << "       ";
-				for (cc = lc.begin(); cc != lc.end(); cc++)
-					LOG << (*cc)->getType()->getCtype() << " " << *cc << "  ";
-				LOG << "\n";
-			}
-		}
-		LOG << "\n *** End results for Data flow based Type Analysis ***\n\n";
-	}
-
-	// Now use the type information gathered
-	Prog* prog = getProg();
-	for (it = stmts.begin(); it != stmts.end(); it++) {
-		Statement* s = *it;
-		//Type* t = s->getType();
-		// Locations
-		// ...
-		// Constants
-		std::list<Const*>lc;
-		s->findConstants(lc);
-		std::list<Const*>::iterator cc;
-		for (cc = lc.begin(); cc != lc.end(); cc++) {
-			Const* con = (Const*)*cc;
-			Type* t = con->getType();
-			int val = con->getInt();
-			if (t && t->isPointer()) {
-				PointerType* pt = t->asPointer();
-				if (pt->getPointsTo()->resolvesToChar()) {
-					// Convert to a string
-					char* str = prog->getStringConstant(val, true);
-					if (str) {
-						// Make a string
-						con->setStr(escapeStr(str));
-						con->setOper(opStrConst);
-					}
-				}
-			}
-		}
-	}
-
-	if (VERBOSE) {
-		LOG << "*** After application of DFA Type Analysis ***\n";
-		printToLog();
-		LOG << "*** End application of DFA Type Analysis ***\n";
-	}
-}
-
 
 
 
@@ -3895,5 +3824,25 @@ void UserProc::readMemo(Memo *mm, bool dec)
 	for (std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
 		(*it).first->restoreMemo(m->mId, dec);
 		(*it).second->restoreMemo(m->mId, dec);
+	}
+}
+
+// Before Type Analysis, refs like r28{0} have a NULL Statement pointer. After this, they will point to an
+// implicit assignment for the location. Thus, during and after type analysis, you can find the type of any
+// location by following the reference to the definition
+void UserProc::addImplicitAssigns() {
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		LocationSet ls;
+		(*it)->addUsedLocs(ls);
+		LocationSet::iterator ll;
+		for (ll = ls.begin(); ll != ls.end(); ll++) {
+			RefExp* r = (RefExp*)*ll;
+			if (r->isSubscript() && r->getRef() == NULL) {
+				r->setDef(cfg->findImplicitAssign(r->getSubExp1()));
+			}
+		}
 	}
 }

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.162.2.3 $
+ * $Revision: 1.162.2.4 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -3943,22 +3943,20 @@ void Exp::addUsedLocs(LocationSet& used) {
 }
 
 // Subscript any occurrences of e with e{def} in this expression
-// When def == NULL, this means use the supplied cfg argument to subscript with the implicit assignment
-Exp* Exp::expSubscriptVar(Exp* e, Statement* def, Cfg* cfg) {
-	ExpSubscripter es(e, def, cfg);
-	Statement* oldDef = cfg->preUpdate(this);
+Exp* Exp::expSubscriptVar(Exp* e, Statement* def /*, Cfg* cfg*/) {
+	ExpSubscripter es(e, def /*, cfg*/);
 	return accept(&es);
 }
 
 // Subscript any occurrences of e with e{0} in this expression
 // Note: with implicit assignments, we don't have NULL references any more
-Exp* Exp::expSubscriptVarImp(Exp* e, Cfg* cfg) {
-	return expSubscriptVar(e, cfg->findImplicitAssign(e), cfg);
+Exp* Exp::expSubscriptVarImp(Exp* e /*, Cfg* cfg*/) {
+	return expSubscriptVar(e, NULL /*cfg->findImplicitAssign(e), cfg */);
 }
 
 // Subscript any terminals in this expression (with their implicit assignments, of course)
-Exp* Exp::expSubscriptAllImp(Cfg* cfg) {
-	return expSubscriptVar(NULL, NULL, cfg);
+Exp* Exp::expSubscriptAllImp(/*Cfg* cfg*/) {
+	return expSubscriptVar(new Terminal(opWild), NULL /* was NULL, NULL, cfg */);
 }
 
 class ConstMemo : public Memo {

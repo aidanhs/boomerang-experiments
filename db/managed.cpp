@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.11.4.1 $
+ * $Revision: 1.11.4.2 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -321,11 +321,11 @@ bool LocationSet::findDifferentRef(RefExp* e, Exp *&dr) {
 }
 
 // Add a subscript (to definition d) to each element
-void LocationSet::addSubscript(Statement* d, Cfg* cfg) {
+void LocationSet::addSubscript(Statement* d /* , Cfg* cfg */) {
 	std::set<Exp*, lessExpStar>::iterator it;
 	std::set<Exp*, lessExpStar> newSet;
 	for (it = sset.begin(); it != sset.end(); it++)
-		newSet.insert((*it)->expSubscriptVar(*it, d, cfg));
+		newSet.insert((*it)->expSubscriptVar(*it, d /* , cfg */));
 	sset = newSet;			// Replace the old set!
 	// Note: don't delete the old exps; they are copied in the new set
 }

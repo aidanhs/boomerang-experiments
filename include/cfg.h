@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.65.4.3 $
+ * $Revision: 1.65.4.4 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -602,11 +602,7 @@ class Cfg {
 	 * the same location.
 	 */
 
-typedef struct {
-	Statement*	s;
-	int			count;
-} ImpInfo;
-	std::map<Exp*, ImpInfo, lessExpStar> implicitMap;
+	std::map<Exp*, Statement*, lessExpStar> implicitMap;
 
 	/******************** Dominance Frontier Data *******************/
 
@@ -1042,14 +1038,6 @@ public:
 		 */
 		Statement* findTheImplicitAssign(Exp* x);		// Find the existing implicit assign for x
 		Statement* findImplicitAssign(Exp* x);			// Find or create an implicit assign for x
-		// These two are for keeping the map of implicit assignments correct. If you propagate into an expression
-		// such that it changes (e.g. propagate r28=r28{0}-4 into m[r28{3}], or even subscript m[r28] to m[r28{0}],
-		// you beed to call preUpdate before the change, and postUpdate after the change.
-		// The reason is that the position in the map depends on details of the expression, and updating invalidates
-		// the position in the map. As a result, you end up with many copies of the same expression in the map;
-		// the whole purpose of the map is to prevent this.
-		Statement* preUpdate(Exp* x);
-		void	postUpdate(Exp* x, Statement* def);
 
 		/*
 	 	 * Dominance frontier and SSA code
