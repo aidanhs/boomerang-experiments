@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.86 $
+ * $Revision: 1.86.2.1 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1508,7 +1508,7 @@ char* BasicBlock::getStmtNumber() {
 	return ret;
 } 
 
-// Prepend an expression (usually an assignment representing a phi function)
+// Prepend an assignment (usually a PhiAssign or ImplicitAssign)
 // Proc is the enclosing Proc
 void BasicBlock::prependStmt(Statement* s, UserProc* proc) {
 	// Check the first RTL (if any)
@@ -1522,7 +1522,7 @@ void BasicBlock::prependStmt(Statement* s, UserProc* proc) {
 			return;
 		}
 	}
-	// Otherwise, prepent a new RTL
+	// Otherwise, prepend a new RTL
 	std::list<Statement*> listStmt;
 	listStmt.push_back(s);
 	RTL* rtl = new RTL(0, &listStmt);

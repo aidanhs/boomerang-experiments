@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207 $
+ * $Revision: 1.207.2.1 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -371,7 +371,7 @@ void Proc::matchParams(std::list<Exp*>& actuals, UserProc& caller,
 		currSize = ty.getSize() / 8 / intSize;	// Current size in slots
 		// Ensure that small types still occupy one slot minimum
 		if (currSize == 0) currSize = 1;
-//cout << "matchParams: Proc " << name << ": formal " << *it << ", actual "; if (ita != actuals.end()) cout << *ita; cout << std::endl;	 // HACK
+//cout << "matchParams: Proc " << name << ": formal " << *it << ", actual "; if (ita != actuals.end()) cout << *ita; cout << std::endl;	 // Hack
 		// We need to find the subset of actuals with the same slot number
 		std::list<Exp*>::iterator itst = ita;	   // Remember start of this set
 		int numAct = 0;							// The count of this set
@@ -931,7 +931,8 @@ void UserProc::numberStatements(int& stmtNum) {
 	BasicBlock::rtlit rit; StatementList::iterator sit;
 	for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
 		for (Statement* s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit))
-			s->setNumber(++stmtNum);
+			if (!s->isImplicit())		// Don't renumber implicits (remain number 0)
+				s->setNumber(++stmtNum);
 	}
 }
 
@@ -1118,7 +1119,6 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	printXML();
 
-	// Is this needed here now? MVE
 	if (Boomerang::get()->noDecompile) {
 		decompiled = true;
 		return cycleSet;
@@ -1147,9 +1147,6 @@ std::set<UserProc*>* UserProc::decompile() {
 		cfg->renameBlockVars(0, depth);
 
 		printXML();
-
-		if (Boomerang::get()->noDecompile)
-			continue;
 
 		// Print if requested
 		if (VERBOSE) {		// was if debugPrintSSA
@@ -1283,12 +1280,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		}
 
 		Boomerang::get()->alert_decompile_afterPropagate(this, depth);
-	}
 
-	if (Boomerang::get()->noDecompile) {
-		decompiled = true;
-		Boomerang::get()->alert_end_decompile(this);
-		return cycleSet;
 	}
 
 	// Check for indirect jumps or calls not already removed by propagation of
@@ -1302,6 +1294,17 @@ std::set<UserProc*>* UserProc::decompile() {
 		Analysis a;
 		a.analyse(this);		// Get rid of this soon
 		return decompile();	 // Restart decompiling this proc
+	}
+
+	// Data flow based type analysis
+	if (DFA_TYPE_ANALYSIS) {
+		if (VERBOSE || DEBUG_TA)
+			LOG << "=== Start Data-flow-based Type Analysis ===\n";
+		do
+			dfaTypeAnalysis();
+		while (ellipsisProcessing());
+		if (VERBOSE || DEBUG_TA)
+			LOG << "=== End Type Analysis ===\n";
 	}
 
 	// Only remove unused statements after decompiling as much as possible of
@@ -3598,61 +3601,75 @@ void UserProc::dfaTypeAnalysis() {
 	StatementList stmts;
 	getStatements(stmts);
 	StatementList::iterator it;
-	for (int i=0; i < DFA_ITER_LIMIT; i++) {
-		bool ch = false;
+	bool ch;
+	int iter;
+	for (iter = 1; iter <= DFA_ITER_LIMIT; iter++) {
+		ch = false;
 		for (it = stmts.begin(); it != stmts.end(); it++) {
 			(*it)->dfaTypeAnalysis(ch);	  
 		}
-		if (!ch) {
+		if (!ch)
 			// No more changes: round robin algorithm terminates
-			if (DEBUG_TA) {
-				LOG << "\n *** Results for Data flow based Type Analysis ***\n";
-				LOG << i+1 << " iterations\n";
-				for (it = stmts.begin(); it != stmts.end(); it++) {
-					Statement* s = *it;
-					Type* t = s->getType();
-					LOG << s << " allocated type " << (t ? t->getCtype() : "NULL") << "\n";
-				}
-				LOG << "\n *** End results for Data flow based Type Analysis ***\n";
-				printToLog();
-				LOG << " *** End print IR after Type Analysis ***\n\n";
+			break;
+	}
+	if (ch)
+		LOG << "**** Iteration limit exceeded for dfaTypeAnalysis of procedure " << getName() << " ****\n";
+
+	if (DEBUG_TA) {
+		LOG << "\n *** Results for Data flow based Type Analysis ***\n";
+		LOG << iter << " iterations\n";
+		for (it = stmts.begin(); it != stmts.end(); it++) {
+			Statement* s = *it;
+			Type* t = s->getType();
+			LOG << s << "\n";			// Print the statement; has dest type
+			// Now print type for each constant in this Statement
+			std::list<Const*> lc;
+			std::list<Const*>::iterator cc;
+			s->findConstants(lc);
+			if (lc.size()) {
+				LOG << "       ";
+				for (cc = lc.begin(); cc != lc.end(); cc++)
+					LOG << (*cc)->getType()->getCtype() << " " << *cc << "  ";
+				LOG << "\n";
 			}
-			// Now use the type information gathered
-			Prog* prog = getProg();
-			for (it = stmts.begin(); it != stmts.end(); it++) {
-				Statement* s = *it;
-				Type* t = s->getType();
-				// Locations
-				// ...
-				// Constants
-				std::list<Const*>lc;
-				s->findConstants(lc);
-				std::list<Const*>::iterator cc;
-				for (cc = lc.begin(); cc != lc.end(); cc++) {
-					Const* con = (Const*)*cc;
-					Type* t = con->getType();
-					int val = con->getInt();
-					if (t && t->isPointer()) {
-						PointerType* pt = t->asPointer();
-						if (pt->getPointsTo()->resolvesToChar()) {
-							// Convert to a string
-							char* str = prog->getStringConstant(val, true);
-							if (str) {
-								// Make a string
-								con->setStr(escapeStr(str));
-								con->setOper(opStrConst);
-							}
-						}
+		}
+		LOG << "\n *** End results for Data flow based Type Analysis ***\n\n";
+	}
+
+	// Now use the type information gathered
+	Prog* prog = getProg();
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		Statement* s = *it;
+		//Type* t = s->getType();
+		// Locations
+		// ...
+		// Constants
+		std::list<Const*>lc;
+		s->findConstants(lc);
+		std::list<Const*>::iterator cc;
+		for (cc = lc.begin(); cc != lc.end(); cc++) {
+			Const* con = (Const*)*cc;
+			Type* t = con->getType();
+			int val = con->getInt();
+			if (t && t->isPointer()) {
+				PointerType* pt = t->asPointer();
+				if (pt->getPointsTo()->resolvesToChar()) {
+					// Convert to a string
+					char* str = prog->getStringConstant(val, true);
+					if (str) {
+						// Make a string
+						con->setStr(escapeStr(str));
+						con->setOper(opStrConst);
 					}
 				}
 			}
-			return;
 		}
 	}
-	LOG << "**** Iteration limit " << DFA_ITER_LIMIT << " exceeded for dfaTypeAnalysis of procedure " << getName() << " ****\n";
+
 	if (VERBOSE) {
+		LOG << "*** After application of DFA Type Analysis ***\n";
 		printToLog();
-		LOG << " *** End print IR after Type Analysis ***\n\n";
+		LOG << "*** End application of DFA Type Analysis ***\n";
 	}
 }
 

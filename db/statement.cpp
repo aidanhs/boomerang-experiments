@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126 $
+ * $Revision: 1.126.2.1 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -272,8 +272,9 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth)
 				// Can propagate TO this (if memory depths are suitable)
 				Statement* def;
 				def = ((RefExp*)e)->getRef();
-				if (def == NULL)
-					// Can't propagate statement "0"
+//				if (def == NULL)
+				if (def->isImplicit())
+					// Can't propagate statement "0" (implicit assignments)
 					continue;
 				if (def == this)
 					// Don't propagate to self! Can happen with %pc's
@@ -362,10 +363,8 @@ bool Statement::doPropagateTo(int memDepth, Statement* def, bool& convert) {
             Boomerang::get()->numToPropagate--;
     }
 
-    if (VERBOSE) {
-        LOG << "Propagating " << def << "\n"
-            << "       into " << this << "\n";
-    }
+    if (VERBOSE)
+        LOG << "Propagating " << def << "\n" << "       into " << this << "\n";
     convert |= replaceRef(def);
     // simplify is costly... done once above
     // simplify();
@@ -1817,6 +1816,8 @@ void CallStatement::simplify() {
 	for (i = 0; i < implicitArguments.size(); i++) {
 		implicitArguments[i] = implicitArguments[i]->simplifyArith()->simplify();
 	}
+
+	if (DFA_TYPE_ANALYSIS) return;
 	for (i = 0; i < returns.size(); i++) {
 		
 		if (returns[i] == NULL)
@@ -2903,6 +2904,9 @@ Assign::Assign(Assign& o) : Assignment(lhs->clone()) {
 	if (o.type)	 type  = o.type->clone();  else type  = NULL;
 	if (o.guard) guard = o.guard->clone(); else guard = NULL;
 }
+ImplicitAssign::ImplicitAssign(ImplicitAssign& o) : Assignment(lhs->clone()) {kind = STMT_IMPASSIGN;}
+// The first virtual function (here the destructor) can't be in statement.h file for gcc
+ImplicitAssign::~ImplicitAssign() {}
 
 Statement* Assign::clone() {
 	Assign* a = new Assign(type == NULL ? NULL : type->clone(),
@@ -2920,11 +2924,19 @@ Statement* PhiAssign::clone() {
 	return pa;
 }
 
+Statement* ImplicitAssign::clone() {
+	ImplicitAssign* ia = new ImplicitAssign(type, lhs);
+	return ia;
+}
+
 // visit this Statement
 bool Assign::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
 bool PhiAssign::accept(StmtVisitor* visitor) {
+	return visitor->visit(this);
+}
+bool ImplicitAssign::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
 
@@ -3233,7 +3245,7 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
 		Exp* subsub1 = ((Unary*)lhs)->getSubExp1();
 		((Unary*)lhs)->setSubExp1ND(subsub1->searchReplaceAll(from, to, changeleft));
 	}
-	//assert(changeright || changeleft);	// HACK!
+	//assert(changeright || changeleft);	// Check this
 	if (!changeright && !changeleft) {
 		// Could be propagating %flags into %CF
 		Exp* baseFrom = ((RefExp*)from)->getSubExp1();
@@ -3582,6 +3594,14 @@ bool PhiAssign::accept(StmtExpVisitor* v) {
 	return ret;
 }
 
+bool ImplicitAssign::accept(StmtExpVisitor* v) {
+	bool override;
+	bool ret = v->visit(this, override);
+	if (override) return ret;
+	if (ret && lhs) ret = lhs->accept(v->ev);
+	return ret;
+}
+
 
 bool GotoStatement::accept(StmtExpVisitor* v) {
 	bool override;
@@ -3671,6 +3691,16 @@ bool PhiAssign::accept(StmtModifier* v) {
 	if (recur) lhs = lhs->accept(v->mod);
 	if (VERBOSE && v->mod->isMod())
 		LOG << "PhiAssign changed: now " << this << "\n";
+	return true;
+}
+
+bool ImplicitAssign::accept(StmtModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	v->mod->clearMod();
+	if (recur) lhs = lhs->accept(v->mod);
+	if (VERBOSE && v->mod->isMod())
+		LOG << "ImplicitAssign changed: now " << this << "\n";
 	return true;
 }
 
@@ -3852,7 +3882,7 @@ void PhiAssign::simplify() {
 		bool onlyOneNotThis = true;
 		Statement *notthis = (Statement*)-1;
 		for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
-			if (*uu == NULL || !(*uu)->isPhi() || (*uu) != this)
+			if (*uu == NULL || (*uu)->isImplicit() || !(*uu)->isPhi() || (*uu) != this)
 				if (notthis != (Statement*)-1) {
 					onlyOneNotThis = false;
 					break;
@@ -3881,8 +3911,7 @@ void PhiAssign::simplifyRefs() {
 			if (((RefExp*)(*uu)->getRight())->getRef() == this) {
 				// ... then *uu can be removed
 				if (VERBOSE)
-					LOG << "removing statement " << *uu << " from phi at " 
-						<< number << "\n";
+					LOG << "removing statement " << *uu << " from phi at " << number << "\n";
 				uu = stmtVec.remove(uu);
 				continue;
 			}

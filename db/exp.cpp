@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.162 $
+ * $Revision: 1.162.2.1 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -1479,7 +1479,7 @@ Exp* Exp::searchReplace(Exp* search, Exp* replace, bool& change)
  *					 "this" will be returned
  * NOTE:			It is possible with wildcards that in very unusual
  *					circumstances a replacement will be made to something that
- *					is already ;//deleted.
+ *					is already deleted.
  * NOTE:			Replacements are cloned. Caller to delete search and replace
  * PARAMETERS:		search:	 ptr to ptr to Exp we are searching for
  *					replace: ptr to Exp to replace it with

@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14 $
+ * $Revision: 1.14.2.1 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -668,8 +668,78 @@ bool StmtConstCaster::visit(BoolAssign *stmt) {
 	return !ecc->isChanged();
 }
 
+bool StmtExpVisitor::visit(Assign *stmt, bool& override) {
+	Exp* e = stmt->getLeft();
+	e->accept(ev);
+	e = stmt->getRight();
+	e->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(PhiAssign *stmt, bool& override) {
+	Exp* e = stmt->getLeft();
+	e->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(ImplicitAssign *stmt, bool& override) {
+	Exp* e = stmt->getLeft();
+	e->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(BoolAssign *stmt, bool& override) {
+	Exp* e = stmt->getLeft();
+	e->accept(ev);
+	e = stmt->getCondExpr();
+	e->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(GotoStatement *stmt, bool& override) {
+	Exp* e = stmt->getDest();
+	e->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(BranchStatement *stmt, bool& override) {
+	Exp* e = stmt->getDest();
+	e->accept(ev);
+	e = stmt->getCondExpr();
+	e->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(CaseStatement *stmt, bool& override) {
+	SWITCH_INFO* si = stmt->getSwitchInfo();
+	if (si) {
+		si->pSwitchVar->accept(ev);
+	}
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(CallStatement *stmt, bool& override) {
+	std::vector<Exp*> args;
+	args = stmt->getArguments();
+	int i, n = args.size();
+	for (i=0; i < n; i++)
+		args[i]->accept(ev);
+	std::vector<Exp*>& impargs = stmt->getImplicitArguments();
+	n = impargs.size();
+	for (i=0; i < n; i++)
+		impargs[i]->accept(ev);
+	std::vector<Exp*>& returns = stmt->getReturns();
+	n = returns.size();
+	for (i=0; i < n; i++)
+		returns[i]->accept(ev);
+	override = false; return true;
+}
+bool StmtExpVisitor::visit(ReturnStatement *stmt, bool& override) {
+	std::vector<Exp*>& returns = stmt->getReturns();
+	int i, n = returns.size();
+	for (i=0; i < n; i++)
+		returns[i]->accept(ev);
+	override = false; return true;
+}
+
 // This is the code (apart from definitions) to find all constants in a Statement
 bool ConstFinder::visit(Const* e) {
 	lc.push_back(e);
 	return true;
+}
+bool ConstFinder::visit(Location* e, bool& override) {
+		return false;		// Don't treat register numbers as typable constants
 }

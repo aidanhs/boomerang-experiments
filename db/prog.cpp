@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112 $
+ * $Revision: 1.112.2.1 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -934,8 +934,9 @@ void Prog::decompile() {
 	}
 	if (Boomerang::get()->conTypeAnalysis)
 		conTypeAnalysis();
-	if (Boomerang::get()->dfaTypeAnalysis)
-		dfaTypeAnalysis();
+	// DFA type analysis performed much earlier now (in decompile())
+	//if (Boomerang::get()->dfaTypeAnalysis)
+	//	dfaTypeAnalysis();
 
 
 	if (VERBOSE)

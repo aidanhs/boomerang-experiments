@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5 $
+ * $Revision: 1.5.2.1 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -277,8 +277,6 @@ void PhiAssign::dfaTypeAnalysis(bool& ch) {
 }
 
 void Assign::dfaTypeAnalysis(bool& ch) {
-if (number == 6)
- std::cerr << "HACK!\n";
 	Type* tr = rhs->ascendType();
 	type = type->meetWith(tr, ch);
 	rhs->descendType(type, ch);
@@ -416,6 +414,7 @@ Type* deltaDifference(Type* ta, Type* tb) {
 //	//	//	//	//	//	//	//	//	//	//
 
 Type* Binary::ascendType() {
+	if (op == opFlagCall) return new VoidType;
 	Type* ta = subExp1->ascendType();
 	Type* tb = subExp2->ascendType();
 	switch (op) {
@@ -497,6 +496,7 @@ Type* TypedExp::ascendType() {
 //	//	//	//	//	//	//	//	//	//	//
 
 void Binary::descendType(Type* parentType, bool& ch) {
+	if (op == opFlagCall) return;
 	Type* ta = subExp1->ascendType();
 	Type* tb = subExp2->ascendType();
 	switch (op) {

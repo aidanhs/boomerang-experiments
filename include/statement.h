@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63 $
+ * $Revision: 1.63.2.1 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -176,6 +176,8 @@ virtual bool	isDefinition() = 0;
 					kind == STMT_IMPASSIGN || kind == STMT_BOOLASSIGN;}
 	// true if this statement is a phi assignment
 	bool		isPhi() {return kind == STMT_PHIASSIGN; }
+	// true if this statement is an implicit assignment
+	bool		isImplicit() {return kind == STMT_IMPASSIGN;}
 
 	// true if this statment is a flags assignment
 	bool		isFlagAssgn();
@@ -568,33 +570,41 @@ protected:
 // looking in its defining Assignment
 class ImplicitAssign : public Assignment {
 public:
-	// Constructor, subexpression
-				ImplicitAssign(Exp* lhs)
-				  : Assignment(lhs) {kind = STMT_IMPASSIGN;}
-	// Constructor, type, and subexpression
+		// Constructor, subexpression
+				ImplicitAssign(Exp* lhs) : Assignment(lhs) {kind = STMT_IMPASSIGN;}
+		// Constructor, type, and subexpression
 				ImplicitAssign(Type* ty, Exp* lhs)
 				  : Assignment(ty, lhs) {kind = STMT_IMPASSIGN; }
-	// Copy constructor
+		// Copy constructor
 				ImplicitAssign(ImplicitAssign& o);
-	// Destructor
-virtual			~ImplicitAssign() {}
+		// Destructor
+virtual			~ImplicitAssign();
 
-	// Clone
+		// Clone
 virtual Statement* clone();
 
-	// inline any constants in the statement
+		// inline any constants in the statement
 virtual void	processConstants(Prog *prog);
 
-	// general search
+		// general search
 virtual bool	search(Exp* search, Exp*& result);
 virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
 
-	// general search and replace
+		// general search and replace
 virtual bool	searchAndReplace(Exp *search, Exp *replace);
  
 virtual void	print(std::ostream& os);
 
-};	// class ImplicitAssign
+		// Statement and Assignment functions
+virtual Exp*	getRight() { return NULL; }
+virtual void	simplify() {}
+
+		// Visitation
+virtual	bool	accept(StmtVisitor* visitor);
+virtual bool	accept(StmtExpVisitor* visitor);
+virtual bool	accept(StmtModifier* visitor);
+
+};		// class ImplicitAssign
 
 /*==============================================================================
  * BoolAssign represents "setCC" type instructions, where some destination is
@@ -611,46 +621,39 @@ public:
 				BoolAssign(int size);
 virtual			~BoolAssign();
 
-	// Make a deep copy, and make the copy a derived object if needed.
+		// Make a deep copy, and make the copy a derived object if needed.
 virtual Statement* clone();
 
-	// Accept a visitor to this RTL
+		// Accept a visitor to this Statement
 virtual bool	accept(StmtVisitor* visitor);
 virtual bool	accept(StmtExpVisitor* visitor);
 virtual bool	accept(StmtModifier* visitor);
 
-	// Set and return the BRANCH_TYPE of this scond as well as whether the
-	// floating point condition codes are used.
-	void		setCondType(BRANCH_TYPE cond, bool usesFloat = false);
-	BRANCH_TYPE getCond(){return jtCond;}
-	bool		isFloat(){return bFloat;}
-	void		setFloat(bool b) { bFloat = b; }
+		// Set and return the BRANCH_TYPE of this scond as well as whether the
+		// floating point condition codes are used.
+		void	setCondType(BRANCH_TYPE cond, bool usesFloat = false);
+		BRANCH_TYPE getCond(){return jtCond;}
+		bool	isFloat(){return bFloat;}
+		void	setFloat(bool b) { bFloat = b; }
 
-	// Set and return the Exp representing the HL condition
-	Exp*		getCondExpr();
-	void		setCondExpr(Exp* pss);
-	// As above, no delete (for subscripting)
-	void		setCondExprND(Exp* e) { pCond = e; }
+		// Set and return the Exp representing the HL condition
+		Exp*	getCondExpr();
+		void	setCondExpr(Exp* pss);
+		// As above, no delete (for subscripting)
+		void	setCondExprND(Exp* e) { pCond = e; }
 
-	int			getSize() {return size;}	// Return the size of the assignment
-	void		makeSigned();
+		int		getSize() {return size;}	// Return the size of the assignment
+		void	makeSigned();
 
 virtual void	print(std::ostream& os = std::cout);
 
-#if 0
-	// Used for type analysis. Stores type information that
-	// can be gathered from the RTL instruction inside a
-	// data structure within BBBlock inBlock
-	void storeUseDefineStruct(BBBlock& inBlock);	   
-#endif
-
-	// code generation
+		// code generation
 virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-	// simplify all the uses/defs in this RTL
+		// simplify all the uses/defs in this RTL
 virtual void	simplify();
 
-	// Statement functions
+		// Statement functions
 virtual bool	isDefinition() { return true; }
 virtual void	getDefinitions(LocationSet &def);
 virtual Exp*	getRight() { return getCondExpr(); }

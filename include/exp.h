@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.114 $
+ * $Revision: 1.114.2.1 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -350,7 +350,7 @@ virtual	void	descendType(Type* parentType, bool& ch) {assert(0);}
 
 protected:
 		friend class XMLProgParser;
-};		// Class Exp
+};		// class Exp
 
 // Not part of the Exp class, but logically belongs with it:
 std::ostream& operator<<(std::ostream& os, Exp* p);	 // Print the Exp poited to by p
@@ -833,7 +833,7 @@ virtual void	descendType(Type* parentType, bool& ch);
 protected:
 	RefExp() : Unary(opSubscript), def(NULL) { }
 	friend class XMLProgParser;
-};	// Class RefExp
+};	// class RefExp
 
 #if 0
 /*==============================================================================
@@ -973,6 +973,6 @@ virtual void	readMemo(Memo *m, bool dec);
 protected:
 	friend class XMLProgParser;
 				Location(OPER op) : Unary(op), proc(NULL), ty(NULL) { }
-};	// Class Location
+};	// class Location
 	
 #endif // __EXP_H__
