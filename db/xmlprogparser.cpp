@@ -435,7 +435,7 @@ void XMLProgParser::addToContext_userproc(Context *c, int e)
         case e_callee:
             break;
         case e_defines:
-            userproc->addDef(stack.front()->loc);   // Was ->exp
+            userproc->addDef(stack.front()->loc);
             break;
         case e_cfg:
             userproc->setCFG(stack.front()->cfg);
@@ -1426,7 +1426,7 @@ void XMLProgParser::start_defines(const char **attr)
 
 void XMLProgParser::addToContext_defines(Context *c, int e)
 {
-    c->exp = stack.front()->exp;
+    c->loc = stack.front()->loc;
 }
 
 void XMLProgParser::start_lhs(const char **attr)
@@ -1471,7 +1471,7 @@ void XMLProgParser::start_returnexp(const char **attr)
 
 void XMLProgParser::addToContext_returnexp(Context *c, int e)
 {
-    c->exp = stack.front()->exp;
+    c->loc = stack.front()->loc;
 }
 
 void XMLProgParser::start_cond(const char **attr)
