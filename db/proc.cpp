@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.201.2.3 $
+ * $Revision: 1.201.2.4 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3635,6 +3635,16 @@ void UserProc::castConst(int num, Type* ty) {
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		if ((*it)->castConst(num, ty))
 			break;
+	}
+}
+
+void UserProc::ellipsisTruncation() {
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		CallStatement* call = dynamic_cast<CallStatement*>(*it);
+		if (call) call->ellipsisTruncation();
 	}
 }
 

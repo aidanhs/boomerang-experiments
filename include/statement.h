@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.60.2.2 $
+ * $Revision: 1.60.2.3 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -174,18 +174,14 @@ virtual bool	isDefinition() = 0;
 	// true if this statement is a any kind of assignment
 	bool		isAssignment() {return kind == STMT_ASSIGN || kind == STMT_PHIASSIGN ||
 					kind == STMT_IMPASSIGN || kind == STMT_BOOLASSIGN;}
-
-virtual bool	isGoto() { return kind == STMT_GOTO; }
-virtual bool	isBranch() { return kind == STMT_BRANCH; }
-
-	// true if this statement is an ordinary (non flags) assignment
-	bool		isOrdinaryAssign();
+	// true if this statement is a phi assignment
+	bool		isPhi() {return kind == STMT_PHIASSIGN; }
 
 	// true if this statment is a flags assignment
 	bool		isFlagAssgn();
 
-	// true if this statement is a phi assignment
-	bool		isPhi() {return kind == STMT_PHIASSIGN; }
+virtual bool	isGoto() { return kind == STMT_GOTO; }
+virtual bool	isBranch() { return kind == STMT_BRANCH; }
 
 	// true if this statement is a call
 	bool		isCall() { return kind == STMT_CALL; }
@@ -1052,6 +1048,7 @@ virtual void	fromSSAform(igraph& ig);
 
 virtual	Type*	getType() {return returnType;}		// MVE: TEMPORARY
 virtual	void	setType(Type* t) { returnType = t;}	// MVE: TEMPORARY
+		void	ellipsisTruncation();		// E.g. remove excess arguments from printf etc
 
 protected:
 virtual bool	doReplaceRef(Exp* from, Exp* to);

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.119.2.2 $
+ * $Revision: 1.119.2.3 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -169,15 +169,6 @@ std::ostream& operator<<(std::ostream& os, Statement* s) {
 	if (s == NULL) {os << "NULL "; return os;}
 	s->print(os);
 	return os;
-}
-
-bool Statement::isOrdinaryAssign() {
-	if (kind != STMT_ASSIGN)
-		return false;
-	OPER op = ((Assign*)this)->getRight()->getOper();
-	if (op == opFlagCall) return false;
-	if (op == opPhi) return false;
-	return true;
 }
 
 bool Statement::isFlagAssgn() {
@@ -2331,33 +2322,62 @@ void CallStatement::processConstants(Prog *prog) {
 		}
 	}
 
+	ellipsisTruncation();
+}
+
+void CallStatement::ellipsisTruncation() {
 	// This code was in CallStatement::doReplaceRef()
-	if (getDestProc() && getDestProc()->getSignature()->hasEllipsis()) {
-		// functions like printf almost always have too many args
-		std::string name(getDestProc()->getName());
-		if ((name == "printf" || name == "scanf") && getArgumentExp(0)->isStrConst()) {
-			char *str = ((Const*)getArgumentExp(0))->getStr();
-			// actually have to parse it
-			int n = 1;		// Number of %s plus 1 = number of args
-			char *p = str;
-			while ((p = strchr(p, '%'))) {
-				// special hack for scanf
-				if (name == "scanf") {
-					setArgumentExp(n, new Unary(opAddrOf, Location::memOf(getArgumentExp(n), proc)));
-				}
-				p++;
-				switch(*p) {
-					case '%':
-						break;
-						// TODO: there's type information here
-					default:
-						n++;
-				}
-				p++;
+	if (getDestProc() == NULL || !getDestProc()->getSignature()->hasEllipsis())
+		return;
+	// functions like printf almost always have too many args
+	std::string name(getDestProc()->getName());
+	int format;
+	if ((name == "printf" || name == "scanf")) format = 0;
+	else if (name == "sprintf" || name == "fprintf" || name == "sscanf") format = 1;
+	else return;
+	char* formatStr = NULL;
+	Exp* formatExp = getArgumentExp(format);
+	if (formatExp->isSubscript()) {
+		// Maybe it's defined to be a Const string
+		Statement* def = ((RefExp*)formatExp)->getRef();
+if (def == NULL) return;	// Waiting for ImplicitAssigns
+		if (def->isAssign()) {
+			// This would be unusual; propagation would normally take care of this
+			Exp* rhs = ((Assign*)def)->getRight();
+			if (rhs == NULL || !rhs->isStrConst()) return;
+			formatStr = ((Const*)rhs)->getStr();
+		} else if (def->isPhi()) {
+			// More likely. Example: switch_gcc. Only need ONE candidate format string
+			PhiAssign* pa = (PhiAssign*)def;
+			int n = pa->getNumRefs();
+			for (int i=0; i < n; i++) {
+				def = pa->getAt(i);
+if (def == NULL) continue;
+				Exp* rhs = ((Assign*)def)->getRight();
+				if (rhs == NULL || !rhs->isStrConst()) continue;
+				formatStr = ((Const*)rhs)->getStr();
+				break;
 			}
-			setNumArguments(n);
+			if (formatStr == NULL) return;
+		} else return;
+	} else if (formatExp->isStrConst()) {
+		formatStr = ((Const*)formatExp)->getStr();
+	} else return;
+	// actually have to parse it
+	int n = 1;		// Number of %'s plus 1 = number of args
+	char *p = formatStr;
+	while ((p = strchr(p, '%'))) {
+		// special hack for scanf
+		// Mike: do we want this here?
+		if (name == "scanf" || name.substr(1, 5) == "scanf") {
+			setArgumentExp(format+n, new Unary(opAddrOf, Location::memOf(getArgumentExp(n), proc)));
 		}
+		p++;
+		if (*p != '%')		// Don't count %%
+			n++;
+		p++;
 	}
+	setNumArguments(format + n);
 }
 
 /**********************************

@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.99.2.1 $
+/* $Revision: 1.99.2.2 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *				locals for a procedure.
 */
@@ -491,6 +491,7 @@ public:
 	void insertStatementAfter(Statement* s, Statement* a);
 	void conTypeAnalysis(Prog* prog);
 	void dfaTypeAnalysis(Prog* prog);
+	void ellipsisTruncation();		// e.g. trim printf to appropriate number of parameters
 
 	// For the final pass of removing returns that are never used
 	typedef std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
