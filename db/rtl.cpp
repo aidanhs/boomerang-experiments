@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.26 $
+ * $Revision: 1.26.2.1 $
  * 
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
@@ -433,16 +433,17 @@ void RTL::clear() {
  *                  when deleting this Exp)
  *                  If size == -1, assumes there is already at least one assign-
  *                    ment in this RTL
- * PARAMETERS:      pLhs: ptr to Exp to place on LHS
+ * PARAMETERS:      pLhs: ptr to Loc to place on LHS
  *                  pRhs: ptr to Exp to place on the RHS
  *                  prep: true if prepend (else append)
  *                  type: type of the transfer, or NULL
  * RETURNS:         <nothing>
  *============================================================================*/
-void RTL::insertAssign(Exp* pLhs, Exp* pRhs, bool prep,
+void RTL::insertAssign(Location* pLhs, Exp* pRhs, bool prep,
                         Type* type /*= NULL */) {
     // Generate the assignment expression
-    Assign* asgn = new Assign(type, pLhs, pRhs);
+    pLhs->setType(type);
+    Assign* asgn = new Assign(pLhs, pRhs);
     if (prep)
         prependStmt(asgn);
     else
@@ -467,7 +468,7 @@ void RTL::insertAssign(Exp* pLhs, Exp* pRhs, bool prep,
  *                    first assign this RTL
  * RETURNS:         <nothing>
  *============================================================================*/
-void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, Type* type  /* NULL */) {
+void RTL::insertAfterTemps(Location* pLhs, Exp* pRhs, Type* type  /* NULL */) {
     std::list<Statement*>::iterator it;
     // First skip all assignments with temps on LHS
     for (it = stmtList.begin(); it != stmtList.end(); it++) {
@@ -511,7 +512,7 @@ Type* RTL::getType() {
     for (it = stmtList.begin(); it != stmtList.end(); it++) {
         Statement *e = *it;
         if (e->isAssign())
-            return ((Assign*)e)->getType();
+            return ((Assign*)e)->getLeft()->getType();
     }
     return new IntegerType();   //  Default to 32 bit integer if no assignments
 }

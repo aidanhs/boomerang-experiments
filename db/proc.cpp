@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.190.2.1 $
+ * $Revision: 1.190.2.2 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -171,7 +171,7 @@ void Proc::printDetailsXML()
     int i;
     for (i = 0; i < signature->getNumParams(); i++) {
         out << "   <param name=\"" << signature->getParamName(i) << "\" "
-            << "exp=\"" << signature->getParamExp(i) << "\" "
+            << "exp=\"" << signature->getParamLoc(i) << "\" "
             << "type=\"" << signature->getParamType(i)->getCtype() << "\"";
         out << "/>\n";
     }
@@ -1754,7 +1754,7 @@ void UserProc::trimParameters(int depth) {
         referenced[i] = false;
         // We want the 
         params.push_back((Location*)
-            signature->getParamExp(i)->clone()->
+            signature->getParamLoc(i)->clone()->
             expSubscriptVar(new Terminal(opWild), NULL));
     }
     for (i = 0; i < signature->getNumImplicitParams(); i++) {
@@ -1789,7 +1789,7 @@ void UserProc::trimParameters(int depth) {
                 Exp *p, *pe;
                 if (i < nparams) {
                     p = Location::param(signature->getParamName(i), this);
-                    pe = signature->getParamExp(i);
+                    pe = signature->getParamLoc(i);
                 } else {
                     p = Location::param(signature->getImplicitParamName(
                                 i - nparams), this);
@@ -2232,9 +2232,9 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
     for (it = stmts.begin(); it != stmts.end(); it++) {
         Statement* s = *it;
         for (int i = 0; i < signature->getNumParams(); i++) {
-            if (signature->getParamExp(i)->getMemDepth() == depth ||
+            if (signature->getParamLoc(i)->getMemDepth() == depth ||
                   depth < 0) {
-                Exp *r = signature->getParamExp(i)->clone();
+                Exp *r = signature->getParamLoc(i)->clone();
                 r = r->expSubscriptVar(new Terminal(opWild), NULL);
                 if (r->getOper() == opSubscript)
                     r = r->getSubExp1();

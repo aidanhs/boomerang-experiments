@@ -18,7 +18,7 @@
  *============================================================================*/
  
 /*
- * $Revision: 1.20 $
+ * $Revision: 1.20.2.1 $
  *
  * 27 Apr 02 - Mike: Mods for boomerang
  * 17 Jul 02 - Mike: readSSLFile resets internal state as well
@@ -517,7 +517,7 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
                     // Add a record in the map for this postvar
                     transPost& el = vars[lhs];
                     el.used = false;
-                    el.type = ((Assign*)*rt)->getType();
+                    el.type = ((Assign*)*rt)->getLeft()->getType();
                     
                     // Constuct a temporary. We should probably be smarter
                     // and actually check that it's not otherwise used here.
@@ -612,8 +612,8 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
       sr != vars.end(); sr++ ) {
         if( sr->second.used ) {
             Assign* te = new Assign(sr->second.type,
-                    sr->second.base->clone(),
-                    sr->second.tmp);
+                    (Location*) sr->second.base->clone(),
+                                sr->second.tmp);
             rts->push_back( te );
         } else {
             // The temp is either used (uncloned) in the assignment, or is

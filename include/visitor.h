@@ -9,7 +9,7 @@
  *             and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.5.2.1 $
+ * $Revision: 1.5.2.2 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *   for searching: they have the capability of stopping the recursion,
@@ -356,7 +356,6 @@ public:
                 ExpSubscripter(Exp* s, Statement* d) {
                     search = s; def = d; }
     virtual Exp* preVisit(Location *e, bool& recur);
-    virtual Exp* preVisit(Terminal *e);
     virtual Exp* preVisit(RefExp *e,   bool& recur);
 };
 

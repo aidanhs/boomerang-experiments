@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.1 $
+ * $Revision: 1.112.2.2 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1526,7 +1526,7 @@ void CallStatement::setSigArguments() {
     arguments.resize(n, NULL);
     int i;
     for (i = 0; i < n; i++) {
-        Exp *e = sig->getArgumentExp(i);
+        Exp *e = sig->getArgumentLoc(i);
         assert(e);
         arguments[i] = e->clone();
         Location *l = dynamic_cast<Location*>(e);
@@ -1537,7 +1537,7 @@ void CallStatement::setSigArguments() {
     if (sig->hasEllipsis()) {
         // Just guess 4 parameters for now
         for (int i = 0; i < 4; i++)
-            arguments.push_back(sig->getArgumentExp(
+            arguments.push_back(sig->getArgumentLoc(
                                     arguments.size())->clone());
     }
     if (procDest)
@@ -1972,14 +1972,14 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
                     for (i = 0; i < sig->getNumParams(); i++) {
                         bool gotsub = false;
                         for (unsigned j = 0; j < params.size(); j++)
-                            if (*params[j] == *sig->getParamExp(i)) {
+                            if (*params[j] == *sig->getParamLoc(i)) {
                                 newargs[i] = oldargs[j];
                                 // Got something to substitute
                                 gotsub = true;
                                 break;
                             }
                         if (!gotsub) {
-                            Exp* parami = sig->getParamExp(i);
+                            Exp* parami = sig->getParamLoc(i);
                             newargs[i] = parami->clone();
                             if (newargs[i]->getOper() == opMemOf) {
                                 newargs[i]->refSubExp1() = 
@@ -2079,7 +2079,7 @@ void CallStatement::setNumArguments(int n) {
     arguments.resize(n, NULL);
     // printf, scanf start with just 2 arguments
     for (int i = oldSize; i < n; i++) {
-        arguments[i] = procDest->getSignature()->getArgumentExp(i)->clone();
+        arguments[i] = procDest->getSignature()->getArgumentLoc(i)->clone();
     }
 }
 
@@ -2132,7 +2132,7 @@ void CallStatement::insertArguments(StatementSet& rs) {
     getBB()->getReachInAt(this, rd, 2);
     StatementSet empty;
     for (int i=0; i<num; i++) {
-        Exp* loc = sig->getArgumentExp(i)->clone();
+        Exp* loc = sig->getArgumentLoc(i)->clone();
         // Needs to be subscripted with everything that reaches the parameters
         // FIXME: need to be sensible about memory depths
         loc->updateRefs(rd, 0, rs);

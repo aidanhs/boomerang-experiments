@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.40.2.1 $
+ * $Revision: 1.40.2.2 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -26,23 +26,23 @@ class Parameter {
 private:
     Type *type;
     std::string name;
-    Exp *exp;
+    Location *loc;
 
 public: 
             Parameter(Type *type, const char *name, Exp *exp = NULL) :
-              type(type), name(name), exp(exp)  { }
-            ~Parameter() { delete type; delete exp; }
+              type(type), name(name), loc(loc)  { }
+            ~Parameter() { delete type; delete loc; }
     bool    operator==(Parameter& other);
 
     Type *getType() { return type; }
     void setType(Type *ty) { type = ty; }
     const char *getName() { return name.c_str(); }
     void setName(const char *nam) { name = nam; }
-    Exp *getExp()       { return exp; }
-    void setExp(Exp *e) { exp = e; }
+    Location *getLoc()       { return loc; }
+    void setLoc(Location *l) { loc = l; }
 protected:
     friend class XMLProgParser;
-    Parameter() : type(NULL), name(""), exp(NULL) { }
+    Parameter() : type(NULL), name(""), loc(NULL) { }
 };
 
 class ImplicitParameter : public Parameter {
@@ -73,9 +73,9 @@ public:
 
     Type *getType() { return type; }
     void setType(Type *ty) { type = ty; }
-    Exp *getExp() { return loc; }
-    Location*& getRefExp() {return loc;}
-    void setExp(Location* l) { loc = l; }
+    Location *getLoc() { return loc; }
+    Location*& getRefLoc() {return loc;}
+    void setLoc(Location* l) { loc = l; }
 protected:
     friend class XMLProgParser;
     Return() : type(NULL), loc(NULL) { }
@@ -113,7 +113,7 @@ public:
 
     // get the return location
     virtual void addReturn(Type *type, Location *l = NULL);
-    virtual void addReturn(Location *e);
+    virtual void addReturn(Location *l);
     virtual void addReturn(Return *ret) { returns.push_back(ret); }
     virtual void removeReturn(Location *e);
     virtual int getNumReturns();
@@ -122,7 +122,7 @@ public:
     void         setReturnLoc(int n, Location* l);
     virtual Type *getReturnType(int n);
     virtual void setReturnType(int n, Type *ty);
-    virtual int findReturn(Exp *e);
+    virtual int findReturn(Location* l);
     void fixReturnsWithParameters();
     void setRetType(Type *t) { rettype = t; }
 
@@ -145,13 +145,15 @@ public:
     // accessors for parameters
     virtual int getNumParams();
     virtual const char *getParamName(int n);
-    virtual Exp *getParamExp(int n);
+    virtual Location *getParamLoc(int n);
     virtual Type *getParamType(int n);
     virtual void setParamType(int n, Type *ty);
     virtual int findParam(Exp *e);
     virtual int findParam(const char *nam);
     // accessor for argument expressions
-    virtual Exp *getArgumentExp(int n);
+    // The below is the loction where arguments are copied to, so even though
+    // arguments are expressions, their locations are Locations
+    virtual Location *getArgumentLoc(int n);
     virtual bool hasEllipsis() { return ellipsis; }
     std::list<Exp*> *getCallerSave(Prog* prog);
 
@@ -179,13 +181,13 @@ public:
     // Special for Mike: find the location that conventionally holds
     // the first outgoing (actual) parameter
     // MVE: Use the below now
-    Exp* getFirstArgLoc(Prog* prog);
+    Location* getFirstArgLoc(Prog* prog);
 
     // This is like getParamLoc, except that it works before Signature::analyse
     // is called.
     // It is used only to order parameters correctly, for the common case
     // where the proc will end up using a standard calling convention
-    Exp* getEarlyParamExp(int n, Prog* prog);
+    Location* getEarlyParamExp(int n, Prog* prog);
 
     // Get a wildcard to find stack locations
     virtual Exp *getStackWildcard() { return NULL; }

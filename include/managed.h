@@ -153,11 +153,11 @@ typedef std::set<Exp*, lessExpStar>::iterator iterator;
     void substitute(Statement& s);          // Substitute the statement to all
     char* prints();                         // Print to cerr for debugging
     void  print(std::ostream& os);          // Print to os
-    // Return true if the location exists in the set
-    bool find(Location* e);
-    // Find a location with a different def, but same expression
+    // Return true if the expression exists in the set
+    bool find(Exp* e);
+    // Find a expression with a different def, but same expression
     // For example, pass r28{10}, return true if r28{20} in the set
-    bool findDifferentRef(RefExp* e, Location *&dr);
+    bool findDifferentRef(RefExp* e, Exp *&dr);
     void addSubscript(Statement* def);      // Add a subscript to all elements
 };  // class ExpressionSet
 

@@ -13,11 +13,11 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.1 $
+ * $Revision: 1.76.2.2 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
- * 02 Jan 03 - Mike: Fixed SPARC getParamExp and getArgExp
+ * 02 Jan 03 - Mike: Fixed SPARC getParamLoc and getArgExp
  */
 
 #include <assert.h>
@@ -78,8 +78,8 @@ namespace CallingConvention {
 
         virtual void addReturn(Type *type, Location *l = NULL);
         virtual void addParameter(Type *type, const char *nam = NULL, 
-                                  Exp *e = NULL);
-        virtual Exp *getArgumentExp(int n);
+                                  Location *l = NULL);
+        virtual Location *getArgumentLoc(int n);
 
         virtual Signature *promote(UserProc *p);
         virtual void getInternalStatements(StatementList &stmts);
@@ -100,7 +100,7 @@ namespace CallingConvention {
     public:
         Win32TcSignature(const char *nam);
         Win32TcSignature(Signature &old);
-        virtual Exp *getArgumentExp(int n);
+        virtual Location *getArgumentLoc(int n);
         virtual Exp *getProven(Exp* left);
         virtual Signature *clone();
 	virtual platform getPlatform() { return PLAT_PENTIUM; }
@@ -118,10 +118,10 @@ namespace CallingConvention {
             virtual bool operator==(Signature& other);
             static bool qualified(UserProc *p, Signature &candidate);
 
-            virtual void addReturn(Type *type, Exp *e = NULL);
+            virtual void addReturn(Type *type, Location *l = NULL);
             virtual void addParameter(Type *type, const char *nam = NULL, 
-                                      Exp *e = NULL);
-            virtual Exp *getArgumentExp(int n);
+                                      Location* l = NULL);
+            virtual Location *getArgumentLoc(int n);
 
             virtual Signature *promote(UserProc *p);
             virtual void getInternalStatements(StatementList &stmts);
@@ -142,10 +142,10 @@ namespace CallingConvention {
             virtual bool operator==(Signature& other);
             static bool qualified(UserProc *p, Signature &candidate);
 
-            virtual void addReturn(Type *type, Exp *e = NULL);
+            virtual void addReturn(Type *type, Location *l = NULL);
             virtual void addParameter(Type *type, const char *nam = NULL, 
-                                      Exp *e = NULL);
-            virtual Exp *getArgumentExp(int n);
+                                      Location* l = NULL);
+            virtual Location *getArgumentLoc(int n);
 
             virtual Signature *promote(UserProc *p);
             virtual Exp *getStackWildcard();
@@ -280,50 +280,48 @@ bool CallingConvention::Win32Signature::qualified(UserProc *p,
     return gotcorrectret1 && gotcorrectret2;
 }
 
-void CallingConvention::Win32Signature::addReturn(Type *type, Exp *e)
+void CallingConvention::Win32Signature::addReturn(Type *type, Location *l)
 {
     if (type->isVoid())
         return;
-    if (e == NULL) {
+    if (l == NULL) {
         if (type->isFloat())
-            e = Location::regOf(32);
+            l = Location::regOf(32);
         else 
-            e = Location::regOf(24);
+            l = Location::regOf(24);
     }
-    Signature::addReturn(type, e);
+    Signature::addReturn(type, l);
 }
     
 void CallingConvention::Win32Signature::addParameter(Type *type, 
-                             const char *nam /*= NULL*/, Exp *e /*= NULL*/)
+                             const char *nam /*= NULL*/, Location* l /*= NULL*/)
 {
-    if (e == NULL) {
-        e = getArgumentExp(params.size());
+    if (l == NULL) {
+        l = getArgumentLoc(params.size());
     }
-    Signature::addParameter(type, nam, e);
+    Signature::addParameter(type, nam, l);
 }
 
-Exp *CallingConvention::Win32Signature::getArgumentExp(int n) {
+Location *CallingConvention::Win32Signature::getArgumentLoc(int n) {
     if (n < (int)params.size())
-        return Signature::getArgumentExp(n);
+        return Signature::getArgumentLoc(n);
     Exp *esp = Location::regOf(28);
-    if (params.size() != 0 && *params[0]->getExp() == *esp)
+    if (params.size() != 0 && *params[0]->getLoc() == *esp)
         n--;
-    Exp *e = Location::memOf(new Binary(opPlus, esp, new Const((n+1) * 4)));
-    return e;
+    return Location::memOf(new Binary(opPlus, esp, new Const((n+1) * 4)));
 }
 
-Exp* CallingConvention::Win32TcSignature::getArgumentExp(int n) {
+Location* CallingConvention::Win32TcSignature::getArgumentLoc(int n) {
     if (n < (int)params.size())
-        return Signature::getArgumentExp(n);
+        return Signature::getArgumentLoc(n);
     Exp *esp = Location::regOf(28);
-    if (params.size() != 0 && *params[0]->getExp() == *esp)
+    if (params.size() != 0 && *params[0]->getLoc() == *esp)
         n--;
     if (n == 0)
         // It's the first parameter, register ecx
         return Location::regOf(25);
     // Else, it is m[esp+4n)]
-    Exp *e = Location::memOf(new Binary(opPlus, esp, new Const(n * 4)));
-    return e;
+    return Location::memOf(new Binary(opPlus, esp, new Const(n * 4)));
 }
 
 Signature *CallingConvention::Win32Signature::promote(UserProc *p)
@@ -342,7 +340,7 @@ Exp *CallingConvention::Win32Signature::getStackWildcard() {
 Exp *CallingConvention::Win32Signature::getProven(Exp *left)
 {
     int nparams = params.size();
-    if (nparams > 0 && *params[0]->getExp() == *Location::regOf(28)) {
+    if (nparams > 0 && *params[0]->getLoc() == *Location::regOf(28)) {
         nparams--;
     }
     if (left->getOper() == opRegOf && 
@@ -374,7 +372,7 @@ Exp *CallingConvention::Win32TcSignature::getProven(Exp *left)
         left->getSubExp1()->getOper() == opIntConst) {
         if (((Const*)left->getSubExp1())->getInt() == 28) {
             int nparams = params.size();
-            if (nparams > 0 && *params[0]->getExp() == *Location::regOf(28)) {
+            if (nparams > 0 && *params[0]->getLoc() == *Location::regOf(28)) {
                 nparams--;
             }
             // r28 += 4 + nparams*4 - 4   (-4 because ecx is register param)
@@ -484,36 +482,35 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p,
 #endif
 }
 
-void CallingConvention::StdC::PentiumSignature::addReturn(Type *type, Exp *e)
-{
+void CallingConvention::StdC::PentiumSignature::addReturn(Type *type,
+  Location *l) {
     if (type->isVoid())
         return;
-    if (e == NULL) {
+    if (l == NULL) {
         if (type->isFloat())
-            e = Location::regOf(32);
+            l = Location::regOf(32);
         else 
-            e = Location::regOf(24);
+            l = Location::regOf(24);
     }
-    Signature::addReturn(type, e);
+    Signature::addReturn(type, l);
 }
 
 void CallingConvention::StdC::PentiumSignature::addParameter(Type *type, 
-                             const char *nam /*= NULL*/, Exp *e /*= NULL*/)
+                             const char *nam /*= NULL*/, Location *l /*= NULL*/)
 {
-    if (e == NULL) {
-        e = getArgumentExp(params.size());
+    if (l == NULL) {
+        l = getArgumentLoc(params.size());
     }
-    Signature::addParameter(type, nam, e);
+    Signature::addParameter(type, nam, l);
 }
 
-Exp *CallingConvention::StdC::PentiumSignature::getArgumentExp(int n) {
+Location *CallingConvention::StdC::PentiumSignature::getArgumentLoc(int n) {
     if (n < (int)params.size())
-        return Signature::getArgumentExp(n);
+        return Signature::getArgumentLoc(n);
     Exp *esp = Location::regOf(28);
-    if (params.size() != 0 && *params[0]->getExp() == *esp)
+    if (params.size() != 0 && *params[0]->getLoc() == *esp)
         n--;
-    Exp *e = Location::memOf(new Binary(opPlus, esp, new Const((n+1) * 4)));
-    return e;
+    return Location::memOf(new Binary(opPlus, esp, new Const((n+1) * 4)));
 }
 
 Signature *CallingConvention::StdC::PentiumSignature::promote(UserProc *p)
@@ -609,38 +606,38 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p,
     return true;
 }
 
-void CallingConvention::StdC::SparcSignature::addReturn(Type *type, Exp *e)
+void CallingConvention::StdC::SparcSignature::addReturn(Type *type, Location* l)
 {
     if (type->isVoid())
         return;
-    if (e == NULL) {
-        e = Location::regOf(8);
+    if (l == NULL) {
+        l = Location::regOf(8);
     }
-    Signature::addReturn(type, e);
+    Signature::addReturn(type, l);
 }
 
 void CallingConvention::StdC::SparcSignature::addParameter(Type *type, 
-                             const char *nam /*= NULL*/, Exp *e /*= NULL*/)
+                             const char *nam /*= NULL*/, Location* l /*= NULL*/)
 {
-    if (e == NULL) {
-        e = getArgumentExp(params.size());
+    if (l == NULL) {
+        l = getArgumentLoc(params.size());
     }
-    Signature::addParameter(type, nam, e);
+    Signature::addParameter(type, nam, l);
 }
 
-Exp *CallingConvention::StdC::SparcSignature::getArgumentExp(int n) {
+Location *CallingConvention::StdC::SparcSignature::getArgumentLoc(int n) {
     if (n < (int)params.size())
-        return Signature::getArgumentExp(n);
-    Exp *e;
+        return Signature::getArgumentLoc(n);
+    Location *l;
     if (n >= 6) {
         // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
         // m[%esp+96], etc.
-        e = Location::memOf(new Binary(opPlus,
+        l = Location::memOf(new Binary(opPlus,
                 Location::regOf(14), // %o6 == %sp
                 new Const(92 + (n-6)*4)));
     } else
-        e = Location::regOf((int)(8 + n));
-    return e;
+        l = Location::regOf((int)(8 + n));
+    return l;
 }
  
 Signature *CallingConvention::StdC::SparcSignature::promote(UserProc *p)
@@ -824,7 +821,7 @@ void Signature::addParameter(Parameter *param)
 {
     Type *ty = param->getType();
     const char *nam = param->getName();
-    Exp *e = param->getExp();
+    Exp *e = param->getLoc();
 
     if (strlen(nam) == 0)
         nam = NULL;
@@ -869,9 +866,9 @@ const char *Signature::getParamName(int n) {
     return params[n]->getName();
 }
 
-Exp *Signature::getParamExp(int n) {
+Location *Signature::getParamLoc(int n) {
     assert(n < (int)params.size());
-    return params[n]->getExp();
+    return params[n]->getLoc();
 }
 
 Type *Signature::getParamType(int n) {
@@ -888,7 +885,7 @@ void Signature::setParamType(int n, Type *ty) {
 
 int Signature::findParam(Exp *e) {
     for (int i = 0; i < getNumParams(); i++)
-        if (*getParamExp(i) == *e)
+        if (*getParamLoc(i) == *e)
             return i;
     return -1;
 }
@@ -911,7 +908,7 @@ const char *Signature::getImplicitParamName(int n) {
 
 Exp *Signature::getImplicitParamExp(int n) {
     assert(n < (int)implicitParams.size());
-    return implicitParams[n]->getExp();
+    return implicitParams[n]->getLoc();
 }
 
 Type *Signature::getImplicitParamType(int n) {
@@ -929,25 +926,25 @@ int Signature::findImplicitParam(Exp *e) {
     return -1;
 }
 
-int Signature::findReturn(Location *e) {
+int Signature::findReturn(Location *l) {
     for (int i = 0; i < getNumReturns(); i++)
-        if (*getReturnLoc(i) == *e)
+        if (*getReturnLoc(i) == *l)
             return i;
     return -1;
 }
 
-void Signature::addReturn(Type *type, Exp *exp) {
-    assert(exp);
-    addReturn(new Return(type, exp));
+void Signature::addReturn(Type *type, Location* loc) {
+    assert(loc);
+    addReturn(new Return(type, loc));
 }
 
-void Signature::addReturn(Exp *exp) {
-    addReturn(new IntegerType(), exp);
+void Signature::addReturn(Location* loc) {
+    addReturn(new IntegerType(), loc);
 }
 
-void Signature::removeReturn(Exp *e)
+void Signature::removeReturn(Location* loc)
 {
-    int i = findReturn(e);
+    int i = findReturn(loc);
     if (i != -1) {
         for (unsigned j = i+1; j < returns.size(); j++)
             returns[j-1] = returns[j];
@@ -959,12 +956,12 @@ int Signature::getNumReturns() {
     return returns.size();
 }
 
-Location *Signature::getReturnExp(int n) {
-    return returns[n]->getExp();
+Location *Signature::getReturnLoc(int n) {
+    return returns[n]->getLoc();
 }
 
-void Signature::setReturnExp(int n, Location* l) {
-    returns[n]->setExp(l);
+void Signature::setReturnLoc(int n, Location* l) {
+    returns[n]->setLoc(l);
 }
 
 Type *Signature::getReturnType(int n) {
@@ -980,16 +977,16 @@ void Signature::fixReturnsWithParameters() {
         int n = returns.size();
         for (int j=0; j < n; j++) {
             bool change;
-            RefExp r(getParamExp(i)->clone(), NULL);
-            Exp*& retExp = returns[j]->getRefExp();
-            retExp = retExp->searchReplaceAll(&r, 
+            RefExp r(getParamLoc(i)->clone(), NULL);
+            Location*& retLoc = returns[j]->getRefLoc();
+            retLoc = (Location*) retLoc->searchReplaceAll(&r, 
                                 Location::param(getParamName(i)), change);
         }
     }
 }
 
-Exp *Signature::getArgumentExp(int n) {
-    return getParamExp(n);
+Location *Signature::getArgumentLoc(int n) {
+    return getParamLoc(n);
 }
 
 Signature *Signature::promote(UserProc *p) {
@@ -1049,18 +1046,18 @@ void Signature::print(std::ostream &out)
     out << name << "(";
 	unsigned int i;
     for (i = 0; i < params.size(); i++) {
-        out << params[i]->getType()->getCtype() << " " << params[i]->getName() << " " << params[i]->getExp();
+        out << params[i]->getType()->getCtype() << " " << params[i]->getName() << " " << params[i]->getLoc();
         if (i != params.size()-1) out << ", ";
     }
     out << "   implicit: ";
     for (i = 0; i < implicitParams.size(); i++) {
         out << implicitParams[i]->getType()->getCtype() << " " << implicitParams[i]->getName() << " " 
-            << implicitParams[i]->getExp();
+            << implicitParams[i]->getLoc();
         if (i != implicitParams.size()-1) out << ", ";
     }
     out << ") { "; 
     for (i = 0; i < returns.size(); i++) {
-        out << returns[i]->getExp();
+        out << returns[i]->getLoc();
         if (i != returns.size()-1) out << ", ";
     }
     out << " }" << std::endl;
@@ -1147,7 +1144,7 @@ void Signature::updateParams(UserProc *p, Statement *stmt, bool checkreach) {
         setNumParams(i+1);
         for (n = 0; n < getNumParams(); n++) {
             if (VERBOSE) std::cerr << "found param " << n << std::endl;
-            p->getCFG()->searchAndReplace(getParamExp(n), 
+            p->getCFG()->searchAndReplace(getParamLoc(n), 
                 Location::param(getParamName(n)));
         }
     }
@@ -1164,13 +1161,13 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach,
     StatementSet reachin;
     //stmt->getReachIn(reachin, 2);
     for (int i = getNumParams(); i < 10; i++)
-        if (stmt->usesExp(getParamExp(i))) {
+        if (stmt->usesExp(getParamLoc(i))) {
             bool ok = true;
             if (checkreach) {
                 bool hasDef = false;
                     StatementSet::iterator it1;
                     for (it1 = reachin.begin(); it1 != reachin.end(); it1++) {
-                        if (*(*it1)->getLeft() == *getParamExp(i)) {
+                        if (*(*it1)->getLeft() == *getParamLoc(i)) {
                             hasDef = true; break; 
                         }
                     }
@@ -1186,7 +1183,7 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach,
 void Signature::addImplicitParametersFor(Parameter *pn)
 {
     Type *type = pn->getType();
-    Exp *e = pn->getExp();
+    Exp *e = pn->getLoc();
     if (type && type->resolvesToPointer()) { 
         PointerType *p = type->asPointer();
         /* seems right, if you're passing a pointer to a procedure
@@ -1236,19 +1233,19 @@ void Signature::removeImplicitParameter(int i)
 
 // Special for Mike: find the location where the first outgoing (actual)
 // parameter is conventionally held
-Exp* Signature::getFirstArgLoc(Prog* prog) {
+Location* Signature::getFirstArgLoc(Prog* prog) {
     MACHINE mach = prog->getMachine();
     switch (mach) {
         case MACHINE_SPARC: {
             CallingConvention::StdC::SparcSignature sig("");
-            return sig.getArgumentExp(0);
+            return sig.getArgumentLoc(0);
         }
         case MACHINE_PENTIUM: {
             //CallingConvention::StdC::PentiumSignature sig("");
-            //Exp* e = sig.getArgumentExp(0);
+            //Location* e = sig.getArgumentLoc(0);
             // For now, need to work around how the above appears to be the
             // wrong thing!
-Exp* e = Location::memOf(Location::regOf(28));
+Location* e = Location::memOf(Location::regOf(28));
             return e;
         }
         default:
@@ -1309,17 +1306,17 @@ std::list<Exp*> *Signature::getCallerSave(Prog* prog) {
 
 // Get the expected argument location, based solely on the machine of the
 // input program
-Exp* Signature::getEarlyParamExp(int n, Prog* prog) {
+Location* Signature::getEarlyParamExp(int n, Prog* prog) {
     MACHINE mach = prog->getMachine();
     switch (mach) {
         case MACHINE_SPARC: {
             CallingConvention::StdC::SparcSignature temp("");
-            return temp.getParamExp(n);
+            return temp.getParamLoc(n);
         }
         case MACHINE_PENTIUM: {
             // Would we ever need Win32?
             CallingConvention::StdC::PentiumSignature temp("");
-            return temp.getParamExp(n);
+            return temp.getParamLoc(n);
         }
         default:
             break;
@@ -1399,13 +1396,13 @@ bool Parameter::operator==(Parameter& other) {
     if (!(*type == *other.type)) return false;
     // Do we really care about a parameter's name?
     if (!(name == other.name)) return false;
-    if (!(*exp == *other.exp)) return false;
+    if (!(*loc == *other.loc)) return false;
     return true;
 }
 
 bool Return::operator==(Return& other) {
     if (!(*type == *other.type)) return false;
-    if (!(*exp == *other.exp)) return false;
+    if (!(*loc == *other.loc)) return false;
     return true;
 }
     

@@ -7,7 +7,7 @@
  *             classes.
  *============================================================================*/
 /*
- * $Revision: 1.6 $
+ * $Revision: 1.6.2.1 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -75,7 +75,7 @@ bool StmtSetConscripts::visit(CallStatement* stmt) {
         args[i]->accept(&sc);
     n = stmt->getNumReturns();
     for (i=0; i < n; i++) {
-        Exp* r = stmt->getReturnExp(i);
+        Location* r = stmt->getReturnLoc(i);
         r->accept(&sc);
     }
     curConscript = sc.getLast();
@@ -96,7 +96,7 @@ bool StmtSetConscripts::visit(ReturnStatement* stmt) {
     SetConscripts sc(curConscript);
     int n = stmt->getNumReturns();
     for (int i=0; i < n; i++) {
-        Exp* r = stmt->getReturnExp(i);
+        Location* r = stmt->getReturnLoc(i);
         r->accept(&sc);
     }
     curConscript = sc.getLast();
@@ -130,7 +130,7 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
     Statement* def = r->getRef();
     CallStatement *call = dynamic_cast<CallStatement*>(def);
     if (call) {
-        Exp *e = call->getProven(r->getSubExp1());
+        Exp *e = call->getProven(r->getBase());
         if (e) {
             e = call->substituteParams(e->clone());
             assert(e);
@@ -142,7 +142,7 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
             mod = true;
             return e;
         } else {
-            Exp* subExp1 = r->getSubExp1();
+            Location* subExp1 = r->getBase();
             if (call->findReturn(subExp1) == -1) {
                 if (VERBOSE && !subExp1->isPC()) {
                     LOG << "nothing proven about " << subExp1 <<
@@ -184,7 +184,7 @@ Exp* CallRefsFixer::postVisit(PhiExp* p) {
         Statement* u = p->getAt(i);
         CallStatement *call = dynamic_cast<CallStatement*>(u);
         if (call) {
-            Exp* subExp1 = p->getSubExp1();
+            Location* subExp1 = p->getBase();
             Exp *e = call->getProven(subExp1);
             if (call->isComputed() && oneIsGlobalFunc) {
                 e = subExp1->clone();
@@ -312,9 +312,9 @@ bool UsedLocsFinder::visit(RefExp* e, bool& override) {
     return true;
 }
 
-bool UsedLocsFinder::visit(PhiExp* e, bool& override) {
-    StatementVec& stmtVec = e->getRefs();
-    Exp* subExp1 = e->getSubExp1();
+bool UsedLocsFinder::visit(PhiExp* p, bool& override) {
+    StatementVec& stmtVec = p->getRefs();
+    Location* subExp1 = p->getBase();
     StatementVec::iterator uu;
     for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
         Exp* temp = new RefExp(subExp1, *uu);
@@ -360,7 +360,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
     int n = s->getNumReturns();
     if (final) {
         if (n != 0) {
-            Exp* r = s->getReturnExp(0);
+            Location* r = s->getReturnLoc(0);
             // If of form m[x] then x is used
             if (r->isMemOf()) {
                 Exp* x = ((Location*)r)->getSubExp1();
@@ -370,7 +370,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
     } else {
         // Otherwise, consider all returns. If of form m[x] then x is used
         for (int i=0; i < n; i++) {
-            Exp* r = s->getReturnExp(i);
+            Location* r = s->getReturnLoc(i);
             if (r->isMemOf()) {
                 Exp* x = ((Location*)r)->getSubExp1();
                 x->accept(ev);
@@ -403,12 +403,6 @@ Exp* ExpSubscripter::preVisit(Location* e, bool& recur) {
         return new RefExp(e, def);
     }
     recur = true;
-    return e;
-}
-
-Exp* ExpSubscripter::preVisit(Terminal* e) {
-    if (*e == *search)
-        return new RefExp(e, def);
     return e;
 }
 
@@ -454,7 +448,7 @@ void StmtSubscripter::visit(CallStatement* s, bool& recur) {
     // directly (only if m[x], and then only subscript the x's)
     n = s->getNumReturns();
     for (int i=0; i < n; i++) {
-        Exp* r = s->getReturnExp(i);
+        Location* r = s->getReturnLoc(i);
         if (r->isMemOf()) {
             Exp*& x = ((Location*)r)->refSubExp1();
             x = x->accept(mod);

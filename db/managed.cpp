@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.9.2.1 $
+ * $Revision: 1.9.2.2 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -303,7 +303,7 @@ bool ExpressionSet::find(Exp* e) {
 }
 
 bool ExpressionSet::findDifferentRef(RefExp* e, Exp *&dr) {
-    RefExp search(e->getSubExp1()->clone(), (Statement*)-1);
+    RefExp search(e->getBase()->clone(), (Statement*)-1);
     std::set<Exp*, lessExpStar>::iterator pos = sset.find(&search);
     if (pos == sset.end()) return false;
     while (pos != sset.end()) {
