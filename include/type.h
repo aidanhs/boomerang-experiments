@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.29 $
+ * $Revision: 1.29.2.1 $
  *
  * 20 Mar 01 - Mike: Added operator*= (compare, ignore sign, and consider all
  *                  floats > 64 bits to be the same
@@ -44,11 +44,12 @@ class NamedType;
 class PointerType;
 class ArrayType;
 class CompoundType;
+class BlankType;
 class Exp;
 class XMLProgParser;
 
 enum eType {eVoid, eFunc, eBoolean, eChar, eInteger, eFloat, ePointer,
-    eArray, eNamed, eCompound};    // For operator< only
+    eArray, eNamed, eCompound, eBlank};    // For operator< only
 
 class Type {
 protected:
@@ -80,6 +81,7 @@ virtual bool isPointer() const { return false; }
 virtual bool isArray() const { return false; }
 virtual bool isNamed() const { return false; }
 virtual bool isCompound() const { return false; }
+virtual bool isBlank() const { return false; }
 
     // These replace type casts
     VoidType *asVoid();
@@ -119,8 +121,10 @@ virtual Exp *match(Type *pattern);
     // Access functions
 virtual int     getSize() const = 0;
 
-    // Format functions
+    // Print and format functions
 virtual const char *getCtype() const = 0;   // Get the C type, e.g. "unsigned int16"
+        // Print in *i32* format
+void    starPrint(std::ostream& os);
 
 virtual std::string getTempName() const; // Get a temporary name for the type
 
@@ -410,9 +414,21 @@ protected:
 	friend class XMLProgParser;
 };
 
+// This class is for before type analysis. Typically, you have no info at
+// all, or only know the size (e.g. width of a register or memory transfer)
+class BlankType : public Type {
+private:
+    int         size;               // Size in bits, e.g. 16
+public:
+                BlankType() : Type(eBlank) {}
+                BlankType(int sz) : Type(eBlank), size(sz) {}
+virtual         ~BlankType() {}
+virtual int     getSize() const;
+};
+
 // Not part of the Type class, but logically belongs with it:
 std::ostream& operator<<(std::ostream& os, Type* t);  // Print the Type
-                                                      //  poited to by t
+                                                      //  pointed to by t
 
 
 #endif  // __TYPE_H__

@@ -2217,7 +2217,7 @@ case 82:
 #line 773 "sslparser.y"
 {
             // Not sure why the below is commented out (MVE)
-/*          Location* pFlag = Location::regOf(Dict.RegMap[$3]);
+/*          Location* pFlag = UnaryLoc::regOf(Dict.RegMap[$3]);
             $1->push_back(pFlag);
             $$ = $1;
 */          yyval.explist = 0;
@@ -2579,21 +2579,21 @@ case 124:
                 if (op) {
                     yyval.loc = new Location(op);
                 } else {
-                    yyval.loc = new Location(opMachFtr,    // Machine specific feature
+                    yyval.loc = new UnaryLoc(opMachFtr,    // Machine specific feature
                             new Const(yyvsp[0].str), NULL);
                 }
             }
             else {
                 // A register with a constant reg nmber, e.g. %g2.
                 // In this case, we want to return r[const 2]
-                yyval.loc = Location::regOf(it->second);
+                yyval.loc = UnaryLoc::regOf(it->second);
             }
         ;
     break;}
 case 125:
 #line 1103 "sslparser.y"
 {
-            yyval.loc = Location::regOf(yyvsp[-1].exp);
+            yyval.loc = UnaryLoc::regOf(yyvsp[-1].exp);
         ;
     break;}
 case 126:
@@ -2601,13 +2601,13 @@ case 126:
 {
             int regNum;
             sscanf(yyvsp[0].str, "r%d", &regNum);
-            yyval.loc = Location::regOf(regNum);
+            yyval.loc = UnaryLoc::regOf(regNum);
         ;
     break;}
 case 127:
 #line 1113 "sslparser.y"
 {
-            yyval.loc = Location::memOf(yyvsp[-1].exp);
+            yyval.loc = UnaryLoc::memOf(yyvsp[-1].exp);
         ;
     break;}
 case 128:
@@ -2618,12 +2618,12 @@ case 128:
             Location* s;
             std::set<std::string>::iterator it = Dict.ParamSet.find(yyvsp[0].str);
             if (it != Dict.ParamSet.end()) {
-                s = new Location(opParam, new Const(yyvsp[0].str), NULL);
+                s = new UnaryLoc(opParam, new Const(yyvsp[0].str), NULL);
             } else if (ConstTable.find(yyvsp[0].str) != ConstTable.end()) {
                 // ? How can a constant table entry be a location?
                 // Maybe if it's just a parameter name, not a general expr
                 // s = new Const(ConstTable[$1]);
-                s = new Location(opParam, new Const(ConstTable[yyvsp[0].str]), NULL);
+                s = new UnaryLoc(opParam, new Const(ConstTable[yyvsp[0].str]), NULL);
             } else {
                 std::ostringstream ost;
                 ost << "`" << yyvsp[0].str << "' is not a constant, definition or a";
@@ -2637,19 +2637,19 @@ case 128:
 case 129:
 #line 1139 "sslparser.y"
 {
-            yyval.loc = new TernaryLocation(opAt, yyvsp[-6].exp, yyvsp[-3].exp, yyvsp[-1].exp);
+            yyval.loc = new TernaryLoc(opAt, yyvsp[-6].exp, yyvsp[-3].exp, yyvsp[-1].exp);
         ;
     break;}
 case 130:
 #line 1143 "sslparser.y"
 {
-            yyval.loc = Location::tempOf(new Const(yyvsp[0].str));
+            yyval.loc = UnaryLoc::tempOf(new Const(yyvsp[0].str));
         ;
     break;}
 case 131:
 #line 1148 "sslparser.y"
 {
-            yyval.loc = new Location(opPostVar, yyvsp[-1].loc, NULL);
+            yyval.loc = new UnaryLoc(opPostVar, yyvsp[-1].loc, NULL);
         ;
     break;}
 case 132:
@@ -3326,5 +3326,5 @@ void SSLParser::expandTables(InsNameElem* iname, std::list<std::string>* params,
  * RETURNS:         The modified expression
  *============================================================================*/
 Location* SSLParser::makeSuccessor(Location* e) {
-	return new Location(opSuccessor, e, NULL);
+	return new UnaryLoc(opSuccessor, e, NULL);
 }

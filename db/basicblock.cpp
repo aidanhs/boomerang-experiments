@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.78.2.2 $
+ * $Revision: 1.78.2.3 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1655,7 +1655,7 @@ int BasicBlock::whichPred(PBB pred) {
 // confuse with form 'A'):
 // Pattern: <base>{}[<index>]{} where <index> could be <var> - <Kmin>
 static Unary* forma = new RefExp(
-        new BinaryLocation(opArraySubscript,
+        new BinaryLoc(opArraySubscript,
             new RefExp(
                 new Location(opWild),
                 (Statement*)-1),
@@ -1663,7 +1663,7 @@ static Unary* forma = new RefExp(
         (Statement*)-1);
 
 // Pattern: m[<expr> * 4 + T ]
-static Location* formA  = Location::memOf(
+static Location* formA  = UnaryLoc::memOf(
         new Binary(opPlus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1672,7 +1672,7 @@ static Location* formA  = Location::memOf(
 
 // Pattern: m[<expr> * 4 + T ] + T
 static Exp* formO  = new Binary(opPlus,
-    Location::memOf(
+    UnaryLoc::memOf(
         new Binary(opPlus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1684,7 +1684,7 @@ static Exp* formO  = new Binary(opPlus,
 // where k is a small constant, typically 28 or 20
 static Exp* formR = new Binary(opPlus,
     new Location(opPC),
-    Location::memOf(new Binary(opPlus,
+    UnaryLoc::memOf(new Binary(opPlus,
         new Location(opPC),
         new Binary(opPlus,
             new Binary(opMult,
@@ -1696,7 +1696,7 @@ static Exp* formR = new Binary(opPlus,
 // where k is a smallish constant, e.g. 288 (/usr/bin/vi 2.6, 0c4233c).
 static Exp* formr = new Binary(opPlus,
     new Location(opPC),
-    Location::memOf(new Binary(opPlus,
+    UnaryLoc::memOf(new Binary(opPlus,
         new Location(opPC),
         new Binary(opMinus,
             new Binary(opMult,
@@ -1711,37 +1711,37 @@ static char chForms[] = {  'a',  'A',   'O',   'R',   'r'};
 // Vcall high level patterns
 // Pattern 0: global<wild>[0]
 static Binary* vfc_funcptr = new Binary(opArraySubscript,
-    new Location(opGlobal,
+    new UnaryLoc(opGlobal,
         new Terminal(opWildStrConst), NULL),
     new Const(0));
 
 // Pattern 1: m[ m[ <expr> + K1 ] + K2 ]
 // K1 is vtable offset, K2 is virtual function offset
-static Location* vfc_both = Location::memOf(
+static Location* vfc_both = UnaryLoc::memOf(
     new Binary(opPlus,
-        Location::memOf(
+        UnaryLoc::memOf(
             new Binary(opPlus,
                 new Terminal(opWild),
                 new Terminal(opWildIntConst))),
             new Terminal(opWildIntConst)));
  
 // Pattern 2: m[ m[ <expr> ] + K2]
-static Location* vfc_vto = Location::memOf(
+static Location* vfc_vto = UnaryLoc::memOf(
     new Binary(opPlus,
-        Location::memOf(
+        UnaryLoc::memOf(
             new Terminal(opWild)),
             new Terminal(opWildIntConst)));
 
 // Pattern 3: m[ m[ <expr> + K1] ]
-Location* vfc_vfo = Location::memOf(
-    Location::memOf(
+Location* vfc_vfo = UnaryLoc::memOf(
+    UnaryLoc::memOf(
         new Binary(opPlus,
             new Terminal(opWild),
             new Terminal(opWildIntConst))));
 
 // Pattern 4: m[ m[ <expr> ] ]
-Location* vfc_none = Location::memOf(
-    Location::memOf(
+Location* vfc_none = UnaryLoc::memOf(
+    UnaryLoc::memOf(
         new Terminal(opWild)));
 
 static Exp* hlVfc[] = {vfc_funcptr, vfc_both, vfc_vto, vfc_vfo, vfc_none};

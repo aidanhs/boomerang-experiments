@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.3 $
+ * $Revision: 1.112.2.4 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2179,7 +2179,7 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
                     proc->getProg()->globalUsed(u);
                     const char *nam = proc->getProg()->getGlobalName(u);
                     if (nam)
-                        e = Location::global(nam, proc);
+                        e = UnaryLoc::global(nam, proc);
                 }
             }
             if (points_to->resolvesToFunc()) {
@@ -2201,7 +2201,7 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
                     else
                         p->setName(sig->getName());
                     p->setSignature(sig);
-                    e = Location::global(p->getName(), proc);
+                    e = UnaryLoc::global(p->getName(), proc);
                 }
             }
         } else if (t->resolvesToFloat()) {
@@ -2210,7 +2210,7 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
     }
 #if 0
     if (t->isPointer() && e->getOper() != opAddrOf) {
-        e = new Unary(opAddrOf, Location::memOf(e));
+        e = new Unary(opAddrOf, UnaryLoc::memOf(e));
     }
 #endif
     
@@ -2256,17 +2256,17 @@ void CallStatement::processConstants(Prog *prog) {
     // hack
     if (getDestProc() && getDestProc()->isLib()) {
         int sp = proc->getSignature()->getStackRegister(prog);
-        removeReturn(Location::regOf(sp));
+        removeReturn(UnaryLoc::regOf(sp));
         unsigned int i;
         for (i = 0; i < implicitArguments.size(); i++)
             if (*getDestProc()->getSignature()->getImplicitParamExp(i) ==
-                  *Location::regOf(sp)) {
+                  *UnaryLoc::regOf(sp)) {
                 implicitArguments[i] = new Const(0);
                 break;
             }
         for (i = 0; i < implicitArguments.size(); i++)
             if (*getDestProc()->getSignature()->getImplicitParamExp(i) ==
-                  *Location::memOf(Location::regOf(sp))) {
+                  *UnaryLoc::memOf(UnaryLoc::regOf(sp))) {
                 implicitArguments[i] = new Const(0);
                 break;
             }
@@ -2286,7 +2286,7 @@ void CallStatement::processConstants(Prog *prog) {
                 // special hack for scanf
                 if (name == "scanf") {
                     setArgumentExp(n, new Unary(opAddrOf,
-                        Location::memOf(getArgumentExp(n), proc)));
+                        UnaryLoc::memOf(getArgumentExp(n), proc)));
                 }
                 p++;
                 switch(*p) {
@@ -2780,8 +2780,8 @@ void Assign::simplify() {
                             LOG << "doing complex pattern on " << this
                                 << " using " << a1 << " and " << a4 << "\n";
                         ((Const*)a4->getRight()->getSubExp2())->setInt(1);
-                        lhs = new BinaryLocation(opArraySubscript, 
-                                Location::memOf(a1->getRight()->clone(), proc), 
+                        lhs = new BinaryLoc(opArraySubscript, 
+                                UnaryLoc::memOf(a1->getRight()->clone(), proc), 
                                 lhs->getSubExp1()->clone());
                         a1->setRight(new Const(0));
                         if (VERBOSE)
@@ -2827,7 +2827,7 @@ void Assign::simplify() {
                                                                     opRegOf &&
                         def->rhs->getSubExp2()->getOper() == opIntConst))) {
                     Exp *ne = new Unary(opAddrOf,
-                        Location::memOf(def->rhs, proc)); 
+                        UnaryLoc::memOf(def->rhs, proc)); 
                     if (VERBOSE)
                         LOG << "replacing " << def->rhs << " with " 
                             << ne << " in " << def << "\n";
@@ -2881,7 +2881,7 @@ void Assign::simplify() {
     }
 
     if (lhs->getType() && lhs->getType()->isArray()) {
-        lhs = new BinaryLocation(opArraySubscript, lhs, new Const(0), proc);
+        lhs = new BinaryLoc(opArraySubscript, lhs, new Const(0), proc);
     }
 }
 
@@ -2913,7 +2913,7 @@ void Assign::getDefinitions(ExpressionSet &defs) {
     defs.insert(lhs);
     // Special case: flag calls define %CF (and others)
     if (lhs->isFlags()) {
-        defs.insert(new Location(opCF, NULL, proc));
+        defs.insert(new Location(opCF, proc));
     }
     Location *loc = dynamic_cast<Location*>(lhs);
     if (loc)

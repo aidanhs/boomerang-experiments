@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.62.2.1 $
+ * $Revision: 1.62.2.2 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness
@@ -494,7 +494,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
                     ADDRESS gu = pProc->getProg()->getGlobalAddr((char*)nam);
                     if (gu != NO_ADDRESS) {
                         s->searchAndReplace(new Const((int)gu), 
-                            new Unary(opAddrOf, Location::global(nam, pProc)));
+                            new Unary(opAddrOf, UnaryLoc::global(nam, pProc)));
                     }
                 }
                 s->simplify();

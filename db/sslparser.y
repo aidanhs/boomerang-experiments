@@ -16,7 +16,7 @@
  *             returns the list of SSL instruction and table definitions.
  *============================================================================*/
 
-/* $Revision: 1.24.2.1 $
+/* $Revision: 1.24.2.2 $
  * Updates:
  * Shane Sendall (original C version) Dec 1997
  * Doug Simon (C++ version) Jan 1998
@@ -772,7 +772,7 @@ rt:
 flag_list:
         flag_list ',' REG_ID {
             // Not sure why the below is commented out (MVE)
-/*          Location* pFlag = Location::regOf(Dict.RegMap[$3]);
+/*          Location* pFlag = UnaryLoc::regOf(Dict.RegMap[$3]);
             $1->push_back(pFlag);
             $$ = $1;
 */          $$ = 0;
@@ -1089,29 +1089,29 @@ location:
                 if (op) {
                     $$ = new Location(op);
                 } else {
-                    $$ = new Location(opMachFtr,    // Machine specific feature
+                    $$ = new UnaryLoc(opMachFtr,    // Machine specific feature
                             new Const($1), NULL);
                 }
             }
             else {
                 // A register with a constant reg nmber, e.g. %g2.
                 // In this case, we want to return r[const 2]
-                $$ = Location::regOf(it->second);
+                $$ = UnaryLoc::regOf(it->second);
             }
         }
 
     |   REG_IDX exp ']' {
-            $$ = Location::regOf($2);
+            $$ = UnaryLoc::regOf($2);
         }
 
     |   REG_NUM {
             int regNum;
             sscanf($1, "r%d", &regNum);
-            $$ = Location::regOf(regNum);
+            $$ = UnaryLoc::regOf(regNum);
         }
 
     |   MEM_IDX exp ']' {
-            $$ = Location::memOf($2);
+            $$ = UnaryLoc::memOf($2);
         }
 
     |   NAME {
@@ -1120,12 +1120,12 @@ location:
             Location* s;
             std::set<std::string>::iterator it = Dict.ParamSet.find($1);
             if (it != Dict.ParamSet.end()) {
-                s = new Location(opParam, new Const($1), NULL);
+                s = new UnaryLoc(opParam, new Const($1), NULL);
             } else if (ConstTable.find($1) != ConstTable.end()) {
                 // ? How can a constant table entry be a location?
                 // Maybe if it's just a parameter name, not a general expr
                 // s = new Const(ConstTable[$1]);
-                s = new Location(opParam, new Const(ConstTable[$1]), NULL);
+                s = new UnaryLoc(opParam, new Const(ConstTable[$1]), NULL);
             } else {
                 std::ostringstream ost;
                 ost << "`" << $1 << "' is not a constant, definition or a";
@@ -1137,16 +1137,16 @@ location:
         }
 
     |      exp AT '[' exp COLON exp ']' {
-            $$ = new TernaryLocation(opAt, $1, $4, $6);
+            $$ = new TernaryLoc(opAt, $1, $4, $6);
         }
 
     |   TEMP {
-            $$ = Location::tempOf(new Const($1));
+            $$ = UnaryLoc::tempOf(new Const($1));
         }
     
         // This indicates a post-instruction marker (var tick)
     |      location '\'' {
-            $$ = new Location(opPostVar, $1, NULL);
+            $$ = new UnaryLoc(opPostVar, $1, NULL);
         }
 	|		SUCCESSOR exp ')' {
             assert($2->isRegOf());
@@ -1621,5 +1621,5 @@ void SSLParser::expandTables(InsNameElem* iname, std::list<std::string>* params,
  * RETURNS:         The modified expression
  *============================================================================*/
 Location* SSLParser::makeSuccessor(Location* e) {
-	return new Location(opSuccessor, e, NULL);
+	return new UnaryLoc(opSuccessor, e, NULL);
 }

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.23 $
+ * $Revision: 1.23.2.1 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -1040,6 +1040,10 @@ bool Type::isPointerToAlpha() {
     return isPointer() && ((PointerType*)this)->pointsToAlpha();
 }
 
+void Type::starPrint(std::ostream& os) {
+    os << "*" << this << "*";
+}
+
 // A crude shortcut representation of a type
 std::ostream& operator<<(std::ostream& os, Type* t) {
     if (t == NULL) return os;
@@ -1054,6 +1058,7 @@ std::ostream& operator<<(std::ostream& os, Type* t) {
             break;
         case eChar: os << 'c'; break;
         case eBoolean: os << 'b'; break;
+        case eBlank: os << std::dec << (BlankType*)t->getSize();
         default:
             os << "?type?";
     }

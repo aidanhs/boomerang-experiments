@@ -18,7 +18,7 @@
  *============================================================================*/
  
 /*
- * $Revision: 1.20.2.1 $
+ * $Revision: 1.20.2.2 $
  *
  * 27 Apr 02 - Mike: Mods for boomerang
  * 17 Jul 02 - Mike: readSSLFile resets internal state as well
@@ -328,8 +328,8 @@ void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcPar
             std::list<std::string>::iterator i,j;
             for( i = funcParams.begin(), j = sub.funcParams.begin();
               i != funcParams.end(); i++, j++ ) {
-                Exp* match = Location::param(j->c_str());
-                Exp* replace = Location::param(i->c_str());
+                Exp* match = UnaryLoc::param(j->c_str());
+                Exp* replace = UnaryLoc::param(i->c_str());
                 sub.asgn->searchAndReplace( match, replace );
             }
             sub.funcParams = funcParams;
@@ -446,7 +446,7 @@ std::list<Statement*>* RTLInstDict::instantiateRTL(RTL& rtl,
         std::vector<Exp*>::const_iterator actual = actuals.begin();
         for (; param != params.end(); param++, actual++) {
             /* Simple parameter - just construct the formal to search for */
-            Exp* formal = Location::param(param->c_str());
+            Exp* formal = UnaryLoc::param(param->c_str());
             (*rt)->searchAndReplace(formal, *actual);
             //delete formal;
         }
@@ -523,7 +523,7 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
                     // and actually check that it's not otherwise used here.
                     std::string tmpname = el.type->getTempName() + (tmpcount++)
                       + "post" ;
-                    el.tmp = Location::tempOf(new Const(
+                    el.tmp = UnaryLoc::tempOf(new Const(
                       (char*)tmpname.c_str()));
 
                     // Keep a copy of the referrent. For example, if the

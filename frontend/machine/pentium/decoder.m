@@ -14,7 +14,7 @@
  *              instructions are processed in decoder_low.m
  *============================================================================*/ 
 /*
- * $Revision: 1.28.2.1 $
+ * $Revision: 1.28.2.2 $
  *
  * 26 Apr 02 - Mike: Changes for boomerang
  * 18 Nov 02 - Mike: Mods for MOV.Ed.Iv^od etc. Also suppressed warning re name
@@ -1559,7 +1559,7 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
     | ANDiodb(Eaddr, i8) =>
         // Special hack to ignore and $0xfffffff0, %esp
         Exp* oper = dis_Eaddr(Eaddr, 32);
-        if (i8 != -16 || !(*oper == *Location::regOf(28)))
+        if (i8 != -16 || !(*oper == *UnaryLoc::regOf(28)))
             stmts = instantiate(pc,  "ANDiodb", DIS_EADDR32, DIS_I8);
 
     | ANDiowb(Eaddr, i8) =>
@@ -2141,30 +2141,30 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
     match pc to 
     | Abs32 (a) =>
             // [a]
-            expr = Location::memOf(new Const(a));
+            expr = UnaryLoc::memOf(new Const(a));
     | Disp32 (d, base) => 
             // m[ r[ base] + d]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+base),
                     new Const(d)));
     | Disp8 (d, r32) => 
             // m[ r[ r32] + d]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+r32),
                     new Const(d)));
     | Index (base, index, ss) =>
             // m[ r[base] + r[index] * ss]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+base),
                     new Binary(opMult,
                         dis_Reg(24+index),
                         new Const(1<<ss))));
     | Base (base) =>
             // m[ r[base] ]
-            expr = Location::memOf(dis_Reg(24+base));
+            expr = UnaryLoc::memOf(dis_Reg(24+base));
     | Index32 (d, base, index, ss) =>
             // m[ r[ base ] + r[ index ] * ss + d ]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+base),
                     new Binary(opPlus,
                         new Binary(opMult,
@@ -2173,12 +2173,12 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
                         new Const(d))));
     | Base32 (d, base) =>
             // m[ r[ base] + d ]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+base),
                     new Const(d)));
     | Index8 (d, base, index, ss) =>
             // m[ r[ base ] + r[ index ] * ss + d ]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+base),
                     new Binary(opPlus,
                         new Binary(opMult,
@@ -2187,22 +2187,22 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
                         new Const(d))));
     | Base8 (d, base) =>
             // m[ r[ base] + d ]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     dis_Reg(24+base),
                     new Const(d)));
     | Indir (base) => 
             // m[ r[base] ]
-            expr = Location::memOf(dis_Reg(24+base));
+            expr = UnaryLoc::memOf(dis_Reg(24+base));
     | ShortIndex (d, index, ss) =>
             // m[ r[index] * ss + d ]
-            expr = Location::memOf(new Binary(opPlus,
+            expr = UnaryLoc::memOf(new Binary(opPlus,
                     new Binary(opMult,
                         dis_Reg(24+index),
                         new Const(1<<ss)),
                     new Const(d)));
     | IndirMem (d) =>
             // [d] (Same as Abs32 using SIB)
-            expr = Location::memOf(new Const(d));
+            expr = UnaryLoc::memOf(new Const(d));
     endmatch
     return expr;
 }

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.40.2.2 $
+ * $Revision: 1.40.2.3 $
  * 21 Oct 98 - Mike: converted from frontsparc.cc
  * 21 May 02 - Mike: Mods for boomerang
  * 27 Nov 02 - Mike: Fixed a bug in the floating point fixup code, which was
@@ -67,7 +67,7 @@ bool PentiumFrontEnd::isStoreFsw(Statement* s) {
     if (!s->isAssign()) return false;
     Exp* rhs = ((Assign*)s)->getRight();
     Exp* result;
-    bool res = rhs->search(Location::regOf(FSW), result);
+    bool res = rhs->search(UnaryLoc::regOf(FSW), result);
     return res;
 }
 /*==============================================================================
@@ -86,7 +86,7 @@ bool PentiumFrontEnd::isDecAh(RTL* r) {
     Binary ahm1(opMinus,
         new Binary(opSize,
             new Const(8),
-            Location::regOf(12)),
+            UnaryLoc::regOf(12)),
         new Const(1));
     return *rhs == ahm1;
 }
@@ -147,7 +147,7 @@ void PentiumFrontEnd::bumpRegisterAll(Exp* e, int min, int max, int delta, int m
     Exp* exp = e;
     // Use doSearch, which is normally an internal method of Exp, to avoid
     // problems of replacing the wrong subexpression (in some odd cases)
-    e->doSearch(Location::regOf(new Terminal(opWild)), exp, li, false);
+    e->doSearch(UnaryLoc::regOf(new Terminal(opWild)), exp, li, false);
     for (it = li.begin(); it != li.end(); it++) {
         int reg = ((Const*)((Unary*)**it)->getSubExp1())->getInt();
         if ((min <= reg) && (reg <= max)) {
@@ -200,15 +200,15 @@ std::vector<Location*> &PentiumFrontEnd::getDefaultParams()
 {
     static std::vector<Location*> params;
     if (params.size() == 0) {
-        params.push_back(Location::regOf(24/*eax*/));
-        params.push_back(Location::regOf(25/*ecx*/));
-        params.push_back(Location::regOf(26/*edx*/));
-        params.push_back(Location::regOf(27/*ebx*/));
-        params.push_back(Location::regOf(28/*esp*/));
-        params.push_back(Location::regOf(29/*ebp*/));
-        params.push_back(Location::regOf(30/*esi*/));
-        params.push_back(Location::regOf(31/*edi*/));
-        params.push_back(Location::memOf(Location::regOf(28)));
+        params.push_back(UnaryLoc::regOf(24/*eax*/));
+        params.push_back(UnaryLoc::regOf(25/*ecx*/));
+        params.push_back(UnaryLoc::regOf(26/*edx*/));
+        params.push_back(UnaryLoc::regOf(27/*ebx*/));
+        params.push_back(UnaryLoc::regOf(28/*esp*/));
+        params.push_back(UnaryLoc::regOf(29/*ebp*/));
+        params.push_back(UnaryLoc::regOf(30/*esi*/));
+        params.push_back(UnaryLoc::regOf(31/*edi*/));
+        params.push_back(UnaryLoc::memOf(UnaryLoc::regOf(28)));
     }
     return params;
 }
@@ -217,22 +217,22 @@ std::vector<Location*> &PentiumFrontEnd::getDefaultReturns()
 {
     static std::vector<Location*> returns;
     if (returns.size() == 0) {
-        returns.push_back(Location::regOf(24/*eax*/));
-        returns.push_back(Location::regOf(25/*ecx*/));
-        returns.push_back(Location::regOf(26/*edx*/));
-        returns.push_back(Location::regOf(27/*ebx*/));
-        returns.push_back(Location::regOf(28/*esp*/));
-        returns.push_back(Location::regOf(29/*ebp*/));
-        returns.push_back(Location::regOf(30/*esi*/));
-        returns.push_back(Location::regOf(31/*edi*/));
-        returns.push_back(Location::regOf(32/*st0*/));
-        returns.push_back(Location::regOf(33/*st1*/));
-        returns.push_back(Location::regOf(34/*st2*/));
-        returns.push_back(Location::regOf(35/*st3*/));
-        returns.push_back(Location::regOf(36/*st4*/));
-        returns.push_back(Location::regOf(37/*st5*/));
-        returns.push_back(Location::regOf(38/*st6*/));
-        returns.push_back(Location::regOf(39/*st7*/));
+        returns.push_back(UnaryLoc::regOf(24/*eax*/));
+        returns.push_back(UnaryLoc::regOf(25/*ecx*/));
+        returns.push_back(UnaryLoc::regOf(26/*edx*/));
+        returns.push_back(UnaryLoc::regOf(27/*ebx*/));
+        returns.push_back(UnaryLoc::regOf(28/*esp*/));
+        returns.push_back(UnaryLoc::regOf(29/*ebp*/));
+        returns.push_back(UnaryLoc::regOf(30/*esi*/));
+        returns.push_back(UnaryLoc::regOf(31/*edi*/));
+        returns.push_back(UnaryLoc::regOf(32/*st0*/));
+        returns.push_back(UnaryLoc::regOf(33/*st1*/));
+        returns.push_back(UnaryLoc::regOf(34/*st2*/));
+        returns.push_back(UnaryLoc::regOf(35/*st3*/));
+        returns.push_back(UnaryLoc::regOf(36/*st4*/));
+        returns.push_back(UnaryLoc::regOf(37/*st5*/));
+        returns.push_back(UnaryLoc::regOf(38/*st6*/));
+        returns.push_back(UnaryLoc::regOf(39/*st7*/));
         returns.push_back(new Location(opPC));
     }
     return returns;
@@ -258,32 +258,32 @@ void PentiumFrontEnd::processFloatCode(Cfg* pCfg)
                 st = (*rit)->elementAt(i);
                 if (st->isFpush()) {
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::tempOf(new Const("tmpD9")), 
-                        Location::regOf(39)), i++);
+                        UnaryLoc::tempOf(new Const("tmpD9")), 
+                        UnaryLoc::regOf(39)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(39), 
-                        Location::regOf(38)), i++);
+                        UnaryLoc::regOf(39), 
+                        UnaryLoc::regOf(38)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(38), 
-                        Location::regOf(37)), i++);
+                        UnaryLoc::regOf(38), 
+                        UnaryLoc::regOf(37)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(37), 
-                        Location::regOf(36)), i++);
+                        UnaryLoc::regOf(37), 
+                        UnaryLoc::regOf(36)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(36), 
-                        Location::regOf(35)), i++);
+                        UnaryLoc::regOf(36), 
+                        UnaryLoc::regOf(35)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(35), 
-                        Location::regOf(34)), i++);
+                        UnaryLoc::regOf(35), 
+                        UnaryLoc::regOf(34)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(34), 
-                        Location::regOf(33)), i++);
+                        UnaryLoc::regOf(34), 
+                        UnaryLoc::regOf(33)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(33), 
-                        Location::regOf(32)), i++);
+                        UnaryLoc::regOf(33), 
+                        UnaryLoc::regOf(32)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(32), 
-                            Location::tempOf(new Const("tmpD9"))), i++);
+                        UnaryLoc::regOf(32), 
+                            UnaryLoc::tempOf(new Const("tmpD9"))), i++);
                     // Remove the FPUSH
                     (*rit)->deleteStmt(i);
                     i--;
@@ -291,33 +291,33 @@ void PentiumFrontEnd::processFloatCode(Cfg* pCfg)
                 }
                 else if (st->isFpop()) {
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(
-                            Location::tempOf(new Const("tmpD9"))), 
-                        Location::regOf(32)), i++);
+                        UnaryLoc::regOf(
+                            UnaryLoc::tempOf(new Const("tmpD9"))), 
+                        UnaryLoc::regOf(32)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(32), 
-                        Location::regOf(33)), i++);
+                        UnaryLoc::regOf(32), 
+                        UnaryLoc::regOf(33)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(33), 
-                        Location::regOf(34)), i++);
+                        UnaryLoc::regOf(33), 
+                        UnaryLoc::regOf(34)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(34), 
-                        Location::regOf(35)), i++);
+                        UnaryLoc::regOf(34), 
+                        UnaryLoc::regOf(35)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(35), 
-                        Location::regOf(36)), i++);
+                        UnaryLoc::regOf(35), 
+                        UnaryLoc::regOf(36)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(36), 
-                        Location::regOf(37)), i++);
+                        UnaryLoc::regOf(36), 
+                        UnaryLoc::regOf(37)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(37), 
-                        Location::regOf(38)), i++);
+                        UnaryLoc::regOf(37), 
+                        UnaryLoc::regOf(38)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(38), 
-                        Location::regOf(39)), i++);
+                        UnaryLoc::regOf(38), 
+                        UnaryLoc::regOf(39)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(39), 
-                           Location::tempOf(new Const("tmpD9"))), i++);
+                        UnaryLoc::regOf(39), 
+                           UnaryLoc::tempOf(new Const("tmpD9"))), i++);
                     // Remove the FPOP
                     (*rit)->deleteStmt(i);
                     i--;
@@ -370,7 +370,7 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
         if (isStoreFsw((*rit)->elementAt(0))) {
             // Check the register - at present we only handle AX
             Exp* lhs = ((Assign*)(*rit)->elementAt(0))->getLeft();
-            Exp* ax = Location::regOf(0);
+            Exp* ax = UnaryLoc::regOf(0);
             assert(*lhs == *ax);
             delete ax;
 
@@ -499,10 +499,10 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
 bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
   std::list<RTL*>* BB_rtls, PBB pBB, Cfg* pCfg) {
     int state = 0;              // Start in state 0
-    Location *ah = Location::regOf(AH);
+    Location *ah = UnaryLoc::regOf(AH);
     Unary *notZf = new Unary(opNot, new Terminal(opZF));
     Ternary *ahAt7 = new Ternary(opTern,
-        Location::regOf(AH),
+        UnaryLoc::regOf(AH),
         new Const(7),
         new Const(7));
     // Keep a list of iterators representing 
@@ -1014,20 +1014,20 @@ bool PentiumFrontEnd::helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lr
         // r[24] = trunc(64, 32, r[tmpl])
         // r[26] = r[tmpl] >> 32
         Statement* a = new Assign(new IntegerType(64),
-            Location::tempOf(new Const("tmpl")),
+            UnaryLoc::tempOf(new Const("tmpl")),
             new Ternary(opFtoi, new Const(64), new Const(32),
-                Location::regOf(32)));
+                UnaryLoc::regOf(32)));
         RTL* pRtl = new RTL(addr);
         pRtl->appendStmt(a);
         a = new Assign(
-            Location::regOf(24),
+            UnaryLoc::regOf(24),
             new Ternary(opTruncs, new Const(64), new Const(32),
-                Location::tempOf(new Const("tmpl"))));
+                UnaryLoc::tempOf(new Const("tmpl"))));
         pRtl->appendStmt(a);
         a = new Assign(
-            Location::regOf(26),
+            UnaryLoc::regOf(26),
             new Binary(opShiftR,
-                Location::tempOf(new Const("tmpl")),
+                UnaryLoc::tempOf(new Const("tmpl")),
                 new Const(32)));
         pRtl->appendStmt(a);
         // Append this RTL to the list of RTLs for this BB
@@ -1076,7 +1076,7 @@ PentiumFrontEnd::PentiumFrontEnd(BinaryFile *pBF)
 		if (!strcmp(r.g_name(), "%esp"))
 			prog->symbols[std::string(r.g_name())] = new TypedExp(Type(DATA_ADDRESS), Location:;regOf(i));
 		else
-			prog->symbols[std::string(r.g_name())] = new TypedExp(r.g_type(), Location::regOf(i));
+			prog->symbols[std::string(r.g_name())] = new TypedExp(r.g_type(), UnaryLoc::regOf(i));
 	} */
 }
 
@@ -1136,7 +1136,7 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain )
             if (inst.valid && inst.rtl->getNumStmt() == 2) {
                 Assign* a = dynamic_cast<Assign*>
                                 (inst.rtl->elementAt(1));
-                if (a && *a->getRight() == *Location::regOf(24)) {
+                if (a && *a->getRight() == *UnaryLoc::regOf(24)) {
 #if 0
                     std::cerr << "is followed by push eax.. "
                               << "good" << std::endl;

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.2 $
+ * $Revision: 1.69.2.3 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -874,13 +874,14 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn)
     // Special case if there is a bit extraction on the LHS
     if (lhs->isArraySub()) {
         // Note: untested... no instructions apart from pentium FCLEX need this
-        // (and it never uses the result).
+        // (and the result isn't used by any other instruction).
+        // May be needed for other architectures
         // s1@[first:last] := rhs =>
         // s1 = s1 & ~((1 << first-last+1)-1) | (rhs) << last
         Location* s1 = (Location*)
-                       ((TernaryLocation*)lhs)->getSubExp1();
-        Exp* first   = ((TernaryLocation*)lhs)->getSubExp2();
-        Exp* last    = ((TernaryLocation*)lhs)->getSubExp3();
+                       ((TernaryLoc*)lhs)->getSubExp1();
+        Exp* first   = ((TernaryLoc*)lhs)->getSubExp2();
+        Exp* last    = ((TernaryLoc*)lhs)->getSubExp3();
         appendExp(s, s1, PREC_ASSIGN);
         s << " = ";
         appendExp(s, s1, PREC_BIT_AND);
@@ -1034,15 +1035,15 @@ void CHLLCode::AddProcStart(Signature *signature)
             // C does this by default when you pass an array
             ty = ((PointerType*)ty)->getPointsTo();
             Exp *foo = new Const("foo123412341234");
-            m_proc->searchAndReplace(Location::memOf(
-                                        Location::param(
+            m_proc->searchAndReplace(UnaryLoc::memOf(
+                                        UnaryLoc::param(
                                           signature->getParamName(i)), NULL), 
                                      foo);
-            m_proc->searchAndReplace(Location::param(
+            m_proc->searchAndReplace(UnaryLoc::param(
                                        signature->getParamName(i)), 
                                      foo);
             m_proc->searchAndReplace(foo, 
-                                     Location::param(
+                                     UnaryLoc::param(
                                        signature->getParamName(i)));
         }
         appendType(s, ty);

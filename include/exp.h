@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.2 $
+ * $Revision: 1.105.2.3 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -16,22 +16,23 @@
  * 29 Apr 02 - Mike: TypedExp takes Type& and Exp* in opposite order; consistent
  * 10 May 02 - Mike: Added refSubExp1 etc
  * 21 May 02 - Mike: Mods for gcc 3.1
- * 13 Jul 04 - Mike: Location is now zero arity, with UnaryLoc etc subclasses
+ * 14 Jul 04 - Mike: Location is now zero arity, with UnaryLoc etc subclasses
  */
 
 #ifndef __EXP_H_
 #define __EXP_H_
 
 /* Main class hierarchy:   Exp (abstract)
-                      _____//\\___________
-                     /     /  \           \
-                  Unary  Const Terminal  Location
-     TypedExp____/  |   \         \         \
-      FlagDef___/ Binary Location  TypeVal  UnaryLoc
-       RefExp__/    |     \                   \
-       PhiExp_/  Ternary   BinaryLocation     BinaryLoc
-                                                \
-                                               TernaryLoc
+                      _____/|\________________
+                     /      |       \         \
+                   Unary   Location  Const  Terminal
+     TypedExp*____/  |  \        /\            |
+      FlagDef___/ Binary UnaryLoc  \        TypeVal*
+       RefExp__/     |  \         / \
+       PhiExp_/  Ternary BinaryLoc  /
+                        \          /
+                         TernaryLoc
+  * = deprecated
 */
 
 #include <iostream>
@@ -370,7 +371,7 @@ public:
     // Nothing to destruct: Don't deallocate the string passed to constructor
 
     // Clone
-    virtual Const* clone();
+    virtual Exp* clone();
 
     // Compare
 virtual bool operator==(const Exp& o) const;
@@ -422,7 +423,7 @@ public:
         Terminal(Terminal& o);      // Copy constructor
 
     // Clone
-    virtual Terminal* clone();
+    virtual Exp* clone();
 
     // Compare
 virtual bool    operator==(const Exp& o) const;
@@ -445,19 +446,19 @@ protected:
 /*==============================================================================
  * Unary is a subclass of Exp, holding one subexpression
  *============================================================================*/
-class Unary : public Exp {
+class Unary : public virtual Exp {
 protected:
     Exp*        subExp1;    // One subexpression pointer
 public:
-    // Constructor, with just ID
+    // Constructor, with just operator
             Unary(OPER op);
-    // Constructor, with ID and subexpression
+    // Constructor, with operator and subexpression
             Unary(OPER op, Exp* e);
     // Copy constructor
             Unary(Unary& o);
 
     // Clone
-    virtual Unary* clone();
+    virtual Exp* clone();
 
     // Compare
 virtual bool operator==(const Exp& o) const;
@@ -516,19 +517,19 @@ protected:
 /*==============================================================================
  * Binary is a subclass of Unary, holding two subexpressions
  *============================================================================*/
-class Binary : public Unary {
+class Binary : public virtual Unary {
 protected:
     Exp*        subExp2;    // Second subexpression pointer
 public:
-    // Constructor, with ID
+    // Constructor, with operator
             Binary(OPER op);
-    // Constructor, with ID and subexpressions
+    // Constructor, with operator and subexpressions
             Binary(OPER op, Exp* e1, Exp* e2);
     // Copy constructor
             Binary(Binary& o);
 
     // Clone
-    virtual Binary* clone();
+    virtual Exp* clone();
 
     // Compare
 virtual bool operator==(const Exp& o) const ;
@@ -603,7 +604,7 @@ public:
             Ternary(Ternary& o);
 
     // Clone
-    virtual Ternary* clone();
+    virtual Exp* clone();
 
     // Compare
 virtual bool operator==(const Exp& o) const ;
@@ -657,7 +658,7 @@ protected:
 
 /*==============================================================================
  * TypedExp is a subclass of Unary, holding one subexpression and a Type
- * It is somewhat deprecated now; mostly, class Location (or one of its child
+ * It is somewhat deprecated now; mostly, class  Location (or one of its child
  * classes) can replace it
  *============================================================================*/
 class TypedExp : public Unary {
@@ -675,7 +676,7 @@ public:
             TypedExp(TypedExp& o);
 
     // Clone
-    virtual TypedExp* clone();
+    virtual Exp* clone();
 
     // Compare
 virtual bool operator==(const Exp& o) const;
@@ -735,7 +736,7 @@ protected:
  * The integer is really a pointer to the defining statement,
  * printed as the statement number for compactness
  *============================================================================*/
-class RefExp : public Unary {
+class RefExp : public virtual Unary {
     Statement* def;             // The defining statement
 
 public:
@@ -743,7 +744,7 @@ public:
             RefExp(Location* l, Statement* def);
             RefExp(Location* l);
             RefExp(RefExp& o);
-virtual RefExp* clone();
+virtual Exp* clone();
 virtual bool operator==(const Exp& o) const;
 virtual bool operator< (const Exp& o) const;
 virtual bool operator*=(Exp& o);
@@ -796,7 +797,7 @@ public:
             // Constructor with statement defining it (def)
             PhiExp(Exp* e, Statement* def);
             PhiExp(PhiExp& o);
-virtual PhiExp* clone();
+virtual Exp* clone();
 virtual bool operator==(const Exp& o) const;
 virtual bool operator< (const Exp& o) const;
 virtual bool operator*=(Exp& o);
@@ -833,6 +834,7 @@ protected:
 /*==============================================================================
 class TypeVal. Just a Terminal with a Type. Used for type values in constraints
 ==============================================================================*/
+// MVE: can Location be used instead?
 class TypeVal : public Terminal {
     Type*   val;
 
@@ -842,7 +844,7 @@ public:
 
     virtual Type*   getType() {return val;}
     virtual void    setType(Type* t) {val = t;}
-virtual TypeVal* clone();
+virtual Exp* clone();
 virtual bool operator==(const Exp& o) const;
 virtual bool operator< (const Exp& o) const;
 virtual bool operator*=(Exp& o);
@@ -860,29 +862,45 @@ protected:
     friend class XMLProgParser;
 };  // class TypeVal
 
-class Location : public Exp {
+
+//  //  //  //  //  //  //  //  //  //  //
+//                                      //
+//  L o c a t i o n   H i e r a r c h y //
+//                                      //
+//  //  //  //  //  //  //  //  //  //  //
+
+// Location has Exp as a virtual base, so that things like the operator
+// are not replicated in classes derived from Location
+class Location : public virtual Exp {
 protected:
     UserProc *proc;
     Type *ty;
 
 public:
     // Constructor with ID and UserProc*
-            Location(OPER op, UserProc *proc);
+            Location(OPER op, UserProc *proc) : Exp(op), proc(proc), ty(NULL)
+              {}
     // Copy constructor
             Location(Location& o);
-    // Clone
-    virtual Location* clone();
+    // Clone: would be nice if Location::clone could return a Location*, but
+    // gcc does not implement pointer adjustment for covariant returns
+    virtual Exp* clone();
 
     void setProc(UserProc *p) { proc = p; }
     UserProc *getProc() { return proc; }
 
-    virtual Exp* polySimplify(bool& bMod);
-    virtual void getDefinitions(ExpressionSet& defs);
-
-    virtual Type *getType();
+    virtual Type *getType() {return ty;}
     virtual void setType(Type *t) { ty = t; }
-virtual int getMemDepth();
+
+    // Pure virtuals
 virtual void    print(std::ostream& os, bool withUses = false);
+virtual void    printx(int ind);
+virtual void appendDotFile(std::ofstream& os);
+virtual bool operator==(const Exp& o) const;
+virtual bool operator< (const Exp& o) const;
+virtual bool operator*=(Exp& o);
+    // Other virtuals
+virtual void getDefinitions(ExpressionSet& defs) {}
 
     // Visitation
     virtual bool accept(ExpVisitor* v);
@@ -890,10 +908,11 @@ virtual void    print(std::ostream& os, bool withUses = false);
 
 //protected:
     friend class XMLProgParser;
-    Location(OPER op) : Unary(op), proc(NULL), ty(NULL) { }
+    Location(OPER op) : Exp(op), proc(NULL), ty(NULL) { }
 };  // Class Location
 
-class UnaryLoc: public Location {
+class UnaryLoc: public Unary, Location {
+public:
     // Constructor with ID, subexpression, and UserProc*
             UnaryLoc(OPER op, Exp* e1, UserProc *proc);
     // Copy constructor
@@ -912,38 +931,37 @@ class UnaryLoc: public Location {
     static Location* param(const char *nam, UserProc *p = NULL) {
         return new UnaryLoc(opParam, new Const((char*)nam), p);}
     // Clone
-    virtual UnaryLoc* clone();
-};
+    virtual Exp* clone();
 
-class BinaryLoc : public UnaryLoc {
+    // Other virtuals
+virtual void getDefinitions(ExpressionSet& defs);
+
+};  // class UnaryLoc
+
+class BinaryLoc : public Binary, Location {
     // Needed for opArraySubscript, maybe others
-protected:
-    Exp*    subExp2;        // Already has subExp1 in parent class
 public:
-            BinaryLoc(OPER op) : Location(op) {}
-            BinaryLoc(OPER op, Exp* e1, Exp* e2) :
-                Location(op, e1, NULL), subExp2(e2) {}
-            BinaryLoc(OPER op, Exp* e1, Exp* e2, UserProc* proc) :
-                Location(op, e1, proc), subExp2(e2) {}
+            BinaryLoc(OPER op, Exp* e1, Exp* e2)
+                : Binary(op, e1, e2),
+                  Location(op, NULL)
+                  {}
+            BinaryLoc(OPER op, Exp* e1, Exp* e2, UserProc* proc)
+                : Binary(op, e1, e2), Location(op, proc) {}
     // Clone
-    virtual BinaryLoc* clone();
-    Exp*    getSubExp2() {return subExp2;}
-};
+    virtual Exp* clone();
 
-class TernaryLoc : public BinaryLoc{
+};  // class BinaryLoc
+
+class TernaryLoc : public Ternary, Location {
     // Needed for opAt, maybe others
-protected:
-    Exp*    subExp3;        // Already has subExp1,2 in parent class
 public:
-            TernaryLoc(OPER op) : BinaryLoc(op) {}
-            TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3) :
-                BinaryLoc(op, e1, e2, NULL), subExp3(e3) {}
+            TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3)
+                : Ternary(op, e1, e2, e3), proc(NULL), ty(NULL) {}
             TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3, UserProc* proc)
-              : BinaryLoc(op, e1, e2, proc), subExp3(e2) {}
+                : BinaryLoc(op, e1, e2, e3), proc(proc), ty(NULL) {}
     // Clone
-    virtual TernaryLoc* clone();
-    Exp*    getSubExp3() {return subExp3;}
+    virtual Exp* clone();
 
-};
+};  // class TernaryLoc
     
 #endif // __EXP_H__

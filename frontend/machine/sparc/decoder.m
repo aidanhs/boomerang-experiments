@@ -13,7 +13,7 @@
  *             SparcDecoder class.
  *============================================================================*/
 
-/* $Revision: 1.17 $
+/* $Revision: 1.17.2.1 $
  *
  * 26 Apr 02 - Mike: Mods for boomerang
  * 19 May 02 - Mike: Added many (int) casts: variables from toolkit are unsgnd
@@ -638,7 +638,7 @@ DecodeResult& SparcDecoder::decodeInstruction (ADDRESS pc, int delta) {
  *============================================================================*/
 Exp* SparcDecoder::dis_RegLhs(unsigned r)
 {
-	return Location::regOf(r);
+	return UnaryLoc::regOf(r);
 }
 
 /*==============================================================================
@@ -653,7 +653,7 @@ Exp* SparcDecoder::dis_RegRhs(unsigned r)
 {
 	if (r == 0)
 		return new Const(0);
-	return Location::regOf(r);
+	return UnaryLoc::regOf(r);
 }
 
 /*==============================================================================
@@ -691,16 +691,16 @@ Exp* SparcDecoder::dis_Eaddr(ADDRESS pc, int ignore /* = 0 */)
 
     match pc to
     | indirectA(rs1) =>
-        expr = Location::regOf(rs1);
+        expr = UnaryLoc::regOf(rs1);
     | indexA(rs1, rs2) =>
         expr = new Binary(opPlus,
-            Location::regOf(rs1),
-            Location::regOf(rs2));
+            UnaryLoc::regOf(rs1),
+            UnaryLoc::regOf(rs2));
     | absoluteA(i) =>
         expr = new Const((int)i);
     | dispA(rs1,i) =>
         expr = new Binary(opPlus,
-            Location::regOf(rs1),
+            UnaryLoc::regOf(rs1),
             new Const((int)i));
     endmatch
 
