@@ -4,7 +4,7 @@
  *              tests the RTL and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.12.2.3 $
+ * $Revision: 1.12.2.4 $
  *
  * 13 May 02 - Mike: Created
  */
@@ -140,7 +140,7 @@ public:
     virtual bool visit(  CaseStatement *s) { d = true; return false; }
     virtual bool visit(  CallStatement *s) { e = true; return false; }
     virtual bool visit(ReturnStatement *s) { f = true; return false; }
-    virtual bool visit(   BoolStatement *s) { g = true; return false; }
+    virtual bool visit(   BoolAssign *s) { g = true; return false; }
     virtual bool visit(         Assign *s) { h = true; return false; }
 };
 
@@ -184,8 +184,8 @@ void RtlTest::testVisitor()
     CPPUNIT_ASSERT(visitor->f);
     delete ret;
 
-    /* "bool" stmt */
-    BoolStatement *scond = new BoolStatement(0);
+    /* "bool" assgn */
+    BoolAssign *scond = new BoolAssign(0);
     scond->accept(visitor);
     CPPUNIT_ASSERT(visitor->g);
     delete scond;

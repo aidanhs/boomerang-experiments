@@ -4,7 +4,7 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.7 $
+ * $Revision: 1.14.2.8 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -992,14 +992,14 @@ void StatementTest::testAddUsedLocs () {
 
     // Boolstatement with condition m[r24] = r25, dest m[r26]
     l.clear();
-    BoolStatement* bs = new BoolStatement(8);
+    BoolAssign* bs = new BoolAssign(8);
     bs->setCondExpr(new Binary(opEquals,
         Location::memOf(Location::regOf(24)),
         Location::regOf(25)));
     std::list<Statement*> stmts;
     a = new Assign(Location::memOf(Location::regOf(26)), new Terminal(opNil));
     stmts.push_back(a);
-    bs->setDest(&stmts);
+    bs->setLeftFromList(&stmts);
     bs->addUsedLocs(l);
     std::ostringstream ost7;
     l.print(ost7);
@@ -1156,14 +1156,11 @@ void StatementTest::testSubscriptVars () {
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
     // Boolstatement with condition m[r28] = r28, dest m[r28]
-    BoolStatement* bs = new BoolStatement(8);
+    BoolAssign* bs = new BoolAssign(8);
     bs->setCondExpr(new Binary(opEquals,
         Location::memOf(Location::regOf(28)),
         Location::regOf(28)));
-    std::list<Statement*> stmts;
-    a = new Assign(Location::memOf(Location::regOf(28)), new Terminal(opNil));
-    stmts.push_back(a);
-    bs->setDest(&stmts);
+    bs->setLeft(Location::memOf(Location::regOf(28)));
     std::ostringstream ost7;
     bs->subscriptVar(srch, &s9);
     ost7 << bs;
