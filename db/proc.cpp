@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.2 $
+ * $Revision: 1.238.2.3 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -917,6 +917,11 @@ std::set<UserProc*>* UserProc::decompile() {
 	if (!decoded)
 		return NULL;
 
+	// Sort by address, so printouts make sense
+	cfg->sortByAddress();
+	// Initialise statements
+	initStatements();
+
 	std::set<UserProc*>* cycleSet = new std::set<UserProc*>;
 	if (!Boomerang::get()->noDecodeChildren) {
 		// Recurse to children first, to perform a depth first search
@@ -949,11 +954,6 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	Boomerang::get()->alert_start_decompile(this);
 	if (VERBOSE) LOG << "decompiling: " << getName() << "\n";
-
-	// Sort by address, so printouts make sense
-	cfg->sortByAddress();
-	// Initialise statements
-	initStatements();
 
 	// Compute dominance frontier
 	DataFlow df;
@@ -1020,7 +1020,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		// recognising globals early prevents them from becoming parameters
 		if (depth == maxDepth)		// Else Sparc problems... MVE
 			replaceExpressionsWithGlobals();
-		int nparams = signature->getNumParams();
+		// int nparams = signature->getNumParams();
 		if (depth > 0 && !Boomerang::get()->noChangeSignatures) {
 			addNewParameters();
 			//trimParameters(depth);
@@ -1739,7 +1739,8 @@ void UserProc::trimParameters(int depth) {
 
 	// find parameters that are referenced (ignore calls to this)
 	int nparams = signature->getNumParams();
-	int totparams = nparams + signature->getNumImplicitParams();
+	// int totparams = nparams + signature->getNumImplicitParams();
+int totparams = nparams;
 	std::vector<Exp*> params;
 	bool referenced[64];
 	assert(totparams <= (int)(sizeof(referenced)/sizeof(bool)));
