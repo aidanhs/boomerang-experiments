@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.5 $
+ * $Revision: 1.14.2.6 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -17,6 +17,8 @@
 #include "statement.h"
 #include "log.h"
 #include "boomerang.h"		// For VERBOSE
+#include "proc.h"
+#include "signature.h"
 
 
 // FixProcVisitor class
@@ -612,85 +614,6 @@ Exp* ExpConstCaster::preVisit(Const* c) {
 	return c;
 }
 
-bool StmtConstCaster::visit(Assign *stmt) {
-	// We really need a StmtExpModifier to do this. Just get each expression to accept the ExpModifier
-	Exp* e = stmt->getLeft();
-	stmt->setLeft(e->accept(ecc));
-	if (ecc->isChanged()) return false;
-	e = stmt->getRight();
-	stmt->setRight(e->accept(ecc));
-	return !ecc->isChanged();
-}
-bool StmtConstCaster::visit(PhiAssign *stmt) {
-	Exp* e = stmt->getLeft();
-	stmt->setLeft(e->accept(ecc));
-	return !ecc->isChanged();
-}
-bool StmtConstCaster::visit(ImplicitAssign *stmt) {
-	Exp* e = stmt->getLeft();
-	stmt->setLeft(e->accept(ecc));
-	return !ecc->isChanged();
-}
-bool StmtConstCaster::visit(GotoStatement *stmt) {
-	Exp* e = stmt->getDest();
-	stmt->setDest(e->accept(ecc));
-	return !ecc->isChanged();
-}
-bool StmtConstCaster::visit(BranchStatement *stmt) {
-	Exp* e = stmt->getDest();
-	stmt->setDest(e->accept(ecc));
-	if (ecc->isChanged()) return false;
-	e = stmt->getCondExpr();
-	stmt->setCondExpr(e->accept(ecc));
-	return !ecc->isChanged();
-}
-bool StmtConstCaster::visit(CaseStatement *stmt) {
-	SWITCH_INFO* si = stmt->getSwitchInfo();
-	if (si) {
-		si->pSwitchVar = si->pSwitchVar->accept(ecc);
-	}
-	return !ecc->isChanged();
-}
-bool StmtConstCaster::visit(CallStatement *stmt) {
-	std::vector<Exp*> args;
-	args = stmt->getArguments();
-	int i, n = args.size();
-	for (i=0; i < n; i++) {
-		args[i] = args[i]->accept(ecc);
-		if (ecc->isChanged()) return true;
-	}
-	std::vector<Exp*>& impargs = stmt->getImplicitArguments();
-	n = impargs.size();
-	for (i=0; i < n; i++) {
-		impargs[i] = impargs[i]->accept(ecc);
-		if (ecc->isChanged()) return true;
-	}
-	std::vector<Exp*>& returns = stmt->getReturns();
-	n = returns.size();
-	for (i=0; i < n; i++) {
-		returns[i] = returns[i]->accept(ecc);
-		if (ecc->isChanged()) return true;
-	}
-	return true;
-}
-bool StmtConstCaster::visit(ReturnStatement *stmt) {
-	std::vector<Exp*>& returns = stmt->getReturns();
-	int i, n = returns.size();
-	for (i=0; i < n; i++) {
-		returns[i] = returns[i]->accept(ecc);
-		if (ecc->isChanged()) return true;
-	}
-	return true;
-}
-bool StmtConstCaster::visit(BoolAssign *stmt) {
-	Exp* e = stmt->getLeft();
-	stmt->setLeft(e->accept(ecc));
-	if (ecc->isChanged()) return false;
-	e = stmt->getCondExpr();
-	stmt->setCondExpr(e->accept(ecc));
-	return !ecc->isChanged();
-}
-
 
 // This is the code (apart from definitions) to find all constants in a Statement
 bool ConstFinder::visit(Const* e) {
@@ -703,4 +626,32 @@ bool ConstFinder::visit(Location* e, bool& override) {
 	else
 		override = false;	// However, we DO want to see constants in memofs
 	return true;			
+}
+
+// Convert expressions to locals
+DfaLocalConverter::DfaLocalConverter(Type* ty, UserProc* proc) : parentType(ty), proc(proc) {
+	sig = proc->getSignature();
+}
+
+Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
+	// Check if this is an appropriate pattern for local variables	
+	Exp* ret;
+	if (e->isMemOf()) {
+		if (sig->isStackLocal(proc->getProg(), e)) {
+			recur = false;
+			ret = proc->getLocalExp(e, parentType, true);
+		}
+	} else
+		ret = e;
+	parentType = new PointerType(parentType);
+	recur = true;
+	return e;
+}
+Exp* DfaLocalConverter::postVisit(Location* e) {
+	if (e->isMemOf()) {
+		PointerType* pt = parentType->asPointer();
+		assert(pt);
+		parentType = pt->getPointsTo();
+	}
+	return e;
 }

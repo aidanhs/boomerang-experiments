@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63.2.3 $
+ * $Revision: 1.63.2.4 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -151,7 +151,7 @@ public:
 
 virtual Statement* clone() = 0;			   // Make copy of self
 
-	// Accept a visitor (of various kinds) to this Statement
+	// Accept a visitor (of various kinds) to this Statement. Return true to continue visiting
 virtual bool	accept(StmtVisitor* visitor) = 0;
 virtual bool	accept(StmtExpVisitor* visitor) = 0;
 virtual bool	accept(StmtModifier* visitor) = 0;
@@ -297,6 +297,9 @@ virtual	void	dfaTypeAnalysis(bool& ch) {}
 
 		// Cast the constant num to type ty. If a change was made, return true
 		bool	castConst(int num, Type* ty);
+
+		// Convert expressions to locals
+		void	dfaConvertLocals();
 
 		// End Statement visitation functions
 
@@ -949,7 +952,7 @@ virtual			~CallStatement();
 	// Make a deep copy, and make the copy a derived object if needed.
 virtual Statement* clone();
 
-	// Accept a visitor to this RTL
+	// Accept a visitor to this stmt
 virtual bool	accept(StmtVisitor* visitor);
 virtual bool	accept(StmtExpVisitor* visitor);
 virtual bool	accept(StmtModifier* visitor);

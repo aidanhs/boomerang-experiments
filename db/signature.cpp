@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.81 $
+ * $Revision: 1.81.2.1 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -1598,4 +1598,10 @@ void Return::readMemo(Memo *mm, bool dec)
 
 	type->restoreMemo(m->mId, dec);
 	exp->restoreMemo(m->mId, dec);
+}
+
+bool Signature::isOpCompatStackLocal(OPER op) {
+	if (op == opMinus) return isLocalOffsetNegative();
+	if (op == opPlus) return isLocalOffsetPositive();
+	return false;
 }

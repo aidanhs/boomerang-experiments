@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.114.2.4 $
+ * $Revision: 1.114.2.5 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -799,7 +799,7 @@ protected:
  * printed as the statement number for compactness
  *============================================================================*/
 class RefExp : public Unary {
-	Statement* def;				// The defining statement
+		Statement* def;				// The defining statement
 
 public:
 				// Constructor with expression (e) and statement defining it (def)
@@ -813,16 +813,19 @@ virtual bool	operator*=(Exp& o);
 
 virtual void	print(std::ostream& os);
 virtual void	printx(int ind);
-virtual int		getNumRefs() {return 1;}
-	Statement*	getRef() {return def;}
-	Exp*		addSubscript(Statement* def) {this->def = def; return this;}
-	void		setDef(Statement* def) {this->def = def;}
+//virtual int		getNumRefs() {return 1;}
+	Statement*	getRef() {return def;}		// Ugh should be called getDef()
+		Exp*	addSubscript(Statement* def) {this->def = def; return this;}
+		void	setDef(Statement* def) {this->def = def;}
 virtual Exp*	genConstraints(Exp* restrictTo);
 virtual Exp*	fromSSA(igraph& ig);
 	bool		references(Statement* s) {return def == s;}
 virtual Exp*	polySimplify(bool& bMod);
 virtual Type*	getType();
 virtual Exp		*match(Exp *pattern);
+		// Before type analysis, implicit definitions are NULL.
+		// During and after TA, they point to an implicit assignment statement.
+		bool	isImplicitDef() {return def == NULL || def->getKind() == STMT_IMPASSIGN;}
 
 	// Visitation
 virtual bool accept(ExpVisitor* v);

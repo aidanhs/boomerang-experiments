@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.3 $
+ * $Revision: 1.207.2.4 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -2367,14 +2367,18 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 
 Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 	Exp *e = NULL;
+	RefExp* r;
+	Location* reg;
 	if (symbolMap.find(le) == symbolMap.end()) {
-		if (le->getOper() == opMemOf && le->getSubExp1()->getOper() == opMinus && *le->getSubExp1()->getSubExp1() ==
-				*new RefExp(Location::regOf(signature->getStackRegister(prog)), NULL) &&
-				le->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
+		if (le->getOper() == opMemOf && signature->isOpCompatStackLocal(le->getSubExp1()->getOper()) &&
+				//*le->getSubExp1()->getSubExp1() == *new RefExp(Location::regOf(signature->getStackRegister(prog)), NULL) &&
+				(r = (RefExp*)(le->getSubExp1()->getSubExp1()), r->isSubscript()) &&
+				(reg = (Location*)(r->getSubExp1(), reg->isRegOf())) &&
+				((Const*)reg->getSubExp1())->getInt() == signature->getStackRegister() &&
+				le->getSubExp1()->getSubExp2()->isIntConst()) {
 			int le_n = ((Const*)le->getSubExp1()->getSubExp2())->getInt();
 			// now test all the locals to see if this expression 
-			// is an alias to one of them (for example, a member
-			// of a compound typed local)
+			// is an alias to one of them (for example, a member of a compound typed local)
 			for (std::map<Exp*, Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
 				Exp *base = (*it).first;
 				assert(base);
@@ -2384,9 +2388,8 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 				Type *ty = locals[name];
 				assert(ty);
 				int size = ty->getSize() / 8;	 // getSize() returns bits!
-				if (base->getOper() == opMemOf && base->getSubExp1()->getOper() == opMinus &&
-						*base->getSubExp1()->getSubExp1() == 
-						  *new RefExp(Location::regOf(signature->getStackRegister(prog)), NULL) &&
+				if (base->getOper() == opMemOf && signature->isOpCompatStackLocal(base->getSubExp1()->getOper()) &&
+						*base->getSubExp1()->getSubExp1() == *new RefExp(Location::regOf(signature->getStackRegister(prog)), NULL) &&
 						base->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
 					int base_n = ((Const*)base->getSubExp1()->getSubExp2()) ->getInt();
 					if (le_n <= base_n && le_n > base_n-size) {
@@ -2804,10 +2807,8 @@ void UserProc::setLocalExp(const char *nam, Exp *e)
 
 Exp *UserProc::getLocalExp(const char *nam)
 {
-	for (std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.begin();
-		 it != symbolMap.end(); it++)
-		if ((*it).second->getOper() == opLocal &&
-			!strcmp(((Const*)(*it).second->getSubExp1())->getStr(), nam))
+	for (std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++)
+		if ((*it).second->getOper() == opLocal && !strcmp(((Const*)(*it).second->getSubExp1())->getStr(), nam))
 			return (*it).first;
 	return NULL;
 }

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.5 $
+ * $Revision: 1.126.2.6 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -3553,7 +3553,7 @@ void Statement::clearConscripts() {
 // Cast the constant num to be of type ty. Return true if a change made
 bool Statement::castConst(int num, Type* ty) {
 	ExpConstCaster ecc(num, ty);
-	StmtConstCaster scc(&ecc);
+	StmtModifier scc(&ecc);
 	accept(&scc);
 	return ecc.isChanged();
 }
@@ -3794,15 +3794,9 @@ void Statement::subscriptVar(Exp* e, Statement* def /*, Cfg* cfg */) {
 
 // Find all constants in this Statement
 void Statement::findConstants(std::list<Const*>& lc) {
-if (kind == STMT_CALL)
-  std::cerr << "HACK!\n";
 	ConstFinder cf(lc);
 	StmtConstFinder scf(&cf);
 	accept(&scf);
-if (kind == STMT_CALL) {
-  std::cerr << "findConstants in call " << this << ":\n";
-  std::list<Const*>::iterator ll; for (ll=lc.begin(); ll != lc.end(); ll++) std::cerr << *ll << ", "; std::cerr << "\n";	// HACK!
-}
 }
 
 // Convert this PhiAssignment to an ordinary Assignment
@@ -3937,5 +3931,4 @@ void PhiAssign::simplifyRefs() {
 		uu++;
 	}
 }
-
 

@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.5 $
+ * $Revision: 1.8.2.6 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -252,15 +252,15 @@ public:
 	virtual		~StmtModifier() {}
 	// This class' visitor functions don't return anything. Maybe we'll need
 	// return values at a later stage.
-virtual void visit(Assign *s,		  bool& recur) {recur = true;}
-virtual void visit(PhiAssign *s,	  bool& recur) {recur = true;}
-virtual void visit(ImplicitAssign *s, bool& recur) {recur = true;}
-virtual void visit(BoolAssign *s,  bool& recur) {recur = true;}
-virtual void visit(GotoStatement *s,  bool& recur) {recur = true;}
-virtual void visit(BranchStatement *s,bool& recur) {recur = true;}
-virtual void visit(CaseStatement *s,  bool& recur) {recur = true;}
-virtual void visit(CallStatement *s,  bool& recur) {recur = true;}
-virtual void visit(ReturnStatement *s,bool& recur) {recur = true;}
+virtual void visit(Assign *s,			bool& recur) {recur = true;}
+virtual void visit(PhiAssign *s,		bool& recur) {recur = true;}
+virtual void visit(ImplicitAssign *s,	bool& recur) {recur = true;}
+virtual void visit(BoolAssign *s,		bool& recur) {recur = true;}
+virtual void visit(GotoStatement *s,	bool& recur) {recur = true;}
+virtual void visit(BranchStatement *s,	bool& recur) {recur = true;}
+virtual void visit(CaseStatement *s,	bool& recur) {recur = true;}
+virtual void visit(CallStatement *s,	bool& recur) {recur = true;}
+virtual void visit(ReturnStatement *s,	bool& recur) {recur = true;}
 };
 
 class PhiStripper : public StmtModifier {
@@ -399,23 +399,6 @@ virtual			~ExpConstCaster() {}
 virtual Exp* 	preVisit(Const *c);
 };
 
-class StmtConstCaster : public StmtVisitor {
-	ExpConstCaster* ecc;
-public:
-				StmtConstCaster(ExpConstCaster* ecc) : ecc(ecc) {}
-virtual			~StmtConstCaster() {};
-
-virtual bool visit(Assign *stmt);
-virtual bool visit(PhiAssign *stmt);
-virtual bool visit(ImplicitAssign *stmt);
-virtual bool visit(BoolAssign *stmt);
-virtual bool visit(GotoStatement *stmt);
-virtual bool visit(BranchStatement *stmt);
-virtual bool visit(CaseStatement *stmt);
-virtual bool visit(CallStatement *stmt);
-virtual bool visit(ReturnStatement *stmt);
-};
-
 class ConstFinder : public ExpVisitor {
 		std::list<Const*>& lc;
 public:
@@ -429,6 +412,19 @@ virtual bool	visit(Location *e, bool& override);
 class StmtConstFinder : public StmtExpVisitor {
 public:
 				StmtConstFinder(ConstFinder* v) : StmtExpVisitor(v) {}
+};
+
+class DfaLocalConverter : public ExpModifier {
+		Type*	parentType;
+		UserProc* proc;
+		Signature* sig;		// Look up once (from proc) for speed
+public:
+				DfaLocalConverter(Type* ty, UserProc* proc);
+		//void	setType(Type* ty) {parentType = ty;}
+		//Type*	getType() {return parentType;}
+
+		Exp*	preVisit(Location* e, bool& recur);
+		Exp*	postVisit(Location* e);
 };
 
 #endif	// #ifndef __VISITOR_H__

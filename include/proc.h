@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.103.2.1 $
+/* $Revision: 1.103.2.2 $
 */
 
 #ifndef _PROC_H_
@@ -570,13 +570,13 @@ private:
 	 */
 	void	checkMemSize(Exp* e);
 
+public:
 	/* 
 	 * Return an expression that is equivilent to e in terms of local variables.
 	 * Creates new locals as needed.
 	 */
 	Exp *getLocalExp(Exp *le, Type *ty = NULL, bool lastPass = false);
 
-public:
 
 	/*
 	 * Sets the parameters that have been recovered for this procedure through

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.3 $
+ * $Revision: 1.5.2.4 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -25,6 +25,7 @@
 #include "exp.h"
 #include "prog.h"
 #include "util.h"
+#include "visitor.h"
 #include <sstream>
 
 static int nextUnionNumber = 0;
@@ -80,6 +81,8 @@ void UserProc::dfaTypeAnalysis() {
 		//Type* t = s->getType();
 		// Locations
 		// ...
+		// Convert expressions to locals
+		s->dfaConvertLocals();
 		// Constants
 		std::list<Const*>lc;
 		s->findConstants(lc);
@@ -664,8 +667,7 @@ void RefExp::descendType(Type* parentType, bool& ch) {
 }
 
 void Const::descendType(Type* parentType, bool& ch) {
-	ch |= *type != *parentType;
-	type = parentType;
+	type = type->meetWith(parentType, ch);
 }
 
 void Unary::descendType(Type* parentType, bool& ch) {
@@ -687,3 +689,11 @@ void TypedExp::descendType(Type* parentType, bool& ch) {
 void Terminal::descendType(Type* parentType, bool& ch) {
 }
 
+// Convert expressions to locals, using the (so far DFA based) type analysis information
+// Basically, descend types, and when you get to m[...] compare with the local high level pattern;
+// when at a sum or difference, check for the address of locals high level pattern that is a pointer
+void Statement::dfaConvertLocals() {
+	DfaLocalConverter dlc(getType(), proc);
+	StmtModifier sm(&dlc);
+	accept(&sm);
+}
