@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.4 $
+ * $Revision: 1.238.2.5 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1150,7 +1150,7 @@ std::set<UserProc*>* UserProc::decompile() {
 
 		printXML();
 		if (VERBOSE && !Boomerang::get()->noRemoveNull) {
-			LOG << "===== After removing null and unused statements =====\n";
+			LOG << "===== After removing null and unused statements depth " << depth << " =====\n";
 			printToLog();
 			LOG << "===== End after removing unused statements =====\n\n";
 		}
@@ -1171,6 +1171,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		do {
 			if (!first)
 				propagateAtDepth(df, maxDepth);		// HACK: Can sometimes be needed, if call was indirect
+													// MVE: Check if still needed
 			first = false;
 			dfaTypeAnalysis();
 		} while (ellipsisProcessing());
@@ -1427,20 +1428,15 @@ void UserProc::trimReturns() {
 
 	if (stdsp) {
 		Unary *regsp = Location::regOf(sp);
-		// I've been removing sp from the return set as it makes 
-		// the output look better, but this only works for recursive
-		// procs (because no other proc calls them and fixCallRefs can
-		// replace refs to the call with a valid expression).  Not
-		// removing sp will make basically every procedure that doesn't
-		// preserve sp return it, and take it as a parameter.  Maybe a 
-		// later pass can get rid of this.	Trent 22/8/2003
-		// We handle this now by doing a final pass which removes any
-		// unused returns of a procedure.  So r28 will remain in the 
-		// returns set of every procedure in the program until such
-		// time as this final pass is made, and then they will be 
-		// removed.	 Trent 22/9/2003
-		// Instead, what we can do is replace r28 in the return statement
-		// of this procedure with what we've proven it to be.
+		// I've been removing sp from the return set as it makes the output look better, but this only works for
+		// recursive procs (because no other proc calls them and fixCallRefs can replace refs to the call with a valid
+		// expression). Not removing sp will make basically every procedure that doesn't preserve sp return it, and take
+		// it as a parameter.  Maybe a later pass can get rid of this.	Trent 22/8/2003
+		// We handle this now by doing a final pass which removes any unused returns of a procedure.  So r28 will remain
+		// in the returns set of every procedure in the program until such time as this final pass is made, and then
+		// they will be removed.	 Trent 22/9/2003
+		// Instead, what we can do is replace r28 in the return statement of this procedure with what we've proven it to
+		// be.
 		//removeReturn(regsp);
 		// also check for any locals that slipped into the returns
 		for (int i = 0; i < signature->getNumReturns(); i++) {
@@ -1450,17 +1446,18 @@ void UserProc::trimReturns() {
 			else if (*e == *regsp) {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
-				// Make sure that the regsp in this expression is subscripted with a proper implicit assignment
+				// Make sure that the regsp in this expression is subscripted with a proper implicit assignment.
 				// Note that trimReturns() is sometimes called before and after implicit assignments are created,
 				// hence call findTHEimplicitAssign()
-				// NOTE: This assumes simple functions of regsp, e.g. regsp + K, not involving other locations
-				// that need to be subscripted
+				// NOTE: This assumes simple functions of regsp, e.g. regsp + K, not involving other locations that
+				// need to be subscripted
+				e = e->clone();			// So don't subscript the proven equation in the Proc
 				e = e->expSubscriptVar(regsp, cfg->findTheImplicitAssign(regsp));
 
 				if (!(*e == *theReturnStatement->getReturnExp(i))) {
 					if (VERBOSE)
-						LOG << "replacing in return statement " << theReturnStatement->getReturnExp(i) <<
-							" with " << e << "\n";
+						LOG << "replacing in return statement " << theReturnStatement->getReturnExp(i) << " with " <<
+							e << "\n";
 					theReturnStatement->setReturnExp(i, e);
 				}
 			}
@@ -2381,7 +2378,7 @@ void UserProc::replaceExpressionsWithLocals(bool lastPass) {
 
 	// start with calls because that's where we have the most types
 	StatementList::iterator it;
-	for (it = stmts.begin(); it != stmts.end(); it++) 
+	for (it = stmts.begin(); it != stmts.end(); it++) {
 		if ((*it)->isCall()) {
 			CallStatement *call = (CallStatement*)*it;
 			for (int i = 0; i < call->getNumArguments(); i++) {
@@ -2413,6 +2410,7 @@ void UserProc::replaceExpressionsWithLocals(bool lastPass) {
 				}
 			}
 		}
+	}
 
 	// normalize sp usage (turn WILD + sp{0} into sp{0} + WILD)
 	Exp *nn = new Binary(opPlus, new Terminal(opWild), new RefExp(Location::regOf(sp), NULL));
@@ -2706,6 +2704,8 @@ void UserProc::promoteSignature() {
 
 Exp* UserProc::newLocal(Type* ty) {
 	std::ostringstream os;
+if (nextLocal == 11)
+ std::cerr << "HACK!\n";
 	os << "local" << nextLocal++;
 	std::string name = os.str();
 	locals[name] = ty;
@@ -2917,8 +2917,8 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				StatementSet::iterator dd;
 				for (dd = stmtsRefdByUnused.begin(); dd != stmtsRefdByUnused.end(); dd++) {
 					if (DEBUG_UNUSED_STMT)
-						LOG << "Decrementing ref count of " << (*dd?(*dd)->getNumber():0) << " because " << s->getNumber() <<
-							" is unused\n";
+						LOG << "Decrementing ref count of " << (*dd?(*dd)->getNumber():0) << " because "
+							<< s->getNumber() << " is unused\n";
 					refCounts[*dd]--;
 				}
 				if (DEBUG_UNUSED_STMT)

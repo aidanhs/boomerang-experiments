@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.3 $
+ * $Revision: 1.23.2.4 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -167,6 +167,7 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 		Exp *e = call->getProven(r->getSubExp1());
 		if (e) {
 			// Express e in terms of the definitions reaching the call
+			e = e->clone();					// So that the expression in the Proc is not altered
 			e = call->localiseExp(e);
 			assert(e);
 			if (VERBOSE)

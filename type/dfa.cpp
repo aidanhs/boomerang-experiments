@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.1 $
+ * $Revision: 1.30.2.2 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -1009,6 +1009,8 @@ void Statement::dfaConvertLocals() {
 	DfaLocalConverter dlc(proc);
 	StmtDfaLocalConverter sdlc(&dlc);
 	accept(&sdlc);
+	if (VERBOSE && dlc.change)
+		LOG << "Statement modified with new local(s): " << this << "\n";
 }
 
 void StmtDfaLocalConverter::visit(Assign* s, bool& recur) {
@@ -1086,8 +1088,9 @@ void StmtDfaLocalConverter::visit(CallStatement* s, bool& recur) {
 
 // Convert expressions to locals
 DfaLocalConverter::DfaLocalConverter(UserProc* proc) : parentType(NULL), proc(proc) {
-	sig = proc->getSignature();		// MVE: is this used?
+	sig = proc->getSignature();
 	prog = proc->getProg();
+	change = false;
 }
 
 Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
@@ -1095,7 +1098,7 @@ Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
 	if (e->isMemOf()) {
 		if (sig->isStackLocal(proc->getProg(), e)) {
 			recur = false;
-			//mod = true;			// We've made a modification
+			change = true;			// We've made a change
 			Exp* ret = proc->getLocalExp(e, parentType, true);
 			// ret is now *usually* a local so postVisit won't expect parentType changed
 			// Note: at least one of Trent's hacks can cause m[a[...]] to be returned
