@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.16 $
+ * $Revision: 1.16.2.1 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -158,6 +158,16 @@ void Statement::getReachIn(StatementSet &reachin) {
     pbb->getReachInAt(this, reachin);
 }
 
+void Statement::getAvailIn(StatementSet &availin) {
+    assert(pbb);
+    pbb->getAvailInAt(this, availin);
+}
+
+void Statement::getLiveOut(LocationSet &liveout) {
+    assert(pbb);
+    pbb->getLiveOutAt(this, liveout);
+}
+
 bool Statement::mayAlias(Exp *e1, Exp *e2, int size) { 
     if (*e1 == *e2) return true;
 
@@ -231,6 +241,42 @@ void Statement::calcReachOut(StatementSet &reach) {
         reach.insert(this);
 }
 
+/* calculates the definitions that are not killed by this statement (along
+    any path).
+   If the available set is empty, it will contain anything this assignment
+   defines. If the available set is not empty, then it will not contain
+   anything this assignment kills.
+ */
+void Statement::calcAvailOut(StatementSet &avail) {
+    // calculate kills
+    killAvail(avail);
+    // add this def
+    if (getLeft() != NULL)
+        avail.insert(this);
+}
+
+/* calculates the definitions containing live variables that are not killed by
+   this statement.
+   If the live set is empty, it will contain anything this assignment defines.
+   If the reach set is not empty, then it will not contain anything this
+      assignment kills.
+ */
+void Statement::calcLiveIn(LocationSet &live) {
+    // Even though this is a backwards flow problem, we need to do the kills
+    // first. Consider
+    // eax := eax + 5
+    // where eax is in fact live (used before being defined) after this stmt.
+    // It is clearly still live before the statement, so we do the kill (which
+    // removes eax from the liveness set) then insert all our uses (which in
+    // this case is eax again). Weird.
+    // calculate kills
+    killLive(live);
+    // add all locations that this statement uses (register or memory)
+    addUsedLocs(live);
+}
+
+
+
 /* 
  * Returns true if the statement can be propagated to all uses (and
  * therefore can be removed).
@@ -269,19 +315,57 @@ bool Statement::canPropagateToAll() {
         return false;
     }
 
+    StatementSet availOutSrc;
+    getAvailIn(availOutSrc);
+    calcAvailOut(availOutSrc);       // Available expr after this stmt
     StmtSetIter it;
     for (Statement* sdest = usedBy.getFirst(it); sdest;
       sdest = usedBy.getNext(it)) {
+        // all locations on the RHS must not be defined on any path from this
+        // statement to the destination
+        // this is the second condition in the Dragon book, p636
+        // We check that the available set at the destination, minus the avail-
+        // able set at the source, does not contain any definition for the RHS
+        // location
         StatementSet destIn;
         sdest->getAvailIn(destIn);
-        // all uses must be available at the destination
-        StmtSetIter ituse;
-        for (Statement* tuse = tmp_uses.getFirst(ituse); tuse;
-          tuse = tmp_uses.getNext(ituse)) {
-            if (!destIn.exists(tuse)) {
-                return false;
-            }
+        destIn.make_diff(availOutSrc);
+        LocationSet rhsUses;
+        addUsedLocs(rhsUses);       // Get the set of locations used
+        LocSetIter ll;
+        for (Exp* used = rhsUses.getFirst(ll); used;
+          used = rhsUses.getNext(ll)) {
+            if (destIn.defines(used))
+                return false;       // Condition 2 of Dragon book fails
         }
+#if 1           // Mike's idea: reject if more than 1 def reaches the dest
+        // Must be only one definition (this statement) that reaches each
+        // destination (Dragon book p636 condition 1)
+        int realDefs = 0;
+        Exp* thisLhs = getLeft();
+        // This destination could "use" statements other than a true
+        // definition, if the LHS of the use is a m[]
+        // So we need this loop to count the true definitions
+        StmtSetIter dui;
+        for (Statement* du = sdest->uses.getFirst(dui); du;
+          du = sdest->uses.getNext(dui)) {
+            Exp* lhs = du->getLeft();
+            if (*lhs == *thisLhs) realDefs++;
+        }
+        if (realDefs > 1) {
+#if 0
+  std::cerr << "Can't propagate " << this << " because there are " << realDefs
+    << " uses for destination " << sdest << "; they include: ";
+  StmtSetIter xx;
+  for (Statement* ss = sdest->uses.getFirst(xx); ss;
+    ss = sdest->uses.getNext(xx))
+      std::cerr << ss << ", "; std::cerr << "\n";   // HACK!
+#endif
+            return false;
+        }
+    }
+    return true;
+#else   // ? Can't understand Trent's logic here
         // no false uses must be created
         StmtSetIter iav;
         for (Statement* savail = destIn.getFirst(iav); savail;
@@ -297,6 +381,7 @@ bool Statement::canPropagateToAll() {
         }
     }
     return true;
+#endif
 }
 
 // assumes canPropagateToAll has returned true
@@ -379,6 +464,7 @@ void Statement::printWithUses(std::ostream& os) {
  * RETURNS:         copy of os (for concatenation)
  *============================================================================*/
 std::ostream& operator<<(std::ostream& os, Statement* s) {
+    if (s == NULL) {os << "NULL "; return os;}
     s->print(os);
     return os;
 }
@@ -444,7 +530,144 @@ bool StatementSet::exists(Statement* s) {
     return (it != sset.end());
 }
 
+// Find a definition for loc in this Statement set. Return true if found
+bool StatementSet::defines(Exp* loc) {
+    StmtSetIter it;
+    for (it = sset.begin(); it != sset.end(); it++) {
+        Exp* lhs = (*it)->getLeft();
+        if (lhs && (*lhs == *loc))
+            return true;
+    }
+    return false;
+}
 
+// Remove if defines the given expression
+bool StatementSet::removeIfDefines(Exp* given) {
+    bool found = false;
+    std::set<Statement*>::iterator it;
+    for (it = sset.begin(); it != sset.end(); it++) {
+        Exp* left = (*it)->getLeft();
+        if (left && *left == *given) {
+            // Erase this Statement
+            sset.erase(it);
+            found = true;
+        }
+    }
+    return found;
+}
+
+// As above, but given a whole statement set
+bool StatementSet::removeIfDefines(StatementSet& given) {
+    StmtSetIter it;
+    bool found = false;
+    for (Statement* s = given.getFirst(it); s; s = given.getNext(it)) {
+        Exp* givenLeft = s->getLeft();
+        if (givenLeft)
+            found |= removeIfDefines(givenLeft);
+    }
+    return found;
+}
+
+// Print to cerr, for debugging
+void StatementSet::print() {
+    StmtSetIter it;
+    for (it = sset.begin(); it != sset.end(); it++)
+        std::cerr << *it << ",\t";
+    std::cerr << "\n";
+}
+
+//
+// LocationSet methods
+//
+
+// Assignment operator
+LocationSet& LocationSet::operator=(const LocationSet& o) {
+    sset.clear();
+    std::set<Exp*, lessExpStar>::const_iterator it;
+    for (it = o.sset.begin(); it != o.sset.end(); it++)
+        sset.insert((*it)->clone());
+    return *this;
+}
+
+// Copy constructor
+LocationSet::LocationSet(const LocationSet& o) {
+    std::set<Exp*, lessExpStar>::const_iterator it;
+    for (it = o.sset.begin(); it != o.sset.end(); it++)
+        sset.insert((*it)->clone());
+}
+
+void LocationSet::print() {
+    std::set<Exp*, lessExpStar>::const_iterator it;
+    for (it = sset.begin(); it != sset.end(); it++)
+        std::cerr << *it << ",\t";
+    std::cerr << "\n";
+}
+
+void LocationSet::remove(Exp* given) {
+    std::set<Exp*, lessExpStar>::iterator it = sset.find(given);
+    if (it == sset.end()) return;
+//std::cerr << "LocationSet::remove at " << std::hex << (unsigned)this << " of " << *it << "\n";
+//std::cerr << "before: "; print();
+    // NOTE: if the below is commented out, things go crazy. Valgrind says that
+    // the deleted value gets used next in LocationSet::operator== ?!
+    //delete *it;         // These expressions were cloned when created
+    sset.erase(it);
+//std::cerr << "after : "; print();
+}
+
+void LocationSet::remove(LocSetIter ll) {
+    //delete *ll;       // Don't trust this either
+    sset.erase(ll);
+}
+
+// Remove locations defined by any of the given set of statements
+// Used for killing in liveness sets
+void LocationSet::removeIfDefines(StatementSet& given) {
+    StmtSetIter it;
+    for (Statement* s = given.getFirst(it); s; s = given.getNext(it)) {
+        Exp* givenLeft = s->getLeft();
+        if (givenLeft)
+            sset.erase(givenLeft);
+    }
+}
+
+// Make this set the union of itself and other
+void LocationSet::make_union(LocationSet& other) {
+    LocSetIter it;
+    for (it = other.sset.begin(); it != other.sset.end(); it++) {
+        sset.insert(*it);
+    }
+}
+
+Exp* LocationSet::getFirst(LocSetIter& it) {
+    it = sset.begin();
+    if (it == sset.end())
+        // No elements
+        return NULL;
+    return *it;         // Else return the first element
+}
+
+Exp* LocationSet::getNext(LocSetIter& it) {
+    if (++it == sset.end())
+        // No more elements
+        return NULL;
+    return *it;         // Else return the next element
+}
+
+bool LocationSet::operator==(const LocationSet& o) const {
+    // We want to compare the strings, not the pointers
+    if (size() != o.size()) return false;
+    std::set<Exp*, lessExpStar>::const_iterator it1, it2;
+    for (it1 = sset.begin(), it2 = o.sset.begin(); it1 != sset.end();
+      it1++, it2++) {
+        if (!(**it1 == **it2)) return false;
+    }
+    return true;
+}
+
+bool LocationSet::find(Exp* e) {
+    return sset.find(e) != sset.end();
+}
 
 //
 // StatementList methods
@@ -486,5 +709,20 @@ Statement* StatementList::getNext(StmtListIter& it) {
         // No more elements
         return NULL;
     return *it;         // Else return the next element
+}
+
+Statement* StatementList::getLast(StmtListRevIter& it) {
+    it = slist.rbegin();
+    if (it == slist.rend())
+        // No elements
+        return NULL;
+    return *it;         // Else return the last element
+}
+
+Statement* StatementList::getPrev(StmtListRevIter& it) {
+    if (++it == slist.rend())
+        // No more elements
+        return NULL;
+    return *it;         // Else return the previous element
 }
 

@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.19 $
+/* $Revision: 1.19.2.1 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -30,7 +30,7 @@
 #include <set>
 #include <string>
 #include "coverage.h"           // For Coverage class
-#include "exp.h"				// For lessExpStar
+#include "exp.h"                // For lessExpStar
 
 class Prog;
 class UserProc;
@@ -76,26 +76,26 @@ public:
      */
     ADDRESS getNativeAddress();
 
-	/*
-	 * Set the native address
-	 */
-	void setNativeAddress(ADDRESS a);
+    /*
+     * Set the native address
+     */
+    void setNativeAddress(ADDRESS a);
 
-	/*
-	 * Get the program this procedure belongs to.
-	 */
-	Prog *getProg();
+    /*
+     * Get the program this procedure belongs to.
+     */
+    Prog *getProg();
 
-	/*
-	 * Get/Set the first procedure that calls this procedure (or null for main/start).
-	 */
-	Proc *getFirstCaller();
-	void setFirstCaller(Proc *p) { if (m_firstCaller == NULL) m_firstCaller = p; }
+    /*
+     * Get/Set the first procedure that calls this procedure (or null for main/start).
+     */
+    Proc *getFirstCaller();
+    void setFirstCaller(Proc *p) { if (m_firstCaller == NULL) m_firstCaller = p; }
 
-	/*
-	 * Returns a poiner to the Signature
-	 */
-	Signature *getSignature();
+    /*
+     * Returns a poiner to the Signature
+     */
+    Signature *getSignature();
 
     /*
      * Prints this procedure to an output stream.
@@ -161,11 +161,11 @@ public:
      */
     std::list<Type>* Proc::getParamTypeList(const std::list<Exp*>& actuals);
 
-	/*
-	 * Set the number of bytes popped off the caller stack by this procedure
-	 */
-	void setBytesPopped(int n);
-	int getBytesPopped() { return bytesPopped; }
+    /*
+     * Set the number of bytes popped off the caller stack by this procedure
+     */
+    void setBytesPopped(int n);
+    int getBytesPopped() { return bytesPopped; }
 
     /*
      * Return true if this is a library proc
@@ -216,17 +216,17 @@ protected:
      */
     Signature *signature;
 
-	/*
-	 * The first procedure to call this procedure
-	 */
-	Proc *m_firstCaller;
-	ADDRESS m_firstCallerAddr;  // can only be used once.
+    /*
+     * The first procedure to call this procedure
+     */
+    Proc *m_firstCaller;
+    ADDRESS m_firstCallerAddr;  // can only be used once.
 
-	/*
-	 * Number of bytes this procedure will cause any call to it to pop off
-	 * the stack (of the caller).
-	 */
-	int bytesPopped;
+    /*
+     * Number of bytes this procedure will cause any call to it to pop off
+     * the stack (of the caller).
+     */
+    int bytesPopped;
 
 
 }; 
@@ -236,9 +236,9 @@ protected:
  *============================================================================*/
 class LibProc : public Proc {
 public:
-	
+    
     LibProc(Prog *prog, std::string& name, ADDRESS address);
-	virtual ~LibProc();
+    virtual ~LibProc();
 
     /*
      * Return the coverage of this procedure in bytes.
@@ -284,18 +284,18 @@ class UserProc : public Proc {
 public:
 
     UserProc(Prog *prog, std::string& name, ADDRESS address);
-	virtual ~UserProc();
+    virtual ~UserProc();
 
     /*
      * Records that this procedure has been decoded.
      */
     void setDecoded();
 
-	/*
-	 * Removes the decoded bit and throws away all the current information 
-	 * about this procedure.
-	 */
-	void unDecode();
+    /*
+     * Removes the decoded bit and throws away all the current information 
+     * about this procedure.
+     */
+    void unDecode();
 
     /*
      * Returns a pointer to the CFG.
@@ -315,6 +315,12 @@ public:
     bool isDecoded();
 
     /*
+     * Is this procedure decompiled or partly decompiled
+     */
+    bool isDecompiled() {return decompiled;}
+    bool isPartDecompiled() {return decompiled_down;}
+
+    /*
      * Return the number of bytes allocated for locals on the stack.
      */
     int getLocalsSize();
@@ -329,47 +335,51 @@ public:
      */
 //    void setVarSize(int idx, int size);
 
-	// serialize this procedure
-	virtual bool serialize(std::ostream &ouf, int &len);
-	// deserialize the subclass specific portion of this procedure
-	virtual bool deserialize_fid(std::istream &inf, int fid);
+    // serialize this procedure
+    virtual bool serialize(std::ostream &ouf, int &len);
+    // deserialize the subclass specific portion of this procedure
+    virtual bool deserialize_fid(std::istream &inf, int fid);
 
-	// code generation
-	void generateCode(HLLCode *hll);
+    // code generation
+    void generateCode(HLLCode *hll);
 
     // print this proc, mainly for debugging
     void print(std::ostream &out, bool withDF = false);
 
-	// decompile this proc
-	void decompile();
-	bool nameStackLocations();
-	bool nameRegisters();
-        void replaceExpressionsWithGlobals();
-        void replaceExpressionsWithSymbols();
-	bool removeNullStatements();
-	bool removeDeadStatements();
+    // decompile this proc
+    void    decompile();
+    // perform the "on the way down" processing for the proc
+    void    decompile_down();
+    // Initialise the staements, e.g. proc, bb pointers
+    void initStatements();
+    bool nameStackLocations();
+    bool nameRegisters();
+    void replaceExpressionsWithGlobals();
+    void replaceExpressionsWithSymbols();
+    bool removeNullStatements();
+    bool removeDeadStatements();
     bool propagateAndRemoveStatements();
-    void recalcDataFlow();       // Recalculate dataflow
+    void recalcDataflow();       // Recalculate dataflow
 
-	// promote the signature if possible
-	void promoteSignature();
+    // promote the signature if possible
+    void promoteSignature();
 
-	// get all the statements
-	void getStatements(StatementList &stmts);
+    // get all the statements
+    void getStatements(StatementList &stmts);
 
-	// remove a statement
-	void removeStatement(Statement *stmt);
+    // remove a statement
+    void removeStatement(Statement *stmt);
 
-	// remove internal statements
-	void removeInternalStatements();
+    // remove statements to the internal list
+    void moveInternalStatements();
 
-	// erase a statement from the internal statements list
-	void eraseInternalStatement(Statement *stmt);
+    // erase a statement from the internal statements list
+    void eraseInternalStatement(Statement *stmt);
 
-	// inline constants
-	void inlineConstants();
+    // inline constants
+    void inlineConstants();
 
-	// get internal statements
+    // get internal statements
     // Note: assignment causes shallow copy of list
     virtual void getInternalStatements(StatementList &sl) {sl = internal;}
 
@@ -468,10 +478,10 @@ public:
      */
     void setCallee(Proc* callee); 
 
-	/*
-	 * return true if this procedure contains the given address
-	 */
-	bool containsAddr(ADDRESS uAddr);
+    /*
+     * return true if this procedure contains the given address
+     */
+    bool containsAddr(ADDRESS uAddr);
 
     /*
      * Add (st, fi) to the set of ranges covered in this procedure
@@ -525,6 +535,7 @@ public:
      */
     virtual bool isAggregateUsed() {return aggregateUsed;}
 
+
 private:
 
     /*
@@ -538,9 +549,21 @@ private:
     bool decoded;
 
     /*
-     * True if this procedure has been decomplied.
+     * True if this procedure has been fully decomplied.
      */
     bool decompiled;
+
+    /*
+     * True if this procedure has decompiled "on the way down", i.e.
+     * it has done limited processing not requiring callees to have
+     * been processed
+     */
+    bool decompiled_down;
+
+    /*
+     * True if the statements have been initialised, e.g. proc, bb pointers
+     */
+    bool        stmts_init;
 
     /*
      * Indicates whether or not a non-default return type has been
@@ -599,13 +622,11 @@ private:
      * call graph, among other things
      */
     std::set<Proc*> calleeSet;
-	std::set<ADDRESS> calleeAddrSet;  // used in serialization
+    std::set<ADDRESS> calleeAddrSet;  // used in serialization
  
     /*
      * Internal statements for this procedure
-     * Note: internal statements (internal to calls and perhaps other HL RTLs)
-     * removed by the dataflow process all end up here!
-     * See Proc::removeInternalStatements
+     * See Proc::moveInternalStatements
      */
     StatementList internal;
 

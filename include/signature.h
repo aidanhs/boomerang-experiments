@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.16 $
+ * $Revision: 1.16.2.1 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -64,8 +64,8 @@ protected:
     Type *rettype;
     bool ellipsis;
 
-    void updateParams(UserProc *p, Statement *stmt, bool checklive = true);
-    bool usesNewParam(UserProc *p, Statement *stmt, bool checklive, int &n);
+    void updateParams(UserProc *p, Statement *stmt, bool checkreach = true);
+    bool usesNewParam(UserProc *p, Statement *stmt, bool checkreach, int &n);
 
 public:
     Signature(const char *nam);
@@ -79,12 +79,12 @@ public:
 
     // serialization
     virtual bool serialize(std::ostream &ouf, int len);
-    static Signature *deserialize(std::istream &inf);
+    static Signature *deserialize(Prog *prog, std::istream &inf);
     virtual bool deserialize_fid(std::istream &inf, int fid);
 
     // get the return location
     virtual Exp *getReturnExp();
-    static  Exp *getReturnExp2(BinaryFile* pBF);
+    static  Exp *getReturnExp2(BinaryFile *pBF);
     virtual Type *getReturnType();
     virtual void setReturnType(Type *t);
 
@@ -108,6 +108,7 @@ public:
     // accessor for argument expressions
     virtual Exp *getArgumentExp(int n);
     virtual bool hasEllipsis() { return ellipsis; }
+    std::list<Exp*> *getCallerSave(Prog* prog);
 
     // analysis determines parameters / return type
     virtual void analyse(UserProc *p);
@@ -118,12 +119,22 @@ public:
 
     virtual void getInternalStatements(StatementList &stmts);
 
-    // Special for Mike: find the location that conventionall holds
+    // Special for Mike: find the location that conventionally holds
     // the first outgoing (actual) parameter
+    // MVE: Use the below now
     Exp* getFirstArgLoc(Prog* prog);
+
+    // This is like getParamLoc, except that it works before Signature::analyse
+    // is called.
+    // It is used only to order parameters correctly, for the common case
+    // where the proc will end up using a standard calling convention
+    Exp* getEarlyParamExp(int n, Prog* prog);
 
     // Get a wildcard to find stack locations
     virtual Exp *getStackWildcard() { return NULL; }
+
+    // Quick and dirty hack
+static StatementList& getStdRetStmt(Prog* prog);
 };
 
 #endif
