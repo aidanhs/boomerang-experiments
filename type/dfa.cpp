@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.5.2.6 $
+ * $Revision: 1.5.2.7 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -93,7 +93,8 @@ void UserProc::dfaTypeAnalysis() {
 			int val = con->getInt();
 			if (t && t->isPointer()) {
 				PointerType* pt = t->asPointer();
-				if (pt->getPointsTo()->resolvesToChar()) {
+				Type* baseType = pt->getPointsTo();
+				if (baseType->resolvesToChar()) {
 					// Convert to a string	MVE: check for read-only?
 					// Also, distinguish between pointer to one char, and ptr to many?
 					char* str = prog->getStringConstant(val, true);
@@ -102,9 +103,9 @@ void UserProc::dfaTypeAnalysis() {
 						con->setStr(escapeStr(str));
 						con->setOper(opStrConst);
 					}
-				} else if (pt->getPointsTo()->resolvesToInteger()) {
+				} else if (baseType->resolvesToInteger() || baseType->resolvesToFloat()) {
 					ADDRESS addr = (ADDRESS) con->getInt();
-					prog->globalUsed(addr);
+					prog->globalUsed(addr, baseType);
 					const char *gloName = prog->getGlobalName(addr);
 					if (gloName) {
 						ADDRESS r = addr - prog->getGlobalAddr((char*)gloName);
@@ -209,6 +210,12 @@ Type* FloatType::meetWith(Type* other, bool& ch) {
 		ch |= size != oldSize;
 		return this;
 	}
+	if (other->isSize()) {
+		int otherSize = other->getSize();
+		ch |= size != otherSize;
+		size = max(size, otherSize);
+		return this;
+	}
 	ch = true;
 	return createUnion(other);
 }
@@ -296,9 +303,7 @@ Type* SizeType::meetWith(Type* other, bool& ch) {
 		return this;
 	}
 	if (other->isInteger() || other->isFloat() || other->isPointer()) {
-		if (other->getSize() != size) {
-			other->setSize(size);
-		}
+		other->setSize(max(size, other->getSize()));
 	}
 	ch = true;
 	return other;

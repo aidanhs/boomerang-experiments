@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.2 $
+ * $Revision: 1.112.2.3 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -585,12 +585,13 @@ Global* Prog::getGlobal(char *nam) {
 	return NULL;
 }
 
-void Prog::globalUsed(ADDRESS uaddr)
+void Prog::globalUsed(ADDRESS uaddr, Type* knownType)
 {
     for (unsigned i = 0; i < globals.size(); i++)
         if (globals[i]->getAddress() == uaddr)
             return;
-        else if (globals[i]->getAddress() < uaddr && globals[i]->getAddress() + globals[i]->getType()->getSize() / 8 > uaddr)
+        else if (globals[i]->getAddress() < uaddr &&
+				globals[i]->getAddress() + globals[i]->getType()->getSize() / 8 > uaddr)
             return;
 #if 0
     if (uaddr < 0x10000) {
@@ -602,7 +603,11 @@ void Prog::globalUsed(ADDRESS uaddr)
     }
 #endif
     const char *nam = newGlobal(uaddr); 
-    Type *ty = guessGlobalType(nam, uaddr);
+    Type *ty;
+	if (knownType)
+		ty = knownType;
+	else
+		ty = guessGlobalType(nam, uaddr);
     globals.push_back(new Global(ty, uaddr, nam));
     if (VERBOSE)
         LOG << "globalUsed: name " << nam << ", address " << 
@@ -945,9 +950,7 @@ void Prog::decompile() {
 	// Now it is OK to transform out of SSA form
 	fromSSAform();
 
-	// A final pass to remove unused locals
-	// Now in UserProc::generateCode()
-	//removeUnusedLocals();
+	// Note: removeUnusedLocals() is now in UserProc::generateCode()
 
 	removeUnusedGlobals();
 }

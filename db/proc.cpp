@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.5 $
+ * $Revision: 1.207.2.6 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3663,7 +3663,7 @@ bool UserProc::ellipsisProcessing() {
 	bool ch = false;
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		CallStatement* call = dynamic_cast<CallStatement*>(*it);
-		if (call) ch |= call->ellipsisProcessing();
+		if (call) ch |= call->ellipsisProcessing(prog);
 	}
 	return ch;
 }

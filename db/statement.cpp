@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.8 $
+ * $Revision: 1.126.2.9 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2053,7 +2053,7 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 	}
 	unsigned int i;
 	for (i = 0; i < returns.size(); i++)
-		if (returns[i]->getOper() == opMemOf) {
+		if (returns[i] && returns[i]->getOper() == opMemOf) {
 			Exp *e = findArgument(returns[i]->getSubExp1());
 			if (e)
 				returns[i]->refSubExp1() = e->clone();
@@ -2376,7 +2376,20 @@ void CallStatement::processConstants(Prog *prog) {
 		}
 	}
 
-	// hack
+	ellipsisProcessing(prog);
+}
+
+void setSigParam(Signature* sig, Type* ty, bool isScanf) {
+	if (isScanf) ty = new PointerType(ty);
+	sig->addParameter(ty);
+}
+
+// This function has two jobs. One is to truncate the list of arguments based on the format string.
+// The second is to add parameter types to the signature.
+// If -Td is used, type analysis will be rerun with these changes.
+bool CallStatement::ellipsisProcessing(Prog* prog) {
+
+	// Hack to remove locals that really aren't used
 	if (getDestProc() && getDestProc()->isLib()) {
 		int sp = proc->getSignature()->getStackRegister(prog);
 		ignoreReturn(Location::regOf(sp));
@@ -2395,19 +2408,6 @@ void CallStatement::processConstants(Prog *prog) {
 		}
 	}
 
-	ellipsisProcessing();
-}
-
-void setSigParam(Signature* sig, Type* ty, bool isScanf) {
-	if (isScanf) ty = new PointerType(ty);
-	sig->addParameter(ty);
-}
-
-// This function has two jobs. One is to truncate the list of arguments based on the format string.
-// The second is to add parameter types to the signature.
-// If -Td is used, type analysis will be rerun with these changes.
-bool CallStatement::ellipsisProcessing() {
-	// This code was in CallStatement::doReplaceRef()
 	if (getDestProc() == NULL || !getDestProc()->getSignature()->hasEllipsis())
 		return false;
 	// functions like printf almost always have too many args
