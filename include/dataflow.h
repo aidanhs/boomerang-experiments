@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18 $
+ * $Revision: 1.18.2.1 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -43,9 +43,9 @@ class StatementSet {
     std::set<Statement*> sset;          // For now, use use standard sets
 
 public:
-    void make_union(StatementSet& other);    // Set union
-    void make_diff (StatementSet& other);    // Set difference
-    void make_isect(StatementSet& other);    // Set intersection
+    void makeUnion(StatementSet& other);    // Set union
+    void makeDiff (StatementSet& other);    // Set difference
+    void makeIsect(StatementSet& other);    // Set intersection
     bool isSubSetOf(StatementSet& other);    // subset relation
 
     int size() {return sset.size();}        // Number of elements

@@ -21,7 +21,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.19 $
+ * $Revision: 1.19.2.1 $
  * 08 Apr 02 - Mike: Mods for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  */
@@ -543,6 +543,7 @@ public:
     virtual void getDeadStatements(StatementSet &dead);
     virtual bool usesExp(Exp *e);
     virtual void addUsedLocs(LocationSet& used);
+            void setPhase1();       // Set up for phase 1 of SW93
 
     // dataflow related functions
     virtual bool canPropagateToAll() { return false; }
@@ -603,6 +604,10 @@ private:
     Proc* procDest;
     // Destination name of call (used in serialization)
     std::string destStr;
+    // The conjugate return block (see SW93)
+    // When this is still nill, we have not started phase 1, or are back
+    // to standard ("phase 0")
+    PBB returnBlock;
 
     Exp *returnLoc;
     StatementList internal;

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33 $
+ * $Revision: 1.33.2.1 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1012,6 +1012,7 @@ void UserProc::removeStatement(Statement *stmt) {
     }
 }
 
+#if 0
 // Perform "on the way down" decompilation processing
 // This is for coping with cycles in the call graph
 // At present, we summarise the dataflow (so that call statements which call
@@ -1130,9 +1131,11 @@ void UserProc::decompile_down() {
         std::cerr << "\n--\n";
     }
 }
+#endif
 
 // decompile this userproc
 void UserProc::decompile() {
+#if 0
     // Prevent infinite loops when there are cycles in the call graph
     if (decompiled_down) return;
 
@@ -1157,6 +1160,7 @@ void UserProc::decompile() {
             call->decompile();
         }
     }
+#endif
 
     if (Boomerang::get()->noDecompileUp) {
         decompiled = true;
@@ -1164,14 +1168,14 @@ void UserProc::decompile() {
     }
 
     if (VERBOSE) {
-        std::cerr << "decompiling (back): " << getName() << std::endl;
+        std::cerr << "decompiling: " << getName() << std::endl;
         print(std::cerr, false);    // First time no df so it's readable!
     }
     bool change = true;
     if (!Boomerang::get()->noDataflow) {
         while (change) {
             change = false;
-            recalcDataflow();
+            //recalcDataflow();
             if (VERBOSE) print(std::cerr, true);
             bool propagate;
             do {
@@ -1198,8 +1202,8 @@ void UserProc::decompile() {
 
     // promoteSignature has converted some register and memory locations
     // to "param1" etc (opParam). Redo the liveness to reflect this change
-    cfg->computeLiveness();
-    LocationSet* le = cfg->getLiveEntry();
+    //cfg->computeLiveness();
+    //LocationSet* le = cfg->getLiveEntry();
     // Above is unused... not finished
     // Get the live set on entry to this procedure. It could well be
     // shorter than it was
@@ -1208,6 +1212,7 @@ void UserProc::decompile() {
     // Truncate the number of arguments to calls (only needed for calls
     // promoteSignature has converted some 
     // involved in cycles in the call graph, e.g. recursive calls)
+    BB_IT it;
     for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
         if (bb->getType() == CALL) {
             // The call RTL will be the last in this BB
@@ -1399,7 +1404,7 @@ bool UserProc::removeNullStatements() {
             StatementSet &reachout = s->getBB()->getReachOut();
             if (reachout.remove(s))
                 //cfg->computeReaches();      // Highly sus: do all or none!
-                recalcDataflow();
+                //recalcDataflow();
             change = true;
         }
     }
@@ -1482,7 +1487,7 @@ bool UserProc::removeDeadStatements() {
                 StatementSet &reachout = s1->getBB()->getReachOut();
                 reachout.remove(s1);
                 //cfg->computeReaches();      // Highly sus: do all or none!
-                recalcDataflow();
+                //recalcDataflow();
                 change = true;
             }
         }
@@ -1586,7 +1591,7 @@ bool UserProc::propagateAndRemoveStatements() {
                 cfg->computeReaches();
 #else
             reachout.remove(s);
-            recalcDataflow();       // Fix alias problems
+            //recalcDataflow();       // Fix alias problems
 #endif
             if (VERBOSE) {
                 // debug: print
@@ -1610,6 +1615,7 @@ Exp* UserProc::newLocal(Type* ty) {
     return new Unary(opLocal, new Const(strdup(name.c_str())));
 }
 
+#if 0
 void UserProc::recalcDataflow() {
     if (VERBOSE) std::cerr << "Recalculating dataflow\n";
     cfg->computeLiveness();
@@ -1623,6 +1629,18 @@ void UserProc::recalcDataflow() {
     for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
         s->calcUseLinks();
 }
+#endif
+
+void UserProc::computeUses() {
+    StatementList stmts;
+    getStatements(stmts);
+    StmtListIter it;
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        s->clearUses();
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        s->calcUseLinks();
+}
+
 
 //
 //  SSA code

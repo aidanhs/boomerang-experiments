@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.24 $
+ * $Revision: 1.24.2.1 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -684,8 +684,8 @@ public:
     LocationSet() {}                        // Default constructor
     LocationSet(const LocationSet& o);      // Copy constructor
     LocationSet& operator=(const LocationSet& o); // Assignment
-    void make_union(LocationSet& other);    // Set union
-    void make_diff (LocationSet& other);    // Set difference
+    void makeUnion(LocationSet& other);    // Set union
+    void makeDiff (LocationSet& other);    // Set difference
     void clear() {sset.clear();}            // Clear the set
     Exp* getFirst(LocSetIter& it);          // Get the first Statement
     Exp* getNext (LocSetIter& it);          // Get next

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39 $
+ * $Revision: 1.39.2.1 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -2519,7 +2519,7 @@ void AssignExp::killReach(StatementSet &reach) {
         if (isKilled)
         kills.insert(s);
     }
-    reach.make_diff(kills);
+    reach.makeDiff(kills);
 }
 
 // Liveness is killed by a definition

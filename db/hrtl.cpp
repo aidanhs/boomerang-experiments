@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33 $
+ * $Revision: 1.33.2.1 $
  * 17 May 02 - Mike: Split off from rtl.cc (was getting too large)
  * 26 Nov 02 - Mike: Generate code for HlReturn with semantics (eg SPARC RETURN)
  * 26 Nov 02 - Mike: In getReturnLoc test for null procDest
@@ -95,7 +95,7 @@ HLJump::~HLJump() {
  *                  be of the Exp form:
  *                     opIntConst dest
  * PARAMETERS:      <none>
- * RETURNS:         Fixed dest or -1 if there isn't one
+ * RETURNS:         Fixed dest or NO_ADDRESS if there isn't one
  *============================================================================*/
 ADDRESS HLJump::getFixedDest() {
     if (pDest->getOper() != opIntConst) return NO_ADDRESS;
@@ -951,7 +951,7 @@ void HLNwayJump::simplify() {
 HLCall::HLCall(ADDRESS instNativeAddr, int returnTypeSize /*= 0*/,
   std::list<Exp*>* le /*= NULL*/): HLJump(instNativeAddr, le), 
       returnTypeSize(returnTypeSize), returnAfterCall(false), 
-      returnLoc(NULL) {
+      returnBlock(NULL), returnLoc(NULL) {
     kind = CALL_RTL;
     postCallExpList = NULL;
     procDest = NULL;
@@ -1473,8 +1473,7 @@ void HLCall::killReach(StatementSet &reach) {
     if (procDest == NULL) {
         // Will always be null for indirect calls
         // MVE: we may have a "candidate" callee in the future
-        // Kills everything. Not clear that this is always "conservative"
-        reach.clear();
+        // Kill nothing. For calls, underestimating kills is safe
         return;
     }
     if (procDest->isLib()) {
@@ -1492,11 +1491,22 @@ void HLCall::killReach(StatementSet &reach) {
     }
 
     // A UserProc
-    LocationSet defs;
-    getDefinitions(defs);
-    LocSetIter it;
-    for (Exp *e = defs.getFirst(it); e; e = defs.getNext(it))
-        reach.removeIfDefines(e);
+    // Find out what phase of the global dataflow
+    if (returnBlock == NULL) {
+        // Normal (non global) dataflow... as we used to do it for now
+        LocationSet defs;
+        getDefinitions(defs);
+        LocSetIter it;
+        for (Exp *e = defs.getFirst(it); e; e = defs.getNext(it))
+            reach.removeIfDefines(e);
+    } else if (m_iNumOutEdges == 0) {
+        // Must be phase 1 (forward flow problem: only return interprocedges
+        // are set)
+
+    } else {
+        // Must be phase 2: call interprocedural outedges are set
+
+    }
 }
 
 void HLCall::killAvail(StatementSet &avail) {
@@ -1620,6 +1630,7 @@ bool HLCall::isDefinition()
     return defs.size() != 0;
 }
 
+// MVE: likely not correct to use this any more
 void HLCall::getDefinitions(LocationSet &defs)
 {
     if (procDest) {
@@ -2163,3 +2174,12 @@ void HLScond::addUsedLocs(LocationSet& used) {
         pCond->addUsedLocs(used);
 }
 
+
+/*==============================================================================
+ * FUNCTION:         CallBB:setPhase1
+ * OVERVIEW:         Set up for phase 1 of [SW93]. Basuically, keeps a copy
+ *                   of the outedge in returnBlock, and points the outedge
+ *                   to the actual callee entry BB
+ * PARAMETERS:       none
+ * RETURNS:          <nothing>
+ *============================================================================*/

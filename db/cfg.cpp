@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18 $
+ * $Revision: 1.18.2.1 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -1404,56 +1404,57 @@ void Cfg::computePostDominators() {
 }
 #endif
 
-/*==============================================================================
- * FUNCTION:        Cfg::computeDataflow
- * OVERVIEW:        Computes the reaches/use information for every bb.
- * PARAMETERS:      <none>
- * RETURNS:         <nothing>
- *============================================================================*/
-void Cfg::computeReaches() {
+void Cfg::clearDataflow() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); 
       it != m_listBB.end(); it++)
         (*it)->reachOut.clear();
-    bool change = true;
-    while(change) {
+}
+/*==============================================================================
+ * FUNCTION:        Cfg::computeReaches
+ * OVERVIEW:        Computes the reaching definitions for this CFG
+ * PARAMETERS:      <none>
+ * RETURNS:         <nothing>
+ *============================================================================*/
+bool Cfg::computeReaches(int phase) {
+    bool change, anychange = false;
+    do {
         change = false;
         for (std::list<PBB>::iterator it = m_listBB.begin(); 
           it != m_listBB.end(); it++) {
+            // Note: at present, this is computed in any order; preorder
+            // would be better (for a forwards flow problem)
             StatementSet out;
-            (*it)->calcReachOut(out);
+            (*it)->calcReachOut(out, phase);
             if (!(out == (*it)->reachOut)) {
                 (*it)->reachOut = out;          // Copy the set
-                change = true;
+                change = anychange = true;
             }
         }
-    }
+    } while (change);
+    return anychange;
 }
 
-void Cfg::computeAvailable() {
-    for (std::list<PBB>::iterator it = m_listBB.begin(); 
-      it != m_listBB.end(); it++)
-        (*it)->availOut.clear();
-    bool change = true;
-    while(change) {
+bool Cfg::computeAvailable(int phase) {
+    bool change, anychange = false;
+    do {
         change = false;
         for (std::list<PBB>::iterator it = m_listBB.begin(); 
           it != m_listBB.end(); it++) {
             StatementSet out;
-            (*it)->calcAvailOut(out);
+            (*it)->calcAvailOut(out, phase);
             if (!(out == (*it)->availOut)) {
                 (*it)->availOut = out;      // Copy the set
-                change = true;
+                change = anychange = true;
             }
         }
-    }
+    } while (change);
+    return anychange;
 }
 
+#if 0           // Probably don't need this now
 void Cfg::computeLiveness() {
-    for (std::list<PBB>::iterator it = m_listBB.begin(); 
-      it != m_listBB.end(); it++)
-        (*it)->liveIn.clear();
-    bool change = true;
-    while(change) {
+    bool change;
+    do {
         change = false;
         for (std::list<PBB>::iterator it = m_listBB.begin(); 
           it != m_listBB.end(); it++) {
@@ -1464,20 +1465,43 @@ void Cfg::computeLiveness() {
                 change = true;
             }
         }
-    }
+    } while (change);
 }
+#endif
 
-void Cfg::computeDataflow() {
+#if 0       // Probably only need computeReaches now
+bool Cfg::computeDataflow() {
     computeReaches();
     computeAvailable();
     computeLiveness();
     StatementList stmts;
     myProc->getStatements(stmts);
     StmtListIter it;
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
-        s->clearUses();
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
-        s->calcUseLinks();
+}
+#endif
+
+void Cfg::setCallInterprocEdges() {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
+        (*it)->setCallInterprocEdges();
+}
+
+void Cfg::clearCallInterprocEdges() {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
+        (*it)->clearCallInterprocEdges();
+}
+
+void Cfg::setReturnInterprocEdges() {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
+        (*it)->setReturnInterprocEdges();
+}
+
+void Cfg::clearReturnInterprocEdges() {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
+        (*it)->clearReturnInterprocEdges();
 }
 
 /*==============================================================================
@@ -1550,8 +1574,7 @@ void Cfg::addNewOutEdge(PBB pFromBB, PBB pNewOutEdge)
 }
 
 // serialize the CFG
-bool Cfg::serialize(std::ostream &ouf, int &len)
-{
+bool Cfg::serialize(std::ostream &ouf, int &len) {
     std::streampos st = ouf.tellp();
 
     saveFID(ouf, FID_CFG_WELLFORMED);
@@ -1559,7 +1582,8 @@ bool Cfg::serialize(std::ostream &ouf, int &len)
 
     // save BBs
     int n = 0;
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
         (*it)->m_nindex = n++;
     for (
 #ifndef WIN32

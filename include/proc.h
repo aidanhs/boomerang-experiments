@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.23 $
+/* $Revision: 1.23.2.1 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -362,7 +362,7 @@ public:
     bool removeNullStatements();
     bool removeDeadStatements();
     bool propagateAndRemoveStatements();
-    void recalcDataflow();       // Recalculate dataflow
+    //void computeDataflow();       // Recalculate dataflow
 
     // promote the signature if possible
     void promoteSignature();
@@ -385,6 +385,8 @@ public:
     // get internal statements
     // Note: assignment causes shallow copy of list
     virtual void getInternalStatements(StatementList &sl) {sl = internal;}
+    // Calculate uses info
+    void computeUses();
 
 //
 //  SSA
@@ -425,11 +427,6 @@ private:
     void    checkMemSize(Exp* e);
 
 public:
-
-    /*
-     * Return the coverage of this procedure in bytes.
-     */
-//    unsigned getCoverage() {return cover.totalCover();}
 
     /*
      * Sets the parameters that have been recovered for this procedure through

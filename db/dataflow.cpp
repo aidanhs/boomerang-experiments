@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22 $
+ * $Revision: 1.22.2.1 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -117,7 +117,7 @@ void Statement::replaceUse(Statement *use) {
     // However, we are now using whatever *use was using
     // Actually, it's possible *use had uses on it's left that will not be
     // propagated in the replacement, we have to remove these later - trent
-    uses.make_union(use->uses);
+    uses.makeUnion(use->uses);
     // Fix the du chains that pointed in to the statement that will
     // be removed; they now point to this 
     StmtSetIter ii;
@@ -489,7 +489,7 @@ std::ostream& operator<<(std::ostream& os, Statement* s) {
 //
 
 // Make this set the union of itself and other
-void StatementSet::make_union(StatementSet& other) {
+void StatementSet::makeUnion(StatementSet& other) {
     StmtSetIter it;
     for (it = other.sset.begin(); it != other.sset.end(); it++) {
         sset.insert(*it);
@@ -497,7 +497,7 @@ void StatementSet::make_union(StatementSet& other) {
 }
 
 // Make this set the difference of itself and other
-void StatementSet::make_diff(StatementSet& other) {
+void StatementSet::makeDiff(StatementSet& other) {
     StmtSetIter it;
     for (it = other.sset.begin(); it != other.sset.end(); it++) {
         sset.erase(*it);
@@ -505,7 +505,7 @@ void StatementSet::make_diff(StatementSet& other) {
 }
 
 // Make this set the intersection of itself and other
-void StatementSet::make_isect(StatementSet& other) {
+void StatementSet::makeIsect(StatementSet& other) {
     StmtSetIter it, ff;
     for (it = sset.begin(); it != sset.end(); it++) {
         ff = other.sset.find(*it);
@@ -660,7 +660,7 @@ void LocationSet::removeIfDefines(StatementSet& given) {
 }
 
 // Make this set the union of itself and other
-void LocationSet::make_union(LocationSet& other) {
+void LocationSet::makeUnion(LocationSet& other) {
     LocSetIter it;
     for (it = other.sset.begin(); it != other.sset.end(); it++) {
         sset.insert(*it);
@@ -668,7 +668,7 @@ void LocationSet::make_union(LocationSet& other) {
 }
 
 // Make this set the set difference of itself and other
-void LocationSet::make_diff(LocationSet& other) {
+void LocationSet::makeDiff(LocationSet& other) {
     LocSetIter it;
     for (it = other.sset.begin(); it != other.sset.end(); it++) {
         sset.erase(*it);
@@ -753,9 +753,9 @@ void LocationSet::substitute(Statement& s) {
             }
         }
     }
-    make_diff(removeSet);       // Remove the items to be removed
-    make_diff(removeAndDelete); // These are to be removed as well
-    make_union(insertSet);      // Insert the items to be added
+    makeDiff(removeSet);       // Remove the items to be removed
+    makeDiff(removeAndDelete); // These are to be removed as well
+    makeUnion(insertSet);      // Insert the items to be added
     // Now delete the expressions that are no longer needed
     LocSetIter dd;
     for (Exp* e = removeAndDelete.getFirst(dd); e;

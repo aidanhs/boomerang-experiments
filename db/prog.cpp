@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18 $
+ * $Revision: 1.18.2.1 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -56,7 +56,8 @@
 #include "boomerang.h"
 
 Prog::Prog()
-    : pBF(NULL),
+    : interProcDFAphase(0),
+      pBF(NULL),
       pFE(NULL),
       globalMap(NULL),
       m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
@@ -65,7 +66,8 @@ Prog::Prog()
 }
 
 Prog::Prog(BinaryFile *pBF, FrontEnd *pFE)
-    : pBF(pBF),
+    : interProcDFAphase(0),
+      pBF(pBF),
       pFE(pFE),
       globalMap(NULL),
       m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
@@ -73,7 +75,8 @@ Prog::Prog(BinaryFile *pBF, FrontEnd *pFE)
 }
 
 Prog::Prog(const char* name)
-    : pBF(NULL),
+    : interProcDFAphase(0),
+      pBF(NULL),
       pFE(NULL),
       globalMap(NULL),
       m_name(name),
@@ -136,6 +139,9 @@ void Prog::analyse() {
 
 // Do decompilation
 void Prog::decompile() {
+    // First do forward-flow global dataflow
+    forwardGlobalDataflow();
+
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
       it++) {
         Proc *pProc = *it;
@@ -143,7 +149,8 @@ void Prog::decompile() {
         UserProc *p = (UserProc*)pProc;
         if (!p->isDecoded()) continue;
 
-        // decoded userproc.. decompile it          
+        // decoded userproc.. compute uses info
+        p->computeUses();
         p->decompile();
     }
 }
@@ -629,3 +636,70 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 #endif
 }
 
+// Calculate global dataflow. The whole program is treated as one large
+// dataflow problem
+// This is done only once (as a global dataflow problem); dataflow may be
+// recalculated repeatedly one proc at a time as substitutions are made
+// This is fine, since the global dataflow has one main objective: set up
+// the sets of locations used by a procedure (parameters), and the locations
+// that it defines (possible return locations).
+void Prog::forwardGlobalDataflow() {
+    PROGMAP::iterator pp;
+    // First set up for phase 1
+std::cerr << "Global DFA: phase 1\n";
+    interProcDFAphase = 1;
+    for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+        UserProc* proc = (UserProc*)pp->second;
+        if (proc->isLib()) continue;
+        Cfg* cfg = proc->getCFG();
+        cfg->clearOrdinaryCallEdges();
+        cfg->setReturnInterprocEdges();
+        // Clear the dataflow info for this proc's cfg
+        cfg->clearDataflow();
+    }
+    bool change;
+int iter=0;
+    do {
+        change = false;
+        for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+            UserProc* proc = (UserProc*)pp->second;
+            if (proc->isLib()) continue;
+            Cfg* cfg = proc->getCFG();
+            change |= cfg->computeReaches();
+            change |= cfg->computeAvailable();
+        }
+std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
+    } while (change);
+
+    // Phase 2
+std::cerr << "Global DFA: phase 2\n";
+    interProcDFAphase = 2;
+    for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+        UserProc* proc = (UserProc*)pp->second;
+        if (proc->isLib()) continue;
+        proc->getCFG()->setCallInterprocEdges();
+        // Clear the dataflow info for this proc's cfg
+        proc->getCFG()->clearDataflow();
+    }
+iter=0;
+    do {
+        change = false;
+        for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+            UserProc* proc = (UserProc*)pp->second;
+            if (proc->isLib()) continue;
+            Cfg* cfg = proc->getCFG();
+            change |= cfg->computeReaches();
+            change |= cfg->computeAvailable();
+        }
+std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
+    } while (change);
+
+std::cerr << "Global DFA: phase 0\n";
+    interProcDFAphase = 0;
+    for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+        UserProc* proc = (UserProc*)pp->second;
+        if (proc->isLib()) continue;
+        Cfg* cfg = proc->getCFG();
+        cfg->restoreOrdinaryCallEdges();
+    }
+}
