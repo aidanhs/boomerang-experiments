@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.5 $
+ * $Revision: 1.105.2.6 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -316,6 +316,11 @@ virtual Exp* simplifyConstraint() {return this;}
     //   sub1 = <ptr> and sub2 = <int> and Tr = <ptr>
     virtual Exp*  genConstraints(Exp* result);
 
+    // Generate a constraint for a condition, e.g. for a == b, constrain that
+    // typeof(a) == typeof(b), but also if a has constraints (e.g. it's a
+    // memOf of size 8), generate constraints for that too
+    void    genConditionConstraints(LocationSet& cons);
+
     virtual Type *getType() { return NULL; }
 
     // Visitation
@@ -328,6 +333,7 @@ virtual Exp* simplifyConstraint() {return this;}
     // Set or clear the constant subscripts
     void         setConscripts(int n, bool bClear);
     Exp*         stripRefs();           // Strip all references
+    Exp*         stripSizes();          // Strip all size casts
     // Subscript all e in this Exp with statement def:
     Exp*         expSubscriptVar(Exp* e, Statement* def);
 protected:
@@ -403,6 +409,7 @@ virtual Exp*    genConstraints(Exp* restrictTo);
     virtual bool accept(ExpVisitor* v);
     virtual Exp* accept(ExpModifier* v);
 
+    int     getConscript() {return conscript;}
     void    setConscript(int cs) {conscript = cs;}
 
 protected:
@@ -764,6 +771,7 @@ protected:
     friend class XMLProgParser;
 };  // Class RefExp
 
+#if 1
 /*==============================================================================
  * PhiExp is a subclass of Unary, holding an operator (opPhi), the expression
  * that is being phi'd (in subExp1), and a StatementVec
@@ -822,6 +830,7 @@ virtual Exp* polySimplify(bool& bMod);
 protected:
     friend class XMLProgParser;
 };  // class PhiExp
+#endif
 
 /*==============================================================================
 class TypeVal. Just a Terminal with a Type. Used for type values in constraints

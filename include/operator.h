@@ -4,7 +4,7 @@
  *              denote what the top level operator is
  *============================================================================*/
 /*
- * $Revision: 1.23.2.1 $
+ * $Revision: 1.23.2.2 $
  *
  * 05 Apr 02 - Mike: Created
  * 12 Apr 02 - Mike: INDEX -> OPER
@@ -117,7 +117,7 @@ enum OPER
     opMemberAccess,         // . and -> in C
     opArraySubscript,       // [] in C
     opTemp,                 // Temp register name
-    opSize,                 // Size override
+    opSize,                 // Size specifier
     opCastIntStar,          // Cast to int*
     opPostVar,              // Post-instruction variable marker (unary with
                               // any subexpression). Can arise in some SSL files

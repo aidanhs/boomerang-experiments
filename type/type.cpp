@@ -15,10 +15,11 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.23.2.1 $
+ * $Revision: 1.23.2.2 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
+ * 23 Jul 04 - Mike: Implement SizeType
  */
 
 #include <assert.h>
@@ -59,7 +60,7 @@ FuncType::FuncType(Signature *sig) : Type(eFunc), signature(sig)
 {
 }
 
-IntegerType::IntegerType(int sz, bool sign) : Type(eInteger), size(sz),
+IntegerType::IntegerType(int sz, int sign) : Type(eInteger), size(sz),
   signd(sign)
 {
 }
@@ -228,54 +229,31 @@ Type *CompoundType::clone() const
     return t;
 }
 
+Type *SizeType::clone() const
+{
+    SizeType *t = new SizeType(size);
+    return t;
+}
+
 /*==============================================================================
  * FUNCTION:        *Type::getSize
- * OVERVIEW:        get the size of this type
+ * OVERVIEW:        Get the size of this type
  * PARAMETERS:      <none>
  * RETURNS:         Size of the type (in bits)
  *============================================================================*/
-int IntegerType::getSize() const
-{
-    return size;
-}
-
-int FloatType::getSize() const
-{
-    return size;
-}
-
-int BooleanType::getSize() const
-{
-    return 1;
-}
-
-int CharType::getSize() const
-{
-    return 8;
-}
-
-int VoidType::getSize() const
-{
-    return 0;
-}
-
-int FuncType::getSize() const
-{
-    return 0; // always nagged me
-}
-
-int PointerType::getSize() const
-{
+int IntegerType::getSize() const { return size; }
+int   FloatType::getSize() const { return size; }
+int BooleanType::getSize() const { return 1; }
+int    CharType::getSize() const { return 8; }
+int    VoidType::getSize() const { return 0; }
+int    FuncType::getSize() const { return 0; /* always nagged me */ }
+int PointerType::getSize() const {
     return 32; //points_to->getSize(); // yes, it was a good idea at the time
 }
-
-int ArrayType::getSize() const
-{
+int ArrayType::getSize() const {
     return base_type->getSize() * length;
 }
-
-int NamedType::getSize() const
-{
+int NamedType::getSize() const {
     Type *ty = resolvesTo();
     if (ty)
         return ty->getSize();
@@ -283,14 +261,15 @@ int NamedType::getSize() const
         LOG << "WARNING: Unknown size for named type " << name.c_str() << "\n";
     return 0; // don't know
 }
-
-int CompoundType::getSize() const
-{
+int CompoundType::getSize() const {
     int n = 0;
     for (unsigned i = 0; i < types.size(); i++)
         n += types[i]->getSize();
     return n;
 }
+int SizeType::getSize() const { return size; }
+
+
 
 Type *CompoundType::getType(const char *nam)
 {
@@ -376,55 +355,51 @@ Type *Type::parseType(const char *str)
  * PARAMETERS:      other - Type being compared to
  * RETURNS:         this == other
  *============================================================================*/
-bool IntegerType::operator==(const Type& other) const
-{
-    return other.isInteger() && (size == ((IntegerType&)other).size) &&
-        (signd == ((IntegerType&)other).signd);
+bool IntegerType::operator==(const Type& other) const {
+    return other.isInteger() && 
+        // Note: zero size matches any other size (wild, or unknown, size)
+        (size==0 || ((IntegerType&)other).size==0 ||
+          size == ((IntegerType&)other).size) &&
+        (signd < 0 || ((IntegerType&)other).signd < 0 ||
+          signd == ((IntegerType&)other).signd);
 }
 
-bool FloatType::operator==(const Type& other) const
-{
-    return other.isFloat() && (size == ((FloatType&)other).size);
+bool FloatType::operator==(const Type& other) const {
+    return other.isFloat() && 
+      (size == 0 || ((FloatType&)other).size == 0 || 
+      (size == ((FloatType&)other).size));
 }
 
-bool BooleanType::operator==(const Type& other) const
-{
+bool BooleanType::operator==(const Type& other) const {
     return other.isBoolean();
 }
 
-bool CharType::operator==(const Type& other) const
-{
+bool CharType::operator==(const Type& other) const {
     return other.isChar();
 }
 
-bool VoidType::operator==(const Type& other) const
-{
+bool VoidType::operator==(const Type& other) const {
     return other.isVoid();
 }
 
-bool FuncType::operator==(const Type& other) const
-{
+bool FuncType::operator==(const Type& other) const {
     return other.isFunc() && (*signature == *((FuncType&)other).signature);
 }
 
-bool PointerType::operator==(const Type& other) const
-{
+bool PointerType::operator==(const Type& other) const {
     return other.isPointer() && (*points_to == *((PointerType&)other).points_to);
 }
 
-bool ArrayType::operator==(const Type& other) const
-{
+bool ArrayType::operator==(const Type& other) const {
     return other.isArray() && *base_type == *((ArrayType&)other).base_type &&
            ((ArrayType&)other).length == length;
 }
 
-bool NamedType::operator==(const Type& other) const
-{
+bool NamedType::operator==(const Type& other) const {
     return other.isNamed() && (name == ((NamedType&)other).name);
 }
 
-bool CompoundType::operator==(const Type& other) const
-{
+bool CompoundType::operator==(const Type& other) const {
     const CompoundType &cother = (CompoundType&)other;
     if (other.isCompound() && cother.types.size() == types.size()) {
         for (unsigned i = 0; i < types.size(); i++)
@@ -433,6 +408,10 @@ bool CompoundType::operator==(const Type& other) const
         return true;
     }
     return false;
+}
+
+bool SizeType::operator==(const Type& other) const {
+    return other.isSize() && (size == ((SizeType&)other).size);
 }
 
 /*==============================================================================
@@ -535,6 +514,12 @@ bool CompoundType::operator<(const Type& other) const {
     return getSize() < other.getSize();
 }
 
+bool SizeType::operator<(const Type& other) const {
+    if (id < other.getId()) return true;
+    if (id > other.getId()) return false;
+	return (size < ((SizeType&)other).size);
+}
+
 /*==============================================================================
  * FUNCTION:        *Type::match
  * OVERVIEW:        Match operation.
@@ -544,10 +529,12 @@ bool CompoundType::operator<(const Type& other) const {
 Exp *Type::match(Type *pattern)
 {
     if (pattern->isNamed()) {
-        LOG << "type match: " << this->getCtype() << " to " << pattern->getCtype() << "\n";
+        LOG << "type match: " << this->getCtype() << " to " <<
+          pattern->getCtype() << "\n";
         return new Binary(opList, 
             new Binary(opEquals, 
-                new Unary(opVar, new Const((char*)pattern->asNamed()->getName())), 
+                new Unary(opVar,
+                    new Const((char*)pattern->asNamed()->getName())), 
                 new TypeVal(this->clone())), 
             new Terminal(opNil));
     }
@@ -587,7 +574,8 @@ Exp *FuncType::match(Type *pattern)
 Exp *PointerType::match(Type *pattern)
 {
     if (pattern->isPointer()) {
-        LOG << "got pointer match: " << this->getCtype() << " to " << pattern->getCtype() << "\n";
+        LOG << "got pointer match: " << this->getCtype() << " to " <<
+          pattern->getCtype() << "\n";
         return points_to->match(pattern->asPointer()->getPointsTo());
     }
     return Type::match(pattern);
@@ -614,27 +602,23 @@ Exp *CompoundType::match(Type *pattern)
 /*==============================================================================
  * FUNCTION:        *Type::getCtype
  * OVERVIEW:        Return a string representing this type
- * PARAMETERS:      <none>
+ * PARAMETERS:      final: if true, this is final output
  * RETURNS:         Pointer to a constant string of char
  *============================================================================*/
-const char *VoidType::getCtype() const
-{
-    return "void";
-}
+const char *VoidType::getCtype(bool final) const { return "void"; }
 
-const char *FuncType::getCtype() const
-{
+const char *FuncType::getCtype(bool final) const {
     if (signature == NULL)
 	return "void (void)"; 
     std::string s; 
     if (signature->getNumReturns() == 0)
         s += "void";
     else 
-        s += signature->getReturnType(0)->getCtype();
+        s += signature->getReturnType(0)->getCtype(final);
     s += " (";
     for (int i = 0; i < signature->getNumParams(); i++) {
        if (i != 0) s += ", ";
-       s += signature->getParamType(i)->getCtype(); 
+       s += signature->getParamType(i)->getCtype(final); 
     }
     s += ")";
     return s.c_str();
@@ -661,17 +645,20 @@ void FuncType::getReturnAndParam(const char*& ret, const char*& param) {
     param = s.c_str();
 }
 
-const char *IntegerType::getCtype() const
-{
+const char *IntegerType::getCtype(bool final) const {
     if (signd) {
+        std::string s;
+        if (!final && signd < 0)
+            s = "/*signed?*/";
         switch(size) {
-            case 32: return "int"; break;
-            case 16: return "short"; break;
-            case  8: return "char"; break;
-            case  1: return "bool"; break;
-            case 64: return "long long"; break;
-            default: return "?";
-         }
+            case 32: s += "int"; break;
+            case 16: s += "short"; break;
+            case  8: s += "char"; break;
+            case  1: s += "bool"; break;
+            case 64: s += "long long"; break;
+            default: s += "?int";
+        }
+        return strdup(s.c_str());
     } else {
         switch (size) {
             case 32: return "unsigned int"; break;
@@ -684,8 +671,7 @@ const char *IntegerType::getCtype() const
     }
 }
 
-const char *FloatType::getCtype() const
-{
+const char *FloatType::getCtype(bool final) const {
     switch (size) {
         case 32: return "float"; break;
         case 64: return "double"; break;
@@ -693,42 +679,30 @@ const char *FloatType::getCtype() const
     }
 }
 
-const char *BooleanType::getCtype() const
-{
-     return "bool";
-}
+const char *BooleanType::getCtype(bool final) const { return "bool"; }
 
-const char *CharType::getCtype() const
-{
-     return "char";
-}
+const char *CharType::getCtype(bool final) const { return "char"; }
 
-const char *PointerType::getCtype() const
-{
-     std::string s = points_to->getCtype();
+const char *PointerType::getCtype(bool final) const {
+     std::string s = points_to->getCtype(final);
      s += "*";
      return s.c_str(); // memory..
 }
 
-const char *ArrayType::getCtype() const
-{
-    std::string s = base_type->getCtype();
+const char *ArrayType::getCtype(bool final) const {
+    std::string s = base_type->getCtype(final);
     std::ostringstream ost;
     ost << "[" << length << "]";
     s += ost.str().c_str();
     return s.c_str(); // memory..
 }
 
-const char *NamedType::getCtype() const
-{
-     return name.c_str();
-}
+const char *NamedType::getCtype(bool final) const { return name.c_str(); }
 
-const char *CompoundType::getCtype() const
-{
+const char *CompoundType::getCtype(bool final) const {
     std::string &tmp = *(new std::string("struct { "));
     for (unsigned i = 0; i < types.size(); i++) {
-        tmp += types[i]->getCtype();
+        tmp += types[i]->getCtype(final);
         if (names[i] != "") {
             tmp += " ";
             tmp += names[i];
@@ -738,6 +712,19 @@ const char *CompoundType::getCtype() const
     tmp += "}";
     return tmp.c_str();
 }
+
+const char* SizeType::getCtype(bool final) const {
+    if (final) {
+        // Make a signed integer type of the same size
+        IntegerType it(size);
+        return it.getCtype();
+    }
+    // Emit a comment and the size
+    std::ostringstream ost;
+    ost << "/*size " << std::dec << size << "*/";
+    return strdup(ost.str().c_str());
+}
+
 
 std::map<std::string, Type*> Type::namedTypes;
 
@@ -1048,17 +1035,20 @@ void Type::starPrint(std::ostream& os) {
 std::ostream& operator<<(std::ostream& os, Type* t) {
     if (t == NULL) return os;
     switch (t->getId()) {
-        case eInteger:
-            os << (((IntegerType*)t)->isSigned() ? 'i' : 'u');
+        case eInteger: {
+            int sg = ((IntegerType*)t)->isSigned();
+            // 'j' for either i or u, don't know which
+            os << (sg<0 ? 'j' : sg ? 'i' : 'u');
             os << std::dec << ((IntegerType*)t)->getSize();
             break;
+        }
         case eFloat:
             os << 'f';
             os << std::dec << ((FloatType*)t)->getSize();
             break;
         case eChar: os << 'c'; break;
         case eBoolean: os << 'b'; break;
-        case eBlank: os << std::dec << (BlankType*)t->getSize();
+        case eSize: os << std::dec << t->getSize(); break;
         default:
             os << "?type?";
     }

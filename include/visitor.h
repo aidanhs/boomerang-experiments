@@ -9,7 +9,7 @@
  *             and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.5.2.4 $
+ * $Revision: 1.5.2.5 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *   for searching: they have the capability of stopping the recursion,
@@ -118,6 +118,7 @@ public:
     int     getLast() {return curConscript;}
     virtual bool visit(Const* e);
     virtual bool visit(Location* e, bool& override);
+    virtual bool visit(Binary* b,   bool& override);
     // All other virtual functions inherit from ExpVisitor: return true
 };
 
@@ -198,11 +199,11 @@ public:
     virtual bool visit(BoolStatement *stmt)  { return true;}
 };
 
-class StmtSetConscripts : public StmtVisitor {
+class StmtConscriptSetter : public StmtVisitor {
     int     curConscript;
     bool    bClear;
 public:
-                 StmtSetConscripts(int n, bool bClear)
+                 StmtConscriptSetter(int n, bool bClear)
                    : curConscript(n), bClear(bClear) {}
     int          getLast() {return curConscript;}
 
@@ -211,6 +212,7 @@ public:
     virtual bool visit(CallStatement *stmt);
     virtual bool visit(ReturnStatement *stmt);
     virtual bool visit(BoolStatement *stmt);
+    virtual bool visit(BranchStatement *stmt);
 };
 
 // StmtExpVisitor is a visitor of statements, and of expressions within
@@ -261,18 +263,18 @@ virtual void visit(ReturnStatement *s,bool& recur) {recur = true;}
 virtual void visit(BoolStatement *s,  bool& recur) {recur = true;}
 };
 
-class StripPhis : public StmtModifier {
+class PhiStripper : public StmtModifier {
     bool    del;            // Set true if this statment is to be deleted
 public:
-                 StripPhis(ExpModifier* em) : StmtModifier(em) {del = false;} 
+                 PhiStripper(ExpModifier* em) : StmtModifier(em) {del = false;} 
     virtual void visit(Assign* stmt, bool& recur);
     bool    getDelete() {return del;}
 };
 
 // This class visits subexpressions, strips references
-class StripRefs : public ExpModifier {
+class RefStripper : public ExpModifier {
 public:
-            StripRefs() {}
+            RefStripper() {}
     virtual Exp* preVisit(RefExp* ei, bool& recur);
     // All other virtual functions inherit and do nothing
 };
@@ -372,6 +374,42 @@ public:
 
     virtual void visit(Assign *s,        bool& recur);
     virtual void visit(CallStatement *s, bool& recur);
+};
+
+class SizeStripper : public ExpModifier {
+public:
+                SizeStripper() {}
+    virtual     ~SizeStripper() {}
+
+    virtual Exp* preVisit(Binary *b,   bool& recur);
+};
+
+class ExpConstCaster: public ExpModifier {
+    int     num;
+    Type*   ty;
+    bool    changed;
+public:
+                ExpConstCaster(int num, Type* ty)
+                  : num(num), ty(ty), changed(false) {}
+    virtual     ~ExpConstCaster() {}
+    bool        isChanged() {return changed;}
+
+    virtual Exp* preVisit(Const *c);
+};
+
+class StmtConstCaster : public StmtVisitor {
+    ExpConstCaster* ecc;
+public:
+                StmtConstCaster(ExpConstCaster* ecc) : ecc(ecc) {}
+    virtual     ~StmtConstCaster() {};
+
+    virtual bool visit(Assign *stmt);
+    virtual bool visit(GotoStatement *stmt);
+    virtual bool visit(BranchStatement *stmt);
+    virtual bool visit(CaseStatement *stmt);
+    virtual bool visit(CallStatement *stmt);
+    virtual bool visit(ReturnStatement *stmt);
+    virtual bool visit(BoolStatement *stmt);
 };
 
 #endif  // #ifndef __VISITOR_H__

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.74.2.3 $
+ * $Revision: 1.74.2.4 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -2148,7 +2148,7 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
         }
     }
 
-    // For each variable a (in defsites, I presume)
+    // For each variable a (in defsites)
     std::map<Exp*, std::set<int>, lessExpStar>::iterator mm;
     for (mm = defsites.begin(); mm != defsites.end(); mm++) {
         Exp* a = (*mm).first;               // *mm is pair<Exp*, set<int>>

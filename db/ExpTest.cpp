@@ -4,7 +4,7 @@
  *              tests the Exp and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.24.2.3 $
+ * $Revision: 1.24.2.4 $
  *
  * 05 Apr 02 - Mike: Fixed problems caused by lack of clone() calls
  * 09 Apr 02 - Mike: Compare, searchReplace
@@ -706,7 +706,7 @@ void ExpTest::testSimplifyBinary() {
             new Terminal(opTrue)),
         new Binary(opEquals,
             new Unary(opTypeOf, Location::regOf(24)),
-            new TypeVal(new IntegerType())));
+            new TypeVal(new IntegerType(32, 1))));
     e = e->simplify();
     expected = "T[r24] = <int>";
     std::ostringstream ost4;

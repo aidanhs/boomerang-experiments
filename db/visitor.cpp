@@ -7,7 +7,7 @@
  *             classes.
  *============================================================================*/
 /*
- * $Revision: 1.6.2.3 $
+ * $Revision: 1.6.2.4 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -56,13 +56,21 @@ bool SetConscripts::visit(Location* l, bool& override) {
     return true;       // Continue recursion
 }
 
+bool SetConscripts::visit(Binary* b, bool& override) {
+    OPER op = b->getOper();
+    if (op == opSize)
+        bInLocalGlobal = true;
+    override = false;
+    return true;       // Continue recursion
+}
+
 
 bool StmtVisitor::visit(RTL* rtl) {
     // Mostly, don't do anything at the RTL level
     return true;
 } 
 
-bool StmtSetConscripts::visit(Assign* stmt) {
+bool StmtConscriptSetter::visit(Assign* stmt) {
     SetConscripts sc(curConscript, bClear);
     stmt->getLeft()->accept(&sc);
     stmt->getRight()->accept(&sc);
@@ -70,13 +78,16 @@ bool StmtSetConscripts::visit(Assign* stmt) {
     return true;
 }
 
-bool StmtSetConscripts::visit(CallStatement* stmt) {
+bool StmtConscriptSetter::visit(CallStatement* stmt) {
     SetConscripts sc(curConscript, bClear);
-    std::vector<Exp*> args;
-    args = stmt->getArguments();
+    std::vector<Exp*>& args = stmt->getArguments();
     int i, n = args.size();
     for (i=0; i < n; i++)
         args[i]->accept(&sc);
+    std::vector<Exp*>& impargs = stmt->getImplicitArguments();
+    n = impargs.size();
+    for (i=0; i < n; i++)
+        impargs[i]->accept(&sc);
     n = stmt->getNumReturns();
     for (i=0; i < n; i++) {
         Exp* r = stmt->getReturnExp(i);
@@ -86,7 +97,7 @@ bool StmtSetConscripts::visit(CallStatement* stmt) {
     return true;
 }
 
-bool StmtSetConscripts::visit(CaseStatement* stmt) {
+bool StmtConscriptSetter::visit(CaseStatement* stmt) {
     SetConscripts sc(curConscript, bClear);
     SWITCH_INFO* si = stmt->getSwitchInfo();
     if (si) {
@@ -96,7 +107,7 @@ bool StmtSetConscripts::visit(CaseStatement* stmt) {
     return true;
 }
 
-bool StmtSetConscripts::visit(ReturnStatement* stmt) {
+bool StmtConscriptSetter::visit(ReturnStatement* stmt) {
     SetConscripts sc(curConscript, bClear);
     int n = stmt->getNumReturns();
     for (int i=0; i < n; i++) {
@@ -107,7 +118,7 @@ bool StmtSetConscripts::visit(ReturnStatement* stmt) {
     return true;
 }
 
-bool StmtSetConscripts::visit(BoolStatement* stmt) {
+bool StmtConscriptSetter::visit(BoolStatement* stmt) {
     SetConscripts sc(curConscript, bClear);
     stmt->getCondExpr()->accept(&sc);
     stmt->getDest()->accept(&sc);
@@ -115,12 +126,19 @@ bool StmtSetConscripts::visit(BoolStatement* stmt) {
     return true;
 }
 
-void StripPhis::visit(Assign* s, bool& recur) {
+bool StmtConscriptSetter::visit(BranchStatement* stmt) {
+    SetConscripts sc(curConscript, bClear);
+    stmt->getCondExpr()->accept(&sc);
+    curConscript = sc.getLast();
+    return true;
+}
+
+void PhiStripper::visit(Assign* s, bool& recur) {
     del = s->isPhi();
     recur = true;
 }
 
-Exp* StripRefs::preVisit(RefExp* e, bool& recur) {
+Exp* RefStripper::preVisit(RefExp* e, bool& recur) {
     recur = false;
     return e->getSubExp1();     // Do the actual stripping of references!
 }
@@ -466,3 +484,90 @@ void StmtSubscripter::visit(CallStatement* s, bool& recur) {
     }
     recur = false;          // Don't do the usual accept logic
 }
+
+
+// Size stripper
+Exp* SizeStripper::preVisit(Binary* b, bool& recur) {
+    recur = true;           // Visit the binary's children
+    if (b->isSizeCast())
+        // Could be a size cast of a size cast
+        return b->getSubExp2()->stripSizes();
+    return b;
+}
+
+Exp* ExpConstCaster::preVisit(Const* c) {
+    if (c->getConscript() == num) {
+        changed = true;
+        return new TypedExp(ty, c);
+    }
+    return c;
+}
+
+bool StmtConstCaster::visit(Assign *stmt) {
+    Exp* e = stmt->getLeft();
+    stmt->setLeft(e->accept(ecc));
+    if (ecc->isChanged()) return false;
+    e = stmt->getRight();
+    stmt->setRight(e->accept(ecc));
+    return !ecc->isChanged();
+}
+bool StmtConstCaster::visit(GotoStatement *stmt) {
+    Exp* e = stmt->getDest();
+    stmt->setDest(e->accept(ecc));
+    return !ecc->isChanged();
+}
+bool StmtConstCaster::visit(BranchStatement *stmt) {
+    Exp* e = stmt->getDest();
+    stmt->setDest(e->accept(ecc));
+    if (ecc->isChanged()) return false;
+    e = stmt->getCondExpr();
+    stmt->setCondExpr(e->accept(ecc));
+    return !ecc->isChanged();
+}
+bool StmtConstCaster::visit(CaseStatement *stmt) {
+    SWITCH_INFO* si = stmt->getSwitchInfo();
+    if (si) {
+        si->pSwitchVar = si->pSwitchVar->accept(ecc);
+    }
+    return !ecc->isChanged();
+}
+bool StmtConstCaster::visit(CallStatement *stmt) {
+    std::vector<Exp*> args;
+    args = stmt->getArguments();
+    int i, n = args.size();
+    for (i=0; i < n; i++) {
+        args[i] = args[i]->accept(ecc);
+        if (ecc->isChanged()) return true;
+    }
+    std::vector<Exp*>& impargs = stmt->getImplicitArguments();
+    n = impargs.size();
+    for (i=0; i < n; i++) {
+        impargs[i] = impargs[i]->accept(ecc);
+        if (ecc->isChanged()) return true;
+    }
+    std::vector<Exp*>& returns = stmt->getReturns();
+    n = returns.size();
+    for (i=0; i < n; i++) {
+        returns[i] = returns[i]->accept(ecc);
+        if (ecc->isChanged()) return true;
+    }
+    return true;
+}
+bool StmtConstCaster::visit(ReturnStatement *stmt) {
+    std::vector<Exp*>& returns = stmt->getReturns();
+    int i, n = returns.size();
+    for (i=0; i < n; i++) {
+        returns[i] = returns[i]->accept(ecc);
+        if (ecc->isChanged()) return true;
+    }
+    return true;
+}
+bool StmtConstCaster::visit(BoolStatement *stmt) {
+    Exp* e = stmt->getDest();
+    stmt->setDest(e->accept(ecc));
+    if (ecc->isChanged()) return false;
+    e = stmt->getCondExpr();
+    stmt->setCondExpr(e->accept(ecc));
+    return !ecc->isChanged();
+}
+

@@ -4,7 +4,7 @@
  *
  *============================================================================*/
 /*
- * $Revision: 1.27 $
+ * $Revision: 1.27.2.1 $
  * 10 Apr 02 - Trent: Created
  * 03 Dec 02 - Trent: reduced to just parse types and signatures
  */
@@ -465,21 +465,21 @@ type_ident_list: type_ident ';' type_ident_list
 type: CHAR 
     { $$ = new CharType(); }
     | SHORT 
-    { $$ = new IntegerType(16); }
+    { $$ = new IntegerType(16, 1); }
     | INT 
-    { $$ = new IntegerType(); }
+    { $$ = new IntegerType(32, 1); }
     | UNSIGNED CHAR
-    { $$ = new IntegerType(8, false); }
+    { $$ = new IntegerType(8, 0); }
     | UNSIGNED SHORT
-    { $$ = new IntegerType(16, false); }
+    { $$ = new IntegerType(16, 0); }
     | UNSIGNED INT 
-    { $$ = new IntegerType(32, false); }
+    { $$ = new IntegerType(32, 0); }
     | LONG 
-    { $$ = new IntegerType(); }
+    { $$ = new IntegerType(32, 1); }
     | LONG LONG
-    { $$ = new IntegerType(64); }
+    { $$ = new IntegerType(64, 1); }
     | UNSIGNED LONG LONG
-    { $$ = new IntegerType(64, false); }
+    { $$ = new IntegerType(64, 0); }
     | FLOAT 
     { $$ = new FloatType(32); }
     | DOUBLE 

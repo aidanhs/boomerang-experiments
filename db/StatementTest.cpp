@@ -4,7 +4,7 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.4 $
+ * $Revision: 1.14.2.5 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -62,6 +62,7 @@ void StatementTest::registerTests(CppUnit::TestSuite* suite) {
     MYTEST(testAddUsedLocs);
     MYTEST(testSubscriptVars);
     MYTEST(testCallRefsFixer);
+    MYTEST(testStripSizes);
 }
 
 int StatementTest::countTestCases () const
@@ -801,7 +802,7 @@ void StatementTest::testClone () {
     a2->print(o1);
     c2->print(o2);
     delete a2;
-    std::string expected("   0 ** r8 := r9 + 99   0 *i16* x := y");
+    std::string expected("   0 ** r8 := r9 + 99   0 *j16* x := y");
     std::string act1(o1.str());
     std::string act2(o2.str());
     CPPUNIT_ASSERT_EQUAL(expected, act1); // Originals
@@ -1207,7 +1208,7 @@ void StatementTest::testCallRefsFixer () {
     advance(it, 2);
     Statement* s22 = *it;                       // Statement 22
     // Make sure it's what we expect!
-    std::string expected("  22 *i32* r24 := m[r29{20} + 8]{0}");
+    std::string expected("  22 *32* r24 := m[r29{20} + 8]{0}");
     std::string actual;
     std::ostringstream ost1;
     ost1 << s22;
@@ -1218,9 +1219,41 @@ void StatementTest::testCallRefsFixer () {
     proc->setProven(new Binary(opEquals, r29, r29->clone()));
     (*it)->fixCallRefs();
     // Now expect r29{30} to be r29{3}
-    expected = "  22 *i32* r24 := m[r29{3} + 8]{0}";
+    expected = "  22 *32* r24 := m[r29{3} + 8]{0}";
     std::ostringstream ost2;
     ost2 << *it;
     actual = ost2.str();
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+}
+
+/*==============================================================================
+ * FUNCTION:        StatementTest::testStripSizes
+ * OVERVIEW:        Test the visitor code that strips out size casts
+ *============================================================================*/
+void StatementTest::testStripSizes () {
+    // ** r24 := m[zfill(8,32,local5) + param6]*8**8* / 16
+    // The double size casting happens as a result of substitution
+    Exp* lhs = Location::regOf(24);
+    Exp* rhs = new Binary(opDiv,
+        new Binary(opSize,
+            new Const(8),
+            new Binary(opSize,
+                new Const(8),
+                Location::memOf(
+                    new Binary(opPlus,
+                        new Ternary(opZfill,
+                            new Const(8),
+                            new Const(32),
+                            Location::local("local5", NULL)),
+                        Location::local("param6", NULL))))),
+        new Const(16));
+    Statement* s = new Assign(lhs, rhs);
+    s->stripSizes();
+    std::string expected(
+      "   0 ** r24 := m[zfill(8,32,local5) + param6] / 16");
+    std::string actual;
+    std::ostringstream ost;
+    ost << s;
+    actual = ost.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 }

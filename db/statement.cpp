@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.6 $
+ * $Revision: 1.112.2.7 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -3044,8 +3044,19 @@ void Assign::processConstants(Prog* prog) {
     rhs = processConstant(rhs, getTypeFor(lhs, prog), prog, proc);
 }
 
+void Assignment::genConstraints(LocationSet& cons) {
+    // Almost every assignment has at least a size from decoding
+    // MVE: do/will PhiAssign's have a valid type? Why not?
+    if (type)
+        cons.insert(new Binary(opEquals,
+            new Unary(opTypeOf,
+                new RefExp(lhs, this)),
+            new TypeVal(type)));
+}
+
 // generate constraints
 void Assign::genConstraints(LocationSet& cons) {
+    Assignment::genConstraints(cons);   // Gen constraint for the LHS
     Exp* con = rhs->genConstraints(
         new Unary(opTypeOf,
             new RefExp(lhs->clone(), this)));
@@ -3166,31 +3177,39 @@ void BranchStatement::genConstraints(LocationSet& cons) {
             " has no condition expression!\n";
         return;
     }
-    assert(pCond->getArity() == 2);
-    Exp* lhs = ((Binary*)pCond)->getSubExp1();
-    Exp* rhs = ((Binary*)pCond)->getSubExp2();
-    Exp* equ = new Binary(opEquals,
-        new Unary(opTypeOf, lhs),
-        new Unary(opTypeOf, rhs));
-    cons.insert(equ);
+    pCond->genConditionConstraints(cons);
 }
 
 int Statement::setConscripts(int n) {
-    StmtSetConscripts ssc(n, false);
-    accept(&ssc);
-    return ssc.getLast();
+    StmtConscriptSetter scs(n, false);
+    accept(&scs);
+    return scs.getLast();
 }
 
 void Statement::clearConscripts() {
-    StmtSetConscripts ssc(0, true);
-    accept(&ssc);
+    StmtConscriptSetter scs(0, true);
+    accept(&scs);
+}
+
+// Cast the constant num to be of type ty. Return true if a change made
+bool Statement::castConst(int num, Type* ty) {
+    ExpConstCaster ecc(num, ty);
+    StmtConstCaster scc(&ecc);
+    accept(&scc);
+    return ecc.isChanged();
 }
 
 bool Statement::stripRefs() {
-    StripRefs sr;
-    StripPhis sp(&sr);
-    accept(&sp);
-    return sp.getDelete();
+    RefStripper rs;
+    PhiStripper ps(&rs);
+    accept(&ps);
+    return ps.getDelete();
+}
+
+void Statement::stripSizes() {
+    SizeStripper ss;
+    StmtModifier sm(&ss);
+    accept(&sm);
 }
 
 // Visiting from class StmtExpVisitor

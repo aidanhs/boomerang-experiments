@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.29.2.1 $
+ * $Revision: 1.29.2.2 $
  *
  * 20 Mar 01 - Mike: Added operator*= (compare, ignore sign, and consider all
  *                  floats > 64 bits to be the same
@@ -44,12 +44,12 @@ class NamedType;
 class PointerType;
 class ArrayType;
 class CompoundType;
-class BlankType;
+class SizeType;
 class Exp;
 class XMLProgParser;
 
 enum eType {eVoid, eFunc, eBoolean, eChar, eInteger, eFloat, ePointer,
-    eArray, eNamed, eCompound, eBlank};    // For operator< only
+    eArray, eNamed, eCompound, eSize};    // For operator< mostly
 
 class Type {
 protected:
@@ -81,7 +81,7 @@ virtual bool isPointer() const { return false; }
 virtual bool isArray() const { return false; }
 virtual bool isNamed() const { return false; }
 virtual bool isCompound() const { return false; }
-virtual bool isBlank() const { return false; }
+virtual bool isSize() const { return false; }
 
     // These replace type casts
     VoidType *asVoid();
@@ -118,11 +118,14 @@ virtual bool    operator< (const Type& other) const = 0;// Considers sign
                     return id == other.id;}              // broad type
 virtual Exp *match(Type *pattern);
 
-    // Access functions
+    // Acccess functions
 virtual int     getSize() const = 0;
+virtual void    setSize(int sz) {assert(0);}
 
     // Print and format functions
-virtual const char *getCtype() const = 0;   // Get the C type, e.g. "unsigned int16"
+    // Get the C type, e.g. "unsigned int". If not final, include comment
+    // for lack of sign information. When final, choose a signedness etc
+virtual const char *getCtype(bool complete = false) const = 0;
         // Print in *i32* format
 void    starPrint(std::ostream& os);
 
@@ -153,7 +156,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -178,7 +181,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 // Split the C type into return and parameter parts
         void    getReturnAndParam(const char*& ret, const char*& param);
@@ -190,10 +193,10 @@ protected:
 class IntegerType : public Type {
 private:
     int         size;               // Size in bits, e.g. 16
-    bool        signd;              // True if a signed quantity
+    int         signd;              // 1=signed, 0=unsigned, -1=unknown
 
 public:
-	IntegerType(int sz = 32, bool sign = true);
+	IntegerType(int sz = 32, int sign = -1);
 virtual ~IntegerType();
 virtual bool isInteger() const { return true; }
 
@@ -205,10 +208,15 @@ virtual bool    operator< (const Type& other) const;
 virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
-        bool    isSigned() { return signd; }
-        void    setSigned(bool b) { signd = b; }
+virtual void    setSize(int sz) {size = sz;}
+        // Is it signed? 0=no, 1=yes, -1 = don't know
+        int     isSigned() { return signd; }
+        void    setSigned(int sg) { signd = sg; }
 
-virtual const char *getCtype() const;
+
+// Get the C type a a string. If full, output comments re the lack of sign
+// information (in IntegerTypes).
+virtual const char *getCtype(bool full = true) const;
 
 virtual std::string getTempName() const;
 
@@ -233,8 +241,9 @@ virtual bool    operator< (const Type& other) const;
 virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
+virtual void    setSize(int sz) {size = sz;}
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 virtual std::string getTempName() const;
 
@@ -257,7 +266,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -278,7 +287,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -307,7 +316,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -339,7 +348,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -369,7 +378,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -408,7 +417,7 @@ virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+virtual const char *getCtype(bool full = true) const;
 
 protected:
 	friend class XMLProgParser;
@@ -416,14 +425,21 @@ protected:
 
 // This class is for before type analysis. Typically, you have no info at
 // all, or only know the size (e.g. width of a register or memory transfer)
-class BlankType : public Type {
+class SizeType : public Type {
 private:
     int         size;               // Size in bits, e.g. 16
 public:
-                BlankType() : Type(eBlank) {}
-                BlankType(int sz) : Type(eBlank), size(sz) {}
-virtual         ~BlankType() {}
+                SizeType() : Type(eSize) {}
+                SizeType(int sz) : Type(eSize), size(sz) {}
+virtual         ~SizeType() {}
+virtual Type*   clone() const;
+virtual bool    operator==(const Type& other) const;
+virtual bool    operator< (const Type& other) const;
+//virtual Exp     *match(Type *pattern);
 virtual int     getSize() const;
+virtual void    setSize(int sz) {size = sz;}
+virtual bool    isSize() const { return true; }
+virtual const char* getCtype(bool full = true) const;
 };
 
 // Not part of the Type class, but logically belongs with it:

@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.91.2.2 $
+/* $Revision: 1.91.2.3 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -238,7 +238,7 @@ protected:
     friend class XMLProgParser;
     Proc() : visited(false), prog(NULL), signature(NULL), address(0), m_firstCaller(NULL), m_firstCallerAddr(0), cluster(NULL) { }
 
-}; 
+};  // class Proc
 
 /*==============================================================================
  * LibProc class.
@@ -667,7 +667,12 @@ public:
 
     bool searchAndReplace(Exp *search, Exp *replace);
 
+    // Visitation
+
+    // Strip the refs from each expression
     void stripRefs();
+    // Cast the constant whose conscript is num to be type ty
+    void castConst(int num, Type* ty);
  
 private:
     // We ensure that there is only one return statement now. See code in

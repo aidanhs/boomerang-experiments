@@ -1892,35 +1892,35 @@ case 54:
     break;}
 case 55:
 #line 468 "ansi-c.y"
-{ yyval.type = new IntegerType(16); ;
+{ yyval.type = new IntegerType(16, 1); ;
     break;}
 case 56:
 #line 470 "ansi-c.y"
-{ yyval.type = new IntegerType(); ;
+{ yyval.type = new IntegerType(32, 1); ;
     break;}
 case 57:
 #line 472 "ansi-c.y"
-{ yyval.type = new IntegerType(8, false); ;
+{ yyval.type = new IntegerType(8, 0); ;
     break;}
 case 58:
 #line 474 "ansi-c.y"
-{ yyval.type = new IntegerType(16, false); ;
+{ yyval.type = new IntegerType(16, 0); ;
     break;}
 case 59:
 #line 476 "ansi-c.y"
-{ yyval.type = new IntegerType(32, false); ;
+{ yyval.type = new IntegerType(32, 0); ;
     break;}
 case 60:
 #line 478 "ansi-c.y"
-{ yyval.type = new IntegerType(); ;
+{ yyval.type = new IntegerType(32, 1); ;
     break;}
 case 61:
 #line 480 "ansi-c.y"
-{ yyval.type = new IntegerType(64); ;
+{ yyval.type = new IntegerType(64, 1); ;
     break;}
 case 62:
 #line 482 "ansi-c.y"
-{ yyval.type = new IntegerType(64, false); ;
+{ yyval.type = new IntegerType(64, 0); ;
     break;}
 case 63:
 #line 484 "ansi-c.y"

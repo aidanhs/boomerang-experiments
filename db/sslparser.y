@@ -16,7 +16,7 @@
  *             returns the list of SSL instruction and table definitions.
  *============================================================================*/
 
-/* $Revision: 1.24.2.3 $
+/* $Revision: 1.24.2.4 $
  * Updates:
  * Shane Sendall (original C version) Dec 1997
  * Doug Simon (C++ version) Jan 1998
@@ -83,7 +83,6 @@ class SSLScanner;
 OPER strToTerm(char* s);        // Convert string to a Terminal (if possible)
 Exp* listExpToExp(std::list<Exp*>* le);  // Convert a STL list of Exp* to opList
 Exp* listStrToExp(std::list<std::string>* ls);// Convert a STL list of strings to opList
-#define STD_SIZE    32          // Standard size
 %}
 
 %define DEBUG 1 
@@ -990,11 +989,13 @@ exp:
         // in the Bison documantation)
       // $1  $2
     |   exp cast %prec CAST_OP {
-            // opSize is deprecated, but for old SSL files we'll make a TypedExp
+            // size casts and the opSize operator were generally deprecated,
+            // but now opSize is used to transmit the size of operands that
+            // could be memOfs from the decoder to type analysis
             if ($2 == STD_SIZE)
                 $$ = $1;
             else
-                $$ = new TypedExp(new IntegerType($2), $1);
+                $$ = new Binary(opSize, new Const($2), $1);
         }
     
     |   NOT exp {
@@ -1114,7 +1115,7 @@ location:
             Exp* s;
             std::set<std::string>::iterator it = Dict.ParamSet.find($1);
             if (it != Dict.ParamSet.end()) {
-                s = new Unary(opParam, new Const($1));
+                s = new Location(opParam, new Const($1), NULL);
             } else if (ConstTable.find($1) != ConstTable.end()) {
                 s = new Const(ConstTable[$1]);
             } else {
@@ -1167,19 +1168,21 @@ esize:
 assigntype:
         ASSIGNTYPE {
             char c = $1[1];
-            if (c == '*') $$ = new IntegerType;
-            if (isdigit(c)) {
+            if (c == '*') $$ = new SizeType(0); // MVE: should remove these
+            else if (isdigit(c)) {
                 int size;
                 // Skip star (hence +1)
                 sscanf($1+1, "%d", &size);
-                $$ = new IntegerType(size);
+                $$ = new SizeType(size);
             } else {
                 int size;
                 // Skip star and letter
                 sscanf($1+2, "%d", &size);
                 if (size == 0) size = STD_SIZE;
                 switch (c) {
-                    case 'i': $$ = new IntegerType(size); break;
+                    case 'i': $$ = new IntegerType(size, 1); break;
+                    case 'j': $$ = new IntegerType(size, -1); break;
+                    case 'u': $$ = new IntegerType(size, 0); break;
                     case 'f': $$ = new FloatType(size); break;
                     case 'c': $$ = new CharType; break;
                     default:
@@ -1503,8 +1506,8 @@ Exp* listStrToExp(std::list<std::string>* ls) {
     for (std::list<std::string>::iterator it = ls->begin(); it != ls->end(); it++) {
         *cur = new Binary(opList);
         // *it is a string. Convert it to a parameter
-        ((Binary*)*cur)->setSubExp1(new Unary(opParam,
-          new Const((char*)(*it).c_str())));
+        ((Binary*)*cur)->setSubExp1(new Location(opParam,
+          new Const((char*)(*it).c_str()), NULL));
         cur = &(*cur)->refSubExp2();
     }
     *cur = new Terminal(opNil);          // Terminate the chain

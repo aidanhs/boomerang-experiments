@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.190.2.5 $
+ * $Revision: 1.190.2.6 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3379,6 +3379,9 @@ void UserProc::typeAnalysis(Prog* prog) {
         consObj.addConstraints(cons);
         if (DEBUG_TA)
             LOG << (*ss) << "\n" << &cons << "\n";
+        // Remove the sizes immediately the constraints are generated.
+        // Otherwise, x and x*8* look like different expressions
+        (*ss)->stripSizes();
     }
 
     std::list<ConstraintMap> solns;
@@ -3416,7 +3419,7 @@ void UserProc::typeAnalysis(Prog* prog) {
             Type* ty = ((TypeVal*)cc->second)->getType();
             if (loc->isSubscript())
                 loc = ((RefExp*)loc)->getSubExp1();
-            else if (loc->isGlobal()) {
+            if (loc->isGlobal()) {
                 char* nam = ((Const*)((Unary*)loc)->getSubExp1())->getStr();
                 prog->setGlobalType(nam, ty->clone());
             } else if (loc->isLocal()) {
@@ -3439,14 +3442,20 @@ void UserProc::typeAnalysis(Prog* prog) {
                         con->setOper(opStrConst);
                     }
                 }
+                else {
+                    if (ty->isInteger() && ty->getSize() != STD_SIZE)
+                        // Wrap the constant in a TypedExp (for a cast)
+                        castConst(con->getConscript(), ty);
+                }
             }
         }
     }
 
-    // Clear the conscripts. These confuse the fromSSA logic, causing
-    // infinite loops
-    for (ss = stmts.begin(); ss != stmts.end(); ss++)
+    // Clear the conscripts. These confuse the fromSSA logic, causing infinite
+    // loops
+    for (ss = stmts.begin(); ss != stmts.end(); ss++) {
         (*ss)->clearConscripts();
+    }
 }
 
 bool UserProc::searchAndReplace(Exp *search, Exp *replace)
@@ -3491,3 +3500,12 @@ Exp *UserProc::getProven(Exp *left)
     return NULL;
 }
 
+void UserProc::castConst(int num, Type* ty) {
+    StatementList stmts;
+    getStatements(stmts);
+    StatementList::iterator it;
+    for (it = stmts.begin(); it != stmts.end(); it++) {
+        if ((*it)->castConst(num, ty))
+            break;
+    }
+}

@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.62.2.3 $
+ * $Revision: 1.62.2.4 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness
@@ -800,6 +800,8 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
                     // This is just an ordinary instruction; no control transfer
                     // Fall through
                 case STMT_ASSIGN:
+                case STMT_PHIASSIGN:
+                case STMT_IMPASSIGN:
                     // Do nothing
                     break;
         

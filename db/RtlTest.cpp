@@ -4,7 +4,7 @@
  *              tests the RTL and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.12.2.1 $
+ * $Revision: 1.12.2.2 $
  *
  * 13 May 02 - Mike: Created
  */
@@ -117,7 +117,7 @@ void RtlTest::testClone () {
     r2->print(o2);
     delete r2;
     std::string expected("00001234    0 ** r8 := r9 + 99\n"
-                         "            0 *i16* x := y\n");
+                         "            0 *j16* x := y\n");
 
     std::string act1(o1.str());
     std::string act2(o2.str());

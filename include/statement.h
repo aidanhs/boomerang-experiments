@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.54.2.3 $
+ * $Revision: 1.54.2.4 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -244,8 +244,14 @@ public:
     // statement was a phi (and to be deleted)
     bool    stripRefs();
 
+    // Strip all size casts
+    void    stripSizes();
+
     // For all expressions in this Statement, replace all e with e{def}
     void    subscriptVar(Exp* e, Statement* def);
+
+    // Cast the constant num to type ty. If a change was made, return true
+    bool    castConst(int num, Type* ty);
 
 protected:
     // Returns true if an indirect call is converted to direct:
@@ -327,6 +333,9 @@ void generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {}
 
     // simpify internal expressions
     virtual void simplify() = 0;
+
+    // generate Constraints
+    virtual void genConstraints(LocationSet& cons);
 
 protected:
     virtual bool doReplaceRef(Exp* from, Exp* to) = 0;
@@ -419,6 +428,19 @@ protected:
     friend class XMLProgParser;
 };  // class Assign
 
+/*==============================================================================
+ * PhiExp is a subclass of Assignment, having a left hand side, and a
+ * StatementVec with the references.
+ * Example:
+ * m[1000] := phi{3 7 10}   m[1000] is defined at statements 3, 7, and 10
+ * m[r28{3}+4] := phi{2 8}  the memof is defined at 2 and 8, and
+ * the r28 is defined at 3. The integers are really pointers to statements,
+ * printed as the statement number for compactness
+ * NOTE: Although the left hand side is nearly always redundant, it is essential
+ * in at least one circumstance: when finding locations used by some statement,
+ * and the reference is to a CallStatement returning multiple locations.
+ * Besides, the lhs gives it useful common functionality with other Assignments
+ *============================================================================*/
 class PhiAssign : public Assignment {
     StatementVec    stmtVec;        // A vector of pointers to statements
 public:
@@ -938,6 +960,7 @@ public:
     int getNumReturns() { return returns.size(); }
     Exp *getReturnExp(int n) { return returns[n]; }
     void setReturnExp(int n, Exp *e) { returns[n] = e; }
+    std::vector<Exp*>& getReturns() {return returns;}
     void setSigArguments();   // Set returns based on signature
     void removeReturn(int n);
     void addReturn(Exp *e);
@@ -987,6 +1010,7 @@ public:
     void setCondExprND(Exp* e) { pCond = e; }
 
     Exp* getDest() {return pDest;}  // Return the destination of the set
+    void setDest(Exp* e) {pDest = e;}
     void setDest(std::list<Statement*>* stmts);
     int getSize() {return size;}    // Return the size of the assignment
 

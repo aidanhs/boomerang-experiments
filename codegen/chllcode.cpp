@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.4 $
+ * $Revision: 1.69.2.5 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -668,7 +668,7 @@ void CHLLCode::appendType(std::ostringstream& str, Type *typ)
 {
     if (typ == NULL) return;
     // TODO: decode types
-    str << typ->getCtype();
+    str << typ->getCtype(true);
 }
 
 void CHLLCode::reset()

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149.2.5 $
+ * $Revision: 1.149.2.6 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -747,7 +747,8 @@ void Binary::print(std::ostream& os, bool withUses) {
         case opSize:
             // This can still be seen after decoding and before type analysis
             // after m[...]
-            // *size* is printed after the expression
+            // *size* is printed after the expression, even though it comes
+            //  from the first subexpression
             p2->printr(os, withUses); os << "*"; p1->printr(os, withUses);
             os << "*";
             return;
@@ -2744,8 +2745,9 @@ Exp* RefExp::polySimplify(bool& bMod) {
         if (used.size() == 0) {
             allProven = false;
         } else {
-            LOG << "attempting to simplify ref to " << phi << " with base "
-                << base << "\n";
+            if (VERBOSE)
+                LOG << "attempting to simplify ref to " << phi << " with base "
+                  << base << "\n";
         }
         // Experiment MVE: compare 1 to 2, 1 to 3 ... 1 to n instead of
         // base to 1, base to 2, ... base to n
@@ -3245,7 +3247,8 @@ Exp* Const::genConstraints(Exp* result) {
         switch (op) {
             case opIntConst:
             case opLongConst:
-                // What about sizes?
+                // An integer constant is compatible with any size of integer,
+                // as long is it is in the right range (not checked yet)
                 match = t->isInteger();
                 // An integer constant can also match a pointer to something
                 // Assume values less than 0x100 can't be a pointer
@@ -3281,7 +3284,7 @@ Exp* Const::genConstraints(Exp* result) {
         case opIntConst: {
             // We have something like local1 = 1234
             // Either they are both integer, or both pointer
-            Type* intt = new IntegerType(32);
+            Type* intt = new IntegerType(0);
             Type* alph = PointerType::newPtrAlpha();
             return new Binary(opOr,
                 new Binary(opAnd,
@@ -3311,7 +3314,7 @@ Exp* Const::genConstraints(Exp* result) {
             t = new PointerType(new CharType());
             break;
         case opFltConst:
-            t = new FloatType();    // size?
+            t = new FloatType();    // size is not known. Assume double for now
             break;
         default:
             return false;
@@ -3322,9 +3325,14 @@ Exp* Const::genConstraints(Exp* result) {
 }
 
 Exp* Unary::genConstraints(Exp* result) {
+    if (result->isTypeVal()) {
+        // TODO: need to check for conflicts
+        return new Terminal(opTrue);
+    }
+    
     switch (op) {
         case opRegOf:
-        case opParam:
+        case opParam:       // Should be no params at constraint time
         case opGlobal:
         case opLocal:
             return new Binary(opEquals,
@@ -3430,7 +3438,7 @@ Exp* Binary::genConstraints(Exp* result) {
     if (result->isTypeVal())
         restrictTo = ((TypeVal*)result)->getType();
     Exp* res = NULL;
-    IntegerType* intType = new IntegerType;
+    IntegerType* intType = new IntegerType(0);  // Wild size (=0)
     TypeVal intVal(intType);
     switch (op) {
         case opFPlus:
@@ -3545,6 +3553,29 @@ Exp* Binary::genConstraints(Exp* result) {
             else return new Terminal(opFalse);
         }
 
+        case opSize: {
+            // This used to be considered obsolete, but now, it is used to
+            // carry the size of memOf's from the decoder to here
+            assert(subExp1->isIntConst());
+            int sz = ((Const*)subExp1)->getInt();
+            if (restrictTo) {
+                int rsz = restrictTo->getSize();
+                if (rsz == 0) {
+                    // This is now restricted to the current restrictTo, but
+                    // with a known size
+                    Type* it = restrictTo->clone();
+                    it->setSize(sz);
+                    return new Binary(opEquals,
+                        new Unary(opTypeOf, subExp2),
+                        new TypeVal(it));
+                }
+                return new Terminal(
+                    (rsz == sz) ? opTrue : opFalse);
+            }
+            // We constrain the size but not the basic type
+            return new Binary(opEquals, result->clone(),
+                new TypeVal(new SizeType(sz)));
+        }
                 
         default:
             break;
@@ -3575,6 +3606,32 @@ Exp* PhiExp::genConstraints(Exp* result) {
             ret = new Binary(opAnd, ret, conjunct);
     }
     return ret->simplify();
+}
+
+void Exp::genConditionConstraints(LocationSet& cons) {
+    // cond should be of the form a relop b, where relop is opEquals, opLess
+    // etc
+    assert(getArity() == 2);
+    Exp* a = ((Binary*)this)->getSubExp1();
+    Exp* b = ((Binary*)this)->getSubExp2();
+    // Constraint typeof(a) == typeof(b)
+    // Generate constraints for a and b separately (if any)
+    Exp* Ta; Exp* Tb;
+    // MVE: are there other times when this is needed?
+    if (a->isSizeCast()) {
+        Ta = new Unary(opTypeOf, ((Binary*)a)->getSubExp2());
+        Exp* con = a->genConstraints(Ta);
+        if (con && !con->isTrue()) cons.insert(con);
+    } else
+        Ta = new Unary(opTypeOf, a);
+    if (b->isSizeCast()) {
+        Tb = new Unary(opTypeOf, ((Binary*)b)->getSubExp2());
+        Exp* con = b->genConstraints(Tb);
+        if (con && !con->isTrue()) cons.insert(con);
+    } else
+        Tb = new Unary(opTypeOf, b);
+    Exp* equ = new Binary(opEquals, Ta, Tb);
+    cons.insert(equ);
 }
 
 Exp* Location::polySimplify(bool& bMod) {
@@ -3912,8 +3969,14 @@ void Exp::setConscripts(int n, bool bClear) {
 
 // Strip references from an Exp
 Exp* Exp::stripRefs() {
-    StripRefs sr;
-    return accept(&sr);
+    RefStripper rs;
+    return accept(&rs);
+}
+
+// Strip size casts from an Exp
+Exp* Exp::stripSizes() {
+    SizeStripper ss;
+    return accept(&ss);
 }
 
 Exp* Unary::accept(ExpModifier* v) {
@@ -4090,3 +4153,4 @@ Exp* Exp::expSubscriptVar(Exp* e, Statement* def) {
     ExpSubscripter es(e, def);
     return accept(&es);
 }
+

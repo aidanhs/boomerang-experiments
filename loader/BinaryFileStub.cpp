@@ -1,6 +1,7 @@
 /* 26 Nov 02 - Mike: Fixed return types to avoid warnings with gcc */
 
 #include "BinaryFileStub.h"
+#include <assert.h>
 
 // text segment of hello pentium
 static char pent_hello_text[] = {
