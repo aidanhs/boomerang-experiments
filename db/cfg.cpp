@@ -15,8 +15,9 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.1 $
- * 18 Apr 01 - Mike: Mods for boomerang
+ * $Revision: 1.15.2.2 $
+ * 18 Apr 02 - Mike: Mods for boomerang
+ * 16 Apr 03 - Mike: added liveEntryDefs and associated code
  */
 
 
@@ -59,8 +60,8 @@ void erase_lrtls(std::list<RTL*>* pLrtl, std::list<RTL*>::iterator begin,
  * RETURNS:         <nothing>
  *============================================================================*/
 Cfg::Cfg()
-  : entryBB(NULL), exitBB(NULL), m_bWellFormed(false), m_uExtraCover(0),
-  lastLabel(0)
+  : liveEntryDefs(NULL), entryBB(NULL), exitBB(NULL), m_bWellFormed(false), 
+    lastLabel(0)
 {}
 
 /*==============================================================================
@@ -69,14 +70,16 @@ Cfg::Cfg()
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-Cfg::~Cfg()
-{
+Cfg::~Cfg() {
+    if (liveEntryDefs)
+        delete liveEntryDefs;
     // Delete the BBs
     BB_IT it;
-    for (it = m_listBB.begin(); it != m_listBB.end(); it++)
+    for (it = m_listBB.begin(); it != m_listBB.end(); it++) {
         if (*it) {
             delete *it;
         }
+    }
 }
 
 /*==============================================================================
@@ -96,9 +99,9 @@ void Cfg::setProc(UserProc* proc)
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void Cfg::clear()
-{
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
+void Cfg::clear() {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
         delete *it;
     m_listBB.clear();
     m_mapBB.clear();
@@ -1242,23 +1245,6 @@ int Cfg::pbbToIndex (PBB pBB) {
 }
 
 /*==============================================================================
- * FUNCTION:        Cfg::getCoverage
- * OVERVIEW:        
- * PARAMETERS:      <none>
- * RETURNS:         <nothing>
- *============================================================================*/
-unsigned Cfg::getCoverage()
-{
-    // Start with the extra coverage from nops, switch tables, and the like
-    unsigned uTotal = m_uExtraCover;
-    for (BB_IT it=m_listBB.begin(); it != m_listBB.end(); it++)
-    {
-        uTotal += (*it)->getCoverage();
-    }
-    return uTotal;
-}
-
-/*==============================================================================
  * FUNCTION:        Cfg::addCall
  * OVERVIEW:        Add a call to the set of calls within this procedure.
  * PARAMETERS:      call - a call instruction
@@ -1435,6 +1421,14 @@ void Cfg::computeDataflow() {
     updateLiveness();
 }
 
+// As above, but only calculate the liveness
+void Cfg::computeOnlyLiveness() {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); 
+      it != m_listBB.end(); it++)
+        (*it)->liveIn.clear();
+    updateLiveness();
+}
+
 void Cfg::updateReaches() {
     bool change = true;
     while(change) {
@@ -1482,6 +1476,26 @@ void Cfg::updateLiveness() {
         }
     }
 }
+
+void Cfg::updateLiveEntryDefs() {
+    if (liveEntryDefs) return;      // Already set; assume never grows
+    LocationSet* le = getLiveEntry();
+    assert(le);
+    LocSetIter ll;
+    for (Exp* loc = le->getFirst(ll); loc; loc = le->getNext(ll)) {
+        // Create a new assignment of the form loc := NIL
+        AssignExp* as = new AssignExp(loc->clone(), new Terminal(opNil));
+        liveEntryDefs->insert(as);
+    }
+}
+
+void Cfg::clearLiveEntryDefsUsedby() {
+    StmtSetIter ii;
+    for (Statement* s = liveEntryDefs->getFirst(ii); s;
+      s = liveEntryDefs->getNext(ii)) 
+        s->clearUses();         // Note: has no uses; could shave some time here
+}
+    
 
 /*==============================================================================
  * FUNCTION:    delete_lrtls

@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.19.2.1 $
+/* $Revision: 1.19.2.2 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -484,52 +484,6 @@ public:
     bool containsAddr(ADDRESS uAddr);
 
     /*
-     * Add (st, fi) to the set of ranges covered in this procedure
-     */
-//    void addRange(ADDRESS st, ADDRESS fi) {cover.addRange(st, fi);}
-
-    /*
-     * Add all the ranges in other to the set of ranges covered this procedure
-     */
-//    void addRanges(Coverage& other) {cover.addRanges(other);}
-
-    /*
-     * Print the coverage for this procedure
-     */
-//    void printCoverage(std::ostream& os = cout) {cover.print(os); }
-
-    /*
-     * Get the first gap (between ranges) for this Coverage object
-     */
-//    bool    getFirstGap(ADDRESS& a1, ADDRESS& a2, COV_CIT& it)
-//                {return cover.getFirstGap(a1, a2, it);}
-
-    /*
-     * Get the next gap (between ranges) for this Coverage object
-     */
-//   bool    getNextGap(ADDRESS& a1, ADDRESS& a2, COV_CIT& it)
-//                {return cover.getNextGap(a1, a2, it);}
-
-    /*
-     * Add this proc's range to the program's coverage
-     */
-//    void    addProcCoverage();
-
-    /*
-     * Check if this return location is "passed through" this function to one
-     * of its callees. For example in the returncallee test, main uses the
-     * return value from add4, and this use is "passed on" to add2, since
-     * add4 doesn't define the return location after the call to add4
-     */
-    void checkReturnPass(int returnLocBit, TypedExp* returnLoc);
-
-    /*
-     * Do the main work for the above
-     */
-    void checkReturnPassBB(PBB pBB, HLCall* pCall, int returnLocBit,
-        TypedExp* returnLoc, std::set<PBB>& seen);
-
-    /*
      * Return true if this proc uses the special aggregate pointer as the
      * first parameter
      */
@@ -604,12 +558,6 @@ private:
      * symbolic, machine independent representations.
      */
     std::map<Exp*,Exp*,lessExpStar> symbolMap;
-
-    /* 
-     * An object that represents a set of ranges, which gives the coverage
-     * of the source procedure
-     */
-    Coverage cover;
 
     /*
      * The return location as written to the .c file. Not valid unless the file

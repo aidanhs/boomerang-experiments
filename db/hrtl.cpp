@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.26.2.1 $
+ * $Revision: 1.26.2.2 $
  * 17 May 02 - Mike: Split off from rtl.cc (was getting too large)
  * 26 Nov 02 - Mike: Generate code for HlReturn with semantics (eg SPARC RETURN)
  * 26 Nov 02 - Mike: In getReturnLoc test for null procDest
@@ -1439,7 +1439,8 @@ void HLCall::truncateArguments() {
     assert(li);
     // This is a bit of a hack, and there is the issue of ordering parameters
     // when the standard calling convention is not used
-//std::cerr << "Parameters " << uproc->getSignature()->getNumParams() << " and live set is " << li->size() << ", arguments " << arguments.size() << "\n";
+std::cerr << "Parameters " << uproc->getSignature()->getNumParams() << " and live set is " << li->size() << ", arguments " << arguments.size() << "\n";
+std::cerr << "Live set: "; li->print();
 // Ugh - for now, we just chop the arguments to the same size as the parameters
     //int n = uproc->getSignature()->getNumParams() - arguments.size();
     // This is the number of parameters that have "disappeared" after we have

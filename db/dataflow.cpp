@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.16.2.1 $
+ * $Revision: 1.16.2.2 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -53,7 +53,7 @@ Statement *Statement::findDef(Exp *e) {
 // that I use (i.e. are in my RHS, or in a m[] on my LHS), parameter, etc
 // This is the set of statements that this statement uses (relies on)
 // Also calculates usedBy
-void Statement::calcUses(StatementSet &uses) {
+void Statement::calcUses(StatementSet &uses, Cfg* cfg) {
     StatementSet reachIn;
     getReachIn(reachIn);
     StmtSetIter it;
@@ -64,6 +64,26 @@ void Statement::calcUses(StatementSet &uses) {
         if (usesExp(left)) {
             uses.insert(s);             // This statement uses s
             s->usedBy.insert(this);     // s is usedBy this Statement
+        }
+    }
+    // The above only finds uses info for those locations which are defined
+    // in this procedure. There is no usedBy info for locations live on entry
+    // to this proc. These are defined in the cfg->liveEntryDefs set
+    cfg->updateLiveEntryDefs();     // Ensure that liveEntryDefs is set up
+    // Unfortunately, have to search every statement for these...
+    // awful performance
+    StatementList stmts;
+    proc->getStatements(stmts);
+    StatementSet* leds = cfg->getLiveEntryDefs();
+    StmtListIter ll;
+    for (Statement* def = leds->getFirst(it); def; def = leds->getNext(it)) {
+        Exp* lhs = def->getLeft();
+        for (Statement* s = stmts.getFirst(ll); s; s = stmts.getNext(ll)) {
+            if (s->usesExp(lhs)) {
+                // s uses def (def is usedby s)
+                s->uses.insert(def);
+                def->usedBy.insert(s);
+            }
         }
     }
 }
@@ -87,8 +107,8 @@ void Statement::calcUsedBy(StatementSet &usedBy) {
    link from any definition that is used by this expression to this 
    expression.
  */
-void Statement::calcUseLinks() {
-    calcUses(uses);             // Does both uses and usedBy now
+void Statement::calcUseLinks(Cfg* cfg) {
+    calcUses(uses, cfg);             // Does both uses and usedBy now
 }
 
 // replace a use in this statement
@@ -283,25 +303,29 @@ void Statement::calcLiveIn(LocationSet &live) {
  * Returns false otherwise.
  *
  * To completely propagate a statement which does not kill any of its
- * own uses it is sufficient to show that all the uses of the statement
- * are still available at the expression to be propagated to.
+ * own uses it is sufficient to show that the definitions of all the uses
+ * of the statement are available at the expression to be propagated to
+ * (the above is for condition 2 of the Dragon book, p636).
  *
  * A statement that kills one or more of its own uses is slightly more 
- * complicated.  All the uses that are not killed must still be available at
- * the expression to be propagated to, but the uses that were killed must
- * be available at the expression to be propagated to after the statement is 
+ * complicated.  All the uses that are not killed must still have their
+ * definitions available at the expression to be propagated to, but the
+ * uses that were killed must have their definitions available at the
+ * expression to be propagated to after the statement is 
  * removed.  This is clearly the case if the only use killed by a 
  * statement is the same as the left hand side, however, if multiple uses
  * are killed a search must be conducted to ensure that no statement between
- * the source and the destination kills the other uses.  This is considered
- * too complex a task and is therefore defered for later experimentation.
+ * the source and the destination kills the other uses. 
+ * Example: *32* m[2] := m[0] + m[4]
+ * This is considered too complex a task and is therefore defered for
+ * later experimentation.
  */
 bool Statement::canPropagateToAll() {
-    StatementSet tmp_uses;
-    tmp_uses = uses;
-    int nold = tmp_uses.size();
-    killReach(tmp_uses);
-    if (nold - tmp_uses.size() > 1) {
+    StatementSet defs;     // Set of locations used, except for (max 1) killed
+    defs = uses;
+    int nold = uses.size();     // Number of statements I use
+    killReach(defs);            // Number used less those killed this stmt
+    if (nold - defs.size() > 1) {
         // See comment above.
         if (VERBOSE) {
             std::cerr << "too hard failure in canPropogateToAll: ";
@@ -315,46 +339,37 @@ bool Statement::canPropagateToAll() {
         return false;
     }
 
-    StatementSet availOutSrc;
-    getAvailIn(availOutSrc);
-    calcAvailOut(availOutSrc);       // Available expr after this stmt
+    Exp* thisLhs = getLeft();
     StmtSetIter it;
+    // We would like to propagate to each dest
     for (Statement* sdest = usedBy.getFirst(it); sdest;
       sdest = usedBy.getNext(it)) {
         // all locations on the RHS must not be defined on any path from this
         // statement to the destination
-        // this is the second condition in the Dragon book, p636
-        // We check that the available set at the destination, minus the avail-
-        // able set at the source, does not contain any definition for the RHS
-        // location
+        // This is the condition 2 in the Dragon book, p636
+        // The set of available expressions at the destination (destIn) must
+        // contain all the definitions in set defs
         StatementSet destIn;
         sdest->getAvailIn(destIn);
-        destIn.make_diff(availOutSrc);
-        LocationSet rhsUses;
-        addUsedLocs(rhsUses);       // Get the set of locations used
-        LocSetIter ll;
-        for (Exp* used = rhsUses.getFirst(ll); used;
-          used = rhsUses.getNext(ll)) {
-            if (destIn.defines(used))
-                return false;       // Condition 2 of Dragon book fails
-        }
-#if 1           // Mike's idea: reject if more than 1 def reaches the dest
-        // Must be only one definition (this statement) that reaches each
-        // destination (Dragon book p636 condition 1)
-        int realDefs = 0;
-        Exp* thisLhs = getLeft();
-        // This destination could "use" statements other than a true
-        // definition, if the LHS of the use is a m[]
-        // So we need this loop to count the true definitions
+        if (!defs.isSubSetOf(destIn))
+            return false;       // Fails condition 2
+        // Mike's idea: reject if more than 1 def reaches the dest
+        // Must be only one definition (this statement) of thisLhs that reaches
+        // each destination (Dragon book p636 condition 1)
+        // sdest->uses is a set of statements defining various things that
+        // sdest uses (not all of them define thisLhs, e.g. if sdest is 
+        // foo := thisLhs + z, some of them define z)
+        int defThisLhs = 0;
         StmtSetIter dui;
         for (Statement* du = sdest->uses.getFirst(dui); du;
           du = sdest->uses.getNext(dui)) {
             Exp* lhs = du->getLeft();
-            if (*lhs == *thisLhs) realDefs++;
+            if (*lhs == *thisLhs) defThisLhs++;
         }
-        if (realDefs > 1) {
+        assert(defThisLhs);         // Should at least find one (this)
+        if (defThisLhs > 1) {
 #if 0
-  std::cerr << "Can't propagate " << this << " because there are " << realDefs
+  std::cerr << "Can't propagate " << this << " because there are " << defThisLhs
     << " uses for destination " << sdest << "; they include: ";
   StmtSetIter xx;
   for (Statement* ss = sdest->uses.getFirst(xx); ss;
@@ -365,23 +380,6 @@ bool Statement::canPropagateToAll() {
         }
     }
     return true;
-#else   // ? Can't understand Trent's logic here
-        // no false uses must be created
-        StmtSetIter iav;
-        for (Statement* savail = destIn.getFirst(iav); savail;
-          savail = destIn.getNext(iav)) {
-            if (savail == this) continue;
-            Exp *left = savail->getLeft();
-            if (left == NULL) {
-                return false;
-            }
-            if (usesExp(left) && findDef(left) == NULL) {
-                return false;
-            }
-        }
-    }
-    return true;
-#endif
 }
 
 // assumes canPropagateToAll has returned true
@@ -498,6 +496,18 @@ void StatementSet::make_isect(StatementSet& other) {
             // Not in both sets
             sset.erase(it);
     }
+}
+
+// Check for the subset relation, i.e. are all my elements also in the set
+// other. Effectively (this intersect other) == this
+bool StatementSet::isSubSetOf(StatementSet& other) {
+    StmtSetIter it, ff;
+    for (it = sset.begin(); it != sset.end(); it++) {
+        ff = other.sset.find(*it);
+        if (ff == other.sset.end())
+            return false;
+    }
+    return true;
 }
 
 Statement* StatementSet::getFirst(StmtSetIter& it) {

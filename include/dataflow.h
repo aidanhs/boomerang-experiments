@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.14.2.1 $
+ * $Revision: 1.14.2.2 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -31,6 +31,7 @@ class BasicBlock;
 typedef BasicBlock *PBB;
 class Prog;
 class UserProc;
+class Cfg;
 class Type;
 class Statement;
 class LocationSet;      // Actually declared in exp.h
@@ -45,6 +46,7 @@ public:
     void make_union(StatementSet& other);    // Set union
     void make_diff (StatementSet& other);    // Set difference
     void make_isect(StatementSet& other);    // Set intersection
+    bool isSubSetOf(StatementSet& other);    // subset relation
 
     int size() {return sset.size();}        // Number of elements
     Statement* getFirst(StmtSetIter& it);   // Get the first Statement
@@ -144,7 +146,7 @@ public:
     virtual void getDeadStatements(StatementSet &dead) = 0;
 
     // calculates the uses/usedBy links for this statement
-    virtual void calcUseLinks();
+    virtual void calcUseLinks(Cfg* cfg);
 
     // returns an expression that would be used to reference the value
     // defined by this statement
@@ -171,7 +173,7 @@ public:
     // 
     // get my uses' definitions (ud chain)
     // 
-    void calcUses(StatementSet &uses);
+    void calcUses(StatementSet &uses, Cfg* cfg);
     int getNumUses() { return uses.size(); }
     StatementSet &getUses() { return uses; }
     void clearUses() {uses.clear(); usedBy.clear();}

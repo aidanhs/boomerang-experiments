@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.26.2.1 $
+ * $Revision: 1.26.2.2 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -585,7 +585,7 @@ std::ostream& LibProc::put(std::ostream& os) {
 UserProc::UserProc(Prog *prog, std::string& name, ADDRESS uNative) :
     Proc(prog, uNative, new Signature(name.c_str())), 
     cfg(new Cfg()), decoded(false), decompiled(false), decompiled_down(false),
-        stmts_init(false), returnIsSet(false), isSymbolic(false), uniqueID(0) {
+    stmts_init(false), returnIsSet(false), isSymbolic(false), uniqueID(0) {
     cfg->setProc(this);              // Initialise cfg.myProc
 }
 
@@ -1097,25 +1097,8 @@ void UserProc::decompile() {
         recalcDataflow();
         if (VERBOSE) print(std::cerr, true);
         change |= propagateAndRemoveStatements();
-        // bool propagated = change;
         change |= removeNullStatements();
         change |= removeDeadStatements();
-#if 0       // We call recalcDataflow every time that a propagation is made,
-            // so that should be enough...
-        // We have a problem with aliases that is not correctable as yet
-        // E.g. in pentium hello,
-        // m[r[28]] := 134517752
-        // ...
-        // CALL printf(m[r[28] + 4],...
-        // It is not obvious that the two m[] are the same until some forward
-        // subsitutions (propagate changes to r[28]
-        // Can't think of a way to avoid these precisely
-        if (propagated) {
-            recalcDataflow();
-            if (VERBOSE) print(std::cerr, true);
-        }
-#endif
-
     }
     if (!Boomerang::get()->noRemoveInternal)
         moveInternalStatements();
@@ -1123,11 +1106,19 @@ void UserProc::decompile() {
     inlineConstants();
 
     // Convert the signature object to one of a derived class, e.g.
-    // SparcSignature. NOTE: this also deletes the internal statements,
-    // so do not recalculate dataflow after this (problems with return
-    // BBs)
+    // SparcSignature.
     promoteSignature();
-    // Truncate the number of parameters to calls (only needed for calls
+    // promoteSignature has converted some register and memory locations
+    // to "arg1" etc (opParam). Redo the liveness to reflect this change
+    cfg->computeOnlyLiveness();
+    LocationSet* le = cfg->getLiveEntry();
+// Above is unused... not finished
+    // Get the live set on entry to this procedure. It could well be
+    // shorter than it was
+    // MVE: Also need to fix return location (remove when not used)
+
+    // Truncate the number of arguments to calls (only needed for calls
+    // promoteSignature has converted some 
     // involved in cycles in the call graph, e.g. recursive calls)
     for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
         if (bb->getType() == CALL) {
@@ -1136,8 +1127,6 @@ void UserProc::decompile() {
             call->truncateArguments();
         }
     }
-    // MVE: I think we need to adjust the parameter to *this* proc as well
-    // MVE: Also need to fix return location (remove when not used)
 
     decompiled = true;          // Now fully decompiled
 }
@@ -1519,7 +1508,8 @@ void UserProc::recalcDataflow() {
     StmtListIter it;
     for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
         s->clearUses();
+    cfg->clearLiveEntryDefsUsedby();
     for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
-        s->calcUseLinks();
+        s->calcUseLinks(cfg);
 }
 

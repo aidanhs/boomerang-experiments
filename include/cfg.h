@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.20.2.1 $
+ * $Revision: 1.20.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -804,22 +804,6 @@ public:
     bool isOrphan ( ADDRESS uAddr);
 
     /*
-     * Add the indicated number of bytes to the total coverage for the cfg.
-     * Needed for example with NOP instuctions in delay slots, and for
-     * switch tables, etc. Inlined for efficiency.
-     */
-    void addExCoverage(unsigned u)
-    {
-        m_uExtraCover += u;
-    }
-
-    /*
-     * Return the number of bytes occupied by the instructions in this
-     * Cfg.
-     */
-    unsigned getCoverage();
-
-    /*
      * This is called where a two-way branch is deleted, thereby joining
      * a two-way BB with it's successor. This happens for example when
      * transforming Intel floating point branches, and a branch on parity
@@ -875,9 +859,12 @@ public:
      * Compute reaches/use information
      */
     void computeDataflow();
+    void computeOnlyLiveness();
     void updateReaches();
     void updateAvail();
     void updateLiveness();
+    void updateLiveEntryDefs();
+    void clearLiveEntryDefsUsedby();
     // Summary information for this cfg
     StatementSet *getReachExit() {
         return (exitBB == NULL) ? NULL : &exitBB->reachOut; }
@@ -988,10 +975,12 @@ protected:
     StatementSet availExit;
 
     /*
-     * All statements which are live (used before definition) at the start
-     * of the entry bb
+     * This is a pointer to a set of dummy statements defining locations that
+     * are live on entry. This guarantees that every statement has a complete
+     * set of definitions defining the locations it uses. This can be used
+     * in canPropagateToAll()
      */
-    StatementSet liveEntry;
+    StatementSet* liveEntryDefs;
 
     /*
      * The ADDRESS to PBB map.
@@ -1008,11 +997,6 @@ protected:
      * True if well formed.
      */
     bool m_bWellFormed;
-
-    /*
-     * Extra coverage for NOPs and switch tables.
-     */
-    unsigned m_uExtraCover;
 
     /*
      * Set of the call instructions in this procedure.
@@ -1043,9 +1027,17 @@ public:
      */
     void addNewOutEdge(PBB fromBB, PBB newOutEdge);
 
-    // print this cfg, mainly for debugging
+    /*
+     * print this cfg, mainly for debugging
+     */
     void print(std::ostream &out, bool withDF = false);
-  
+
+    /*
+     * get the set of dummy Statements defining locations that are live on
+     * entry to this proc
+     */
+    StatementSet *getLiveEntryDefs() { return liveEntryDefs; }
+
 };              /* Cfg */
 
 #endif
