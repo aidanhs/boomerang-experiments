@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.1 $
+ * $Revision: 1.33.2.2 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -896,6 +896,7 @@ void UserProc::generateCode(HLLCode *hll) {
 void UserProc::print(std::ostream &out, bool withDF) {
     signature->print(out);
     cfg->print(out, withDF);
+    out << "\n";
 }
 
 // initialise all statements
@@ -1135,10 +1136,10 @@ void UserProc::decompile_down() {
 
 // decompile this userproc
 void UserProc::decompile() {
-#if 0
     // Prevent infinite loops when there are cycles in the call graph
     if (decompiled_down) return;
 
+#if 0
     if (VERBOSE)
         std::cerr << "decompiling (down): " << getName() << std::endl;
     // This is code that we can perform "on the way down" to the bottom
@@ -1148,6 +1149,7 @@ void UserProc::decompile() {
     // This solves problems with recursion and other cycles in the call graph
     decompile_down();
 
+#endif
     // Done "on the way down" processing for this proc
     decompiled_down = true;
 
@@ -1160,7 +1162,6 @@ void UserProc::decompile() {
             call->decompile();
         }
     }
-#endif
 
     if (Boomerang::get()->noDecompileUp) {
         decompiled = true;
@@ -1171,6 +1172,10 @@ void UserProc::decompile() {
         std::cerr << "decompiling: " << getName() << std::endl;
         print(std::cerr, false);    // First time no df so it's readable!
     }
+
+    // compute uses/usedby info
+    computeUses();
+
     bool change = true;
     if (!Boomerang::get()->noDataflow) {
         while (change) {
@@ -1212,7 +1217,6 @@ void UserProc::decompile() {
     // Truncate the number of arguments to calls (only needed for calls
     // promoteSignature has converted some 
     // involved in cycles in the call graph, e.g. recursive calls)
-    BB_IT it;
     for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
         if (bb->getType() == CALL) {
             // The call RTL will be the last in this BB

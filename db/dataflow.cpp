@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.1 $
+ * $Revision: 1.22.2.2 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -57,7 +57,9 @@ Statement *Statement::findDef(Exp *e) {
 // Also calculates usedBy
 void Statement::calcUses(StatementSet &uses) {
     StatementSet reachIn;
-    getReachIn(reachIn);
+    // Assume (for now) that calculation of uses is interprocedural, and
+    // everything is still set up for phase 2
+    getReachIn(reachIn, 2);
     StmtSetIter it;
     for (Statement* s = reachIn.getFirst(it); s; s = reachIn.getNext(it)) {
         assert(s);
@@ -155,14 +157,14 @@ void Statement::replaceUse(Statement *use) {
 /* Get everything that reaches this assignment.
    To get the reachout, use getReachIn(reachset), calcReachOut(reachset).
  */
-void Statement::getReachIn(StatementSet &reachin) {
+void Statement::getReachIn(StatementSet &reachin, int phase) {
     assert(pbb);
-    pbb->getReachInAt(this, reachin);
+    pbb->getReachInAt(this, reachin, phase);
 }
 
-void Statement::getAvailIn(StatementSet &availin) {
+void Statement::getAvailIn(StatementSet &availin, int phase) {
     assert(pbb);
-    pbb->getAvailInAt(this, availin);
+    pbb->getAvailInAt(this, availin, phase);
 }
 
 void Statement::getLiveOut(LocationSet &liveout) {
@@ -341,7 +343,8 @@ bool Statement::canPropagateToAll() {
         if (sdest == this) 
             return false; // can't propagate to self
         StatementSet destIn;
-        sdest->getReachIn(destIn);
+        // Note: this all needs changing. Can propagate anything with SSA!
+        sdest->getReachIn(destIn, 2);
         StmtSetIter dd;
         for (Statement* reachDest = destIn.getFirst(dd); reachDest;
           reachDest = destIn.getNext(dd)) {
@@ -596,7 +599,7 @@ bool StatementSet::removeIfDefines(StatementSet& given) {
 }
 
 // Print to cerr, for debugging
-void StatementSet::print() {
+void StatementSet::prints() {
     StmtSetIter it;
     for (it = sset.begin(); it != sset.end(); it++)
         std::cerr << *it << ",\t";
@@ -624,7 +627,7 @@ LocationSet::LocationSet(const LocationSet& o) {
         sset.insert((*it)->clone());
 }
 
-void LocationSet::print() {
+void LocationSet::prints() {
     LocSetIter it;
     for (it = sset.begin(); it != sset.end(); it++)
         std::cerr << *it << ",\t";
@@ -820,7 +823,7 @@ Statement* StatementList::getPrev(StmtListRevIter& it) {
     return *it;         // Else return the previous element
 }
 
-void StatementList::print() {
+void StatementList::prints() {
     StmtListIter it;
     for (it = slist.begin(); it != slist.end(); it++) {
         std::cerr << *it << ",\t";

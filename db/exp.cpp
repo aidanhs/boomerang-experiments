@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39.2.1 $
+ * $Revision: 1.39.2.2 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -2533,18 +2533,19 @@ void AssignExp::killLive(LocationSet &live) {
     }
 }
 
+// MVE: I don't think that this will be needed any more
 void AssignExp::getDeadStatements(StatementSet &dead)
 {
     StatementSet reach;
-    getReachIn(reach);
+    getReachIn(reach, 2);
     StmtSetIter it;
     for (Statement* s = reach.getFirst(it); s; s = reach.getNext(it)) {
-    if (s->getLeft() == NULL) continue;
+        if (s->getLeft() == NULL) continue;
         bool isKilled = false;
         if (*s->getLeft() == *subExp1)
             isKilled = true;
         if (s->getLeft()->isMemOf() && subExp1->isMemOf())
-            isKilled = true; // might alias, very conservative
+            isKilled = true; // might alias, very "conservative"
         if (isKilled && s->getNumUsedBy() == 0)
         dead.insert(s);
     }

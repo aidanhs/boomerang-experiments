@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.1 $
+ * $Revision: 1.33.2.2 $
  * 17 May 02 - Mike: Split off from rtl.cc (was getting too large)
  * 26 Nov 02 - Mike: Generate code for HlReturn with semantics (eg SPARC RETURN)
  * 26 Nov 02 - Mike: In getReturnLoc test for null procDest
@@ -1491,22 +1491,8 @@ void HLCall::killReach(StatementSet &reach) {
     }
 
     // A UserProc
-    // Find out what phase of the global dataflow
-    if (returnBlock == NULL) {
-        // Normal (non global) dataflow... as we used to do it for now
-        LocationSet defs;
-        getDefinitions(defs);
-        LocSetIter it;
-        for (Exp *e = defs.getFirst(it); e; e = defs.getNext(it))
-            reach.removeIfDefines(e);
-    } else if (m_iNumOutEdges == 0) {
-        // Must be phase 1 (forward flow problem: only return interprocedges
-        // are set)
-
-    } else {
-        // Must be phase 2: call interprocedural outedges are set
-
-    }
+    // Don't kill anything. The interprocedural analysis handles the effects
+    // of the callee now
 }
 
 void HLCall::killAvail(StatementSet &avail) {
@@ -1566,9 +1552,10 @@ void HLCall::killLive(LocationSet &live) {
 }
 
 
+// MVE: Probably not needed, and probably not correct
 void HLCall::getDeadStatements(StatementSet &dead) {
     StatementSet reach;
-    getReachIn(reach);
+    getReachIn(reach, 2);
     StmtSetIter it;
     if (procDest && procDest->isLib()) {
         for (Statement* s = reach.getFirst(it); s; s = reach.getNext(it)) {
@@ -2089,11 +2076,12 @@ void HLScond::killLive(LocationSet &live) {
     }
 }
 
+// Probably not needed, and probably not right
 void HLScond::getDeadStatements(StatementSet &dead)
 {
     assert(pDest);
     StatementSet reach;
-    getReachIn(reach);
+    getReachIn(reach, 2);
     StmtSetIter it;
     for (Statement* s = reach.getFirst(it); s; s = reach.getNext(it)) {
         if (s->getLeft() && *s->getLeft() == *pDest && 

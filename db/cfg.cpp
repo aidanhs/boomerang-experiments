@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.1 $
+ * $Revision: 1.18.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -975,7 +975,7 @@ bool Cfg::compressCfg()
                 HLJcond *prior = dynamic_cast<HLJcond*>(bb->m_pRtls->back());
                 assert(jcond && prior);
                 StatementSet reach;
-                jcond->getReachIn(reach);       // What is this?
+                jcond->getReachIn(reach, 0);       // What is this?
                 bool allReach = true;
                 StmtSetIter sit;
                 StatementSet& priorUses = prior->getUses();

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.1 $
+ * $Revision: 1.22.2.2 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -412,7 +412,8 @@ static char debug_buffer[1000];
 char* BasicBlock::prints() {   
     std::ostringstream ost; 
     print(ost);       
-    // Static buffer may overflow; that's OK, we just print the first 999 bytes
+    // Static buffer may overflow; that's OK, we just copy and print the first
+    // 999 bytes
     strncpy(debug_buffer, ost.str().c_str(), 999);
     debug_buffer[999] = '\0';
     return debug_buffer; 
@@ -1569,8 +1570,6 @@ void BasicBlock::getReachIn(StatementSet &reachin, int phase) {
         } else {
             // Phase 2
             // REACHIN[return] = PREACH[P] U REACHOUT[call] - PAVAIL[P]
-            // First set reachin to the union of the summarised reach out
-            // from all call edges
             reachin.clear();
             for (unsigned i = 0; i < m_InEdges.size(); i++) {
                 PBB inEdge = m_InEdges[i];
@@ -1583,8 +1582,8 @@ void BasicBlock::getReachIn(StatementSet &reachin, int phase) {
                     temp.makeUnion(*cfgDest->getReachExit());
                     reachin.makeUnion(temp);
                 } else
-                    // Just union it in: either from a return edge, or from
-                    // an intra-procedural jump, flow-through (etc) edge
+                    // Just union it in: has to be an intra-procedural jump,
+                    // flow-through (etc) edge
                     reachin.makeUnion(inEdge->reachOut);
             }
         }
@@ -1609,9 +1608,10 @@ void BasicBlock::doAvail(StatementSet& availSet, PBB inEdge) {
         availSet.makeDiff(exitBlock->reachOut);
         // U AVAILOUT[exit]
         availSet.makeUnion(exitBlock->availOut);
-    } else {
+    } else if (inEdge->m_nodeType != RET) {
         // Non call in-edge; just copy the available set to intersect with the
-        // rest
+        // rest, except for return edges. These are considered with the special
+        // case for CALL basic blocks, above.
         availSet = inEdge->availOut;
     }
 }
@@ -1707,6 +1707,7 @@ void BasicBlock::setReturnInterprocEdges() {
     if (proc->isLib()) return;      // Leave it alone
     PBB exitBB = ((UserProc*)proc)->getCFG()->getExitBB();
     exitBB->m_iNumOutEdges = 1;
+    exitBB->m_OutEdges.resize(1);
     PBB postCall = m_OutEdges[0];
     exitBB->m_OutEdges[0] = postCall;
     postCall->m_iNumInEdges++;

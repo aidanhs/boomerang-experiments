@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.1 $
+ * $Revision: 1.18.2.2 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -149,8 +149,7 @@ void Prog::decompile() {
         UserProc *p = (UserProc*)pProc;
         if (!p->isDecoded()) continue;
 
-        // decoded userproc.. compute uses info
-        p->computeUses();
+        // decoded userproc.. decompile it
         p->decompile();
     }
 }
@@ -652,7 +651,6 @@ std::cerr << "Global DFA: phase 1\n";
         UserProc* proc = (UserProc*)pp->second;
         if (proc->isLib()) continue;
         Cfg* cfg = proc->getCFG();
-        cfg->clearOrdinaryCallEdges();
         cfg->setReturnInterprocEdges();
         // Clear the dataflow info for this proc's cfg
         cfg->clearDataflow();
@@ -665,8 +663,8 @@ int iter=0;
             UserProc* proc = (UserProc*)pp->second;
             if (proc->isLib()) continue;
             Cfg* cfg = proc->getCFG();
-            change |= cfg->computeReaches();
-            change |= cfg->computeAvailable();
+            change |= cfg->computeReaches(1);
+            change |= cfg->computeAvailable(1);
         }
 std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
     } while (change);
@@ -677,6 +675,7 @@ std::cerr << "Global DFA: phase 2\n";
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;
         if (proc->isLib()) continue;
+        proc->getCFG()->clearReturnInterprocEdges();
         proc->getCFG()->setCallInterprocEdges();
         // Clear the dataflow info for this proc's cfg
         proc->getCFG()->clearDataflow();
@@ -688,18 +687,22 @@ iter=0;
             UserProc* proc = (UserProc*)pp->second;
             if (proc->isLib()) continue;
             Cfg* cfg = proc->getCFG();
-            change |= cfg->computeReaches();
-            change |= cfg->computeAvailable();
+            change |= cfg->computeReaches(2);
         }
 std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
     } while (change);
 
+    // For now, stay in phase 2. Going to "standard" ("phase 0") dataflow
+    // won't work (I think). MVE
+#if 0
 std::cerr << "Global DFA: phase 0\n";
     interProcDFAphase = 0;
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;
         if (proc->isLib()) continue;
         Cfg* cfg = proc->getCFG();
-        cfg->restoreOrdinaryCallEdges();
+        cfg->clearCallInterprocEdges();
     }
+#endif
+
 }

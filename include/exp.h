@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.24.2.1 $
+ * $Revision: 1.24.2.2 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -696,7 +696,7 @@ public:
     int  size() const {return sset.size();}  // Number of elements
     bool operator==(const LocationSet& o) const; // Compare
     void substitute(Statement& s);          // Substitute the statement to all
-    void print();                           // Print to cerr for debugging
+    void prints();                          // Print to cerr for debugging
     bool find(Exp* e);                      // Return true if the location exists in the set
 };
 

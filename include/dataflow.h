@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.1 $
+ * $Revision: 1.18.2.2 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -61,7 +61,7 @@ public:
     void clear() {sset.clear();}            // Clear the set
     bool operator==(const StatementSet& o) const // Compare
         { return sset == o.sset;}
-    void print();                           // Print to std::cerr (for debug)
+    void prints();                          // Print to std::cerr (for debug)
 };
 
 // Ugh - we also need lists of Statements for the internal statements
@@ -85,7 +85,7 @@ public:
     StmtListIter StatementList::remove(StmtListIter it) {
         return slist.erase(it); }
     bool exists(Statement* s);  // Find; returns false if not found
-    void print();                           // Print to cerr (for debugging)
+    void prints();                          // Print to cerr (for debugging)
 };
 
 // NOTE: class LocationSet is defined in exp.h (problems with #include ordering)
@@ -114,7 +114,7 @@ public:
     virtual void calcReachOut(StatementSet &reachout);
 
     // gets the reaching definitions set before this statement
-    virtual void getReachIn(StatementSet &reachin);
+    virtual void getReachIn(StatementSet &reachin, int phase);
 
     // removes any statement from the reaching definitions set which is
     // killed by this statement
@@ -125,7 +125,7 @@ public:
 
     // get the available definitions (not reassigned on any path) before
     // this statement
-    virtual void getAvailIn(StatementSet& availin);
+    virtual void getAvailIn(StatementSet& availin, int phase);
 
     // removes any statement from the available definitions set which is
     // killed by this statement
