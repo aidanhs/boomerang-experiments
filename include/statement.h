@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63.2.1 $
+ * $Revision: 1.63.2.2 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -293,7 +293,7 @@ virtual	void	dfaTypeAnalysis(bool& ch) {}
 		void	stripSizes();
 
 		// For all expressions in this Statement, replace all e with e{def}
-		void	subscriptVar(Exp* e, Statement* def);
+		void	subscriptVar(Exp* e, Statement* def, Cfg* cfg);
 
 		// Cast the constant num to type ty. If a change was made, return true
 		bool	castConst(int num, Type* ty);

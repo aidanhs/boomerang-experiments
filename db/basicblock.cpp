@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.86.2.1 $
+ * $Revision: 1.86.2.2 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1588,7 +1588,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum, UserProc* myProc) {
 			LocationSet defs;
 			s->getDefinitions(defs);
 			// The definitions don't have refs yet
-			defs.addSubscript(s);
+			defs.addSubscript(s, myProc->getCFG());
 			// Definitions kill uses
 			liveLocs.makeDiff(defs);
 			// Phi functions are a special case. The operands of phi functions

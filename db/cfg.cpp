@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.86.2.2 $
+ * $Revision: 1.86.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -2203,32 +2203,6 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
 	}
 }
 
-Statement* Cfg::findTheImplicitAssign(Exp* x) {
-	// As per the below, but it's an error if the expression is not found
-	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
-	assert(it != implicitMap.end());
-	return it->second;
-}
-
-// A short helper function for renameBlockVars
-Statement* Cfg::findImplicitAssign(Exp* x) {
-	Statement* def;
-	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
-	if (it == implicitMap.end()) {
-//std::cerr << "Creating new implicit for " << x << "; existing are ";
-//for (it = implicitMap.begin(); it != implicitMap.end(); it++)
-//  it->first->printx(0); std::cerr << ", "; std::cerr << "\n";
-		// A use with no explicit definition. Create a new implicit assignment
-		def = new ImplicitAssign(x->clone());
-		entryBB->prependStmt(def, myProc);
-		// Remember it for later so we don't insert more than one implicit assignment for any one location
-		implicitMap[x] = def;
-	} else
-		// Use an existing implicit assignment
-		def = it->second;
-	return def;
-}
-
 // Subscript dataflow variables
 void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
 	// Need to clear the Stack of old, renamed locations like m[esp-4]
@@ -2268,8 +2242,8 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
 					def = Stack[x].top();
 				// Replace the use of x with x{def} in S
 				if (S->isPhi())
-					S->getLeft()->refSubExp1() = S->getLeft()->getSubExp1()->expSubscriptVar(x, def);
-				else S->subscriptVar(x, def);
+					S->getLeft()->refSubExp1() = S->getLeft()->getSubExp1()->expSubscriptVar(x, def, this);
+				else S->subscriptVar(x, def, this);
 			}
 		}
 		// For each definition of some variable a in S
@@ -2636,5 +2610,65 @@ void Cfg::undoComputedBB(Statement* stmt) {
 		if ((*it)->undoComputedBB(stmt))
 			break;
 	}
+}
 
+Statement* Cfg::findTheImplicitAssign(Exp* x) {
+	// As per the below, but it's an error if the expression is not found
+	std::map<Exp*, ImpInfo, lessExpStar>::iterator it = implicitMap.find(x);
+	assert(it != implicitMap.end());
+	return it->second.s;
+}
+
+Statement* Cfg::findImplicitAssign(Exp* x) {
+	Statement* def;
+	std::map<Exp*, ImpInfo, lessExpStar>::iterator it = implicitMap.find(x);
+	if (it == implicitMap.end()) {
+		// A use with no explicit definition. Create a new implicit assignment
+		def = new ImplicitAssign(x->clone());
+		entryBB->prependStmt(def, myProc);
+		// Remember it for later so we don't insert more than one implicit assignment for any one location
+		// We don't clone the copy in the map. Note that this presents problems if x is a memof and is
+		// substituted into. That's what preUpdate() and postUpdate() are all about.
+		ImpInfo ii;
+		ii.s = def;
+		ii.count = 1;		// Usage count
+		implicitMap[x] = ii;
+std::cerr << "Creating new implicit for " << x << "; map now has these " << std::dec << implicitMap.size() << " entries:\n";	// HACK!
+for (it = implicitMap.begin(); it != implicitMap.end(); it++) {
+  it->first->printx(0); std::cerr << "count = " << std::dec << it->second.count << ", statement is " << it->second.s << "\n";
+}
+	} else {
+		// Use an existing implicit assignment
+		def = it->second.s;
+		it->second.count++;
+	}
+	return def;
+}
+
+// Expression x is about to change (e.g. m[r28] -> m[r28{0}]). Remove the implicit definition
+// from the map. (Note: the actual implicit definition
+Statement* Cfg::preUpdate(Exp* x) {
+	std::map<Exp*, ImpInfo, lessExpStar>::iterator it = implicitMap.find(x);
+if (it == implicitMap.end()) {
+std::cerr << "About to assert: map is\n";
+for (it = implicitMap.begin(); it != implicitMap.end(); it++) {
+  it->first->printx(0); std::cerr << "count = " << std::dec << it->second.count << ", statement is " << it->second.s << "\n";}
+}
+	assert (it != implicitMap.end());
+	Statement* ret = it->second.s;
+	if (--it->second.count <= 0)		// Only erase if no other use
+		implicitMap.erase(it);
+	return ret;
+}
+
+void Cfg::postUpdate(Exp* x, Statement* def) {
+	std::map<Exp*, ImpInfo, lessExpStar>::iterator it = implicitMap.find(x);
+	if (it == implicitMap.end()) {
+		ImpInfo ii;
+		ii.s = def;
+		ii.count = 1;
+		implicitMap[x] = ii;
+	} else
+		// It happens to already exist; update the count
+		it->second.count++;
 }
