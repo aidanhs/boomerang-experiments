@@ -21,7 +21,7 @@ Log &Log::operator<<(Exp *e)
     return *this;
 }
 
-Log &Log::operator<<(ExpressionSet *l)
+Log &Log::operator<<(LocationSet *l)
 {
     std::ostringstream st;
     st << l;
@@ -38,15 +38,9 @@ Log &Log::operator<<(int i)
 }
 
 Log &Log::operator<<(char c) {
-    *this << c;
-    return *this;
-}
-
-// The following should allow the dropping of a lot of calls to c_str()
-// But gcc doesn't seem to understand that std::basic_string<char> (as returned
-// by stringstream::str()) is the same as std::string... ugh.
-Log& Log::operator<<(std::string& s) {
-    *this << s.c_str();
+    std::ostringstream st;
+    st << c;
+    *this << st.str().c_str();
     return *this;
 }
 

@@ -21,7 +21,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.47.2.1 $
+ * $Revision: 1.47.2.2 $
  * 08 Apr 02 - Mike: Mods for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  * 25 Jul 03 - Mike: RTL now a list of Statements
@@ -125,18 +125,17 @@ public:
     void forwardSubs();
 
     // Insert an assignment into this RTL
-    //   ssLhs: ptr to Loc to place on LHS
+    //   ssLhs: ptr to Exp to place on LHS
     //   ssRhs: ptr to Exp to place on RHS
     //   prep:  true if prepend (else append)
     //   type:  type of the transfer, or NULL
-    void insertAssign(Location* ssLhs, Exp* ssRhs, bool prep,
-      Type* type = NULL);
+    void insertAssign(Exp* ssLhs, Exp* ssRhs, bool prep, Type* type = NULL);
 
     // Insert an assignment into this RTL, after temps have been defined
-    //   pLhs: ptr to Loc to place on LHS
-    //   pRhs: ptr to Exp to place on RHS
+    //   ssLhs: ptr to Exp to place on LHS
+    //   ssRhs: ptr to Exp to place on RHS
     //   type:  type of the transfer, or NULL
-    void insertAfterTemps(Location* pLhs, Exp* pRhs, Type* type = NULL);
+    void insertAfterTemps(Exp* ssLhs, Exp* ssRhs, Type* type = NULL);
 
     // Replace all instances of "search" with "replace".
     virtual bool searchAndReplace(Exp* search, Exp* replace);

@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.91.2.1 $
+/* $Revision: 1.91.2.2 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -179,10 +179,9 @@ public:
      */
     friend std::ostream& operator<<(std::ostream& os, Proc& proc);
     
-    virtual Location *getProven(Location *left) = 0;
+    virtual Exp *getProven(Exp *left) = 0;
 
     // Set an equation as proven. Useful for some sorts of testing
-    // fact is usually of the form <loc1> == <loc2> (loc1, loc2 Locations)
     void setProven(Exp* fact) {proven.insert(fact);}
 
     /*
@@ -202,10 +201,10 @@ public:
      */
     void addCallers(std::set<UserProc*>& callers);
 
-    virtual void removeReturn(Location *l);
-    void removeParameter(Location *l);
-    void addParameter(Location *l);
-    virtual void addReturn(Location *l);
+    virtual void removeReturn(Exp *e);
+    void removeParameter(Exp *e);
+    void addParameter(Exp *e);
+    virtual void addReturn(Exp *e);
 
     virtual void printCallGraphXML(std::ostream &os, int depth, 
                                    bool recurse = true);
@@ -269,7 +268,7 @@ public:
      */
     virtual bool isAggregateUsed() {return false;}
 
-    virtual Location* getProven(Location* left);
+    virtual Exp* getProven(Exp* left);
 
     /*
      * Prints this procedure to an output stream.
@@ -351,14 +350,14 @@ class UserProc : public Proc {
      * Note: there is a different set in each call, because the locations
      * may be different from the caller's perspective (e.g. stack locations)
      */
-    ExpressionSet definesSet;
+    LocationSet definesSet;
 
     /*
      * Set of locations returned by this proc (see above). As calls are found
      * with use-before-def of locations in definesSet, they are transferred
      * to this set.
      */
-    ExpressionSet returnsSet;
+    LocationSet returnsSet;
 
 public:
 
@@ -477,10 +476,10 @@ public:
     void typeAnalysis(Prog* prog);
 
     // For the final pass of removing returns that are never used
-    typedef std::map<UserProc*, std::set<Location*, lessExpStar> >ReturnCounter;
+    typedef std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
     void countUsedReturns(ReturnCounter& rc);
     bool removeUnusedReturns(ReturnCounter& rc);
-    void doCountReturns(Statement* def, ReturnCounter& rc, Location* loc);
+    void doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc);
 
     // Insert actual arguments to match formals
     void insertArguments(StatementSet& rs);
@@ -498,8 +497,8 @@ public:
     // get all the statements
     void getStatements(StatementList &stmts);
 
-    virtual void removeReturn(Location *l);
-    virtual void addReturn(Location *l);
+    virtual void removeReturn(Exp *e);
+    virtual void addReturn(Exp *e);
 
     // remove a statement
     void removeStatement(Statement *stmt);
@@ -515,14 +514,14 @@ public:
 
 #if 0
     // get the set of locations "defined" in this procedure
-    void getDefinitions(ExpressionSet &defs) {defs = definesSet;}
+    void getDefinitions(LocationSet &defs) {defs = definesSet;}
 
     // get the set of locations "returned" by this procedure
-    void getReturnSet(ExpressionSet &ret) {ret = returnsSet;}
+    void getReturnSet(LocationSet &ret) {ret = returnsSet;}
 
 #endif
 
-    void getDefinitions(ExpressionSet &defs);
+    void getDefinitions(LocationSet &defs);
 
 private:
     /*
@@ -555,13 +554,13 @@ public:
      * Sets the parameters that have been recovered for this procedure through
      * analysis.
      */
-    void setParams(std::list<Location*>& params, bool aggUsed = false);
+    void setParams(std::list<TypedExp*>& params, bool aggUsed = false);
 
     /*
      * Given a machine dependent location, return a generated symbolic
      * representation for it.
      */
-    void toSymbolic(Location* loc, Location* result, bool local = true);
+    void toSymbolic(TypedExp* loc, TypedExp* result, bool local = true);
 
     /*
      * Return the next available local variable; make it the given type
@@ -655,7 +654,7 @@ public:
      */
     virtual bool isAggregateUsed() {return aggregateUsed;}
 
-    virtual Location* getProven(Location* left);
+    virtual Exp* getProven(Exp* left);
 
     virtual void printCallGraphXML(std::ostream &os, int depth,
                                    bool recurse = true);
@@ -687,6 +686,6 @@ protected:
     friend class XMLProgParser;
     UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), decompileSeen(false), decompiled(false), isRecursive(false) { }
     void setCFG(Cfg *c) { cfg = c; }
-    void addDef(Location *e) { definesSet.insert(e); }
+    void addDef(Exp *e) { definesSet.insert(e); }
 };      // class UserProc
 #endif

@@ -2,11 +2,11 @@
  * Copyright (C) 2002, Mike Van Emmerik and Trent Waddington
  */
 /*==============================================================================
- * FILE:       exp.cc
+ * FILE:       exp.cpp
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149.2.3 $
+ * $Revision: 1.149.2.4 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -143,7 +143,7 @@ TypedExp::TypedExp(TypedExp& o) : Unary(opTypedExp)
 FlagDef::FlagDef(Exp* params, RTL* rtl)
     : Unary(opFlagDef, params), rtl(rtl) {}
 
-RefExp::RefExp(Location* l, Statement* d) : Unary(opSubscript, l), def(d) {
+RefExp::RefExp(Exp* e, Statement* d) : Unary(opSubscript, e), def(d) {
 }
 
 PhiExp::PhiExp(Exp* e, Statement* d) : Unary(opPhi, e)
@@ -157,10 +157,11 @@ PhiExp::PhiExp(PhiExp& o) : Unary(opPhi, subExp1)
 TypeVal::TypeVal(Type* ty) : Terminal(opTypeVal), val(ty)
 { }
 
-UnaryLoc::UnaryLoc(OPER op, Exp *exp, UserProc *proc) : Location(op, proc),
-                                                        subExp1(exp)
+Location::Location(OPER op, Exp *exp, UserProc *proc) : Unary(op, exp), 
+                                                        proc(proc), ty(NULL)
 {
-    assert(isLocation());
+    assert(op == opRegOf || op == opMemOf || op == opLocal ||
+           op == opGlobal || op == opParam || op == opTemp);
     if (proc == NULL) {
         // eep.. this almost always causes problems
         Exp *e = exp;
@@ -189,12 +190,7 @@ UnaryLoc::UnaryLoc(OPER op, Exp *exp, UserProc *proc) : Location(op, proc),
     }
 }
 
-Location::Location(Location& o) : Exp(o.op), proc(o.proc), ty(o.ty)
-{
-}
-
-UnaryLoc::UnaryLoc(UnaryLoc& o) : Location(o.op, o.proc),
-    subExp1(o.subExp1->clone())
+Location::Location(Location& o) : Unary(o.op, o.subExp1->clone()), proc(o.proc), ty(o.ty)
 {
 }
 
@@ -282,23 +278,6 @@ void TypedExp::setType(Type* ty)
     type = ty;
 }
 
-bool Exp::isLocation() {
-    // A location is any expression that can be assigned to
-    switch (op) {
-        case opMemOf:   case opRegOf:
-        case opGlobal:  case opLocal: case opTemp:
-        case opParam:   case opPostVar:        // SSL special things
-        case opPC:
-        case opCF: case opZF: case opNF: case opOF:
-        case opFlags:   case opFflags:
-        case opArraySubscript: case opAt:
-        case opMachFtr:         // Machine feature
-            return true;
-        default:
-            return false;
-    }
-}
-
 /*==============================================================================
  * FUNCTION:        Binary::commute
  * OVERVIEW:        Swap the two subexpressions
@@ -383,7 +362,7 @@ Exp* PhiExp::clone() {
     return c;
 }
 Exp* RefExp::clone() {
-    RefExp* c = new RefExp((Location*)subExp1->clone(), def);
+    RefExp* c = new RefExp(subExp1->clone(), def);
     return c;
 }
 
@@ -393,33 +372,7 @@ Exp* TypeVal::clone() {
 }
 
 Exp* Location::clone() {
-    Location* c;
-    c = new Location(op, proc);
-    if (ty)
-        c->ty = ty->clone();
-    return c;
-}
-
-Exp* UnaryLoc::clone() {
-    UnaryLoc* c;
-    c = new UnaryLoc(op, subExp1->clone(), proc);
-    if (ty)
-        c->ty = ty->clone();
-    return c;
-}
-
-Exp* BinaryLoc::clone() {
-    BinaryLoc* c;
-    c = new BinaryLoc(op, subExp1->clone(), subExp2->clone(), proc);
-    if (ty)
-        c->ty = ty->clone();
-    return c;
-}
-
-Exp* TernaryLoc::clone() {
-    TernaryLoc* c;
-    c = new TernaryLoc(op, subExp1->clone(), subExp2->clone(), 
-        subExp3->clone(), proc);
+    Location* c = new Location(op, subExp1->clone(), proc);
     if (ty)
         c->ty = ty->clone();
     return c;
@@ -787,16 +740,16 @@ void Binary::printr(std::ostream& os, bool withUses) {
 }
 
 void Binary::print(std::ostream& os, bool withUses) {
-    Exp* p1; Exp* p2;
-    p1 = ((Binary*)this)->getSubExp1();
-    p2 = ((Binary*)this)->getSubExp2();
+    Exp* p1 = ((Binary*)this)->getSubExp1();
+    Exp* p2 = ((Binary*)this)->getSubExp2();
     // Special cases
     switch (op) {
         case opSize:
+            // This can still be seen after decoding and before type analysis
+            // after m[...]
             // *size* is printed after the expression
             p2->printr(os, withUses); os << "*"; p1->printr(os, withUses);
             os << "*";
-            assert(false); // thought this was deprecated.
             return;
         case opFlagCall:
             // The name of the flag function (e.g. ADDFLAGS) should be enough
@@ -821,6 +774,18 @@ void Binary::print(std::ostream& os, bool withUses) {
             p2->print(os, withUses);
             return;
 
+        case opMemberAccess:
+            p1->print(os, withUses);
+            os << ".";
+            ((Const*)p2)->printNoQuotes(os, withUses);
+            return;
+
+        case opArraySubscript:
+            p1->print(os, withUses);
+            os << "[";
+            p2->print(os, withUses);
+            os << "]";
+            return;
 
         default:
             break;
@@ -890,6 +855,14 @@ void Binary::print(std::ostream& os, bool withUses) {
 //  //  //  //  //
 void Terminal::print(std::ostream& os, bool withUses) {
     switch (op) {
+        case opPC:      os << "%pc";   break;
+        case opFlags:   os << "%flags"; break;
+        case opFflags:  os << "%fflags"; break;
+        case opCF:      os << "%CF";   break;
+        case opZF:      os << "%ZF";   break;
+        case opOF:      os << "%OF";   break;
+        case opNF:      os << "%NF";   break;
+        case opDF:      os << "%DF";   break;
         case opAFP:     os << "%afp";  break;
         case opAGP:     os << "%agp";  break;
         case opWild:    os << "WILD";  break;
@@ -906,7 +879,7 @@ void Terminal::print(std::ostream& os, bool withUses) {
         case opTrue:    os << "true"; break;
         case opFalse:   os << "false"; break;
         default:
-            std::cerr << "Unhandled Terminal " << operStrings[op]
+            LOG << "Terminal::print invalid operator " << operStrings[op]
               << "\n";
             assert(0);
     }
@@ -916,18 +889,19 @@ void Terminal::print(std::ostream& os, bool withUses) {
 //   Unary  //
 //  //  //  //
 void Unary::print(std::ostream& os, bool withUses) {
+    Exp* p1 = ((Unary*)this)->getSubExp1();
     switch (op) {
         //  //  //  //  //  //  //
         //  x[ subexpression ]  //
         //  //  //  //  //  //  //
         case opRegOf:
             // Make a special case for the very common case of r[intConst]
-            if (subExp1->isIntConst()) {
-                os << "r" << std::dec << ((Const*)subExp1)->getInt();
+            if (p1->isIntConst()) {
+                os << "r" << std::dec << ((Const*)p1)->getInt();
                 break;
-            } else if (subExp1->isTemp()) {
+            } else if (p1->isTemp()) {
                 // Just print the temp {   // balance }s
-                subExp1->print(os, withUses);
+                p1->print(os, withUses);
                 break;
             }
             // Else fall through
@@ -941,16 +915,16 @@ void Unary::print(std::ostream& os, bool withUses) {
                 case opKindOf:os << "K["; break;
                 default: break;     // Suppress compiler warning
             }
-            if (op == opVar) ((Const*)subExp1)->printNoQuotes(os, withUses);
+            if (op == opVar) ((Const*)p1)->printNoQuotes(os, withUses);
             // Use print, not printr, because this is effectively the top
             // level again (because the [] act as parentheses)
             else {
 #if 0       // Problem when attempt to print with conscripts
-                if (op == opMemOf && subExp1->getOper() == opIntConst)
+                if (op == opMemOf && p1->getOper() == opIntConst)
                     os << std::hex << ((Const*)p1)->getInt();
                 else
 #endif
-                    subExp1->print(os, withUses);
+                    p1->print(os, withUses);
             }
             os << "]";
             break;
@@ -964,11 +938,11 @@ void Unary::print(std::ostream& os, bool withUses) {
             else if (op == opLNot) os << "L~";
             else if (op == opFNeg) os << "~f ";
             else                   os << "-";
-            subExp1->printr(os, withUses);
+            p1->printr(os, withUses);
             return;
 
         case opSignExt:
-            subExp1->printr(os, withUses);
+            p1->printr(os, withUses);
             os << "!";          // Operator after expression
             return;
 
@@ -980,7 +954,7 @@ void Unary::print(std::ostream& os, bool withUses) {
         case opSqrt: case opSin: case opCos:
         case opTan: case opArcTan: case opLog2:
         case opLog10: case opLoge: case opPow:
-        case opSuccessor:
+        case opMachFtr: case opSuccessor:
             switch (op) {
                 case opSQRTs: os << "SQRTs("; break;
                 case opSQRTd: os << "SQRTd("; break;
@@ -994,137 +968,46 @@ void Unary::print(std::ostream& os, bool withUses) {
                 case opLog10: os << "log10("; break;
                 case opLoge:  os << "loge("; break;
                 case opExecute:os<< "execute("; break;
+                case opMachFtr:os << "machine("; break;
                 case opSuccessor: os << "succ("; break;
                 default: break;         // For warning
             }
-            subExp1->printr(os, withUses);
+            p1->printr(os, withUses);
             os << ")";
             return;
 
         //  Misc    //
         case opSgnEx:      // Different because the operator appears last
-            subExp1->printr(os, withUses);
+            p1->printr(os, withUses);
             os << "! ";
             return;
-        case opPhi:
-            os << "phi(";
-            subExp1->print(os, withUses);
-            os << ")";
-            return;
-        case opFtrunc:
-            os << "ftrunc(";
-            subExp1->print(os, withUses);
-            os << ")";
-            return;
-        case opFabs:
-            os << "fabs(";
-            subExp1->print(os, withUses);
-            os << ")";
-            return;
-        default:
-            std::cerr << "Unhandled Unary " << operStrings[op] <<
-              "\n";
-            assert(0);
-    }
-}
-
-void Location::print(std::ostream& os, bool withUses) {
-    if (ty) ty->starPrint(os);
-    switch (op) {
-        case opPC: os << "%pc"; break;
-        case opCF: os << "%CF"; break;
-        case opZF: os << "%ZF"; break;
-        case opNF: os << "%NF"; break;
-        case opOF: os << "%OF"; break;
-        case opFlags:   os << "%flags"; break;
-        case opFflags:  os << "%fflags"; break;
-        default:
-            std::cerr << "Unhandled zero arity Location " << operStrings[op]
-              << "\n";
-            assert(0);
-    }
-}
-
-void UnaryLoc::print(std::ostream& os, bool withUses) {
-    switch (op) {
-        case opRegOf:
-            // Make a special case for the very common case of r[intConst]
-            if (subExp1->isIntConst()) {
-                os << "r" << std::dec << ((Const*)subExp1)->getInt();
-                break;
-            } else if (subExp1->isTemp()) {
-                // Just print the temp
-                subExp1->print(os, withUses);
-                break;
-            }
-            // Else fall through
-        case opMemOf: case opVar:
-            switch (op) {
-                case opRegOf: os << "r["; break;    // e.g. r[r2]
-                case opMemOf: os << "m["; break;
-                case opVar:   os << "v["; break;    // Used any more?
-                default: break;     // Suppress compiler warning
-            }
-            subExp1->print(os, withUses);
-            os << "]";
-
         case opTemp:
             // Temp: just print the string, no quotes
         case opGlobal:
         case opLocal:
         case opParam:
             // Print a more concise form than param["foo"] (just foo)
-            ((Const*)subExp1)->printNoQuotes(os, withUses);
-            break;
-
-        case opMachFtr:
-            os << "machine(";
-            subExp1->print(os, withUses);
+            ((Const*)p1)->printNoQuotes(os, withUses);
+            return;
+        case opPhi:
+            os << "phi(";
+            p1->print(os, withUses);
             os << ")";
-            break;
+            return;
+        case opFtrunc:
+            os << "ftrunc(";
+            p1->print(os, withUses);
+            os << ")";
+            return;
+        case opFabs:
+            os << "fabs(";
+            p1->print(os, withUses);
+            os << ")";
+            return;
         default:
-            std::cerr << "Unhandled UnaryLoc " << operStrings[op] << "\n";
+            LOG << "Unary::print invalid operator " << operStrings[op] <<
+              "\n";
             assert(0);
-            break;
-    }
-}
-
-void BinaryLoc::print(std::ostream& os, bool withUses) {
-    switch (op) {
-        case opMemberAccess:
-            subExp1->print(os, withUses);
-            os << ".";
-            ((Const*)subExp2)->printNoQuotes(os, withUses);
-            break;
-
-        case opArraySubscript:
-            subExp1->print(os, withUses);
-            os << "[";
-            subExp2->print(os, withUses);
-            os << "]";
-            break;
-
-        default:
-            std::cerr << "Unhandled BinaryLoc " << operStrings[op] << "\n";
-            assert(0);
-            break;
-    }
-}
-
-void TernaryLoc::print(std::ostream& os, bool withUses) {
-    switch (op) {
-        case opAt:
-            subExp1->print(os, withUses);
-            os << "@[";
-            subExp2->print(os, withUses);
-            os << ":";
-            subExp3->print(os, withUses);
-            os << "]";
-            break;
-        default:
-            std::cerr << "Unhandled TernaryLoc " << operStrings[op] << "\n";
-            assert(0);
-            break;
     }
 }
 
@@ -1584,7 +1467,7 @@ void Exp::doSearchChildren(Exp* search, std::list<Exp**>& li, bool once) {
     return;         // Const and Terminal do not override this
 }
 void Unary::doSearchChildren(Exp* search, std::list<Exp**>& li, bool once) {
-        subExp1->doSearch(search, subExp1, li, once);
+    subExp1->doSearch(search, subExp1, li, once);
 }
 void Binary::doSearchChildren(Exp* search, std::list<Exp**>& li, bool once) {
     getSubExp1()->doSearch(search, subExp1, li, once);
@@ -2555,7 +2438,7 @@ Exp* Binary::polySimplify(bool& bMod) {
                 res = new Binary(opPlus, 
                         new Unary(opAddrOf, 
                             new Binary(opMemberAccess, 
-                                UnaryLoc::memOf(subExp1),
+                                Location::memOf(subExp1),
                                 new Const((char*)nam))),
                         new Const(r / 8));
                 if (VERBOSE)
@@ -2583,7 +2466,7 @@ Exp* Binary::polySimplify(bool& bMod) {
                 res = new Binary(opPlus, 
                         new Unary(opAddrOf, 
                             new Binary(opArraySubscript, 
-                              UnaryLoc::memOf(l->clone()), 
+                              Location::memOf(l->clone()), 
                               new Binary(opDiv, x->clone(), new Const(b)))),
                         new Binary(opMod, x->clone(), new Const(b)));
                 if (VERBOSE)
@@ -2834,15 +2717,15 @@ Exp* RefExp::polySimplify(bool& bMod) {
     // another hack, this time for aliasing
     if (subExp1->getOper() == opRegOf && 
         ((Const*)subExp1->getSubExp1())->getInt() == 0 &&
-        def && def->getLeft() && *def->getLeft() == *UnaryLoc::regOf(24)) {
-        res = new TypedExp(new IntegerType(16), new RefExp(UnaryLoc::regOf(24), def));
+        def && def->getLeft() && *def->getLeft() == *Location::regOf(24)) {
+        res = new TypedExp(new IntegerType(16), new RefExp(Location::regOf(24), def));
         bMod = true;
         return res;
     }
 
     // hack to fixing refs to phis which don't do anything
     if (def && def->isPhi() && def->getProc()->canProveNow()) {
-        Exp *base = new RefExp((Location*)subExp1, NULL);
+        Exp *base = new RefExp(subExp1, NULL);
         StatementVec::iterator uu;
         PhiExp *phi = (PhiExp*)def->getRight();
         for (uu = phi->begin(); uu != phi->end(); uu++)
@@ -2855,7 +2738,7 @@ Exp* RefExp::polySimplify(bool& bMod) {
                 }
             }
         bool allProven = true;
-        ExpressionSet used;
+        LocationSet used;
         base->addUsedLocs(used);
         if (used.size() == 0) {
             allProven = false;
@@ -2866,13 +2749,13 @@ Exp* RefExp::polySimplify(bool& bMod) {
         // Experiment MVE: compare 1 to 2, 1 to 3 ... 1 to n instead of
         // base to 1, base to 2, ... base to n
         // Seems to work
-        Exp* first = new RefExp((Location*)subExp1->clone(), *phi->begin());
+        Exp* first = new RefExp(subExp1->clone(), *phi->begin());
         //for (uu = phi->begin(); allProven && uu != phi->end(); uu++) { // }
         for (uu = ++phi->begin(); allProven && uu != phi->end(); uu++) {
             //Exp *query = new Binary(opEquals, new RefExp(subExp1->clone(),
             //   *uu), base->clone());
             Exp* query = new Binary(opEquals, first,
-              new RefExp((Location*)subExp1->clone(), *uu));
+              new RefExp(subExp1->clone(), *uu));
             if (Boomerang::get()->debugProof)
                 LOG << "attempting to prove " << query << " for ref to phi\n";
             if (!def->getProc()->prove(query)) {
@@ -2917,7 +2800,7 @@ Exp* PhiExp::polySimplify(bool& bMod) {
             if (VERBOSE)
                 LOG << "all the same in " << this << "\n";
             bMod = true;
-            res = new RefExp((Location*)subExp1, first);
+            res = new RefExp(subExp1, first);
             return res;
         }
 
@@ -2935,7 +2818,7 @@ Exp* PhiExp::polySimplify(bool& bMod) {
             if (VERBOSE)
                 LOG << "all but one not this in " << this << "\n";
             bMod = true;
-            res = new RefExp((Location*)subExp1, notthis);
+            res = new RefExp(subExp1, notthis);
             return res;
         }
     }
@@ -3104,7 +2987,7 @@ Exp* Exp::fixSuccessor() {
     Exp* result;
     // Assume only one successor function in any 1 expression
     if (search(new Unary(opSuccessor,
-                         UnaryLoc::regOf(new Terminal(opWild))), result)) {
+                         Location::regOf(new Terminal(opWild))), result)) {
         // Result has the matching expression, i.e. succ(r[K])
         Exp* sub1 = ((Unary*)result)->getSubExp1();
         assert(sub1->getOper() == opRegOf);
@@ -3159,9 +3042,9 @@ bool Exp::isTemp() {
 Exp *Exp::removeSubscripts(bool& allZero)
 {
     Exp *e = this;
-    ExpressionSet locs;
+    LocationSet locs;
     e->addUsedLocs(locs);
-    ExpressionSet::iterator xx; 
+    LocationSet::iterator xx; 
     allZero = true;
     for (xx = locs.begin(); xx != locs.end(); xx++) {
         if ((*xx)->getOper() == opSubscript) {
@@ -3242,7 +3125,7 @@ Exp* RefExp::fromSSA(igraph& ig) {
         if (subExp1->isPC())
             // pc is just a nuisance at this stage. Make it explicit for
             // debugging (i.e. to find out why it is still here)
-            return UnaryLoc::local("pc", NULL);
+            return Location::local("pc", NULL);
         // It is in the map. Delete the current expression, and replace
         // with a new local
         std::ostringstream os;
@@ -3260,7 +3143,7 @@ Exp* RefExp::fromSSA(igraph& ig) {
         }
         if (p == NULL) std::cerr << "Error: no proc for " << this << "\n";
         assert(p);
-        return UnaryLoc::local(strdup(name.c_str()), p);
+        return Location::local(strdup(name.c_str()), p);
     }
 }
 
@@ -3296,10 +3179,8 @@ Exp* Ternary::fromSSA(igraph& ig) {
     return this;
 }
 
-// MVE: should be a member of Location!
 Exp* Exp::fromSSAleft(igraph& ig, Statement* d) {
-    assert(isLocation());
-    RefExp* r = new RefExp((Location*)this, d);       // "Wrap" in a ref
+    RefExp* r = new RefExp(this, d);       // "Wrap" in a ref
     return r->fromSSA(ig);
     // Note: r will be ;//deleted in fromSSA! Do not ;//delete here!
 }
@@ -3326,28 +3207,12 @@ int Ternary::getMemDepth() {
 	return d3;
 }
 
-int UnaryLoc::getMemDepth() {
+int Location::getMemDepth() {
     if (op == opMemOf)
         return subExp1->getMemDepth() + 1;
     else if (subExp1)
         return subExp1->getMemDepth();
     return 0;
-}
-
-int BinaryLoc::getMemDepth() {
-    int d1 = subExp1->getMemDepth();
-    int d2 = subExp2->getMemDepth();
-	if (d1 > d2) return d1;
-	return d2;
-}
-
-int TernaryLoc::getMemDepth() {
-    int d1 = subExp1->getMemDepth();
-    int d2 = subExp2->getMemDepth();
-    int d3 = subExp3->getMemDepth();
-	if (d1 >= d2 && d1 >= d3) return d1;
-	if (d2 >= d3) return d2;
-	return d3;
 }
 
 // A helper file for comparing Exp*'s sensibly
@@ -3680,7 +3545,7 @@ Exp* PhiExp::genConstraints(Exp* result) {
         Exp* conjunct = new Binary(opEquals,
             result,
             new Unary(opTypeOf,
-                new RefExp((Location*)base, *uu)));
+                new RefExp(base, *uu)));
         if (first) {
             ret = conjunct;
             first = false;
@@ -3691,10 +3556,10 @@ Exp* PhiExp::genConstraints(Exp* result) {
     return ret->simplify();
 }
 
-Exp* UnaryLoc::polySimplify(bool& bMod) {
-    Exp* res = subExp1->polySimplify(bMod);
+Exp* Location::polySimplify(bool& bMod) {
+    Exp *res = Unary::polySimplify(bMod);
 
-    // m[a[x]] -> x
+
     if (res->getOper() == opMemOf && 
         res->getSubExp1()->getOper() == opAddrOf) {
         LOG << "polySimplify " << res << "\n";
@@ -3704,7 +3569,6 @@ Exp* UnaryLoc::polySimplify(bool& bMod) {
     }
 
     // check for m[a[loc.x]] becomes loc.x
-    // ? Doesn't the above do this?
     if (res->getOper() == opMemOf && res->getSubExp1()->getOper() == opAddrOf &&
         res->getSubExp1()->getSubExp1()->getOper() == opMemberAccess) {
         res = subExp1->getSubExp1();
@@ -3715,24 +3579,10 @@ Exp* UnaryLoc::polySimplify(bool& bMod) {
     return res;
 }
 
-Exp* BinaryLoc::polySimplify(bool& bMod) {
-    subExp1 = subExp1->polySimplify(bMod);
-    subExp2 = subExp2->polySimplify(bMod);
-    return this;
-}
-
-Exp* TernaryLoc::polySimplify(bool& bMod) {
-    subExp1 = subExp1->polySimplify(bMod);
-    subExp2 = subExp2->polySimplify(bMod);
-    subExp3 = subExp3->polySimplify(bMod);
-    return this;
-}
-
-void UnaryLoc::getDefinitions(ExpressionSet& defs) {
-    // This is a HACK to fix aliasing (replace with something general)
-    // For Pentium, whenever %eax (r24) is used, %ax is also used (r0)
+void Location::getDefinitions(LocationSet& defs) {
+    // This is a hack to fix aliasing (replace with something general)
     if (op == opRegOf && ((Const*)subExp1)->getInt() == 24) {
-        defs.insert(UnaryLoc::regOf(0));
+        defs.insert(Location::regOf(0));
     }
 }
 
@@ -3834,8 +3684,7 @@ Type *RefExp::getType()
     return NULL;
 }
 
-#if 0
-Type* UnaryLoc::getType()
+Type *Location::getType()
 {
     if (proc == NULL && subExp1->isLocation())
         proc = ((Location*)subExp1)->getProc();
@@ -3906,7 +3755,6 @@ Type* UnaryLoc::getType()
     }
     return NULL;
 }
-#endif
 
 const char* Const::getFuncName() {
     return u.pp->getName();
@@ -4001,25 +3849,10 @@ bool   PhiExp::accept(ExpVisitor* v) {
     if (ret) ret = subExp1->accept(v);
     return ret;
 }
-bool UnaryLoc::accept(ExpVisitor* v) {
+bool Location::accept(ExpVisitor* v) {
     bool override, ret = v->visit(this, override);
     if (override) return ret;
     if (ret) ret &= subExp1->accept(v);
-    return ret;
-}
-bool BinaryLoc::accept(ExpVisitor* v) {
-    bool override, ret = v->visit(this, override);
-    if (override) return ret;
-    if (ret) ret &= subExp1->accept(v);
-    if (ret) ret &= subExp2->accept(v);
-    return ret;
-}
-bool TernaryLoc::accept(ExpVisitor* v) {
-    bool override, ret = v->visit(this, override);
-    if (override) return ret;
-    if (ret) ret &= subExp1->accept(v);
-    if (ret) ret &= subExp2->accept(v);
-    if (ret) ret &= subExp3->accept(v);
     return ret;
 }
 
@@ -4088,7 +3921,7 @@ Exp* Ternary::accept(ExpModifier* v) {
     return v->postVisit(ret);
 }
 
-Exp* UnaryLoc::accept(ExpModifier* v) {
+Exp* Location::accept(ExpModifier* v) {
     // This looks to be the same source code as Unary::accept, but the
     // type of "this" is different, which is all important here!
     // (it makes a call to a different visitor member function).
@@ -4097,22 +3930,6 @@ Exp* UnaryLoc::accept(ExpModifier* v) {
     if (recur) subExp1 = subExp1->accept(v);
     return v->postVisit(ret);
 }
-Exp* BinaryLoc::accept(ExpModifier* v) {
-    bool recur;
-    Location* ret = (Location*)v->preVisit(this, recur);
-    if (recur) subExp1 = subExp1->accept(v);
-    if (recur) subExp2 = subExp2->accept(v);
-    return v->postVisit(ret);
-}
-Exp* TernaryLoc::accept(ExpModifier* v) {
-    bool recur;
-    Location* ret = (Location*)v->preVisit(this, recur);
-    if (recur) subExp1 = subExp1->accept(v);
-    if (recur) subExp2 = subExp2->accept(v);
-    if (recur) subExp3 = subExp3->accept(v);
-    return v->postVisit(ret);
-}
-
 
 Exp* PhiExp::accept(ExpModifier* v) {
     bool recur;
@@ -4186,20 +4003,6 @@ void Ternary::printx(int ind) {
     child(subExp3, ind);
 }
 
-void BinaryLoc::printx(int ind) {
-    std::cerr << std::setw(ind) << " " << operStrings[op] << "\n" << std::flush;
-    child(subExp1, ind);
-    child(subExp2, ind);
-}
-
-void TernaryLoc::printx(int ind) {
-    std::cerr << std::setw(ind) << " " << operStrings[op] << "\n" << std::flush;
-    child(subExp1, ind);
-    child(subExp2, ind);
-    child(subExp3, ind);
-}
-
-
 void Const::printx(int ind) {
     std::cerr << std::setw(ind) << " " << operStrings[op] << " ";
     switch (op) {
@@ -4256,7 +4059,7 @@ char* Exp::getAnyStrConst() {
 
 // Find the locations used by this expression. Use the UsedLocsFinder visitor
 // class
-void Exp::addUsedLocs(ExpressionSet& used) {
+void Exp::addUsedLocs(LocationSet& used) {
     UsedLocsFinder ulf(used);
     accept(&ulf);
 }

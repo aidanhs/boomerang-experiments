@@ -14,12 +14,11 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.4 $
+ * $Revision: 1.112.2.5 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
  * 25 Jul 03 - Mike: dataflow.cpp, hrtl.cpp -> statement.cpp
- * 13 Jul 04 - Mike: Mods for types in Location
  */
 
 /*==============================================================================
@@ -49,12 +48,12 @@ extern char debug_buffer[];      // For prints functions
 void Statement::setProc(UserProc *p)
 {
     proc = p;
-    ExpressionSet exps;
+    LocationSet exps;
     addUsedLocs(exps);
-    ExpressionSet defs;
+    LocationSet defs;
     getDefinitions(defs);
     exps.makeUnion(defs);
-    ExpressionSet::iterator ll;
+    LocationSet::iterator ll;
     for (ll = exps.begin(); ll != exps.end(); ll++) {
         Location *l = dynamic_cast<Location*>(*ll);
         if (l) {
@@ -65,7 +64,7 @@ void Statement::setProc(UserProc *p)
 
 // replace a use in this statement
 bool Statement::replaceRef(Statement *def) {
-    Location* lhs = def->getLeft();
+    Exp* lhs = def->getLeft();
     Exp* rhs = def->getRight();
     assert(lhs);
     assert(rhs);
@@ -271,17 +270,17 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth)
     // can substitute b{4} into this, but not a. Can't do c either, since there
     // is no definition (it's a parameter).
     do {
-        ExpressionSet exps;
+        LocationSet exps;
         addUsedLocs(exps);
-        ExpressionSet::iterator ll;
+        LocationSet::iterator ll;
         change = false;
         for (ll = exps.begin(); ll != exps.end(); ll++) {
             Exp* m = *ll;
             if (toDepth != -1 && m->getMemDepth() != toDepth)
                 continue;
-            ExpressionSet refs;
+            LocationSet refs;
             m->addUsedLocs(refs);
-            ExpressionSet::iterator rl;
+            LocationSet::iterator rl;
             for (rl = refs.begin(); rl != refs.end(); rl++) {
                 Exp* e = *rl;
                 if (!e->getNumRefs() == 1) continue;
@@ -383,19 +382,18 @@ bool Statement::doPropagateTo(int memDepth, Statement* def, bool& convert) {
     return true;
 }
 
+#if 0
 bool Statement::operator==(Statement& other) {
     // When do we need this?
     assert(0);
-#if 0
     Assign* ae1 = dynamic_cast<Assign*>(this);
     Assign* ae2 = dynamic_cast<Assign*>(&other);
     assert(ae1);
     assert(ae2);
     return *ae1 == *ae2;
-#else
     return false;
-#endif
 }
+#endif
 
 bool Statement::isNullStatement() {
     if (kind != STMT_ASSIGN) return false;
@@ -625,7 +623,6 @@ Statement* GotoStatement::clone() {
     ret->pbb = pbb;
     ret->proc = proc;
     ret->number = number;
-    ret->parent = parent;
     return ret;
 }
 
@@ -719,39 +716,39 @@ void BranchStatement::setCondType(BRANCH_TYPE cond, bool usesFloat /*= false*/) 
             break;
         case BRANCH_JUL:
             // C
-            p = new Location(opCF);
+            p = new Terminal(opCF);
             break;
         case BRANCH_JULE:
             // C or Z
-            p = new Binary(opOr, new Location(opCF), 
-                                 new Location(opZF));
+            p = new Binary(opOr, new Terminal(opCF), 
+                                 new Terminal(opZF));
             break;
         case BRANCH_JUGE:
             // not C
-            p = new Unary(opNot, new Location(opCF));
+            p = new Unary(opNot, new Terminal(opCF));
             break;
         case BRANCH_JUG:
             // not (C or Z)
             p = new Unary(opNot,
                 new Binary(opOr,
-                    new Location(opCF),
-                    new Location(opZF)));
+                    new Terminal(opCF),
+                    new Terminal(opZF)));
             break;
         case BRANCH_JMI:
             // N
-            p = new Location(opNF);
+            p = new Terminal(opNF);
             break;
         case BRANCH_JPOS:
             // not N
-            p = new Unary(opNot, new Location(opNF));
+            p = new Unary(opNot, new Terminal(opNF));
             break;
         case BRANCH_JOF:
             // V
-            p = new Location(opOF);
+            p = new Terminal(opOF);
             break;
         case BRANCH_JNOF:
             // not V
-            p = new Unary(opNot, new Location(opOF));
+            p = new Unary(opNot, new Terminal(opOF));
             break;
         case BRANCH_JPAR:
             // Can't handle (could happen as a result of a failure of Pentium
@@ -919,7 +916,6 @@ Statement* BranchStatement::clone() {
     ret->pbb = pbb;
     ret->proc = proc;
     ret->number = number;
-    ret->parent = parent;
     return ret;
 }
 
@@ -935,10 +931,6 @@ void BranchStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) 
 bool BranchStatement::usesExp(Exp *e) {
     Exp *tmp;
     return pCond && pCond->search(e, tmp);
-}
-
-// process any constants in the statement
-void BranchStatement::processConstants(Prog *prog) {
 }
 
 bool BranchStatement::doReplaceRef(Exp* from, Exp* to) {
@@ -1266,7 +1258,6 @@ Statement* CaseStatement::clone() {
     ret->pbb = pbb;
     ret->proc = proc;
     ret->number = number;
-    ret->parent = parent;
     return ret;
 }
 
@@ -1357,7 +1348,7 @@ CallStatement::~CallStatement() {
  * OVERVIEW:      Return a copy of the locations that have been determined
  *                as the actual arguments for this call.
  * PARAMETERS:    <none>
- * RETURNS:       A reference to the vector of arguments
+ * RETURNS:       A reference to the list of arguments
  *============================================================================*/
 std::vector<Exp*>& CallStatement::getArguments() {
     return arguments;
@@ -1367,20 +1358,20 @@ int CallStatement::getNumReturns() {
     return returns.size();
 }
 
-Location *CallStatement::getReturnLoc(int i) {
+Exp *CallStatement::getReturnExp(int i) {
     return returns[i];
 }
 
-int CallStatement::findReturn(Location *l) {
+int CallStatement::findReturn(Exp *e) {
     for (unsigned i = 0; i < returns.size(); i++)
-        if (*returns[i] == *l)
+        if (*returns[i] == *e)
             return i;
     return -1;
 }
 
-void CallStatement::removeReturn(Location *l)
+void CallStatement::removeReturn(Exp *e)
 {
-    int i = findReturn(l);
+    int i = findReturn(e);
     if (i != -1) {
         for (unsigned j = i+1; j < returns.size(); j++)
             returns[j-1] = returns[j];
@@ -1388,23 +1379,23 @@ void CallStatement::removeReturn(Location *l)
     }
 }
 
-void CallStatement::addReturn(Location *l)
+void CallStatement::addReturn(Exp *e)
 {
-    returns.push_back(l);
+    returns.push_back(e);
 }
 
-Location *CallStatement::getProven(Location *l) {
+Exp *CallStatement::getProven(Exp *e) {
     if (procDest)
-        return procDest->getProven(l);
+        return procDest->getProven(e);
     return NULL;
 }
 
 Exp *CallStatement::substituteParams(Exp *e)
 {
     e = e->clone();
-    ExpressionSet locs;
+    LocationSet locs;
     e->addUsedLocs(locs);
-    ExpressionSet::iterator xx;
+    LocationSet::iterator xx;
     for (xx = locs.begin(); xx != locs.end(); xx++) {
         Exp *r = findArgument(*xx);
         if (r == NULL) continue;
@@ -1424,7 +1415,7 @@ Exp *CallStatement::findArgument(Exp *e) {
         if (n != -1)
             return implicitArguments[n];
     } else {
-        std::vector<Location*> &params = proc->getProg()->getDefaultParams();
+        std::vector<Exp*> &params = proc->getProg()->getDefaultParams();
         if (params.size() != implicitArguments.size()) {
             LOG << "eep. " << implicitArguments.size() << " args ";
             if (procDest) {
@@ -1506,14 +1497,14 @@ void CallStatement::setSigArguments() {
     if (procDest == NULL) {
         if (proc == NULL) return; // do it later
         // computed calls must have their arguments initialized to something 
-        std::vector<Location*> &params = proc->getProg()->getDefaultParams();
+        std::vector<Exp*> &params = proc->getProg()->getDefaultParams();
         implicitArguments.resize(params.size(), NULL);
         unsigned i;
         for (i = 0; i < params.size(); i++) {
             implicitArguments[i] = params[i]->clone();
             implicitArguments[i]->fixLocationProc(proc);
         }
-        std::vector<Location*> &rets = proc->getProg()->getDefaultReturns();
+        std::vector<Exp*> &rets = proc->getProg()->getDefaultReturns();
         returns.resize(0, NULL);
         for (i = 0; i < rets.size(); i++)
             if (!(*rets[i] == *pDest))
@@ -1526,7 +1517,7 @@ void CallStatement::setSigArguments() {
     arguments.resize(n, NULL);
     int i;
     for (i = 0; i < n; i++) {
-        Exp *e = sig->getArgumentLoc(i);
+        Exp *e = sig->getArgumentExp(i);
         assert(e);
         arguments[i] = e->clone();
         Location *l = dynamic_cast<Location*>(e);
@@ -1537,7 +1528,7 @@ void CallStatement::setSigArguments() {
     if (sig->hasEllipsis()) {
         // Just guess 4 parameters for now
         for (int i = 0; i < 4; i++)
-            arguments.push_back(sig->getArgumentLoc(
+            arguments.push_back(sig->getArgumentExp(
                                     arguments.size())->clone());
     }
     if (procDest)
@@ -1555,7 +1546,7 @@ void CallStatement::setSigArguments() {
     // initialize returns
     returns.clear();
     for (i = 0; i < sig->getNumReturns(); i++)
-        returns.push_back(sig->getReturnLoc(i)->clone());
+        returns.push_back(sig->getReturnExp(i)->clone());
 
     if (procDest == NULL)
         ;//delete sig;
@@ -1633,8 +1624,7 @@ bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
     unsigned int i;
     for (i = 0; i < returns.size(); i++) {
         bool ch;
-        returns[i] = (Location*)
-          returns[i]->searchReplaceAll(search, replace, ch);
+        returns[i] = returns[i]->searchReplaceAll(search, replace, ch);
         change |= ch;
     }
     for (i = 0; i < arguments.size(); i++) {
@@ -1717,7 +1707,7 @@ void CallStatement::print(std::ostream& os /*= cout*/, bool withDF) {
         for (int i = 0; i < getNumReturns(); i++) {
             if (i != 0)
                 os << ", ";
-            os << getReturnLoc(i);
+            os << getReturnExp(i);
         }
         os << " }";
     }
@@ -1768,7 +1758,6 @@ Statement* CallStatement::clone() {
     ret->pbb = pbb;
     ret->proc = proc;
     ret->number = number;
-    ret->parent = parent;
     return ret;
 }
 
@@ -1823,7 +1812,7 @@ void CallStatement::simplify() {
         implicitArguments[i] = implicitArguments[i]->simplifyArith()->simplify();
     }
     for (i = 0; i < returns.size(); i++) {
-        returns[i] = (Location*)returns[i]->simplifyArith()->simplify();
+        returns[i] = returns[i]->simplifyArith()->simplify();
     }
 }
 
@@ -1881,14 +1870,14 @@ bool CallStatement::usesExp(Exp *e) {
 
 bool CallStatement::isDefinition() 
 {
-    ExpressionSet defs;
+    LocationSet defs;
     getDefinitions(defs);
     return defs.size() != 0;
 }
 
-void CallStatement::getDefinitions(ExpressionSet &defs) {
+void CallStatement::getDefinitions(LocationSet &defs) {
     for (int i = 0; i < getNumReturns(); i++) {
-        defs.insert(getReturnLoc(i));
+        defs.insert(getReturnExp(i));
     }
 }
 
@@ -1936,13 +1925,13 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
                     returns.resize(sig->getNumReturns(), NULL);
                     int i;
                     for (i = 0; i < sig->getNumReturns(); i++)
-                        returns[i] = sig->getReturnLoc(i)->clone();
+                        returns[i] = sig->getReturnExp(i)->clone();
                     // 2
                     //LOG << "2\n";
                     proc->fixCallRefs();
                     // 3
                     //LOG << "3\n";
-                    std::vector<Location*> &params = proc->getProg()
+                    std::vector<Exp*> &params = proc->getProg()
                       ->getDefaultParams();
                     std::vector<Exp*> oldargs = implicitArguments;
                     std::vector<Exp*> newimpargs;
@@ -1972,14 +1961,14 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
                     for (i = 0; i < sig->getNumParams(); i++) {
                         bool gotsub = false;
                         for (unsigned j = 0; j < params.size(); j++)
-                            if (*params[j] == *sig->getParamLoc(i)) {
+                            if (*params[j] == *sig->getParamExp(i)) {
                                 newargs[i] = oldargs[j];
                                 // Got something to substitute
                                 gotsub = true;
                                 break;
                             }
                         if (!gotsub) {
-                            Exp* parami = sig->getParamLoc(i);
+                            Exp* parami = sig->getParamExp(i);
                             newargs[i] = parami->clone();
                             if (newargs[i]->getOper() == opMemOf) {
                                 newargs[i]->refSubExp1() = 
@@ -2015,7 +2004,7 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
             // Simplify is very expensive, especially if it happens to
             // reference a phi statement (attempts proofs)
             if (change) {
-                returns[i] = (Location*)returns[i]->simplifyArith()->simplify();
+                returns[i] = returns[i]->simplifyArith()->simplify();
                 if (0 & VERBOSE)
                     LOG << "doReplaceRef: updated return[" << i << "] with " <<
                       returns[i] << "\n";
@@ -2079,7 +2068,7 @@ void CallStatement::setNumArguments(int n) {
     arguments.resize(n, NULL);
     // printf, scanf start with just 2 arguments
     for (int i = oldSize; i < n; i++) {
-        arguments[i] = procDest->getSignature()->getArgumentLoc(i)->clone();
+        arguments[i] = procDest->getSignature()->getArgumentExp(i)->clone();
     }
 }
 
@@ -2112,7 +2101,7 @@ void CallStatement::fromSSAform(igraph& ig) {
     }
     n = returns.size();
     for (i=0; i < n; i++) {
-        returns[i] = (Location*) returns[i]->fromSSAleft(ig, this);
+        returns[i] = returns[i]->fromSSAleft(ig, this);
     }
 }
 
@@ -2132,7 +2121,7 @@ void CallStatement::insertArguments(StatementSet& rs) {
     getBB()->getReachInAt(this, rd, 2);
     StatementSet empty;
     for (int i=0; i<num; i++) {
-        Exp* loc = sig->getArgumentLoc(i)->clone();
+        Exp* loc = sig->getArgumentExp(i)->clone();
         // Needs to be subscripted with everything that reaches the parameters
         // FIXME: need to be sensible about memory depths
         loc->updateRefs(rd, 0, rs);
@@ -2144,7 +2133,9 @@ void CallStatement::insertArguments(StatementSet& rs) {
 #endif
 }
 
-Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
+// MVE: Likely can go. Processes each argument of a CallStatement, and the
+// RHS of an Assign
+Exp *processConstant(Exp *e, Type *t, Prog *prog, UserProc* proc)
 {
     if (t == NULL) return e;
     NamedType *nt = NULL;
@@ -2171,7 +2162,6 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
                     e = new Const(escapeStr(str));
                     // Check if we may have guessed this global incorrectly
                     // (usually as an array of char)
-                    Prog* prog = proc->getProg();
                     const char* nam = prog->getGlobalName(u);
                     if (nam) prog->setGlobalType(nam,
                         new PointerType(new CharType()));
@@ -2179,7 +2169,7 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
                     proc->getProg()->globalUsed(u);
                     const char *nam = proc->getProg()->getGlobalName(u);
                     if (nam)
-                        e = UnaryLoc::global(nam, proc);
+                        e = Location::global(nam, proc);
                 }
             }
             if (points_to->resolvesToFunc()) {
@@ -2201,7 +2191,7 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
                     else
                         p->setName(sig->getName());
                     p->setSignature(sig);
-                    e = UnaryLoc::global(p->getName(), proc);
+                    e = Location::global(p->getName(), proc);
                 }
             }
         } else if (t->resolvesToFloat()) {
@@ -2210,7 +2200,7 @@ Exp *Statement::processConstant(Exp *e, Type *t, Prog *prog)
     }
 #if 0
     if (t->isPointer() && e->getOper() != opAddrOf) {
-        e = new Unary(opAddrOf, UnaryLoc::memOf(e));
+        e = new Unary(opAddrOf, Location::memOf(e));
     }
 #endif
     
@@ -2250,23 +2240,23 @@ void CallStatement::processConstants(Prog *prog) {
         Type *t = getArgumentType(i);
         Exp *e = arguments[i];
     
-        arguments[i] = processConstant(e, t, prog);
+        arguments[i] = processConstant(e, t, prog, proc);
     }
 
     // hack
     if (getDestProc() && getDestProc()->isLib()) {
         int sp = proc->getSignature()->getStackRegister(prog);
-        removeReturn(UnaryLoc::regOf(sp));
+        removeReturn(Location::regOf(sp));
         unsigned int i;
         for (i = 0; i < implicitArguments.size(); i++)
             if (*getDestProc()->getSignature()->getImplicitParamExp(i) ==
-                  *UnaryLoc::regOf(sp)) {
+                  *Location::regOf(sp)) {
                 implicitArguments[i] = new Const(0);
                 break;
             }
         for (i = 0; i < implicitArguments.size(); i++)
             if (*getDestProc()->getSignature()->getImplicitParamExp(i) ==
-                  *UnaryLoc::memOf(UnaryLoc::regOf(sp))) {
+                  *Location::memOf(Location::regOf(sp))) {
                 implicitArguments[i] = new Const(0);
                 break;
             }
@@ -2286,7 +2276,7 @@ void CallStatement::processConstants(Prog *prog) {
                 // special hack for scanf
                 if (name == "scanf") {
                     setArgumentExp(n, new Unary(opAddrOf,
-                        UnaryLoc::memOf(getArgumentExp(n), proc)));
+                        Location::memOf(getArgumentExp(n), proc)));
                 }
                 p++;
                 switch(*p) {
@@ -2341,7 +2331,6 @@ Statement* ReturnStatement::clone() {
     ret->pbb = pbb;
     ret->proc = proc;
     ret->number = number;
-    ret->parent = parent;
     return ret;
 }
 
@@ -2357,12 +2346,12 @@ void ReturnStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel)
 
 void ReturnStatement::simplify() {
     for (unsigned i = 0; i < returns.size(); i++)
-        returns[i] = (Location*) returns[i]->simplify();
+        returns[i] = returns[i]->simplify();
 }
 
 void ReturnStatement::setSigArguments() {
     for (int i = 0; i < proc->getSignature()->getNumReturns(); i++)
-        returns.push_back(proc->getSignature()->getReturnLoc(i)->clone());
+        returns.push_back(proc->getSignature()->getReturnExp(i)->clone());
 }
 
 void ReturnStatement::removeReturn(int n)
@@ -2375,16 +2364,16 @@ void ReturnStatement::removeReturn(int n)
     }
 }
 
-void ReturnStatement::addReturn(Location *l)
+void ReturnStatement::addReturn(Exp *e)
 {
-    returns.push_back(l);
+    returns.push_back(e);
 }
 
 // Convert from SSA form
 void ReturnStatement::fromSSAform(igraph& ig) {
     int n = returns.size();
     for (int i=0; i < n; i++) {
-        returns[i] = (Location*) returns[i]->fromSSA(ig);
+        returns[i] = returns[i]->fromSSA(ig);
     }
 }
 
@@ -2414,8 +2403,7 @@ bool ReturnStatement::searchAndReplace(Exp* search, Exp* replace) {
     bool change = GotoStatement::searchAndReplace(search, replace);
     for (int i = 0; i < (int)returns.size(); i++) {
         bool ch;
-        returns[i] = (Location*)
-          returns[i]->searchReplaceAll(search, replace, ch);
+        returns[i] = returns[i]->searchReplaceAll(search, replace, ch);
         change |= ch;
     }
     return change;
@@ -2442,8 +2430,8 @@ bool ReturnStatement::usesExp(Exp *e) {
 bool ReturnStatement::doReplaceRef(Exp* from, Exp* to) {
     bool change = false;
     for (unsigned i = 0; i < returns.size(); i++) {
-        returns[i] = (Location*) returns[i]->searchReplaceAll(from, to, change);
-        returns[i] = (Location*) returns[i]->simplifyArith()->simplify();
+        returns[i] = returns[i]->searchReplaceAll(from, to, change);
+        returns[i] = returns[i]->simplifyArith()->simplify();
     }
     return false;
 }
@@ -2588,7 +2576,6 @@ Statement* BoolStatement::clone() {
     ret->pbb = pbb;
     ret->proc = proc;
     ret->number = number;
-    ret->parent = parent;
     return ret;
 }
 
@@ -2611,7 +2598,7 @@ void BoolStatement::simplify() {
         condToRelational(pCond, jtCond);
 }
 
-void BoolStatement::getDefinitions(ExpressionSet &defs) 
+void BoolStatement::getDefinitions(LocationSet &defs) 
 {
     defs.insert(getLeft());
 }
@@ -2655,7 +2642,7 @@ bool BoolStatement::searchAndReplace(Exp *search, Exp *replace) {
     assert(pCond);
     assert(pDest);
     pCond = pCond->searchReplaceAll(search, replace, change);
-    pDest = (Location*) pDest->searchReplaceAll(search, replace, change);
+    pDest = pDest->searchReplaceAll(search, replace, change);
     return change;
 }
 
@@ -2667,7 +2654,7 @@ Type* BoolStatement::updateType(Exp *e, Type *curType) {
 // Convert from SSA form
 void BoolStatement::fromSSAform(igraph& ig) {
     pCond = pCond->fromSSA(ig); 
-    pDest = (Location*) pDest->fromSSAleft(ig, this);
+    pDest = pDest->fromSSAleft(ig, this);
 }
 
 bool BoolStatement::doReplaceRef(Exp* from, Exp* to) {
@@ -2687,41 +2674,37 @@ void BoolStatement::setDest(std::list<Statement*>* stmts) {
 // Assign //
 //  //  //  //
 
-Assign::Assign() {
-    setKind(STMT_ASSIGN);
-}
+Assignment::~Assignment() {}
 
-Assign::Assign(Location* lhs, Exp* rhs) : lhs(lhs), rhs(rhs), guard(NULL)
+Assign::Assign(Exp* lhs, Exp* rhs)
+  : Assignment(lhs), rhs(rhs), guard(NULL)
 {
-    setKind(STMT_ASSIGN);
-    if (rhs->getOper() == opPhi)
-        ((PhiExp*)rhs)->setStatement(this);
+    kind = STMT_ASSIGN;
+    // MVE: Can go soon:
+    if (lhs->getOper() == opTypedExp) { 
+        type = ((TypedExp*)lhs)->getType(); 
+    } 
 }
 
-Assign::Assign(Type* ty, Location* lhs, Exp* rhs) : lhs(lhs), rhs(rhs),
-  guard(NULL) 
+Assign::Assign(Type* ty, Exp* lhs, Exp* rhs)
+  : Assignment(ty, lhs), rhs(rhs), guard(NULL) 
 {
-    setKind(STMT_ASSIGN);
-    lhs->setType(ty);
-    if (rhs->getOper() == opPhi)
-        ((PhiExp*)rhs)->setStatement(this);
+    kind = STMT_ASSIGN;
 }
-
-Assign::Assign(Assign& o) {
-    setKind(STMT_ASSIGN);
-    lhs = o.lhs->clone();
+Assign::Assign(Assign& o) : Assignment(lhs->clone()) {
+    kind = STMT_ASSIGN;
     rhs = o.rhs->clone();
+    if (o.type)  type  = o.type->clone();  else type  = NULL;
     if (o.guard) guard = o.guard->clone(); else guard = NULL;
 }
 
 Statement* Assign::clone() {
-    Assign* a = new Assign(lhs->clone(), rhs->clone());
-    if (guard) a->guard = guard->clone(); else a->guard = NULL;
+    Assign* a = new Assign(type == NULL ? NULL : type->clone(),
+        lhs->clone(), rhs->clone());
     // Statement members
     a->pbb = pbb;
     a->proc = proc;
     a->number = number;
-    a->parent = parent;
     return a;
 }
 
@@ -2780,8 +2763,8 @@ void Assign::simplify() {
                             LOG << "doing complex pattern on " << this
                                 << " using " << a1 << " and " << a4 << "\n";
                         ((Const*)a4->getRight()->getSubExp2())->setInt(1);
-                        lhs = new BinaryLoc(opArraySubscript, 
-                                UnaryLoc::memOf(a1->getRight()->clone(), proc), 
+                        lhs = new Binary(opArraySubscript, 
+                                Location::memOf(a1->getRight()->clone(), proc), 
                                 lhs->getSubExp1()->clone());
                         a1->setRight(new Const(0));
                         if (VERBOSE)
@@ -2793,22 +2776,18 @@ void Assign::simplify() {
         }
     }
 
-    lhs = (Location*) lhs->simplifyArith();
-    rhs =             rhs->simplifyArith();
+    lhs = lhs->simplifyArith();
+    rhs = rhs->simplifyArith();
     // simplify the resultant expression
-    lhs = (Location*) lhs->simplify();
-    rhs =             rhs->simplify();
+    lhs = lhs->simplify();
+    rhs = rhs->simplify();
 
-    if (lhs->isMemOf()) {
-        lhs->refSubExp1() = (Location*)lhs->getSubExp1()->simplifyArith();
+    if (lhs->getOper() == opMemOf) {
+        lhs->refSubExp1() = lhs->getSubExp1()->simplifyArith();
     }
 
     // this hack finds address constants.. it should go away when
     // Mike writes some decent type analysis.
-//
-//  HACK
-//  HACK ME AWAY: MVE
-//  HACK
     if (lhs->getOper() == opMemOf && 
         lhs->getSubExp1()->getOper() == opSubscript) {
         RefExp *ref = (RefExp*)lhs->getSubExp1();
@@ -2827,7 +2806,7 @@ void Assign::simplify() {
                                                                     opRegOf &&
                         def->rhs->getSubExp2()->getOper() == opIntConst))) {
                     Exp *ne = new Unary(opAddrOf,
-                        UnaryLoc::memOf(def->rhs, proc)); 
+                        Location::memOf(def->rhs, proc)); 
                     if (VERBOSE)
                         LOG << "replacing " << def->rhs << " with " 
                             << ne << " in " << def << "\n";
@@ -2860,7 +2839,6 @@ void Assign::simplify() {
             }
     }
 
-// MVE: CHECK THIS
     // let's gather some more accurate type information
     if (lhs->isLocation() && rhs->getType()) {
         Location *llhs = dynamic_cast<Location*>(lhs);
@@ -2868,8 +2846,7 @@ void Assign::simplify() {
         Type *ty = rhs->getType();
         llhs->setType(ty);
         if (VERBOSE)
-            LOG << "setting type of " << llhs << " to " << ty->getCtype() <<
-              "\n";
+            LOG << "setting type of " << llhs << " to " << ty->getCtype() << "\n";
     }
 
     if (lhs->getType() && lhs->getType()->isFloat() && 
@@ -2881,42 +2858,38 @@ void Assign::simplify() {
     }
 
     if (lhs->getType() && lhs->getType()->isArray()) {
-        lhs = new BinaryLoc(opArraySubscript, lhs, new Const(0), proc);
+        lhs = new Binary(opArraySubscript, lhs, new Const(0));
     }
 }
 
 void Assign::simplifyAddr() {
-    lhs = (Location*) lhs->simplifyAddr();
-    rhs =             rhs->simplifyAddr();
+    lhs = lhs->simplifyAddr();
+    rhs = rhs->simplifyAddr();
 }
 
 void Assign::fixSuccessor() {
-    lhs = (Location*) lhs->fixSuccessor();
-    rhs =             rhs->fixSuccessor();
-}
-
-bool Assign::searchAndReplace(Exp* search, Exp* replace) {
-    bool change = false;
-    lhs = (Location*) lhs->searchReplaceAll(search, replace, change);
-    rhs =             rhs->searchReplaceAll(search, replace, change);
-    return change;
+    lhs = lhs->fixSuccessor();
+    rhs = rhs->fixSuccessor();
 }
 
 void Assign::print(std::ostream& os, bool withDF) {
     os << std::setw(4) << std::dec << number << " ";
+    os << "*" << type << "* ";
     if (lhs) lhs->print(os, withDF);
     os << " := ";
     if (rhs) rhs->print(os, withDF);
 }
 
-void Assign::getDefinitions(ExpressionSet &defs) {
+// All the Assignment-derived classes have the same definitions: the lhs
+void Assignment::getDefinitions(LocationSet &defs) {
     defs.insert(lhs);
     // Special case: flag calls define %CF (and others)
     if (lhs->isFlags()) {
-        defs.insert(new Location(opCF, proc));
+        defs.insert(new Terminal(opCF));
     }
     Location *loc = dynamic_cast<Location*>(lhs);
     if (loc)
+        // This is to call a hack to define ax when eax defined, etc
         loc->getDefinitions(defs);
 }
 
@@ -2938,6 +2911,27 @@ bool Assign::searchAll(Exp* search, std::list<Exp*>& result) {
     return res;
 }
 
+bool Assign::searchAndReplace(Exp* search, Exp* replace) {
+    bool change = false;
+    lhs = lhs->searchReplaceAll(search, replace, change);
+    rhs = rhs->searchReplaceAll(search, replace, change);
+    return change;
+}
+
+bool ImplicitAssign::search(Exp* search, Exp*& result) {
+    return (lhs->search(search, result));
+}
+
+bool ImplicitAssign::searchAll(Exp* search, std::list<Exp*>& result) {
+    return lhs->searchAll(search, result);
+}
+
+bool ImplicitAssign::searchAndReplace(Exp* search, Exp* replace) {
+    bool change = false;
+    lhs = lhs->searchReplaceAll(search, replace, change);
+    return change;
+}
+
 void Assign::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
     hll->AddAssignmentStatement(indLevel, this);
 }
@@ -2951,12 +2945,16 @@ int Assign::getMemDepth() {
 }
 
 void Assign::fromSSAform(igraph& ig) {
-    lhs = (Location*) lhs->fromSSAleft(ig, this);
-    rhs =             rhs->fromSSA(ig);
+    lhs = lhs->fromSSAleft(ig, this);
+    rhs = rhs->fromSSA(ig);
 }
 
-// update type for expression
-Type *Assign::updateType(Exp *e, Type *curType) {
+void Assignment::fromSSAform(igraph& ig) {
+    lhs = lhs->fromSSAleft(ig, this);
+}
+
+// update type for expression MVE: to go soon
+Type *Assignment::updateType(Exp *e, Type *curType) {
     return curType;
 }
 
@@ -2965,6 +2963,13 @@ bool Assign::usesExp(Exp *e) {
     return (rhs->search(e, where) || (lhs->isMemOf() && 
         ((Unary*)lhs)->getSubExp1()->search(e, where)));
 }
+
+bool PhiAssign::usesExp(Exp* e) {
+    assert(0);      // Not written yet; take from PhiExp::usesExp
+}
+
+bool ImplicitAssign::usesExp(Exp* e) {return false;}    // Uses nothing
+
 
 bool Assign::doReplaceRef(Exp* from, Exp* to) {
     bool changeright = false;
@@ -3002,7 +3007,7 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
             Exp* e = new Binary(opLessUns,
                 ((Binary*)defRhs)->getSubExp2()->getSubExp1(),
                 ((Binary*)defRhs)->getSubExp2()->getSubExp2()->getSubExp1());
-            rhs = rhs->searchReplaceAll(new RefExp(new Location(opCF), def),
+            rhs = rhs->searchReplaceAll(new RefExp(new Terminal(opCF), def),
               e, changeright);
         }
     }
@@ -3016,12 +3021,12 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
               to << " in " << this << " !!\n";
         }
     }
-    if (changeleft) {
-        lhs = (Location*) lhs->simplifyArith()->simplify();
-    }
     if (changeright) {
         // simplify the expression
-        rhs =             rhs->simplifyArith()->simplify();
+        rhs = rhs->simplifyArith()->simplify();
+    }
+    if (changeleft) {
+        lhs = lhs->simplifyArith()->simplify();
     }
     return false;
 }
@@ -3036,18 +3041,18 @@ void Assign::processConstants(Prog* prog) {
     else
         LOG << "none\n";
 #endif
-    rhs = processConstant(rhs, getTypeFor(lhs, prog), prog);
+    rhs = processConstant(rhs, getTypeFor(lhs, prog), prog, proc);
 }
 
 // generate constraints
-void Assign::genConstraints(ExpressionSet& cons) {
+void Assign::genConstraints(LocationSet& cons) {
     Exp* con = rhs->genConstraints(
         new Unary(opTypeOf,
             new RefExp(lhs->clone(), this)));
     if (con) cons.insert(con);
 }
 
-void CallStatement::genConstraints(ExpressionSet& cons) {
+void CallStatement::genConstraints(LocationSet& cons) {
     Proc* dest = getDestProc();
     if (dest == NULL) return;
     Signature* destSig = dest->getSignature();
@@ -3155,7 +3160,7 @@ void CallStatement::genConstraints(ExpressionSet& cons) {
     }
 }
 
-void BranchStatement::genConstraints(ExpressionSet& cons) {
+void BranchStatement::genConstraints(LocationSet& cons) {
     if (pCond == NULL && VERBOSE) {
         LOG << "Warning: BranchStatment " << number <<
             " has no condition expression!\n";
@@ -3243,9 +3248,8 @@ bool CallStatement::accept(StmtExpVisitor* v) {
     for (it = implicitArguments.begin(); ret && it != implicitArguments.end();
       it++)
         ret = (*it)->accept(v->ev);
-    std::vector<Location*>::iterator rr;
-    for (rr = returns.begin(); ret && rr != returns.end(); rr++)
-        ret = (Location*) (*rr)->accept(v->ev);
+    for (it = returns.begin(); ret && it != returns.end(); it++)
+        ret = (*it)->accept(v->ev);
     return ret;
 }
 
@@ -3253,9 +3257,9 @@ bool ReturnStatement::accept(StmtExpVisitor* v) {
     bool override;
     bool ret = v->visit(this, override);
     if (override) return ret;
-    std::vector<Location*>::iterator rr;
-    for (rr = returns.begin(); ret && rr != returns.end(); rr++)
-        ret = (Location*) (*rr)->accept(v->ev);
+    std::vector<Exp*>::iterator it;
+    for (it = returns.begin(); ret && it != returns.end(); it++)
+        ret = (*it)->accept(v->ev);
     return ret;
 }
 
@@ -3274,8 +3278,8 @@ bool Assign::accept(StmtModifier* v) {
     bool recur;
     v->visit(this, recur);
     v->mod->clearMod();
-    if (recur) lhs = (Location*) lhs->accept(v->mod);
-    if (recur) rhs =             rhs->accept(v->mod);
+    if (recur) lhs = lhs->accept(v->mod);
+    if (recur) rhs = rhs->accept(v->mod);
     if (VERBOSE && v->mod->isMod())
         LOG << "Assignment changed: now " << this << "\n";
     return true;
@@ -3320,18 +3324,17 @@ bool CallStatement::accept(StmtModifier* v) {
     for (it = implicitArguments.begin(); recur && it != implicitArguments.end();
       it++)
         *it = (*it)->accept(v->mod);
-    std::vector<Location*>::iterator rr;
-    for (rr = returns.begin(); recur && rr != returns.end(); rr++)
-        *rr = (Location*) (*rr)->accept(v->mod);
+    for (it = returns.begin(); recur && it != returns.end(); it++)
+        *it = (*it)->accept(v->mod);
     return true;
 }
 
 bool ReturnStatement::accept(StmtModifier* v) {
     bool recur;
     v->visit(this, recur);
-    std::vector<Location*>::iterator rr;
-    for (rr = returns.begin(); recur && rr != returns.end(); rr++)
-        *rr = (Location*) (*rr)->accept(v->mod);
+    std::vector<Exp*>::iterator it;
+    for (it = returns.begin(); recur && it != returns.end(); it++)
+        *it = (*it)->accept(v->mod);
     return true;
 }
 
@@ -3341,7 +3344,7 @@ bool BoolStatement::accept(StmtModifier* v) {
     if (pCond && recur)
         pCond = pCond->accept(v->mod);
     if (pDest && recur)
-        pDest = (Location*) pDest->accept(v->mod);
+        pDest = pDest->accept(v->mod);
     return true;
 }
 
@@ -3354,7 +3357,7 @@ void Statement::fixCallRefs() {
 
 // Find the locations used by expressions in this Statement.
 // Use the StmtExpVisitor and UsedLocsFinder visitor classes
-void Statement::addUsedLocs(ExpressionSet& used, bool final /* = false */) {
+void Statement::addUsedLocs(LocationSet& used, bool final /* = false */) {
     UsedLocsFinder ulf(used);
     UsedLocsVisitor ulv(&ulf, final);
     accept(&ulv);

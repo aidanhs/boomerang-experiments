@@ -18,7 +18,7 @@
  *============================================================================*/
  
 /*
- * $Revision: 1.20.2.2 $
+ * $Revision: 1.20.2.3 $
  *
  * 27 Apr 02 - Mike: Mods for boomerang
  * 17 Jul 02 - Mike: readSSLFile resets internal state as well
@@ -328,8 +328,8 @@ void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcPar
             std::list<std::string>::iterator i,j;
             for( i = funcParams.begin(), j = sub.funcParams.begin();
               i != funcParams.end(); i++, j++ ) {
-                Exp* match = UnaryLoc::param(j->c_str());
-                Exp* replace = UnaryLoc::param(i->c_str());
+                Exp* match = Location::param(j->c_str());
+                Exp* replace = Location::param(i->c_str());
                 sub.asgn->searchAndReplace( match, replace );
             }
             sub.funcParams = funcParams;
@@ -446,7 +446,7 @@ std::list<Statement*>* RTLInstDict::instantiateRTL(RTL& rtl,
         std::vector<Exp*>::const_iterator actual = actuals.begin();
         for (; param != params.end(); param++, actual++) {
             /* Simple parameter - just construct the formal to search for */
-            Exp* formal = UnaryLoc::param(param->c_str());
+            Exp* formal = Location::param(param->c_str());
             (*rt)->searchAndReplace(formal, *actual);
             //delete formal;
         }
@@ -517,13 +517,13 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
                     // Add a record in the map for this postvar
                     transPost& el = vars[lhs];
                     el.used = false;
-                    el.type = ((Assign*)*rt)->getLeft()->getType();
+                    el.type = ((Assign*)*rt)->getType();
                     
                     // Constuct a temporary. We should probably be smarter
                     // and actually check that it's not otherwise used here.
                     std::string tmpname = el.type->getTempName() + (tmpcount++)
                       + "post" ;
-                    el.tmp = UnaryLoc::tempOf(new Const(
+                    el.tmp = Location::tempOf(new Const(
                       (char*)tmpname.c_str()));
 
                     // Keep a copy of the referrent. For example, if the
@@ -612,8 +612,8 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
       sr != vars.end(); sr++ ) {
         if( sr->second.used ) {
             Assign* te = new Assign(sr->second.type,
-                    (Location*) sr->second.base->clone(),
-                                sr->second.tmp);
+                    sr->second.base->clone(),
+                    sr->second.tmp);
             rts->push_back( te );
         } else {
             // The temp is either used (uncloned) in the assignment, or is

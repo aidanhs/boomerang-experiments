@@ -19,10 +19,9 @@
  *              Also has some prototypes and structs for switch.cc
  *============================================================================*/
 
-/* $Revision: 1.24.2.1 $
+/* $Revision: 1.24.2.2 $
  *
  * 17 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
- * 13 Jul 04 - Mike: Mods for types in Location
  */
 
 
@@ -44,7 +43,6 @@ class NJMCDecoder;
 class BasicBlock;
 typedef BasicBlock* PBB;
 class Exp;
-class Location;
 class TypedExp;
 class Cfg;
 class Prog;
@@ -139,8 +137,8 @@ virtual int     getInst(int addr);
     // return a signature that matches the architecture best
     Signature *getDefaultSignature(const char *name);
 
-    virtual std::vector<Location*> &getDefaultParams() = 0;
-    virtual std::vector<Location*> &getDefaultReturns() = 0;
+    virtual std::vector<Exp*> &getDefaultParams() = 0;
+    virtual std::vector<Exp*> &getDefaultReturns() = 0;
 
     /*
      * Decode all undecoded procedures and return a new program containing

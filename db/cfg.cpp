@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.74.2.1 $
+ * $Revision: 1.74.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -2128,31 +2128,31 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
         PBB bb = BBs[n];
         for (Statement* s = bb->getFirstStmt(rit, sit); s;
                         s = bb->getNextStmt(rit, sit)) {
-            ExpressionSet ls;
-            ExpressionSet::iterator it;
+            LocationSet ls;
+            LocationSet::iterator it;
             s->getDefinitions(ls);
             for (it = ls.begin(); it != ls.end(); it++)
                 if ((*it)->getMemDepth() == memDepth)
-                    A_orig[n].insert((Location*)(*it)->clone());
+                    A_orig[n].insert((*it)->clone());
         }
     }
 
     // For each node n
     for (n=0; n < numBB; n++) {
         // For each variable a in A_orig[n]
-        std::set<Location*, lessExpStar>& s = A_orig[n];
-        std::set<Location*, lessExpStar>::iterator aa;
+        std::set<Exp*, lessExpStar>& s = A_orig[n];
+        std::set<Exp*, lessExpStar>::iterator aa;
         for (aa = s.begin(); aa != s.end(); aa++) {
-            Location* a = *aa;
+            Exp* a = *aa;
             defsites[a].insert(n);
         }
     }
 
-    // For each variable a (in defsites)
-    std::map<Location*, std::set<int>, lessExpStar>::iterator mm;
+    // For each variable a (in defsites, I presume)
+    std::map<Exp*, std::set<int>, lessExpStar>::iterator mm;
     for (mm = defsites.begin(); mm != defsites.end(); mm++) {
-        Location* a = (*mm).first;          // *mm is pair<Exp*, set<int>>
-        std::set<int> W = defsites[a];      // set copy
+        Exp* a = (*mm).first;               // *mm is pair<Exp*, set<int>>
+        std::set<int> W = defsites[a];   // set copy
         // While W not empty
         while (W.size()) {
             // Remove some node n from W
@@ -2200,14 +2200,14 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
         // if S is not a phi function
         if (1) { //!S->isPhi()) 
             // For each use of some variable x in S (not just assignments)
-            ExpressionSet locs;
+            LocationSet locs;
             if (S->isPhi()) {
                 // The below, plus a similar hack a page down,  seems to
                 // indicate the need for a PhiStatement:
                 if (S->getLeft()->getOper() == opMemOf)
                     S->getLeft()->getSubExp1()->addUsedLocs(locs);
             } else S->addUsedLocs(locs);
-            ExpressionSet::iterator xx;
+            LocationSet::iterator xx;
             for (xx = locs.begin(); xx != locs.end(); xx++) {
                 Exp* x = *xx;
                 if (x->getMemDepth() == memDepth) {
@@ -2228,9 +2228,9 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
             }
         }
         // For each definition of some variable a in S
-        ExpressionSet defs;
+        LocationSet defs;
         S->getDefinitions(defs);
-        ExpressionSet::iterator dd;
+        LocationSet::iterator dd;
         for (dd = defs.begin(); dd != defs.end(); dd++) {
             Exp *a = *dd;
             if (a->getMemDepth() == memDepth) {
@@ -2298,9 +2298,9 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
     for (S = bb->getFirstStmt(rit, sit); S;
          S = bb->getNextStmt(rit, sit)) {
         // For each definition of some variable a in S
-        ExpressionSet defs;
+        LocationSet defs;
         S->getDefinitions(defs);
-        ExpressionSet::iterator dd;
+        LocationSet::iterator dd;
         for (dd = defs.begin(); dd != defs.end(); dd++) {
             if ((*dd)->getMemDepth() == memDepth)
                 Stack[*dd].pop();

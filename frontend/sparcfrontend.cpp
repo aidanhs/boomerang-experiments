@@ -799,9 +799,9 @@ bool SparcFrontEnd::case_SCDAN(ADDRESS& address, int delta, ADDRESS hiAddress,
     return true;
 }
 
-std::vector<Location*> &SparcFrontEnd::getDefaultParams()
+std::vector<Exp*> &SparcFrontEnd::getDefaultParams()
 {
-    static std::vector<Location*> params;
+    static std::vector<Exp*> params;
     if (params.size() == 0) {
         // init arguments and return set to be all 31 machine registers
         // Important: because o registers are save in i registers, and
@@ -817,9 +817,9 @@ std::vector<Location*> &SparcFrontEnd::getDefaultParams()
     return params;
 }
 
-std::vector<Location*> &SparcFrontEnd::getDefaultReturns()
+std::vector<Exp*> &SparcFrontEnd::getDefaultReturns()
 {
-    static std::vector<Location*> returns;
+    static std::vector<Exp*> returns;
     if (returns.size() == 0) {
         returns.push_back(Location::regOf(30));
         returns.push_back(Location::regOf(31));
@@ -852,12 +852,12 @@ bool SparcFrontEnd::processProc(ADDRESS address, UserProc* proc,
         if (VERBOSE)
             LOG << "adding default params and returns for " << proc->getName()
               << "\n";
-        std::vector<Location*> &params = getDefaultParams();
-        std::vector<Location*>::iterator it;
+        std::vector<Exp*> &params = getDefaultParams();
+        std::vector<Exp*>::iterator it;
         for (it = params.begin();
              it != params.end(); it++)
             proc->getSignature()->addImplicitParameter((*it)->clone());
-        std::vector<Location*> &returns = getDefaultReturns();
+        std::vector<Exp*> &returns = getDefaultReturns();
         for (it = returns.begin();
              it != returns.end(); it++)
             proc->getSignature()->addReturn((*it)->clone());
@@ -1406,7 +1406,7 @@ void SparcFrontEnd::emitCopyPC(std::list<RTL*>* pRtls, ADDRESS uAddr)
     // Emit %o7 = %pc
     Assign* a = new Assign(
         Location::regOf(15),      // %o7 == r[15]
-        new Location(opPC));
+        new Terminal(opPC));
     // Add the Exp to an RTL
     RTL* pRtl = new RTL(uAddr);
     pRtl->appendStmt(a);
@@ -1426,7 +1426,7 @@ void SparcFrontEnd::emitCopyPC(std::list<RTL*>* pRtls, ADDRESS uAddr)
  *                      otherwise
  *============================================================================*/
 // Append one assignment to a list of RTLs
-void SparcFrontEnd::appendAssignment(Location* lhs, Exp* rhs, Type* type,
+void SparcFrontEnd::appendAssignment(Exp* lhs, Exp* rhs, Type* type,
   ADDRESS addr, std::list<RTL*>* lrtl) {
     Assign* a = new Assign(type, lhs, rhs);
     // Create an RTL with this one Statement
@@ -1441,7 +1441,7 @@ void SparcFrontEnd::appendAssignment(Location* lhs, Exp* rhs, Type* type,
  * *128* m[m[r[14]+64]] = m[r[8]] OP m[r[9]] */
 void SparcFrontEnd::quadOperation(ADDRESS addr, std::list<RTL*>* lrtl, OPER op)
 {
-    Location* lhs = Location::memOf(Location::memOf(new Binary(opPlus,
+    Exp* lhs = Location::memOf(Location::memOf(new Binary(opPlus,
                 Location::regOf(14),
                 new Const(64))));
     Exp* rhs = new Binary(op,
@@ -1518,7 +1518,7 @@ if (0)  // SETTINGS!
         return false;
     }
     // Need to make an RTAssgn with %o0 = rhs
-    Location* lhs = Location::regOf(8);
+    Exp* lhs = Location::regOf(8);
     Assign* a = new Assign(lhs, rhs);
     // Create an RTL with this one Exp
     std::list<Statement*>* lrt = new std::list<Statement*>;
@@ -1599,7 +1599,7 @@ void SparcFrontEnd::gen32op32gives64(OPER op, std::list<RTL*>* lrtl, ADDRESS add
 bool SparcFrontEnd::helperFuncLong(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl,
   std::string& name) {
     Exp* rhs;
-    Location* lhs;
+    Exp* lhs;
     if (name == ".umul") {
         gen32op32gives64(opMult, lrtl, addr);
         return true;

@@ -18,7 +18,7 @@
  *              instructions are processed in decoder_low.m
  *============================================================================*/ 
 /*
- * $Revision: 1.46.2.2 $
+ * $Revision: 1.46.2.3 $
  *
  * 26 Apr 02 - Mike: Changes for boomerang
  * 18 Nov 02 - Mike: Mods for MOV.Ed.Iv^od etc. Also suppressed warning re name
@@ -29567,7 +29567,7 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
 
                                           Exp* oper = dis_Eaddr(Eaddr, 32);
 
-                                          if (i8 != -16 || !(*oper == *UnaryLoc::regOf(28)))
+                                          if (i8 != -16 || !(*oper == *Location::regOf(28)))
 
                                               stmts = instantiate(pc,  "ANDiodb", DIS_EADDR32, DIS_I8);
 
@@ -46633,7 +46633,7 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
 
               Exp* oper = dis_Eaddr(Eaddr, 32);
 
-              if (i8 != -16 || !(*oper == *UnaryLoc::regOf(28)))
+              if (i8 != -16 || !(*oper == *Location::regOf(28)))
 
                   stmts = instantiate(pc,  "ANDiodb", DIS_EADDR32, DIS_I8);
 
@@ -46659,7 +46659,7 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
 
               Exp* oper = dis_Eaddr(Eaddr, 32);
 
-              if (i8 != -16 || !(*oper == *UnaryLoc::regOf(28)))
+              if (i8 != -16 || !(*oper == *Location::regOf(28)))
 
                   stmts = instantiate(pc,  "ANDiodb", DIS_EADDR32, DIS_I8);
 
@@ -46685,7 +46685,7 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
 
               Exp* oper = dis_Eaddr(Eaddr, 32);
 
-              if (i8 != -16 || !(*oper == *UnaryLoc::regOf(28)))
+              if (i8 != -16 || !(*oper == *Location::regOf(28)))
 
                   stmts = instantiate(pc,  "ANDiodb", DIS_EADDR32, DIS_I8);
 
@@ -46711,7 +46711,7 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
 
               Exp* oper = dis_Eaddr(Eaddr, 32);
 
-              if (i8 != -16 || !(*oper == *UnaryLoc::regOf(28)))
+              if (i8 != -16 || !(*oper == *Location::regOf(28)))
 
                   stmts = instantiate(pc,  "ANDiodb", DIS_EADDR32, DIS_I8);
 
@@ -61438,7 +61438,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                               // m[ r[base] ]
 
-                              expr = UnaryLoc::memOf(dis_Reg(24+base));
+                              expr = Location::memOf(dis_Reg(24+base));
 
                   
                   
@@ -61459,7 +61459,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                                   // [d] (Same as Abs32 using SIB)
 
-                                  expr = UnaryLoc::memOf(new Const(d));
+                                  expr = Location::memOf(new Const(d));
 
                       
                       
@@ -61480,7 +61480,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                                   // m[ r[index] * ss + d ]
 
-                                  expr = UnaryLoc::memOf(new Binary(opPlus,
+                                  expr = Location::memOf(new Binary(opPlus,
 
                                           new Binary(opMult,
 
@@ -61505,7 +61505,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                                 // m[ r[base] ]
 
-                                expr = UnaryLoc::memOf(dis_Reg(24+base));
+                                expr = Location::memOf(dis_Reg(24+base));
 
                     
                     
@@ -61522,7 +61522,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                                 // m[ r[base] + r[index] * ss]
 
-                                expr = UnaryLoc::memOf(new Binary(opPlus,
+                                expr = Location::memOf(new Binary(opPlus,
 
                                         dis_Reg(24+base),
 
@@ -61548,7 +61548,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                               // [a]
 
-                              expr = UnaryLoc::memOf(new Const(a));
+                              expr = Location::memOf(new Const(a));
 
                   
                   
@@ -61573,7 +61573,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                             // m[ r[ base] + d ]
 
-                            expr = UnaryLoc::memOf(new Binary(opPlus,
+                            expr = Location::memOf(new Binary(opPlus,
 
                                     dis_Reg(24+base),
 
@@ -61599,7 +61599,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                             // m[ r[ base ] + r[ index ] * ss + d ]
 
-                            expr = UnaryLoc::memOf(new Binary(opPlus,
+                            expr = Location::memOf(new Binary(opPlus,
 
                                     dis_Reg(24+base),
 
@@ -61633,7 +61633,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                           // m[ r[ r32] + d]
 
-                          expr = UnaryLoc::memOf(new Binary(opPlus,
+                          expr = Location::memOf(new Binary(opPlus,
 
                                   dis_Reg(24+r32),
 
@@ -61660,7 +61660,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                             // m[ r[ base] + d ]
 
-                            expr = UnaryLoc::memOf(new Binary(opPlus,
+                            expr = Location::memOf(new Binary(opPlus,
 
                                     dis_Reg(24+base),
 
@@ -61685,7 +61685,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                             // m[ r[ base ] + r[ index ] * ss + d ]
 
-                            expr = UnaryLoc::memOf(new Binary(opPlus,
+                            expr = Location::memOf(new Binary(opPlus,
 
                                     dis_Reg(24+base),
 
@@ -61718,7 +61718,7 @@ Exp* PentiumDecoder::dis_Mem(ADDRESS pc)
 
                           // m[ r[ base] + d]
 
-                          expr = UnaryLoc::memOf(new Binary(opPlus,
+                          expr = Location::memOf(new Binary(opPlus,
 
                                   dis_Reg(24+base),
 
@@ -61951,9 +61951,9 @@ void genBSFR(ADDRESS pc, Exp* dest, Exp* modrm, int init, int size,
     switch (BSFRstate) {
         case 0:
             s = new Assign(
-                new Location(opZF),
+                new IntegerType(1),
+                new Terminal(opZF),
                 new Const(1));
-            ((Assign*)s)->getLeft()->setType(new IntegerType(1));
             stmts->push_back(s);
             b = new BranchStatement;
             b->setDest(pc+numBytes);
@@ -61966,23 +61966,23 @@ void genBSFR(ADDRESS pc, Exp* dest, Exp* modrm, int init, int size,
             break;
         case 1:
             s = new Assign(
-                new Location(opZF),
+                new IntegerType(1),
+                new Terminal(opZF),
                 new Const(0));
-            ((Assign*)s)->getLeft()->setType(new IntegerType(1));
             stmts->push_back(s);
             s = new Assign(
-                (Location*)dest->clone(),
+                new IntegerType(size),
+                dest->clone(),
                 new Const(init));
-            ((Assign*)s)->getLeft()->setType(new IntegerType(size));
             stmts->push_back(s);
             break;
         case 2:
             s = new Assign(
-                (Location*)dest->clone(),
+                new IntegerType(size),
+                dest->clone(),
                 new Binary(incdec,
                     dest->clone(),
                     new Const(1)));
-            ((Assign*)s)->getLeft()->setType(new IntegerType(size));
             stmts->push_back(s);
             b = new BranchStatement;
             b->setDest(pc+2);

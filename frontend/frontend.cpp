@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.62.2.2 $
+ * $Revision: 1.62.2.3 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness
@@ -367,12 +367,12 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
         if (VERBOSE)
             LOG << "adding default params and returns for " <<
               pProc->getName() << "\n";
-        std::vector<Location*> &params = getDefaultParams();
-		std::vector<Location*>::iterator it;
+        std::vector<Exp*> &params = getDefaultParams();
+		std::vector<Exp*>::iterator it;
         for (it = params.begin(); 
              it != params.end(); it++)
             pProc->getSignature()->addImplicitParameter((*it)->clone());
-        std::vector<Location*> &returns = getDefaultReturns();
+        std::vector<Exp*> &returns = getDefaultReturns();
         for (it = returns.begin(); 
              it != returns.end(); it++)
             pProc->getSignature()->addReturn((*it)->clone());
@@ -494,7 +494,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
                     ADDRESS gu = pProc->getProg()->getGlobalAddr((char*)nam);
                     if (gu != NO_ADDRESS) {
                         s->searchAndReplace(new Const((int)gu), 
-                            new Unary(opAddrOf, UnaryLoc::global(nam, pProc)));
+                            new Unary(opAddrOf, Location::global(nam, pProc)));
                     }
                 }
                 s->simplify();

@@ -4,7 +4,7 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.1 $
+ * $Revision: 1.14.2.2 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -48,8 +48,8 @@ suite->addTest(new CppUnit::TestCaller<StatementTest> ("Statements", \
 
 void StatementTest::registerTests(CppUnit::TestSuite* suite) {
 
-    MYTEST(testExpressionSet);
-    MYTEST(testWildExpressionSet);
+    MYTEST(testLocationSet);
+    MYTEST(testWildLocationSet);
     MYTEST(testEmpty);
     MYTEST(testFlow);
     MYTEST(testKill);
@@ -553,14 +553,14 @@ void StatementTest::testEndlessLoop () {
 }
 
 /*==============================================================================
- * FUNCTION:        StatementTest::testExpressionSet
+ * FUNCTION:        StatementTest::testLocationSet
  * OVERVIEW:        
  *============================================================================*/
-void StatementTest::testExpressionSet () {
+void StatementTest::testLocationSet () {
     Location rof(opRegOf, new Const(12), NULL);
     Const& theReg = *(Const*)rof.getSubExp1();
-    ExpressionSet ls;
-    ExpressionSet::iterator ii;
+    LocationSet ls;
+    LocationSet::iterator ii;
     ls.insert(rof.clone());
     theReg.setInt(8);
     ls.insert(rof.clone());
@@ -590,7 +590,7 @@ void StatementTest::testExpressionSet () {
     CPPUNIT_ASSERT_EQUAL(5, ls.size());
     ii = ls.begin();
     CPPUNIT_ASSERT(mof == **ii);
-    ExpressionSet ls2 = ls;
+    LocationSet ls2 = ls;
     Exp* e2 = *ls2.begin();
     CPPUNIT_ASSERT(e2 != *ls.begin());      // Must be cloned
     CPPUNIT_ASSERT_EQUAL(5, ls2.size());
@@ -600,10 +600,10 @@ void StatementTest::testExpressionSet () {
 }
 
 /*==============================================================================
- * FUNCTION:        StatementTest::testWildExpressionSet
+ * FUNCTION:        StatementTest::testWildLocationSet
  * OVERVIEW:        
  *============================================================================*/
-void StatementTest::testWildExpressionSet () {
+void StatementTest::testWildLocationSet () {
     Location rof12(opRegOf, new Const(12), NULL);
     Location rof13(opRegOf, new Const(13), NULL);
     Assign a10, a20;
@@ -617,7 +617,7 @@ void StatementTest::testWildExpressionSet () {
     RefExp r13_0 (rof13.clone(), NULL);
     RefExp r11_10(Location::regOf(11), &a10);
     RefExp r22_10(Location::regOf(22), &a10);
-    ExpressionSet ls;
+    LocationSet ls;
     ls.insert(&r12_10);
     ls.insert(&r12_20);
     ls.insert(&r12_0);
@@ -710,13 +710,13 @@ void StatementTest::testRecursion () {
     rtl->appendStmt(a);
     // m[r28] := pc
     a = new Assign(Location::memOf(Location::regOf(28)),
-        new Location(opPC));
+        new Terminal(opPC));
     rtl->appendStmt(a);
     // %pc := (%pc + 5) + 135893848
-    a = new Assign(new Location(opPC),
+    a = new Assign(new Terminal(opPC),
         new Binary(opPlus,
             new Binary(opPlus,
-                new Location(opPC),
+                new Terminal(opPC),
                 new Const(5)),
             new Const(135893848)));
     a->setProc(proc);
@@ -746,7 +746,7 @@ void StatementTest::testRecursion () {
     // This ReturnStatement requires the following two sets of semantics to pass the
     // tests for standard Pentium calling convention
     // pc = m[r28]
-    a = new Assign(new Location(opPC),
+    a = new Assign(new Terminal(opPC),
         Location::memOf(
             Location::regOf(28)));
     rtl->appendStmt(a);
@@ -885,7 +885,7 @@ void StatementTest::testAddUsedLocs () {
                     new Const(8))),
                 Location::regOf(26)));
     a->setNumber(1);
-    ExpressionSet l;
+    LocationSet l;
     a->addUsedLocs(l);
     std::ostringstream ost1;
     l.print(ost1);

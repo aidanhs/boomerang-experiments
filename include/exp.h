@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.3 $
+ * $Revision: 1.105.2.4 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -16,23 +16,19 @@
  * 29 Apr 02 - Mike: TypedExp takes Type& and Exp* in opposite order; consistent
  * 10 May 02 - Mike: Added refSubExp1 etc
  * 21 May 02 - Mike: Mods for gcc 3.1
- * 14 Jul 04 - Mike: Location is now zero arity, with UnaryLoc etc subclasses
  */
 
 #ifndef __EXP_H_
 #define __EXP_H_
 
-/* Main class hierarchy:   Exp (abstract)
-                      _____/|\________________
-                     /      |       \         \
-                   Unary   Location  Const  Terminal
-     TypedExp*____/  |  \        /\            |
-      FlagDef___/ Binary UnaryLoc  \        TypeVal*
-       RefExp__/     |  \         / \
-       PhiExp_/  Ternary BinaryLoc  /
-                        \          /
-                         TernaryLoc
-  * = deprecated
+/* Main class hierarchy:    Exp (abstract)
+                      _____/ | \
+                     /       |  \
+                  Unary    Const Terminal
+     TypedExp____/  |   \         \
+      FlagDef___/ Binary Location  TypeVal
+       RefExp__/    |
+       PhiExp_/  Ternary
 */
 
 #include <iostream>
@@ -53,7 +49,7 @@ class DefSet;
 class RTL;              // For class FlagDef
 class Statement;
 class BasicBlock;
-class ExpressionSet;
+class LocationSet;
 class StatementSet;
 class TypeVal;
 class ExpVisitor;
@@ -209,10 +205,10 @@ virtual int getArity() {return 0;}      // Overridden for Unary, Binary, etc
     bool isTypeVal() { return op == opTypeVal;}
     // True if this is a machine feature
     bool isMachFtr() {return op == opMachFtr;}
-    // True if this is an array subscript
-    bool isArraySub() {return op == opArraySubscript;}
     // True if this is a location
-    bool isLocation();
+    bool isLocation() { return op == opMemOf || op == opRegOf ||
+                               op == opGlobal || op == opLocal ||
+                               op == opParam; }
                  
 
     // Matches this expression to the pattern, if successful returns
@@ -292,7 +288,7 @@ virtual Exp* simplifyConstraint() {return this;}
         Exp* killFill();
 
     // Do the work of finding used locations
-            void addUsedLocs(ExpressionSet& used);
+            void addUsedLocs(LocationSet& used);
 
     Exp *removeSubscripts(bool& allZero);
 
@@ -446,13 +442,13 @@ protected:
 /*==============================================================================
  * Unary is a subclass of Exp, holding one subexpression
  *============================================================================*/
-class Unary : public virtual Exp {
+class Unary : public Exp {
 protected:
     Exp*        subExp1;    // One subexpression pointer
 public:
-    // Constructor, with just operator
+    // Constructor, with just ID
             Unary(OPER op);
-    // Constructor, with operator and subexpression
+    // Constructor, with ID and subexpression
             Unary(OPER op, Exp* e);
     // Copy constructor
             Unary(Unary& o);
@@ -517,13 +513,13 @@ protected:
 /*==============================================================================
  * Binary is a subclass of Unary, holding two subexpressions
  *============================================================================*/
-class Binary : public virtual Unary {
+class Binary : public Unary {
 protected:
     Exp*        subExp2;    // Second subexpression pointer
 public:
-    // Constructor, with operator
+    // Constructor, with ID
             Binary(OPER op);
-    // Constructor, with operator and subexpressions
+    // Constructor, with ID and subexpressions
             Binary(OPER op, Exp* e1, Exp* e2);
     // Copy constructor
             Binary(Binary& o);
@@ -658,8 +654,6 @@ protected:
 
 /*==============================================================================
  * TypedExp is a subclass of Unary, holding one subexpression and a Type
- * It is somewhat deprecated now; mostly, class  Location (or one of its child
- * classes) can replace it
  *============================================================================*/
 class TypedExp : public Unary {
     Type   *type;
@@ -730,19 +724,18 @@ protected:
 /*==============================================================================
  * RefExp is a subclass of Unary, holding an ordinary Exp pointer, and
  *  a pointer to a defining statement (could be a phi assignment)
- * RefExps always subscript locations (there is a definition somewhere)
  * This is used for subscripting SSA variables. Example:
  * m[1000] becomes m[1000]{3} if defined at statement 3
- * The integer is really a pointer to the defining statement,
+ * The integer is really a pointer to the definig statement,
  * printed as the statement number for compactness
  *============================================================================*/
-class RefExp : public virtual Unary {
+class RefExp : public Unary {
     Statement* def;             // The defining statement
 
 public:
-            // Constructor with location (l) and statement defining it (def)
-            RefExp(Location* l, Statement* def);
-            RefExp(Location* l);
+            // Constructor with expression (e) and statement defining it (def)
+            RefExp(Exp* e, Statement* def);
+            RefExp(Exp* e);
             RefExp(RefExp& o);
 virtual Exp* clone();
 virtual bool operator==(const Exp& o) const;
@@ -761,7 +754,6 @@ virtual int getNumRefs() {return 1;}
 virtual Exp* polySimplify(bool& bMod);
     virtual Type*   getType();
     virtual Exp *match(Exp *pattern);
-    Location* getBase() {return (Location*)subExp1;}
 
     // Visitation
     virtual bool accept(ExpVisitor* v);
@@ -817,7 +809,6 @@ virtual Exp*   addSubscript(Statement* def) {assert(0); return NULL; }
     StatementVec& getRefs() {return stmtVec;}
     virtual Exp*  genConstraints(Exp* restrictTo);
     void    setStatement(Assign *a) { stmt = a; }
-    Location* getBase() {return (Location*)subExp1;}
 
     // polySimplify
 virtual Exp* polySimplify(bool& bMod);
@@ -834,7 +825,6 @@ protected:
 /*==============================================================================
 class TypeVal. Just a Terminal with a Type. Used for type values in constraints
 ==============================================================================*/
-// MVE: can Location be used instead?
 class TypeVal : public Terminal {
     Type*   val;
 
@@ -862,106 +852,49 @@ protected:
     friend class XMLProgParser;
 };  // class TypeVal
 
-
-//  //  //  //  //  //  //  //  //  //  //
-//                                      //
-//  L o c a t i o n   H i e r a r c h y //
-//                                      //
-//  //  //  //  //  //  //  //  //  //  //
-
-// Location has Exp as a virtual base, so that things like the operator
-// are not replicated in classes derived from Location
-class Location : public virtual Exp {
+class Location : public Unary {
 protected:
     UserProc *proc;
     Type *ty;
 
 public:
-    // Constructor with ID and UserProc*
-            Location(OPER op, UserProc *proc) : Exp(op), proc(proc), ty(NULL)
-              {}
+    // Constructor with ID, subexpression, and UserProc*
+            Location(OPER op, Exp* e, UserProc *proc);
     // Copy constructor
             Location(Location& o);
-    // Clone: would be nice if Location::clone could return a Location*, but
-    // gcc does not implement pointer adjustment for covariant returns
+    // Custom constructor
+    static Location* regOf(int r) {return new Location(opRegOf, new Const(r),
+        NULL);}
+    static Location* regOf(Exp *e) {return new Location(opRegOf, e, NULL);}
+    static Location* memOf(Exp *e, UserProc* p = NULL) {
+        return new Location(opMemOf, e, p);}
+    static Location* tempOf(Exp* e) {return new Location(opTemp, e, NULL);}
+    static Location* global(const char *nam, UserProc *p) {
+        return new Location(opGlobal, new Const((char*)nam), p);}
+    static Location* local(const char *nam, UserProc *p) {
+        return new Location(opLocal, new Const((char*)nam), p);}
+    static Location* param(const char *nam, UserProc *p = NULL) {
+        return new Location(opParam, new Const((char*)nam), p);}
+    // Clone
     virtual Exp* clone();
 
     void setProc(UserProc *p) { proc = p; }
     UserProc *getProc() { return proc; }
 
-    virtual Type *getType() {return ty;}
-    virtual void setType(Type *t) { ty = t; }
+    virtual Exp* polySimplify(bool& bMod);
+    virtual void getDefinitions(LocationSet& defs);
 
-    // Pure virtuals
-virtual void    print(std::ostream& os, bool withUses = false);
-virtual void    printx(int ind);
-virtual void appendDotFile(std::ofstream& os);
-virtual bool operator==(const Exp& o) const;
-virtual bool operator< (const Exp& o) const;
-virtual bool operator*=(Exp& o);
-    // Other virtuals
-virtual void getDefinitions(ExpressionSet& defs) {}
+    virtual Type *getType();
+    virtual void setType(Type *t) { ty = t; }
+virtual int getMemDepth();
 
     // Visitation
     virtual bool accept(ExpVisitor* v);
     virtual Exp* accept(ExpModifier* v);
 
-//protected:
+protected:
     friend class XMLProgParser;
-    Location(OPER op) : Exp(op), proc(NULL), ty(NULL) { }
+    Location(OPER op) : Unary(op), proc(NULL), ty(NULL) { }
 };  // Class Location
-
-class UnaryLoc: public Unary, Location {
-public:
-    // Constructor with ID, subexpression, and UserProc*
-            UnaryLoc(OPER op, Exp* e1, UserProc *proc);
-    // Copy constructor
-            UnaryLoc(UnaryLoc& o);
-    // Custom constructors
-    static Location* regOf(int r) {return new UnaryLoc(opRegOf, new Const(r),
-        NULL);}
-    static Location* regOf(Exp *e) {return new UnaryLoc(opRegOf, e, NULL);}
-    static Location* memOf(Exp *e, UserProc* p = NULL) {
-        return new UnaryLoc(opMemOf, e, p);}
-    static Location* tempOf(Exp* e) {return new UnaryLoc(opTemp, e, NULL);}
-    static Location* global(const char *nam, UserProc *p) {
-        return new UnaryLoc(opGlobal, new Const((char*)nam), p);}
-    static Location* local(const char *nam, UserProc *p) {
-        return new UnaryLoc(opLocal, new Const((char*)nam), p);}
-    static Location* param(const char *nam, UserProc *p = NULL) {
-        return new UnaryLoc(opParam, new Const((char*)nam), p);}
-    // Clone
-    virtual Exp* clone();
-
-    // Other virtuals
-virtual void getDefinitions(ExpressionSet& defs);
-
-};  // class UnaryLoc
-
-class BinaryLoc : public Binary, Location {
-    // Needed for opArraySubscript, maybe others
-public:
-            BinaryLoc(OPER op, Exp* e1, Exp* e2)
-                : Binary(op, e1, e2),
-                  Location(op, NULL)
-                  {}
-            BinaryLoc(OPER op, Exp* e1, Exp* e2, UserProc* proc)
-                : Binary(op, e1, e2), Location(op, proc) {}
-    // Clone
-    virtual Exp* clone();
-
-};  // class BinaryLoc
-
-class TernaryLoc : public Ternary, Location {
-    // Needed for opAt, maybe others
-public:
-            TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3)
-                : Ternary(op, e1, e2, e3), proc(NULL), ty(NULL) {}
-            TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3, UserProc* proc)
-                : BinaryLoc(op, e1, e2, e3), proc(proc), ty(NULL) {}
-    // Clone
-    virtual Exp* clone();
-
-};  // class TernaryLoc
     
 #endif // __EXP_H__

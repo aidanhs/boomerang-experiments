@@ -149,12 +149,11 @@ public:
 	// sequential statements
 	virtual void AddAssignmentStatement(int indLevel, Assign *asgn);
 	virtual void AddCallStatement(int indLevel, Proc *proc, 
-            const char *name, std::vector<Exp*> &args,
-            std::vector<Location*>& rets);
+            const char *name, std::vector<Exp*> &args, std::vector<Exp*>& rets);
 	virtual void AddIndCallStatement(int indLevel, Exp *exp,
             std::vector<Exp*> &args);
 	virtual void AddReturnStatement(int indLevel, 
-                                        std::vector<Location*> &returns);
+                                        std::vector<Exp*> &returns);
 	virtual void AddProcStart(Signature *signature);
 	virtual void AddProcEnd();
 	virtual void AddLocal(const char *name, Type *type);

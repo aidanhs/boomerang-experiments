@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.9.2.2 $
+ * $Revision: 1.9.2.3 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, StatementSet* ss) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, ExpressionSet* ls) {
+std::ostream& operator<<(std::ostream& os, LocationSet* ls) {
     ls->print(os);
     return os;
 }
@@ -181,11 +181,11 @@ bool StatementSet::operator<(const StatementSet& o) const {
 }
 
 //
-// ExpressionSet methods
+// LocationSet methods
 //
 
 // Assignment operator
-ExpressionSet& ExpressionSet::operator=(const ExpressionSet& o) {
+LocationSet& LocationSet::operator=(const LocationSet& o) {
     sset.clear();
     std::set<Exp*, lessExpStar>::const_iterator it;
     for (it = o.sset.begin(); it != o.sset.end(); it++) {
@@ -195,13 +195,13 @@ ExpressionSet& ExpressionSet::operator=(const ExpressionSet& o) {
 }
 
 // Copy constructor
-ExpressionSet::ExpressionSet(const ExpressionSet& o) {
+LocationSet::LocationSet(const LocationSet& o) {
     std::set<Exp*, lessExpStar>::const_iterator it;
     for (it = o.sset.begin(); it != o.sset.end(); it++)
         sset.insert((*it)->clone());
 }
 
-char* ExpressionSet::prints() {
+char* LocationSet::prints() {
     std::ostringstream ost;
     std::set<Exp*, lessExpStar>::iterator it;
     for (it = sset.begin(); it != sset.end(); it++) {
@@ -214,7 +214,7 @@ char* ExpressionSet::prints() {
     return debug_buffer;
 }
 
-void ExpressionSet::print(std::ostream& os) {
+void LocationSet::print(std::ostream& os) {
     std::set<Exp*, lessExpStar>::iterator it;
     for (it = sset.begin(); it != sset.end(); it++) {
         if (it != sset.begin()) os << ",\t";
@@ -223,20 +223,20 @@ void ExpressionSet::print(std::ostream& os) {
     os << "\n";
 }
 
-void ExpressionSet::remove(Exp* given) {
+void LocationSet::remove(Exp* given) {
     std::set<Exp*, lessExpStar>::iterator it = sset.find(given);
     if (it == sset.end()) return;
-//std::cerr << "ExpressionSet::remove at " << std::hex << (unsigned)this << " of " << *it << "\n";
+//std::cerr << "LocationSet::remove at " << std::hex << (unsigned)this << " of " << *it << "\n";
 //std::cerr << "before: "; print();
     // NOTE: if the below uncommented, things go crazy. Valgrind says that
-    // the deleted value gets used next in ExpressionSet::operator== ?!
+    // the deleted value gets used next in LocationSet::operator== ?!
     //delete *it;         // These expressions were cloned when created
     sset.erase(it);
 //std::cerr << "after : "; print();
 }
 
 #if 0
-void ExpressionSet::remove(LocSetIter ll) {
+void LocationSet::remove(LocSetIter ll) {
     //delete *ll;       // Don't trust this either
     sset.erase(ll);
 }
@@ -244,7 +244,7 @@ void ExpressionSet::remove(LocSetIter ll) {
 
 // Remove locations defined by any of the given set of statements
 // Used for killing in liveness sets
-void ExpressionSet::removeIfDefines(StatementSet& given) {
+void LocationSet::removeIfDefines(StatementSet& given) {
     StatementSet::iterator it;
     for (it = given.begin(); it != given.end(); it++) {
         Statement* s = (Statement*)*it;
@@ -255,7 +255,7 @@ void ExpressionSet::removeIfDefines(StatementSet& given) {
 }
 
 // Make this set the union of itself and other
-void ExpressionSet::makeUnion(ExpressionSet& other) {
+void LocationSet::makeUnion(LocationSet& other) {
     iterator it;
     for (it = other.sset.begin(); it != other.sset.end(); it++) {
         sset.insert(*it);
@@ -263,7 +263,7 @@ void ExpressionSet::makeUnion(ExpressionSet& other) {
 }
 
 // Make this set the set difference of itself and other
-void ExpressionSet::makeDiff(ExpressionSet& other) {
+void LocationSet::makeDiff(LocationSet& other) {
     std::set<Exp*, lessExpStar>::iterator it;
     for (it = other.sset.begin(); it != other.sset.end(); it++) {
         sset.erase(*it);
@@ -271,7 +271,7 @@ void ExpressionSet::makeDiff(ExpressionSet& other) {
 }
 
 #if 0
-Exp* ExpressionSet::getFirst(LocSetIter& it) {
+Exp* LocationSet::getFirst(LocSetIter& it) {
     it = sset.begin();
     if (it == sset.end())
         // No elements
@@ -279,7 +279,7 @@ Exp* ExpressionSet::getFirst(LocSetIter& it) {
     return *it;         // Else return the first element
 }
 
-Exp* ExpressionSet::getNext(LocSetIter& it) {
+Exp* LocationSet::getNext(LocSetIter& it) {
     if (++it == sset.end())
         // No more elements
         return NULL;
@@ -287,7 +287,7 @@ Exp* ExpressionSet::getNext(LocSetIter& it) {
 }
 #endif
 
-bool ExpressionSet::operator==(const ExpressionSet& o) const {
+bool LocationSet::operator==(const LocationSet& o) const {
     // We want to compare the strings, not the pointers
     if (size() != o.size()) return false;
     std::set<Exp*, lessExpStar>::const_iterator it1, it2;
@@ -298,12 +298,12 @@ bool ExpressionSet::operator==(const ExpressionSet& o) const {
     return true;
 }
 
-bool ExpressionSet::find(Exp* e) {
+bool LocationSet::find(Exp* e) {
     return sset.find(e) != sset.end();
 }
 
-bool ExpressionSet::findDifferentRef(RefExp* e, Exp *&dr) {
-    RefExp search(e->getBase()->clone(), (Statement*)-1);
+bool LocationSet::findDifferentRef(RefExp* e, Exp *&dr) {
+    RefExp search(e->getSubExp1()->clone(), (Statement*)-1);
     std::set<Exp*, lessExpStar>::iterator pos = sset.find(&search);
     if (pos == sset.end()) return false;
     while (pos != sset.end()) {
@@ -321,7 +321,7 @@ bool ExpressionSet::findDifferentRef(RefExp* e, Exp *&dr) {
 }
 
 // Add a subscript (to definition d) to each element
-void ExpressionSet::addSubscript(Statement* d) {
+void LocationSet::addSubscript(Statement* d) {
     std::set<Exp*, lessExpStar>::iterator it;
     std::set<Exp*, lessExpStar> newSet;
     for (it = sset.begin(); it != sset.end(); it++)
@@ -331,7 +331,7 @@ void ExpressionSet::addSubscript(Statement* d) {
 }
 
 // Substitute s into all members of the set
-void ExpressionSet::substitute(Statement& s) {
+void LocationSet::substitute(Statement& s) {
     Exp* lhs = s.getLeft();
     if (lhs == NULL) return;
     Exp* rhs = s.getRight();
@@ -342,9 +342,9 @@ void ExpressionSet::substitute(Statement& s) {
     // set becomes out of order, and operations such as set comparison fail!
     // To avoid any funny behaviour when iterating the loop, we use the follow-
     // ing two sets
-    ExpressionSet removeSet;        // These will be removed after the loop
-    ExpressionSet removeAndDelete;  // These will be removed then deleted
-    ExpressionSet insertSet;        // These will be inserted after the loop
+    LocationSet removeSet;          // These will be removed after the loop
+    LocationSet removeAndDelete;    // These will be removed then deleted
+    LocationSet insertSet;          // These will be inserted after the loop
     bool change;
     for (it = sset.begin(); it != sset.end(); it++) {
         Exp* loc = *it;

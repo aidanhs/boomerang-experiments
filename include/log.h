@@ -3,11 +3,10 @@
 #define LOG_H
 
 #include "types.h"
-#include <string>
 
 class Statement;
 class Exp;
-class ExpressionSet;
+class LocationSet;
 
 class Log 
 {
@@ -18,10 +17,9 @@ public:
     virtual Log &operator<<(Exp *e);
     virtual Log &operator<<(int i);
     virtual Log &operator<<(char c);
-    virtual Log &operator<<(std::string& s);
     virtual Log &operator<<(double d);
     virtual Log &operator<<(ADDRESS a);
-    virtual Log &operator<<(ExpressionSet *l);
+    virtual Log &operator<<(LocationSet *l);
     virtual ~Log() {};
 };
 

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.99.2.1 $
+ * $Revision: 1.99.2.2 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -462,12 +462,12 @@ Signature *Prog::getDefaultSignature(const char *name)
     return pFE->getDefaultSignature(name);
 }
 
-std::vector<Location*> &Prog::getDefaultParams()
+std::vector<Exp*> &Prog::getDefaultParams()
 {
     return pFE->getDefaultParams();
 }
 
-std::vector<Location*> &Prog::getDefaultReturns()
+std::vector<Exp*> &Prog::getDefaultReturns()
 {
     return pFE->getDefaultReturns();
 }
@@ -837,9 +837,7 @@ void Prog::decompile() {
         }
     }
 
-    //
     // Type analysis
-    //
     typeAnalysis();
 
     if (VERBOSE)
@@ -890,10 +888,10 @@ void Prog::removeUnusedReturns() {
             // Note: if it's SPARC (or perhaps other architectures), there may
             // be only one
             Signature* sig = m->getSignature();
-            Location* r;
+            Exp* r;
             if (sig->getNumReturns() == 1)
-                r = sig->getReturnLoc(0);
-            else r = sig->getReturnLoc(1);
+                r = sig->getReturnExp(0);
+            else r = sig->getReturnExp(1);
             rc[m].insert(r);
         }
 

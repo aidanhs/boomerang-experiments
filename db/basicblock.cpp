@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.78.2.3 $
+ * $Revision: 1.78.2.4 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1514,7 +1514,7 @@ void BasicBlock::prependStmt(Statement* s, UserProc* proc) {
 
 bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
     // Start with the liveness at the bottom of the BB
-    ExpressionSet liveLocs;
+    LocationSet liveLocs;
     getLiveOut(liveLocs);
     // For each RTL in this BB
     std::list<RTL*>::reverse_iterator rit;
@@ -1524,7 +1524,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
         // For each statement this RTL
         for (sit = stmts.rbegin(); sit != stmts.rend(); sit++) {
             Statement* s = *sit;
-            ExpressionSet defs;
+            LocationSet defs;
             s->getDefinitions(defs);
             // The definitions don't have refs yet
             defs.addSubscript(s);
@@ -1539,12 +1539,12 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
             // This is done in getLiveOut()
             if (s->isPhi()) continue;
             // Check for livenesses that overlap
-            ExpressionSet uses;
+            LocationSet uses;
             s->addUsedLocs(uses);
             // For each new use
-            ExpressionSet::iterator uu;
+            LocationSet::iterator uu;
             for (uu = uses.begin(); uu != uses.end(); uu++) {
-                Exp* u = *uu;
+                Exp* u = (Exp*)*uu;
                 // Only interested in subscripted vars
                 if (!u->isSubscript()) continue;
                 // Interference if we can find a live variable which differs
@@ -1596,7 +1596,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
 
 // Locations that are live at the end of this BB are the union of the
 // locations that are live at the start of its successors
-void BasicBlock::getLiveOut(ExpressionSet &liveout) {
+void BasicBlock::getLiveOut(LocationSet &liveout) {
     liveout.clear();
     for (unsigned i = 0; i < m_OutEdges.size(); i++) {
         PBB currBB = m_OutEdges[i];
@@ -1618,8 +1618,9 @@ void BasicBlock::getLiveOut(ExpressionSet &liveout) {
             // Get the jth operand to the phi function; it has a use
             // from BB *this
             Statement* def = phi->getAt(j);
+            // This will leak
             RefExp* r = new RefExp((*it)->getLeft()->clone(), def);
-            liveout.insert((Location*)r);
+            liveout.insert(r);
             if (Boomerang::get()->debugLiveness)
                 LOG << " ## Liveness: adding " << r <<
                   " due to ref to phi " << *it << " in BB at " << 
@@ -1655,15 +1656,15 @@ int BasicBlock::whichPred(PBB pred) {
 // confuse with form 'A'):
 // Pattern: <base>{}[<index>]{} where <index> could be <var> - <Kmin>
 static Unary* forma = new RefExp(
-        new BinaryLoc(opArraySubscript,
+        new Binary(opArraySubscript,
             new RefExp(
-                new Location(opWild),
+                new Terminal(opWild),
                 (Statement*)-1),
             new Terminal(opWild)),
         (Statement*)-1);
 
 // Pattern: m[<expr> * 4 + T ]
-static Location* formA  = UnaryLoc::memOf(
+static Location* formA  = Location::memOf(
         new Binary(opPlus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1672,7 +1673,7 @@ static Location* formA  = UnaryLoc::memOf(
 
 // Pattern: m[<expr> * 4 + T ] + T
 static Exp* formO  = new Binary(opPlus,
-    UnaryLoc::memOf(
+    Location::memOf(
         new Binary(opPlus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1683,9 +1684,9 @@ static Exp* formO  = new Binary(opPlus,
 // Pattern: %pc + m[%pc  + (<expr> * 4) + k]
 // where k is a small constant, typically 28 or 20
 static Exp* formR = new Binary(opPlus,
-    new Location(opPC),
-    UnaryLoc::memOf(new Binary(opPlus,
-        new Location(opPC),
+    new Terminal(opPC),
+    Location::memOf(new Binary(opPlus,
+        new Terminal(opPC),
         new Binary(opPlus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1695,9 +1696,9 @@ static Exp* formR = new Binary(opPlus,
 // Pattern: %pc + m[%pc + ((<expr> * 4) - k)] - k
 // where k is a smallish constant, e.g. 288 (/usr/bin/vi 2.6, 0c4233c).
 static Exp* formr = new Binary(opPlus,
-    new Location(opPC),
-    UnaryLoc::memOf(new Binary(opPlus,
-        new Location(opPC),
+    new Terminal(opPC),
+    Location::memOf(new Binary(opPlus,
+        new Terminal(opPC),
         new Binary(opMinus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1711,37 +1712,37 @@ static char chForms[] = {  'a',  'A',   'O',   'R',   'r'};
 // Vcall high level patterns
 // Pattern 0: global<wild>[0]
 static Binary* vfc_funcptr = new Binary(opArraySubscript,
-    new UnaryLoc(opGlobal,
+    new Location(opGlobal,
         new Terminal(opWildStrConst), NULL),
     new Const(0));
 
 // Pattern 1: m[ m[ <expr> + K1 ] + K2 ]
 // K1 is vtable offset, K2 is virtual function offset
-static Location* vfc_both = UnaryLoc::memOf(
+static Location* vfc_both = Location::memOf(
     new Binary(opPlus,
-        UnaryLoc::memOf(
+        Location::memOf(
             new Binary(opPlus,
                 new Terminal(opWild),
                 new Terminal(opWildIntConst))),
             new Terminal(opWildIntConst)));
  
 // Pattern 2: m[ m[ <expr> ] + K2]
-static Location* vfc_vto = UnaryLoc::memOf(
+static Location* vfc_vto = Location::memOf(
     new Binary(opPlus,
-        UnaryLoc::memOf(
+        Location::memOf(
             new Terminal(opWild)),
             new Terminal(opWildIntConst)));
 
 // Pattern 3: m[ m[ <expr> + K1] ]
-Location* vfc_vfo = UnaryLoc::memOf(
-    UnaryLoc::memOf(
+Location* vfc_vfo = Location::memOf(
+    Location::memOf(
         new Binary(opPlus,
             new Terminal(opWild),
             new Terminal(opWildIntConst))));
 
 // Pattern 4: m[ m[ <expr> ] ]
-Location* vfc_none = UnaryLoc::memOf(
-    UnaryLoc::memOf(
+Location* vfc_none = Location::memOf(
+    Location::memOf(
         new Terminal(opWild)));
 
 static Exp* hlVfc[] = {vfc_funcptr, vfc_both, vfc_vto, vfc_vfo, vfc_none};

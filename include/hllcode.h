@@ -33,7 +33,7 @@ class Proc;
 class Type;
 class Signature;
 class Assign;
-class ExpressionSet;
+class LocationSet;
 
 class HLLCode {
 protected:
@@ -100,11 +100,11 @@ public:
 	virtual void AddAssignmentStatement(int indLevel, Assign *s) = 0;
 	virtual void AddCallStatement(int indLevel, Proc *proc, 
             const char *name, std::vector<Exp*> &args,
-            std::vector<Location*>& rets) = 0;
+            std::vector<Exp*>& rets) = 0;
 	virtual void AddIndCallStatement(int indLevel, Exp *exp,
             std::vector<Exp*> &args) = 0;
 	virtual void AddReturnStatement(int indLevel, 
-                                        std::vector<Location*> &returns) = 0;
+                                        std::vector<Exp*> &returns) = 0;
 	virtual void AddProcStart(Signature *signature) = 0;
 	virtual void AddProcEnd() = 0;
 	virtual void AddLocal(const char *name, Type *type) = 0;

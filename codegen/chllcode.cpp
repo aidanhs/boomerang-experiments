@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.3 $
+ * $Revision: 1.69.2.4 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -249,7 +249,6 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec,
             //  s1 >> last & (1 << first-last+1)-1
             // When first == last:
             //  s1 >> last & 1
-            // Note: assumes first > last, e.g. [15:8]
             openParen(str, curPrec, PREC_BIT_AND);
             appendExp(str, t->getSubExp1(), PREC_BIT_SHIFT);
             Exp* first = t->getSubExp2();
@@ -320,6 +319,7 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec,
             break;
         case opRegOf:
             {
+                // MVE: this can likely go
                 if (u->getSubExp1()->getOper() == opTemp) {
                     // The great debate: r[tmpb] vs tmpb
                     str << "tmp";
@@ -342,13 +342,14 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec,
             str << "tmp";       // Should never see this
             break;
         case opItof:
+            // MVE: needs work: float/double/long double.
             str << "(float)";
             openParen(str, curPrec, PREC_UNARY);
             appendExp(str, t->getSubExp3(), PREC_UNARY);
             closeParen(str, curPrec, PREC_UNARY);
             break;
         case opFsize:
-   // needs work!
+   // MVE: needs work!
             appendExp(str, t->getSubExp3(), curPrec);
             break;
         case opMult:
@@ -548,6 +549,7 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec,
             }
             break;
         case opSgnEx: {
+            // MVE: Needs work
             str << "/* opSgnEx */ (int) ";
             Exp* s = t->getSubExp3();
             appendExp(str, s, curPrec);
@@ -867,76 +869,43 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn)
 {
     std::ostringstream s;
     indent(s, indLevel);
-    Location* lhs = asgn->getLeft();
-    Exp* rhs = asgn->getRight();
-    Type* asgnType = lhs->getType();
-
-    // Special case if there is a bit extraction on the LHS
-    if (lhs->isArraySub()) {
-        // Note: untested... no instructions apart from pentium FCLEX need this
-        // (and the result isn't used by any other instruction).
-        // May be needed for other architectures
-        // s1@[first:last] := rhs =>
-        // s1 = s1 & ~((1 << first-last+1)-1) | (rhs) << last
-        Location* s1 = (Location*)
-                       ((TernaryLoc*)lhs)->getSubExp1();
-        Exp* first   = ((TernaryLoc*)lhs)->getSubExp2();
-        Exp* last    = ((TernaryLoc*)lhs)->getSubExp3();
-        appendExp(s, s1, PREC_ASSIGN);
-        s << " = ";
-        appendExp(s, s1, PREC_BIT_AND);
-        s << " & ~((1 << ";
+    Type* asgnType = asgn->getType();
+    if (asgn->getLeft()->getOper() == opMemOf && asgnType) 
         appendExp(s,
-            new Binary(opMinus,
-                first,
-                last),
-            PREC_ADD);
-        s << "+1 | ";
-        appendExp(s, rhs, PREC_BIT_SHIFT);
-        s << " << ";
-        appendExp(s, last, PREC_BIT_SHIFT);
-    } else {
-        if (lhs->isMemOf() && asgnType) 
-            // Emit a cast on the LHS if needed
-            appendExp(s,
-                new TypedExp(
-                    asgnType,
-                    lhs),
-                PREC_ASSIGN);
-        else if (lhs->isGlobal() && asgnType && asgnType->isArray())
-            appendExp(s,
-                new Binary(opArraySubscript,
-                    lhs,
-                    new Const(0)),
-                PREC_ASSIGN);
-        else
-            appendExp(s, asgn->getLeft(), PREC_ASSIGN);
-
-        // C has special syntax for x=x+e and x=x+1, i.e. += and ++
-        if (asgn->getRight()->getOper() == opPlus && 
-            *asgn->getRight()->getSubExp1() == *asgn->getLeft()) {
-            if (asgn->getRight()->getSubExp2()->getOper() == opIntConst &&
-                ((Const*)asgn->getRight()->getSubExp2())->getInt() == 1) 
-                s << "++";
-            else {
-                s << " += ";
-                appendExp(s, asgn->getRight()->getSubExp2(), PREC_ASSIGN);
-            }
-        } else {
-            s << " = ";
-            appendExp(s, asgn->getRight(), PREC_ASSIGN);
+            new TypedExp(
+                asgnType,
+                asgn->getLeft()), PREC_ASSIGN);
+    else if (asgn->getLeft()->getOper() == opGlobal &&
+             ((Location*)asgn->getLeft())->getType() && 
+             ((Location*)asgn->getLeft())->getType()->isArray())
+        appendExp(s, new Binary(opArraySubscript, asgn->getLeft(),
+            new Const(0)), PREC_ASSIGN);
+    else
+        appendExp(s, asgn->getLeft(), PREC_ASSIGN);
+    if (asgn->getRight()->getOper() == opPlus && 
+        *asgn->getRight()->getSubExp1() == *asgn->getLeft()) {
+        // C has special syntax for this, eg += and ++
+        if (asgn->getRight()->getSubExp2()->getOper() == opIntConst &&
+            ((Const*)asgn->getRight()->getSubExp2())->getInt() == 1) 
+            s << "++";
+        else {
+            s << " += ";
+            appendExp(s, asgn->getRight()->getSubExp2(), PREC_ASSIGN);
         }
+    } else {
+        s << " = ";
+        appendExp(s, asgn->getRight(), PREC_ASSIGN);
     }
     s << ";";
     lines.push_back(strdup(s.str().c_str()));
 }
 
 void CHLLCode::AddCallStatement(int indLevel, Proc *proc, 
-    const char *name, std::vector<Exp*> &args, std::vector<Location*>& rets)
+    const char *name, std::vector<Exp*> &args, std::vector<Exp*>& rets)
 {
     std::ostringstream s;
     indent(s, indLevel);
-    std::vector<Location*>::iterator it;
+    std::vector<Exp*>::iterator it;
     if (rets.size() >= 1) {
         it = rets.begin();
         appendExp(s, rets.front(), PREC_ASSIGN);
@@ -997,7 +966,7 @@ void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp,
 }
 
 
-void CHLLCode::AddReturnStatement(int indLevel, std::vector<Location*> &returns)
+void CHLLCode::AddReturnStatement(int indLevel, std::vector<Exp*> &returns)
 {
     std::ostringstream s;
     indent(s, indLevel);
@@ -1035,15 +1004,15 @@ void CHLLCode::AddProcStart(Signature *signature)
             // C does this by default when you pass an array
             ty = ((PointerType*)ty)->getPointsTo();
             Exp *foo = new Const("foo123412341234");
-            m_proc->searchAndReplace(UnaryLoc::memOf(
-                                        UnaryLoc::param(
+            m_proc->searchAndReplace(Location::memOf(
+                                        Location::param(
                                           signature->getParamName(i)), NULL), 
                                      foo);
-            m_proc->searchAndReplace(UnaryLoc::param(
+            m_proc->searchAndReplace(Location::param(
                                        signature->getParamName(i)), 
                                      foo);
             m_proc->searchAndReplace(foo, 
-                                     UnaryLoc::param(
+                                     Location::param(
                                        signature->getParamName(i)));
         }
         appendType(s, ty);
