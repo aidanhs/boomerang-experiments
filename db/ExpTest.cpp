@@ -4,7 +4,7 @@
  *              tests the Exp and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.24.2.4 $
+ * $Revision: 1.24.2.5 $
  *
  * 05 Apr 02 - Mike: Fixed problems caused by lack of clone() calls
  * 09 Apr 02 - Mike: Compare, searchReplace
@@ -1342,12 +1342,13 @@ void ExpTest::testAddUsedLocs() {
         new Binary(opPlus,
             Location::local("local21", NULL),
             new Const(16)));
-    PhiExp* phi = new PhiExp(base, NULL);
+    PhiAssign* phi = new PhiAssign(base);
+    phi->putAt(0, NULL);
     phi->putAt(1, &s372);
     phi->addUsedLocs(l);
-    // Note: phi's are not considered to use blah if they ref m[blah],
-    // so local21 is not considered used
-    expected = "m[local21 + 16]{0},\tm[local21 + 16]{372}\n";
+    // Note: phi's were not considered to use blah if they ref m[blah],
+    // so local21 was not considered used
+    expected = "m[local21 + 16]{0},\tm[local21 + 16]{372},\tlocal21\n";
     std::ostringstream ost9;
     l.print(ost9);
     actual = ost9.str();

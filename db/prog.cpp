@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.99.2.2 $
+ * $Revision: 1.99.2.3 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -266,7 +266,7 @@ void Prog::generateCode(std::ostream &os) {
 }
 
 // Print this program, mainly for debugging
-void Prog::print(std::ostream &out, bool withDF) {
+void Prog::print(std::ostream &out) {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
       it++) {
         Proc *pProc = *it;
@@ -275,7 +275,7 @@ void Prog::print(std::ostream &out, bool withDF) {
         if (!p->isDecoded()) continue;
 
         // decoded userproc.. print it
-        p->print(out, withDF);
+        p->print(out);
     }
 }
 
@@ -962,7 +962,7 @@ void Prog::fromSSAform() {
         if (Boomerang::get()->vFlag) {
             LOG << "===== After transformation from SSA form for " 
                 << proc->getName() << " =====\n";
-            proc->printToLog(true);
+            proc->printToLog();
             LOG << "===== End after transformation from SSA for " <<
               proc->getName() << " =====\n\n";
         }

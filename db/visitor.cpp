@@ -7,7 +7,7 @@
  *             classes.
  *============================================================================*/
 /*
- * $Revision: 1.6.2.4 $
+ * $Revision: 1.6.2.5 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -77,6 +77,18 @@ bool StmtConscriptSetter::visit(Assign* stmt) {
     curConscript = sc.getLast();
     return true;
 }
+bool StmtConscriptSetter::visit(PhiAssign* stmt) {
+    SetConscripts sc(curConscript, bClear);
+    stmt->getLeft()->accept(&sc);
+    curConscript = sc.getLast();
+    return true;
+}
+bool StmtConscriptSetter::visit(ImplicitAssign* stmt) {
+    SetConscripts sc(curConscript, bClear);
+    stmt->getLeft()->accept(&sc);
+    curConscript = sc.getLast();
+    return true;
+}
 
 bool StmtConscriptSetter::visit(CallStatement* stmt) {
     SetConscripts sc(curConscript, bClear);
@@ -133,8 +145,8 @@ bool StmtConscriptSetter::visit(BranchStatement* stmt) {
     return true;
 }
 
-void PhiStripper::visit(Assign* s, bool& recur) {
-    del = s->isPhi();
+void PhiStripper::visit(PhiAssign* s, bool& recur) {
+    del = true;
     recur = true;
 }
 
@@ -178,6 +190,7 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
     return ret;
 }
 
+#if 0
 Exp* CallRefsFixer::postVisit(PhiExp* p) {
     Exp* ret = p;
     // If child was modified, simplify now
@@ -242,6 +255,7 @@ Exp* CallRefsFixer::postVisit(PhiExp* p) {
     }
     return ret;
 }
+#endif
 
 Exp* CallRefsFixer::postVisit(Unary *e)    {
     bool isAddrOfMem = e->isAddrOf() && e->getSubExp1()->isMemOf();
@@ -334,6 +348,7 @@ bool UsedLocsFinder::visit(RefExp* e, bool& override) {
     return true;
 }
 
+#if 0
 bool UsedLocsFinder::visit(PhiExp* e, bool& override) {
     StatementVec& stmtVec = e->getRefs();
     Exp* subExp1 = e->getSubExp1();
@@ -350,11 +365,39 @@ bool UsedLocsFinder::visit(PhiExp* e, bool& override) {
     override = true;
     return true;
 }
+#endif
 
 bool UsedLocsVisitor::visit(Assign* s, bool& override) {
     Exp* lhs = s->getLeft();
     Exp* rhs = s->getRight();
     if (rhs) rhs->accept(ev);
+    // Special logic for the LHS
+    if (lhs->isMemOf()) {
+        Exp* child = ((Location*)lhs)->getSubExp1();
+        child->accept(ev);
+    }
+    override = true;                // Don't do the usual accept logic
+    return true;                    // Continue the recursion
+}
+bool UsedLocsVisitor::visit(PhiAssign* s, bool& override) {
+    Exp* lhs = s->getLeft();
+    // Special logic for the LHS
+    if (lhs->isMemOf()) {
+        Exp* child = ((Location*)lhs)->getSubExp1();
+        child->accept(ev);
+    }
+    StatementVec& stmtVec = s->getRefs();
+    StatementVec::iterator uu;
+    for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
+        Exp* temp = new RefExp(lhs, *uu);
+        temp->accept(ev);
+    }
+
+    override = true;                // Don't do the usual accept logic
+    return true;                    // Continue the recursion
+}
+bool UsedLocsVisitor::visit(ImplicitAssign* s, bool& override) {
+    Exp* lhs = s->getLeft();
     // Special logic for the LHS
     if (lhs->isMemOf()) {
         Exp* child = ((Location*)lhs)->getSubExp1();
@@ -457,6 +500,22 @@ void StmtSubscripter::visit(Assign* s, bool& recur) {
     }
     recur = false;
 }
+void StmtSubscripter::visit(PhiAssign* s, bool& recur) {
+    Exp* lhs = s->getLeft();
+    if (lhs->isMemOf()) {
+        Exp*& child = ((Location*)lhs)->refSubExp1();
+        child = child->accept(mod);   
+    }
+    recur = false;
+}
+void StmtSubscripter::visit(ImplicitAssign* s, bool& recur) {
+    Exp* lhs = s->getLeft();
+    if (lhs->isMemOf()) {
+        Exp*& child = ((Location*)lhs)->refSubExp1();
+        child = child->accept(mod);   
+    }
+    recur = false;
+}
 
 void StmtSubscripter::visit(CallStatement* s, bool& recur) {
     Exp* pDest = s->getDest();
@@ -509,6 +568,16 @@ bool StmtConstCaster::visit(Assign *stmt) {
     if (ecc->isChanged()) return false;
     e = stmt->getRight();
     stmt->setRight(e->accept(ecc));
+    return !ecc->isChanged();
+}
+bool StmtConstCaster::visit(PhiAssign *stmt) {
+    Exp* e = stmt->getLeft();
+    stmt->setLeft(e->accept(ecc));
+    return !ecc->isChanged();
+}
+bool StmtConstCaster::visit(ImplicitAssign *stmt) {
+    Exp* e = stmt->getLeft();
+    stmt->setLeft(e->accept(ecc));
     return !ecc->isChanged();
 }
 bool StmtConstCaster::visit(GotoStatement *stmt) {

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.190.2.6 $
+ * $Revision: 1.190.2.7 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -190,7 +190,7 @@ void UserProc::printDecodedXML()
     out << "<proc name=\"" << getName() << "\">\n";
     out << "    <decoded>\n";
     std::ostringstream os;
-    print(os, false);
+    print(os);
     std::string s = os.str();
     escapeXMLChars(s);
     out << s;
@@ -208,7 +208,7 @@ void UserProc::printAnalysedXML()
     out << "<proc name=\"" << getName() << "\">\n";
     out << "    <analysed>\n";
     std::ostringstream os;
-    print(os, false);
+    print(os);
     std::string s = os.str();
     escapeXMLChars(s);
     out << s;
@@ -226,7 +226,7 @@ void UserProc::printSSAXML()
     out << "<proc name=\"" << getName() << "\">\n";
     out << "    <ssa>\n";
     std::ostringstream os;
-    print(os, true);
+    print(os);
     std::string s = os.str();
     escapeXMLChars(s);
     out << s;
@@ -869,14 +869,13 @@ void UserProc::generateCode(HLLCode *hll) {
 }
 
 // print this userproc, maining for debugging
-void UserProc::print(std::ostream &out, bool withDF) {
+void UserProc::print(std::ostream &out) {
     signature->print(out);
-    cfg->print(out, withDF);
+    cfg->print(out);
     out << "\n";
 }
 
-void UserProc::printToLog(bool withDF)
-{
+void UserProc::printToLog() {
     signature->printToLog();
     for (std::map<std::string, Type*>::iterator it = locals.begin();
       it != locals.end(); it++) {
@@ -888,7 +887,7 @@ void UserProc::printToLog(bool withDF)
         else
             LOG << "-\n";
     }
-    cfg->printToLog(withDF);
+    cfg->printToLog();
     LOG << "\n";
 }
 
@@ -1111,7 +1110,7 @@ std::set<UserProc*>* UserProc::decompile() {
         if (VERBOSE) {      // was if debugPrintSSA
             LOG << "=== Debug Print SSA for " << getName()
               << " at memory depth " << depth << " (no propagations) ===\n";
-            printToLog(true);
+            printToLog();
             LOG << "=== End Debug Print SSA for " <<
               getName() << " at depth " << depth << " ===\n\n";
         }
@@ -1154,7 +1153,7 @@ std::set<UserProc*>* UserProc::decompile() {
                 LOG << "=== Debug Print SSA for " << getName()
                   << " at memory depth " << depth
                   << " (after adding new parameters) ===\n";
-                printToLog(true);
+                printToLog();
                 LOG << "=== End Debug Print SSA for " <<
                   getName() << " at depth " << depth << " ===\n\n";
             }
@@ -1175,7 +1174,7 @@ std::set<UserProc*>* UserProc::decompile() {
             LOG << "=== Debug Print SSA for " << getName()
               << " at memory depth " << depth
               << " (after adding new returns) ===\n";
-            printToLog(true);
+            printToLog();
             LOG << "=== End Debug Print SSA for " <<
               getName() << " at depth " << depth << " ===\n\n";
         }
@@ -1188,7 +1187,7 @@ std::set<UserProc*>* UserProc::decompile() {
             LOG << "=== Debug Print SSA for " << getName() <<
               " at memory depth " << depth <<
               " (after trimming return set) ===\n";
-            printToLog(true);
+            printToLog();
             LOG << "=== End Debug Print SSA for " <<
               getName() << " at depth " << depth << " ===\n\n";
         }
@@ -1235,7 +1234,7 @@ std::set<UserProc*>* UserProc::decompile() {
         if (VERBOSE) {
             LOG << "=== After propagate for " << getName() <<
               " at memory depth " << depth << " ===\n";
-            printToLog(true);
+            printToLog();
             LOG << "=== End propagate for " << getName() <<
               " at depth " << depth << " ===\n\n";
         }
@@ -1273,7 +1272,7 @@ std::set<UserProc*>* UserProc::decompile() {
         if (VERBOSE && !Boomerang::get()->noRemoveNull) {
             LOG << "===== After removing null and unused statements "
               "=====\n";
-            printToLog(true);
+            printToLog();
             LOG << "===== End after removing unused "
               "statements =====\n\n";
         }
@@ -1291,7 +1290,7 @@ std::set<UserProc*>* UserProc::decompile() {
         if (VERBOSE) {
             LOG << "=== After replacing expressions, trimming params "
               "and returns ===\n";
-            printToLog(true);
+            printToLog();
             LOG << "=== End after replacing expressions, trimming params "
               "and returns ===\n";
             LOG << "===== End after replacing params =====\n\n";
@@ -1354,7 +1353,7 @@ void UserProc::removeRedundantPhis() {
         Statement* s = *it;
         if (s->isPhi()) {
             bool unused = false;
-            PhiExp *p = (PhiExp*)s->getRight();
+            PhiAssign *p = (PhiAssign*)s;
             if (refCounts[s] == 0)
                 unused = true;
             else if (refCounts[s] == 1) {
@@ -1381,7 +1380,7 @@ void UserProc::removeRedundantPhis() {
                         if (VERBOSE || DEBUG_UNUSED_STMT)
                             LOG << "removing phi using shakey hack:\n";
                         unused = true;
-                        removeReturn(p->getSubExp1());
+                        removeReturn(p->getLeft());
                     }
                 }
             } else {
@@ -1801,15 +1800,14 @@ void UserProc::trimParameters(int depth) {
                     if (VERBOSE)
                         LOG << "searching " << s << " for uses of " 
                                   << params[i] << "\n";
-                    PhiExp *ph = (PhiExp*)s->getRight();
+                    PhiAssign *pa = (PhiAssign*)s;
                     StatementVec::iterator it1;
-                    for (it1 = ph->begin(); it1 != ph->end(); it1++)
+                    for (it1 = pa->begin(); it1 != pa->end(); it1++)
                         if (*it1 == NULL) {
                             referenced[i] = true;
                             break;
                         }
                 }
-                delete p;
             }
         }
     }
@@ -2509,11 +2507,6 @@ bool UserProc::nameStackLocations() {
                     ->getStr();
             if (memref->getType() != NULL)
                 locals[name] = memref->getType();
-            // MVE: check this
-            locals[name] = s->updateType(memref, locals[name]);
-            if (VERBOSE)
-                LOG << "updating type of " << name.c_str() << " to " 
-                    << locals[name]->getCtype() << "\n";
             found = true;
         }
     }
@@ -2544,12 +2537,7 @@ bool UserProc::nameRegisters() {
               getStr();
             if (memref->getType() != NULL)
                 locals[name] = memref->getType();
-            // MVE: check this
-            locals[name] = s->updateType(memref, locals[name]);
             found = true;
-            if (VERBOSE)
-                LOG << "updating type of " << name.c_str() << " to " 
-                    << locals[name]->getCtype() << "\n";
         }
     }
     delete match;
@@ -2695,7 +2683,7 @@ void UserProc::countRefs(RefCounter& refCounts) {
     for (it = stmts.begin(); it != stmts.end(); it++) {
         Statement* s = *it;
         if (s->isPhi()) {
-            ((PhiExp*)s->getRight())->simplifyRefs();
+            ((PhiAssign*)s)->simplifyRefs();
             s->simplify();
         }
         if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS && s->isReturn())
@@ -2890,9 +2878,9 @@ void UserProc::fromSSAform() {
         Statement* s = *it;
         if (!s->isPhi()) continue;
         // Check that the base variables are all the same
-        PhiExp* p = (PhiExp*)s->getRight();
+        PhiAssign* pa = (PhiAssign*)s;
         LocationSet refs;
-        p->addUsedLocs(refs);
+        pa->addUsedLocs(refs);
         Exp* first = *refs.begin();
         bool same = true;
         LocationSet::iterator rr;
@@ -2915,10 +2903,10 @@ void UserProc::fromSSAform() {
                 // code can be removed. - MVE
                 removeStatement(s);
             } else
-                // Just need to replace the phi by an expression,
+                // Need to replace the phi by an expression,
                 // e.g. local0 = phi(r24{3}, r24{5}) becomes 
                 //      local0 = r24
-                ((Assign*)s)->setRight(first->getSubExp1()->clone());
+                pa->convertToAssign(first->getSubExp1()->clone());
         }
         else {
             // Need copies
@@ -2927,10 +2915,10 @@ void UserProc::fromSSAform() {
                   " requires copies, using temp" << tempNum << "\n";
             // For each definition ref'd in the phi
             StatementVec::iterator rr;
-            for (rr = p->begin(); rr != p->end(); p++) {
+            for (rr = pa->begin(); rr != pa->end(); rr++) {
                 // Start with the original name, in the left of the phi
                 // (note: this has not been renamed above)
-                Exp* right = p->getSubExp1()->clone();
+                Exp* right = pa->getLeft()->clone();
                 // Wrap it in a ref to *rr
                 right = new RefExp(right, *rr);
                 // Check the interference graph for a new name
@@ -3022,8 +3010,8 @@ bool UserProc::prove(Exp *query)
     }
 
     proven.insert(original);
-    std::set<PhiExp*> lastPhis;
-    std::map<PhiExp*, Exp*> cache;
+    std::set<PhiAssign*> lastPhis;
+    std::map<PhiAssign*, Exp*> cache;
     if (!prover(query, lastPhis, cache)) {
         proven.erase(original);
         //delete original;
@@ -3038,8 +3026,8 @@ bool UserProc::prove(Exp *query)
     return true;
 }
 
-bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis, 
-                      std::map<PhiExp*, Exp*> &cache, PhiExp* lastPhi)
+bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, 
+                      std::map<PhiAssign*, Exp*> &cache, PhiAssign* lastPhi)
 {
     std::map<CallStatement*, Exp*> callwd;
     Exp *phiInd = query->getSubExp2()->clone();
@@ -3121,11 +3109,11 @@ bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis,
                     if (s->getRight()->getOper() == opPhi) {
                         // for a phi, we have to prove the query for every 
                         // statement
-                        PhiExp *p = (PhiExp*)s->getRight();
+                        PhiAssign *pa = (PhiAssign*)s;
                         StatementVec::iterator it;
                         bool ok = true;
-                        if (lastPhis.find(p) != lastPhis.end() || p == lastPhi)
-                        {
+                        if (lastPhis.find(pa) != lastPhis.end() ||
+                              pa == lastPhi) {
                             if (DEBUG_PROOF)
                                 LOG << "phi loop detected ";
                             ok = (*query->getSubExp2() == *phiInd);
@@ -3138,14 +3126,14 @@ bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis,
                         } else {
                             if (DEBUG_PROOF)
                                 LOG << "found " << s << " prove for each\n";
-                            for (it = p->begin(); it != p->end(); it++) {
+                            for (it = pa->begin(); it != pa->end(); it++) {
                                 Exp *e = query->clone();
                                 RefExp *r1 = (RefExp*)e->getSubExp1();
                                 r1->setDef(*it);
                                 if (DEBUG_PROOF)
                                     LOG << "proving for " << e << "\n";
                                 lastPhis.insert(lastPhi);
-                                if (!prover(e, lastPhis, cache, p)) { 
+                                if (!prover(e, lastPhis, cache, pa)) { 
                                     ok = false; 
                                     //delete e; 
                                     break; 
@@ -3154,7 +3142,7 @@ bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis,
                                 //delete e;
                             }
                             if (ok)
-                                cache[p] = query->getSubExp2()->clone();
+                                cache[pa] = query->getSubExp2()->clone();
                         }
                         if (ok)
                             query = new Terminal(opTrue);
@@ -3305,12 +3293,16 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
                 // for this one reference
                 def = ((RefExp*)*ll)->getRef();
                 doCountReturns(def, rc, ((RefExp*)*ll)->getSubExp1());
-            } else if ((*ll)->isPhi()) {
+            } else /* if ((*ll)->isPhi()) */ {
+#if 0
                 StatementVec::iterator rr;
-                PhiExp& pe = (PhiExp&)**ll;
+                PhiAssign& pa = (PhiAssign&)**ll;
                 // for each reference this phi expression
-                for (rr = pe.begin(); rr != pe.end(); rr++)
-                    doCountReturns(*rr, rc, pe.getSubExp1());
+                for (rr = pa.begin(); rr != pa.end(); rr++)
+                    doCountReturns(*rr, rc, pa.getSubExp1());
+#else
+    assert(0);      // Don't think this should happen any more: MVE
+#endif
             }
         }
     }

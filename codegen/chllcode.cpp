@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.5 $
+ * $Revision: 1.69.2.6 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1046,7 +1046,7 @@ void CHLLCode::AddLocal(const char *name, Type *type)
             s << ";";
         } else {
             s << "; // ";
-            e->print(s, true);
+            e->print(s);
         }
     }
     lines.push_back(strdup(s.str().c_str()));

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.26.2.4 $
+ * $Revision: 1.26.2.5 $
  * 
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
@@ -318,7 +318,7 @@ Statement* RTL::elementAt(unsigned i) {
  * PARAMETERS:      os - stream to output to (often cout or cerr)
  * RETURNS:         <nothing>
  *============================================================================*/
-void RTL::print(std::ostream& os /*= cout*/, bool withDF /*= false*/) {
+void RTL::print(std::ostream& os /*= cout*/) {
 
     // print out the instruction address of this RTL
     os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
@@ -332,12 +332,7 @@ void RTL::print(std::ostream& os /*= cout*/, bool withDF /*= false*/) {
         Statement* stmt = *ss;
         if (bFirst) os << " ";
         else        os << std::setw(9) << " ";
-        if (stmt) {
-            if (withDF)
-                stmt->printWithUses(os);
-            else
-                stmt->print(os);
-        }
+        if (stmt) stmt->print(os);
         // Note: we only put newlines where needed. So none at the end of
         // Statement::print; one here to separate from other statements
         os << "\n";
@@ -349,7 +344,7 @@ void RTL::print(std::ostream& os /*= cout*/, bool withDF /*= false*/) {
 extern char debug_buffer[];
 char* RTL::prints() {
       std::ostringstream ost;
-      print(ost, true);
+      print(ost);
       strncpy(debug_buffer, ost.str().c_str(), 199);
       debug_buffer[199] = '\0';
       return debug_buffer;

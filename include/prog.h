@@ -14,7 +14,7 @@
  * OVERVIEW:    interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.57.2.2 $
+ * $Revision: 1.57.2.3 $
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -189,7 +189,7 @@ public:
     void generateCode(Cluster *cluster = NULL);
 
     // Print this program (primarily for debugging)
-    void print(std::ostream &out, bool withDF = false);
+    void print(std::ostream &out);
 
     // lookup a library procedure by name
     LibProc *getLibraryProc(const char *nam);

@@ -4,7 +4,7 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.5 $
+ * $Revision: 1.14.2.6 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -122,7 +122,7 @@ void StatementTest::testEmpty () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected = "Ret BB:\n00000123\n\n";
@@ -170,7 +170,7 @@ void StatementTest::testFlow () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -230,7 +230,7 @@ void StatementTest::testKill () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -288,7 +288,7 @@ void StatementTest::testUse () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -351,7 +351,7 @@ void StatementTest::testUseOverKill () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -416,7 +416,7 @@ void StatementTest::testUseOverBB () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -476,7 +476,7 @@ void StatementTest::testUseKill () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -533,7 +533,7 @@ void StatementTest::testEndlessLoop () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;
@@ -763,7 +763,7 @@ void StatementTest::testRecursion () {
     prog->decompile();
     // print cfg to a string
     std::ostringstream st;
-    cfg->print(st, true);
+    cfg->print(st);
     std::string s = st.str();
     // compare it to expected
     std::string expected;

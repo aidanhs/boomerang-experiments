@@ -9,7 +9,7 @@
  *             and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.5.2.5 $
+ * $Revision: 1.5.2.6 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *   for searching: they have the capability of stopping the recursion,
@@ -44,6 +44,8 @@
 
 class Statement;
 class Assign;
+class PhiAssign;
+class ImplicitAssign;
 class CaseStatement;
 class CallStatement;
 class ReturnStatement;
@@ -73,7 +75,6 @@ virtual bool visit(Ternary *e,  bool& override) {override = false; return true;}
 virtual bool visit(TypedExp *e, bool& override) {override = false; return true;}
 virtual bool visit(FlagDef *e,  bool& override) {override = false; return true;}
 virtual bool visit(RefExp *e,   bool& override) {override = false; return true;}
-virtual bool visit(PhiExp *e,   bool& override) {override = false; return true;}
 virtual bool visit(Location *e, bool& override) {override = false; return true;}
 // These three have zero arity, so there is nothing to override
 virtual bool visit(Const *e   ) {return true;}
@@ -148,7 +149,6 @@ virtual Exp* preVisit(Ternary *e,  bool& recur) {recur = true; return e;}
 virtual Exp* preVisit(TypedExp *e, bool& recur) {recur = true; return e;}
 virtual Exp* preVisit(FlagDef *e,  bool& recur) {recur = true; return e;}
 virtual Exp* preVisit(RefExp *e,   bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(PhiExp *e,   bool& recur) {recur = true; return e;}
 virtual Exp* preVisit(Location *e, bool& recur) {recur = true; return e;}
 virtual Exp* preVisit(Const *e                ) {              return e;}
 virtual Exp* preVisit(Terminal *e             ) {              return e;}
@@ -161,7 +161,6 @@ virtual Exp* postVisit(Ternary *e)  {return e;}
 virtual Exp* postVisit(TypedExp *e) {return e;}
 virtual Exp* postVisit(FlagDef *e)  {return e;}
 virtual Exp* postVisit(RefExp *e)   {return e;}
-virtual Exp* postVisit(PhiExp *e)   {return e;}
 virtual Exp* postVisit(Location *e) {return e;}
 virtual Exp* postVisit(Const *e)    {return e;}
 virtual Exp* postVisit(Terminal *e) {return e;}
@@ -191,6 +190,8 @@ public:
     // returns true to continue iterating the container
     virtual bool visit(RTL *rtl);   // By default, visits all statements
     virtual bool visit(Assign *stmt)         { return true;}
+    virtual bool visit(PhiAssign *stmt)      { return true;}
+    virtual bool visit(ImplicitAssign *stmt) { return true;}
     virtual bool visit(GotoStatement *stmt)  { return true;}
     virtual bool visit(BranchStatement *stmt){ return true;}
     virtual bool visit(CaseStatement *stmt)  { return true;}
@@ -208,6 +209,8 @@ public:
     int          getLast() {return curConscript;}
 
     virtual bool visit(Assign *stmt);
+    virtual bool visit(PhiAssign *stmt);
+    virtual bool visit(ImplicitAssign *stmt);
     virtual bool visit(CaseStatement *stmt);
     virtual bool visit(CallStatement *stmt);
     virtual bool visit(ReturnStatement *stmt);
@@ -224,6 +227,10 @@ public:
                     ev = v;}
     virtual      ~StmtExpVisitor() {}
     virtual bool visit(Assign *stmt, bool& override)
+        {override = false; return true;}
+    virtual bool visit(PhiAssign *stmt, bool& override)
+        {override = false; return true;}
+    virtual bool visit(ImplicitAssign *stmt, bool& override)
         {override = false; return true;}
     virtual bool visit(GotoStatement *stmt, bool& override)
         {override = false; return true;}
@@ -255,6 +262,8 @@ public:
     // This class' visitor functions don't return anything. Maybe we'll need
     // return values at a later stage.
 virtual void visit(Assign *s,         bool& recur) {recur = true;}
+virtual void visit(PhiAssign *s,      bool& recur) {recur = true;}
+virtual void visit(ImplicitAssign *s, bool& recur) {recur = true;}
 virtual void visit(GotoStatement *s,  bool& recur) {recur = true;}
 virtual void visit(BranchStatement *s,bool& recur) {recur = true;}
 virtual void visit(CaseStatement *s,  bool& recur) {recur = true;}
@@ -267,7 +276,7 @@ class PhiStripper : public StmtModifier {
     bool    del;            // Set true if this statment is to be deleted
 public:
                  PhiStripper(ExpModifier* em) : StmtModifier(em) {del = false;} 
-    virtual void visit(Assign* stmt, bool& recur);
+    virtual void visit(PhiAssign* stmt, bool& recur);
     bool    getDelete() {return del;}
 };
 
@@ -301,8 +310,6 @@ virtual Exp* preVisit(FlagDef *e,  bool& recur) {
     recur = true; mask <<= 1; return e;}
 virtual Exp* preVisit(RefExp *e,   bool& recur) {
     recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(PhiExp *e,   bool& recur) {
-    recur = true; mask <<= 1; return e;}
 virtual Exp* preVisit(Location *e, bool& recur) {
     recur = true; mask <<= 1; return e;}
 virtual Exp* preVisit(Const *e)     { mask <<= 1; return e;}
@@ -315,7 +322,6 @@ virtual Exp* postVisit(Ternary *e);
 virtual Exp* postVisit(TypedExp *e);
 virtual Exp* postVisit(FlagDef *e);
 virtual Exp* postVisit(RefExp *e);
-virtual Exp* postVisit(PhiExp *e);
 virtual Exp* postVisit(Location *e);
 virtual Exp* postVisit(Const *e);
 virtual Exp* postVisit(Terminal *e);
@@ -332,7 +338,6 @@ public:
     virtual bool visit(RefExp *e,   bool& override);
     virtual bool visit(Location *e, bool& override);
     virtual bool visit(Terminal* e);
-    virtual bool visit(PhiExp* e,   bool& override);
 };
 
 class UsedLocsVisitor : public StmtExpVisitor {
@@ -347,7 +352,9 @@ public:
     virtual ~UsedLocsVisitor() {}
     // Needs special attention because the lhs of an assignment isn't used
     // (except where it's m[blah], when blah is used)
-    virtual bool visit(Assign *stmt, bool& override);
+    virtual bool visit(        Assign *stmt, bool& override);
+    virtual bool visit(     PhiAssign *stmt, bool& override);
+    virtual bool visit(ImplicitAssign *stmt, bool& override);
     // Returns aren't used (again, except where m[blah] where blah is used),
     // and there is special logic for when the pass is final
     virtual bool visit(CallStatement *stmt, bool& override);
@@ -372,8 +379,10 @@ public:
                 StmtSubscripter(ExpModifier* em) : StmtModifier(em) {}
     virtual     ~StmtSubscripter() {}
 
-    virtual void visit(Assign *s,        bool& recur);
-    virtual void visit(CallStatement *s, bool& recur);
+    virtual void visit(        Assign *s, bool& recur);
+    virtual void visit(     PhiAssign *s, bool& recur);
+    virtual void visit(ImplicitAssign *s, bool& recur);
+    virtual void visit( CallStatement *s, bool& recur);
 };
 
 class SizeStripper : public ExpModifier {
@@ -404,6 +413,8 @@ public:
     virtual     ~StmtConstCaster() {};
 
     virtual bool visit(Assign *stmt);
+    virtual bool visit(PhiAssign *stmt);
+    virtual bool visit(ImplicitAssign *stmt);
     virtual bool visit(GotoStatement *stmt);
     virtual bool visit(BranchStatement *stmt);
     virtual bool visit(CaseStatement *stmt);

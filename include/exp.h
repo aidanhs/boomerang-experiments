@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.6 $
+ * $Revision: 1.105.2.7 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -16,6 +16,8 @@
  * 29 Apr 02 - Mike: TypedExp takes Type& and Exp* in opposite order; consistent
  * 10 May 02 - Mike: Added refSubExp1 etc
  * 21 May 02 - Mike: Mods for gcc 3.1
+ * 02 Aug 04 - Mike: Removed PhiExp (PhiAssign replaces it) 
+ * 05 Aug 04 - Mike: Removed the withUses/withDF parameter from print() funcs
  */
 
 #ifndef __EXP_H_
@@ -28,7 +30,7 @@
      TypedExp____/  |   \         \
       FlagDef___/ Binary Location  TypeVal
        RefExp__/    |
-       PhiExp_/  Ternary
+                 Ternary
 */
 
 #include <iostream>
@@ -86,16 +88,14 @@ virtual     ~Exp() {}
     void    setOper(OPER x) {op = x;}     // A few simplifications use this
 
     // Print the expression to the given stream
-virtual void print(std::ostream& os, bool withUses = false) = 0;
+virtual void print(std::ostream& os) = 0;
              // Print with <type>
-    void     printt(std::ostream& os = std::cout, bool withUses = false);
+    void     printt(std::ostream& os = std::cout);
     void     printAsHL(std::ostream& os = std::cout); // Print with v[5] as v5
     char*    prints();      // Print to string (for debugging)
              // Recursive print: don't want parens at the top level
-virtual void printr(std::ostream& os, bool withUses = false) {
-                print(os, withUses);}       // But most classes want standard
-             // Print with the "{1 2 3}" uses info
-        void printWithUses(std::ostream& os) {print(os, true);}
+virtual void printr(std::ostream& os) {
+                 print(os);}       // But most classes want standard
              // For debugging: print in indented hex. In gdb: "p x->printx(0)"
 virtual void printx(int ind) = 0;
 
@@ -316,11 +316,6 @@ virtual Exp* simplifyConstraint() {return this;}
     //   sub1 = <ptr> and sub2 = <int> and Tr = <ptr>
     virtual Exp*  genConstraints(Exp* result);
 
-    // Generate a constraint for a condition, e.g. for a == b, constrain that
-    // typeof(a) == typeof(b), but also if a has constraints (e.g. it's a
-    // memOf of size 8), generate constraints for that too
-    void    genConditionConstraints(LocationSet& cons);
-
     virtual Type *getType() { return NULL; }
 
     // Visitation
@@ -396,9 +391,9 @@ const char* getFuncName();
     void setStr(char* p)    {u.p = p;}
     void setAddr(ADDRESS a) {u.a = a;}
 
-virtual void    print(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
     // Print "recursive" (extra parens not wanted at outer levels)
-        void    printNoQuotes(std::ostream& os, bool withUses = false);
+        void    printNoQuotes(std::ostream& os);
 virtual void    printx(int ind);
  
 
@@ -434,7 +429,7 @@ virtual bool    operator==(const Exp& o) const;
 virtual bool    operator< (const Exp& o) const;
 virtual bool    operator*=(Exp& o);
 
-virtual void    print(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
 virtual void    appendDotFile(std::ofstream& of);
 virtual void    printx(int ind);
 
@@ -476,7 +471,7 @@ virtual     ~Unary();
 virtual int getArity() {return 1;}
 
     // Print
-virtual void    print(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
 virtual void    appendDotFile(std::ofstream& of);
 virtual void    printx(int ind);
 
@@ -547,8 +542,8 @@ virtual     ~Binary();
     int getArity() {return 2;}
 
     // Print
-virtual void    print(std::ostream& os, bool withUses = false);
-virtual void    printr(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
+virtual void    printr(std::ostream& os);
 virtual void    appendDotFile(std::ofstream& of);
 virtual void    printx(int ind);
 
@@ -622,8 +617,8 @@ virtual     ~Ternary();
     int getArity() {return 3;}
 
     // Print
-virtual void    print(std::ostream& os, bool withUses = false);
-virtual void    printr(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
+virtual void    printr(std::ostream& os);
 virtual void    appendDotFile(std::ofstream& of);
 virtual void    printx(int ind);
 
@@ -689,7 +684,7 @@ virtual bool operator<<(const Exp& o) const;
 virtual bool operator*=(Exp& o);
 
 
-virtual void    print(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
 virtual void    appendDotFile(std::ofstream& of);
 virtual void    printx(int ind);
 
@@ -750,7 +745,7 @@ virtual bool operator==(const Exp& o) const;
 virtual bool operator< (const Exp& o) const;
 virtual bool operator*=(Exp& o);
 
-virtual void print(std::ostream& os, bool withUses = false);
+virtual void print(std::ostream& os);
 virtual void printx(int ind);
 virtual int getNumRefs() {return 1;}
     Statement* getRef() {return def;}
@@ -771,7 +766,7 @@ protected:
     friend class XMLProgParser;
 };  // Class RefExp
 
-#if 1
+#if 0
 /*==============================================================================
  * PhiExp is a subclass of Unary, holding an operator (opPhi), the expression
  * that is being phi'd (in subExp1), and a StatementVec
@@ -848,7 +843,7 @@ virtual Exp* clone();
 virtual bool operator==(const Exp& o) const;
 virtual bool operator< (const Exp& o) const;
 virtual bool operator*=(Exp& o);
-virtual void    print(std::ostream& os, bool withUses = false);
+virtual void    print(std::ostream& os);
 virtual void    printx(int ind);
     virtual Exp*  genConstraints(Exp* restrictTo) {
         assert(0); return NULL;} // Should not be constraining constraints

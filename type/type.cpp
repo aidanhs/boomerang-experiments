@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.23.2.2 $
+ * $Revision: 1.23.2.3 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -61,7 +61,7 @@ FuncType::FuncType(Signature *sig) : Type(eFunc), signature(sig)
 }
 
 IntegerType::IntegerType(int sz, int sign) : Type(eInteger), size(sz),
-  signd(sign)
+  signedness(sign)
 {
 }
 
@@ -169,7 +169,7 @@ CompoundType::~CompoundType()
  *============================================================================*/
 Type *IntegerType::clone() const
 {
-    IntegerType *t = new IntegerType(size, signd);
+    IntegerType *t = new IntegerType(size, signedness);
     return t;
 }
 
@@ -360,8 +360,8 @@ bool IntegerType::operator==(const Type& other) const {
         // Note: zero size matches any other size (wild, or unknown, size)
         (size==0 || ((IntegerType&)other).size==0 ||
           size == ((IntegerType&)other).size) &&
-        (signd < 0 || ((IntegerType&)other).signd < 0 ||
-          signd == ((IntegerType&)other).signd);
+        (signedness < 0 || ((IntegerType&)other).signedness < 0 ||
+          signedness == ((IntegerType&)other).signedness);
 }
 
 bool FloatType::operator==(const Type& other) const {
@@ -460,7 +460,7 @@ bool IntegerType::operator<(const Type& other) const {
     if (id > other.getId()) return false;
   	if (size < ((IntegerType&)other).size) return true;
   	if (size > ((IntegerType&)other).size) return false;
-	return (signd < ((IntegerType&)other).signd);
+	return (signedness < ((IntegerType&)other).signedness);
 }
 
 bool FloatType::operator<(const Type& other) const {
@@ -646,9 +646,9 @@ void FuncType::getReturnAndParam(const char*& ret, const char*& param) {
 }
 
 const char *IntegerType::getCtype(bool final) const {
-    if (signd) {
+    if (signedness >= 0) {
         std::string s;
-        if (!final && signd < 0)
+        if (!final && signedness == 0)
             s = "/*signed?*/";
         switch(size) {
             case 32: s += "int"; break;
@@ -1038,7 +1038,7 @@ std::ostream& operator<<(std::ostream& os, Type* t) {
         case eInteger: {
             int sg = ((IntegerType*)t)->isSigned();
             // 'j' for either i or u, don't know which
-            os << (sg<0 ? 'j' : sg ? 'i' : 'u');
+            os << (sg == 0 ? 'j' : sg>0 ? 'i' : 'u');
             os << std::dec << ((IntegerType*)t)->getSize();
             break;
         }

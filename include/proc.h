@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.91.2.3 $
+/* $Revision: 1.91.2.4 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -423,8 +423,8 @@ public:
     void generateCode(HLLCode *hll);
 
     // print this proc, mainly for debugging
-    void print(std::ostream &out, bool withDF = false);
-    void printToLog(bool withDF = false);
+    void print(std::ostream &out);
+    void printToLog();
 
     // simplify the statements in this proc
     void simplify() { cfg->simplify(); }
@@ -489,7 +489,8 @@ public:
     // prove any arbitary property of this procedure
     bool prove(Exp *query);
     // helper function, should be private
-    bool prover(Exp *query, std::set<PhiExp*> &lastPhis, std::map<PhiExp*, Exp*> &cache, PhiExp *lastPhi = NULL);    
+    bool prover(Exp *query, std::set<PhiAssign*> &lastPhis,
+        std::map<PhiAssign*, Exp*> &cache, PhiAssign *lastPhi = NULL);    
 
     // promote the signature if possible
     void promoteSignature();

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.60.2.3 $
+ * $Revision: 1.60.2.4 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -187,8 +187,8 @@ public:
      * Print the BB. For -R and for debugging
 	 * Don't use = std::cout, because gdb doesn't know about std::
      */
-    void print(std::ostream& os, bool withDF = false);
-    void printToLog(bool withDF = false);
+    void print(std::ostream& os);
+    void printToLog();
     char* prints();                     // For debugging
 
     /*
@@ -1013,8 +1013,8 @@ public:
     /*
      * print this cfg, mainly for debugging
      */
-    void print(std::ostream &out, bool withDF = false);
-    void printToLog(bool withDF = false);
+    void print(std::ostream &out);
+    void printToLog();
 
     /*
      * Check for indirect jumps and calls

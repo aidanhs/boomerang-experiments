@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.54.2.4 $
+ * $Revision: 1.54.2.5 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -137,7 +137,7 @@ public:
     bool isFlagAssgn();
 
     // true if this statement is a phi assignment
-    bool isPhi();
+    bool isPhi() {return kind == STMT_PHIASSIGN; }
 
     // true if this statement is a call
     bool isCall() { return kind == STMT_CALL; }
@@ -145,6 +145,7 @@ public:
     // true if this statement is a BoolStatement
     bool isBool() { return kind == STMT_BOOL; }
 
+    // true if this statement is a ReturnStatement
     bool isReturn() { return kind == STMT_RET; }
 
     // true if this is a fpush/fpop
@@ -161,7 +162,7 @@ public:
     virtual Exp* getLeft() = 0;
 
     // returns a type for the left
-    virtual Type* getLeftType() = 0;
+// virtual Type* getLeftType() = 0;
 
     // returns an expression that would be used to replace this statement
     // in a use
@@ -170,7 +171,7 @@ public:
     // returns true if this statement uses the given expression
     virtual bool usesExp(Exp *e) = 0;
 
-    // Adds (inserts) all locations (registers or memory) used by this
+    // Adds (inserts) all locations (registers or memory etc) used by this
     // statement
             void addUsedLocs(LocationSet& used, bool final = false);
     void fixCallRefs();
@@ -187,8 +188,7 @@ public:
             void specialReplaceRef(Statement* def);
 
     // statements should be printable (for debugging)
-    virtual void print(std::ostream &os, bool withDF = false) = 0;
-    virtual void printWithUses(std::ostream& os) {print(os, true);}
+    virtual void print(std::ostream &os) = 0;
             void printAsUse(std::ostream &os)   {os << std::dec << number;}
             void printAsUseBy(std::ostream &os) {os << std::dec << number;}
             void printNum(std::ostream &os)     {os << std::dec << number;}
@@ -203,9 +203,6 @@ public:
 
     // general search and replace
     virtual bool searchAndReplace(Exp *search, Exp *replace) = 0;
-
-    // update the type information for an expression in this statement
-    virtual Type *updateType(Exp *e, Type *curType) = 0;
 
     // get the statement number
     virtual int getNumber() {return number;}
@@ -226,7 +223,7 @@ public:
     virtual void simplify() = 0;
 
     // simplify internal address expressions (a[m[x]] -> x)
-    // Only Assign overrides at present
+    // Only Assigns override at present
     virtual void simplifyAddr() {}
 
     // fixSuccessor
@@ -277,7 +274,7 @@ std::ostream& operator<<(std::ostream& os, LocationSet* p);
  *============================================================================*/
 class Assignment : public Statement {
 protected:
-    Type*   type;       // The assignment type
+    Type*   type;       // The type for this assignment
     Exp*    lhs;        // The left hand side
 public:
     // Constructor, subexpression
@@ -295,7 +292,7 @@ virtual bool accept(StmtVisitor* visitor) = 0;
 virtual bool accept(StmtExpVisitor* visitor) = 0;
 virtual bool accept(StmtModifier* visitor) = 0;
 
-virtual void print(std::ostream& os, bool withDF = false) = 0;
+virtual void print(std::ostream& os) = 0;
 
     // Get and set the type
     Type*   getType() {return type;}
@@ -308,13 +305,10 @@ virtual void getDefinitions(LocationSet &defs);
         
     // get how to access this value
 virtual Exp* getLeft() { return lhs; }
-    virtual Type* getLeftType() { return NULL; }
+// virtual Type* getLeftType() { return NULL; }
 
     // set the lhs to something new
     void         setLeft(Exp* e)  { lhs = e; }
-
-    // update type for expression
-    virtual Type *updateType(Exp *e, Type *curType);
 
     // memory depth
     int getMemDepth();
@@ -338,11 +332,13 @@ void generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {}
     virtual void genConstraints(LocationSet& cons);
 
 protected:
-    virtual bool doReplaceRef(Exp* from, Exp* to) = 0;
+    virtual bool doReplaceRef(Exp* from, Exp* to);
 
     friend class XMLProgParser;
 };      // class Assignment
 
+
+// Assign: an ordinary assignment with left and right sides
 class Assign : public Assignment {
     Exp*    rhs;
     Exp*    guard;
@@ -375,53 +371,49 @@ virtual bool accept(StmtVisitor* visitor);
 virtual bool accept(StmtExpVisitor* visitor);
 virtual bool accept(StmtModifier* visitor);
 
-virtual void print(std::ostream& os, bool withDF = false);
+virtual void print(std::ostream& os);
 
     // Guard
     void setGuard(Exp* g) {guard = g;}
     Exp* getGuard() {return guard;}
     bool isGuarded() {return guard != NULL;}
 
-    virtual bool usesExp(Exp *e);
-    virtual bool isDefinition() { return true; }
+virtual bool usesExp(Exp *e);
+virtual bool isDefinition() { return true; }
         
     // get how to access this value
-    virtual Exp* getLeft() { return lhs; }
-    virtual Type* getLeftType() { return NULL; }
-
-    // set the lhs to something new
-    void         setLeft(Exp* e)  { lhs = e; }
+virtual Exp* getLeft() { return lhs; }
 
     // inline any constants in the statement
-    virtual void processConstants(Prog *prog);
+virtual void processConstants(Prog *prog);
 
     // general search
-    virtual bool search(Exp* search, Exp*& result);
-    virtual bool searchAll(Exp* search, std::list<Exp*>& result);
+virtual bool search(Exp* search, Exp*& result);
+virtual bool searchAll(Exp* search, std::list<Exp*>& result);
 
     // general search and replace
-    virtual bool searchAndReplace(Exp *search, Exp *replace);
+virtual bool searchAndReplace(Exp *search, Exp *replace);
  
     // memory depth
     int getMemDepth();
 
     // from SSA form
-    virtual void fromSSAform(igraph& ig);
+virtual void fromSSAform(igraph& ig);
 
     // Generate code
-    virtual void generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+virtual void generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
     // simpify internal expressions
-    virtual void simplify();
+virtual void simplify();
 
     // simplify address expressions
-    virtual void simplifyAddr();
+virtual void simplifyAddr();
 
     // fixSuccessor (succ(r2) -> r3)
-    virtual void fixSuccessor();
+virtual void fixSuccessor();
 
     // generate Constraints
-    virtual void genConstraints(LocationSet& cons);
+virtual void genConstraints(LocationSet& cons);
 
 protected:
     virtual bool doReplaceRef(Exp* from, Exp* to);
@@ -446,19 +438,68 @@ class PhiAssign : public Assignment {
 public:
     // Constructor, subexpression
             PhiAssign(Exp* lhs)
-              : Assignment(lhs) {}
+              : Assignment(lhs) {kind = STMT_PHIASSIGN;}
     // Constructor, type and subexpression
             PhiAssign(Type* ty, Exp* lhs)
-              : Assignment(ty, lhs) {}
+              : Assignment(ty, lhs) {kind = STMT_PHIASSIGN;}
     // Copy constructor
             PhiAssign(Assign& o);
     // Destructor
-            ~PhiAssign() {}
+virtual     ~PhiAssign() {}
 
     // Clone
-    virtual Statement* clone();
+virtual Statement* clone();
 
+    // get how to replace this statement in a use
+virtual Exp* getRight() { return NULL; }
+
+    // Accept a visitor to this Statement
+virtual bool accept(StmtVisitor* visitor);
+virtual bool accept(StmtExpVisitor* visitor);
+virtual bool accept(StmtModifier* visitor);
 virtual bool usesExp(Exp *e);
+
+virtual void print(std::ostream& os);
+
+    // inline any constants in the statement
+virtual void processConstants(Prog *prog);
+
+    // general search
+virtual bool search(Exp* search, Exp*& result);
+virtual bool searchAll(Exp* search, std::list<Exp*>& result);
+
+    // general search and replace
+virtual bool searchAndReplace(Exp *search, Exp *replace);
+ 
+    // simplify all the uses/defs in this RTL
+virtual void simplify();
+
+    // from SSA form
+virtual void fromSSAform(igraph& ig);
+
+    // Generate constraints
+    virtual void genConstraints(LocationSet& cons);
+//
+//  Phi specific functions
+//
+
+    // Get or put the statement at index idx
+    Statement*  getAt(int idx) {return stmtVec.getAt(idx);}
+    void        putAt(int idx, Statement* d) {stmtVec.putAt(idx, d);}
+    void        simplifyRefs();
+virtual int     getNumRefs() {return stmtVec.size();}
+    StatementVec& getRefs() {return stmtVec;}
+    // A hack. Check MVE
+    bool        hasGlobalFuncParam();
+
+    StatementVec::iterator begin() {return stmtVec.begin();}
+    StatementVec::iterator end()   {return stmtVec.end();}
+
+    // Convert this phi assignment to an ordinary assignment
+    void        convertToAssign(Exp* rhs);
+
+protected:
+    friend class XMLProgParser;
 };  // class PhiAssign
 
 // An implicit assignment has only a left hand side. It is a placeholder for
@@ -469,10 +510,10 @@ class ImplicitAssign : public Assignment {
 public:
     // Constructor, subexpression
             ImplicitAssign(Exp* lhs)
-              : Assignment(lhs) {}
+              : Assignment(lhs) {kind = STMT_IMPASSIGN;}
     // Constructor, type, and subexpression
             ImplicitAssign(Type* ty, Exp* lhs)
-              : Assignment(ty, lhs) {}
+              : Assignment(ty, lhs) {kind = STMT_IMPASSIGN; }
     // Copy constructor
             ImplicitAssign(ImplicitAssign& o);
     // Destructor
@@ -481,6 +522,9 @@ public:
     // Clone
     virtual Statement* clone();
 
+    // inline any constants in the statement
+virtual void processConstants(Prog *prog);
+
     // general search
     virtual bool search(Exp* search, Exp*& result);
     virtual bool searchAll(Exp* search, std::list<Exp*>& result);
@@ -488,8 +532,10 @@ public:
     // general search and replace
     virtual bool searchAndReplace(Exp *search, Exp *replace);
  
+virtual void print(std::ostream& os);
+
 virtual bool usesExp(Exp *e);
-};
+};  // class ImplicitAssign
 
 /*=============================================================================
  * GotoStatement has just one member variable, an expression representing the
@@ -540,7 +586,7 @@ public:
     void setIsComputed(bool b = true);
     bool isComputed();
 
-    virtual void print(std::ostream& os = std::cout, bool withDF = false);
+    virtual void print(std::ostream& os = std::cout);
 
     // general search
     virtual bool search(Exp*, Exp*&);
@@ -565,7 +611,6 @@ public:
     virtual Exp* getRight() {return NULL;}
     virtual bool usesExp(Exp*) {return false;}
     virtual void processConstants(Prog*) {}
-    virtual Type* updateType(Exp* e, Type* curType) {return curType;}
     virtual void fromSSAform(igraph&) {}
     virtual bool doReplaceRef(Exp*, Exp*) {return false;}
 
@@ -629,8 +674,7 @@ public:
     // signed conditional branch
     void makeSigned();
 
-    virtual void print(std::ostream& os = std::cout, bool withDF = false);
-    virtual void print(std::ostream& os) { print(os, true); }
+    virtual void print(std::ostream& os = std::cout);
 
     // general search
     virtual bool search(Exp *search, Exp *&result);
@@ -670,9 +714,6 @@ public:
 
     // simplify all the uses/defs in this RTL
     virtual void simplify();
-
-    // update type for expression
-    virtual Type *updateType(Exp *e, Type *curType);
 
     // From SSA form
     virtual void fromSSAform(igraph& ig);
@@ -725,7 +766,7 @@ public:
     SWITCH_INFO* getSwitchInfo(); 
     void setSwitchInfo(SWITCH_INFO* pss);
     
-    virtual void print(std::ostream& os = std::cout, bool withDF = false);
+    virtual void print(std::ostream& os = std::cout);
 
     // Replace all instances of "search" with "replace".
     virtual bool searchAndReplace(Exp* search, Exp* replace);
@@ -827,7 +868,7 @@ public:
     void clearLiveEntry();
 
 
-    virtual void print(std::ostream& os = std::cout, bool withDF = false);
+    virtual void print(std::ostream& os = std::cout);
 
     // general search
     virtual bool search(Exp *search, Exp *&result);
@@ -880,9 +921,6 @@ public:
     // simplify all the uses/defs in this RTL
     virtual void simplify();
 
-    // update type for expression
-    virtual Type *updateType(Exp *e, Type *curType);
-
     void setIgnoreReturnLoc(bool b);
 
     void decompile();
@@ -928,7 +966,7 @@ public:
     virtual bool accept(StmtModifier* visitor);
 
     // print
-    virtual void print(std::ostream& os = std::cout, bool withDF = false);
+    virtual void print(std::ostream& os = std::cout);
 
     // From SSA form
     virtual void fromSSAform(igraph& igm);
@@ -1016,7 +1054,7 @@ public:
 
     void makeSigned();
 
-    virtual void print(std::ostream& os = std::cout, bool withDF = false);
+    virtual void print(std::ostream& os = std::cout);
 
 #if 0
     // Used for type analysis. Stores type information that
@@ -1038,12 +1076,10 @@ public:
     virtual Type* getLeftType();
     virtual Exp* getRight() { return getCondExpr(); }
     virtual bool usesExp(Exp *e);
-    virtual void print(std::ostream &os) { print(os, false); }
     virtual void processConstants(Prog *prog);
     virtual bool search(Exp *search, Exp *&result);
     virtual bool searchAll(Exp* search, std::list<Exp*>& result);
     virtual bool searchAndReplace(Exp *search, Exp *replace);
-    virtual Type* updateType(Exp *e, Type *curType);
     virtual bool doReplaceRef(Exp* from, Exp* to);
     // from SSA form
     virtual void fromSSAform(igraph& ig);

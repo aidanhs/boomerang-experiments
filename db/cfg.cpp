@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.74.2.4 $
+ * $Revision: 1.74.2.5 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -1392,17 +1392,17 @@ void Cfg::simplify() {
 }
 
 // print this cfg, mainly for debugging
-void Cfg::print(std::ostream &out, bool withDF) {
+void Cfg::print(std::ostream &out) {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
       it++) 
-        (*it)->print(out, withDF);
+        (*it)->print(out);
     out << std::endl;
 }
 
-void Cfg::printToLog(bool withDF) {
+void Cfg::printToLog() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
       it++) 
-        (*it)->printToLog(withDF);
+        (*it)->printToLog();
     LOG << "\n";
 }
 
@@ -2168,8 +2168,7 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
                 if (s.find(y) == s.end()) {
                     // Insert trivial phi function for a at top of block y
                     // a := phi{}
-                    Statement* as = new Assign(a->clone(),
-                      new PhiExp(a->clone()));
+                    Statement* as = new PhiAssign(a->clone());
                     PBB Ybb = BBs[y];
                     Ybb->prependStmt(as, proc);
                     // A_phi[a] <- A_phi[a] U {y}
@@ -2267,13 +2266,13 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
 		Statement* S;
         for (S = Ybb->getFirstStmt(rit, sit); S;
              S = Ybb->getNextStmt(rit, sit)) {
-            Assign* ae = dynamic_cast<Assign*>(S);
+            PhiAssign* pa = dynamic_cast<PhiAssign*>(S);
             // if S is not a phi function, then quit the loop (no more phi's)
             // wrong: do not quit the loop, there's an optimisation that 
             // turns phis with a single param into refs.
-            if (!ae || !ae->isPhi()) continue;
+            if (!pa) continue;
             // Suppose the jth operand of the phi is a; we just get the LHS
-            Exp* a = ae->getLeft();
+            Exp* a = pa->getLeft();
             // Only consider variables of the current memory depth
             // (since we only have reaching defs for these)
             if (a->getMemDepth() != memDepth) continue;
@@ -2284,7 +2283,7 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
             else
                 def = Stack[a].top();
             // "Replace jth operand with a_i"
-            ((PhiExp*)ae->getRight())->putAt(j, def);
+            pa->putAt(j, def);
         }
     }
     // For each child X of n

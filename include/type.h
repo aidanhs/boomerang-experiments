@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.29.2.2 $
+ * $Revision: 1.29.2.3 $
  *
  * 20 Mar 01 - Mike: Added operator*= (compare, ignore sign, and consider all
  *                  floats > 64 bits to be the same
@@ -193,7 +193,8 @@ protected:
 class IntegerType : public Type {
 private:
     int         size;               // Size in bits, e.g. 16
-    int         signd;              // 1=signed, 0=unsigned, -1=unknown
+    int         signedness;         // pos=signed, neg=unsigned, 0=unknown or
+                                    // evenly matched
 
 public:
 	IntegerType(int sz = 32, int sign = -1);
@@ -210,11 +211,13 @@ virtual Exp *match(Type *pattern);
 virtual int     getSize() const;
 virtual void    setSize(int sz) {size = sz;}
         // Is it signed? 0=no, 1=yes, -1 = don't know
-        int     isSigned() { return signd; }
-        void    setSigned(int sg) { signd = sg; }
+        bool    isSigned() { return signedness >= 0; }
+        // A hint for signedness
+        void    bumpSigned(int sg) { signedness += sg; }
+        // Do we need this? Set absolute signedness
+        void    setSigned(int sg) {signedness = sg; }
 
-
-// Get the C type a a string. If full, output comments re the lack of sign
+// Get the C type as a string. If full, output comments re the lack of sign
 // information (in IntegerTypes).
 virtual const char *getCtype(bool full = true) const;
 

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.7 $
+ * $Revision: 1.112.2.8 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -170,7 +170,7 @@ bool Statement::calcMayAlias(Exp *e1, Exp *e2, int size) {
  *============================================================================*/
 std::ostream& operator<<(std::ostream& os, Statement* s) {
     if (s == NULL) {os << "NULL "; return os;}
-    s->print(os, true);
+    s->print(os);
     return os;
 }
 
@@ -191,16 +191,9 @@ bool Statement::isFlagAssgn() {
 }
 
     
-bool Statement::isPhi() {
-    if (kind != STMT_ASSIGN)
-        return false;
-    Exp* rhs = ((Assign*)this)->getRight();
-    return /*rhs &&*/  rhs->isPhi();
-}
-    
 char* Statement::prints() {
     std::ostringstream ost;
-    print(ost, true);
+    print(ost);
     strncpy(debug_buffer, ost.str().c_str(), 199);
     debug_buffer[199] = '\0';
     return debug_buffer;
@@ -574,13 +567,13 @@ bool GotoStatement::searchAll(Exp* search, std::list<Exp*> &result) {
  * PARAMETERS:      os: stream to write to
  * RETURNS:         Nothing
  *============================================================================*/
-void GotoStatement::print(std::ostream& os /*= cout*/, bool withDF) {
+void GotoStatement::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
     os << "GOTO ";
     if (pDest == NULL)
         os << "*no dest*";
     else if (pDest->getOper() != opIntConst)
-         pDest->print(os, withDF);
+         pDest->print(os);
     else
         os << "0x" << std::hex << getFixedDest();
 }
@@ -825,16 +818,6 @@ bool BranchStatement::searchAndReplace(Exp* search, Exp* replace) {
     return change;
 }
 
-// update type for expression
-Type *BranchStatement::updateType(Exp *e, Type *curType) {
-    if (jtCond == BRANCH_JUGE || jtCond == BRANCH_JULE ||
-        jtCond == BRANCH_JUG || jtCond == BRANCH_JUL && 
-        curType->isInteger()) {
-        ((IntegerType*)curType)->setSigned(false);
-    }
-    return curType;
-}
-
 // Convert from SSA form
 void BranchStatement::fromSSAform(igraph& ig) {
     if (pCond)
@@ -861,7 +844,7 @@ bool BranchStatement::searchAll(Exp* search, std::list<Exp*> &result) {
  * PARAMETERS:      os: stream
  * RETURNS:         Nothing
  *============================================================================*/
-void BranchStatement::print(std::ostream& os /*= cout*/, bool withDF) {
+void BranchStatement::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
     os << "BRANCH ";
     if (pDest == NULL)
@@ -1228,7 +1211,7 @@ bool CaseStatement::searchAll(Exp* search, std::list<Exp*> &result) {
  *                  indent: number of columns to skip
  * RETURNS:         Nothing
  *============================================================================*/
-void CaseStatement::print(std::ostream& os /*= cout*/, bool withDF) {
+void CaseStatement::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
     if (pSwitchInfo == NULL) {
         os << "CASE [";
@@ -1670,7 +1653,7 @@ bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
  * PARAMETERS:      os: stream to write to
  * RETURNS:         Nothing
  *============================================================================*/
-void CallStatement::print(std::ostream& os /*= cout*/, bool withDF) {
+void CallStatement::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
  
     os << "CALL ";
@@ -1682,7 +1665,7 @@ void CallStatement::print(std::ostream& os /*= cout*/, bool withDF) {
         if (pDest->isIntConst())
             os << "0x" << std::hex << ((Const*)pDest)->getInt();
         else
-            pDest->print(os, withDF);       // Could still be an expression
+            pDest->print(os);       // Could still be an expression
     }
 
     // Print the actual arguments of the call
@@ -1831,11 +1814,6 @@ void CallStatement::decompile() {
     }
 }
 #endif
-
-// update type for expression
-Type *CallStatement::updateType(Exp *e, Type *curType) {
-    return curType;
-}
 
 bool CallStatement::usesExp(Exp *e) {
     Exp *where;
@@ -2377,7 +2355,7 @@ void ReturnStatement::fromSSAform(igraph& ig) {
     }
 }
 
-void ReturnStatement::print(std::ostream& os /*= cout*/, bool withDF) {
+void ReturnStatement::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
     os << "RET ";
     for (unsigned i = 0; i < returns.size(); i++) {
@@ -2529,10 +2507,10 @@ void BoolStatement::setCondExpr(Exp* pss) {
  * PARAMETERS:      os: stream
  * RETURNS:         <Nothing>
  *============================================================================*/
-void BoolStatement::print(std::ostream& os /*= cout*/, bool withDF) {
+void BoolStatement::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
     os << "BOOL ";
-    pDest->print(os, withDF);
+    pDest->print(os);
     os << " := CC(";
     switch (jtCond)
     {
@@ -2646,11 +2624,6 @@ bool BoolStatement::searchAndReplace(Exp *search, Exp *replace) {
     return change;
 }
 
-Type* BoolStatement::updateType(Exp *e, Type *curType) {
-    ;//delete curType;
-    return new BooleanType();
-}
-
 // Convert from SSA form
 void BoolStatement::fromSSAform(igraph& ig) {
     pCond = pCond->fromSSA(ig); 
@@ -2677,8 +2650,7 @@ void BoolStatement::setDest(std::list<Statement*>* stmts) {
 Assignment::~Assignment() {}
 
 Assign::Assign(Exp* lhs, Exp* rhs)
-  : Assignment(lhs), rhs(rhs), guard(NULL)
-{
+  : Assignment(lhs), rhs(rhs), guard(NULL) {
     kind = STMT_ASSIGN;
     // MVE: Can go soon:
     if (lhs->getOper() == opTypedExp) { 
@@ -2708,8 +2680,17 @@ Statement* Assign::clone() {
     return a;
 }
 
+Statement* PhiAssign::clone() {
+    PhiAssign* pa = new PhiAssign(type, lhs);
+    pa->stmtVec = stmtVec;      // Copy the vector of locations
+    return pa;
+}
+
 // visit this Statement
 bool Assign::accept(StmtVisitor* visitor) {
+    return visitor->visit(this);
+}
+bool PhiAssign::accept(StmtVisitor* visitor) {
     return visitor->visit(this);
 }
 
@@ -2739,7 +2720,7 @@ void Assign::simplify() {
         ((RefExp*)lhs->getSubExp1())->getRef() &&
         ((RefExp*)lhs->getSubExp1())->getRef()->isPhi()) {
         Statement *phistmt = ((RefExp*)lhs->getSubExp1())->getRef();
-        PhiExp *phi = (PhiExp*)phistmt->getRight();
+        PhiAssign *phi = (PhiAssign*)phistmt;
         if (phi->getNumRefs() == 2 && 
             phi->getAt(0) && phi->getAt(1) &&
             phi->getAt(0)->isAssign() &&
@@ -2751,7 +2732,7 @@ void Assign::simplify() {
                 a4->getRight()->getSubExp1()->getOper() == opSubscript &&
                 ((RefExp*)a4->getRight()->getSubExp1())->getRef() == phistmt &&
                 *a4->getRight()->getSubExp1()->getSubExp1() == 
-                                                        *phi->getSubExp1() &&
+                                                        *phi->getLeft() &&
                 a4->getRight()->getSubExp2()->getOper() == opIntConst) {
                 Type *ty = a1->getRight()->getType();
                 int b = ((Const*)a4->getRight()->getSubExp2())->getInt();
@@ -2792,9 +2773,9 @@ void Assign::simplify() {
         lhs->getSubExp1()->getOper() == opSubscript) {
         RefExp *ref = (RefExp*)lhs->getSubExp1();
         Statement *phist = ref->getRef();
-        PhiExp *phi = NULL;
+        PhiAssign *phi = NULL;
         if (phist && phist->getRight())
-            phi = dynamic_cast<PhiExp*>(phist->getRight());
+            phi = dynamic_cast<PhiAssign*>(phist);
         for (int i = 0; phi && i < phi->getNumRefs(); i++) 
             if (phi->getAt(i)) {
                 Assign *def = dynamic_cast<Assign*>(phi->getAt(i));
@@ -2872,13 +2853,29 @@ void Assign::fixSuccessor() {
     rhs = rhs->fixSuccessor();
 }
 
-void Assign::print(std::ostream& os, bool withDF) {
+void Assign::print(std::ostream& os) {
     os << std::setw(4) << std::dec << number << " ";
     os << "*" << type << "* ";
-    if (lhs) lhs->print(os, withDF);
+    if (lhs) lhs->print(os);
     os << " := ";
-    if (rhs) rhs->print(os, withDF);
+    if (rhs) rhs->print(os);
 }
+void PhiAssign::print(std::ostream& os) {
+    os << std::setw(4) << std::dec << number << " ";
+    os << "*" << type << "* ";
+    if (lhs) lhs->print(os);
+    os << " := phi(";
+    stmtVec.printNums(os);
+    os << ")";
+}
+void ImplicitAssign::print(std::ostream& os) {
+    os << std::setw(4) << std::dec << number << " ";
+    os << "*" << type << "* ";
+    if (lhs) lhs->print(os);
+    os << " := -";
+}
+
+
 
 // All the Assignment-derived classes have the same definitions: the lhs
 void Assignment::getDefinitions(LocationSet &defs) {
@@ -2898,6 +2895,12 @@ bool Assign::search(Exp* search, Exp*& result) {
         return true;
     return rhs->search(search, result);
 }
+bool PhiAssign::search(Exp* search, Exp*& result) {
+    return lhs->search(search, result);
+}
+bool ImplicitAssign::search(Exp* search, Exp*& result) {
+    return lhs->search(search, result);
+}
 
 bool Assign::searchAll(Exp* search, std::list<Exp*>& result) {
     bool res;
@@ -2910,6 +2913,12 @@ bool Assign::searchAll(Exp* search, std::list<Exp*>& result) {
         result.push_back(*it);
     return res;
 }
+bool PhiAssign::searchAll(Exp* search, std::list<Exp*>& result) {
+    return lhs->searchAll(search, result);
+}
+bool ImplicitAssign::searchAll(Exp* search, std::list<Exp*>& result) {
+    return lhs->searchAll(search, result);
+}
 
 bool Assign::searchAndReplace(Exp* search, Exp* replace) {
     bool change = false;
@@ -2917,15 +2926,11 @@ bool Assign::searchAndReplace(Exp* search, Exp* replace) {
     rhs = rhs->searchReplaceAll(search, replace, change);
     return change;
 }
-
-bool ImplicitAssign::search(Exp* search, Exp*& result) {
-    return (lhs->search(search, result));
+bool PhiAssign::searchAndReplace(Exp* search, Exp* replace) {
+    bool change = false;
+    lhs = lhs->searchReplaceAll(search, replace, change);
+    return change;
 }
-
-bool ImplicitAssign::searchAll(Exp* search, std::list<Exp*>& result) {
-    return lhs->searchAll(search, result);
-}
-
 bool ImplicitAssign::searchAndReplace(Exp* search, Exp* replace) {
     bool change = false;
     lhs = lhs->searchReplaceAll(search, replace, change);
@@ -2953,9 +2958,8 @@ void Assignment::fromSSAform(igraph& ig) {
     lhs = lhs->fromSSAleft(ig, this);
 }
 
-// update type for expression MVE: to go soon
-Type *Assignment::updateType(Exp *e, Type *curType) {
-    return curType;
+void PhiAssign::fromSSAform(igraph& ig) {
+    lhs = lhs->fromSSAleft(ig, this);
 }
 
 bool Assign::usesExp(Exp *e) {
@@ -3031,7 +3035,21 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
     return false;
 }
 
+bool Assignment::doReplaceRef(Exp* from, Exp* to) {
+    bool change = false;
+    // If LHS is a memof, substitute its subexpression
+    if (lhs->isMemOf()) {
+        Exp* subsub1 = ((Unary*)lhs)->getSubExp1();
+        ((Unary*)lhs)->setSubExp1ND(
+          subsub1->searchReplaceAll(from, to, change));
+    }
+    if (change)
+        lhs = lhs->simplifyArith()->simplify();
+    return false;
+}
+
 // Not sure if anything needed here
+// MVE: check if can be deleted
 void Assign::processConstants(Prog* prog) {
 #if 0
     LOG << "processing constants in assign lhs: " << lhs << " type: ";
@@ -3042,6 +3060,11 @@ void Assign::processConstants(Prog* prog) {
         LOG << "none\n";
 #endif
     rhs = processConstant(rhs, getTypeFor(lhs, prog), prog, proc);
+}
+
+void PhiAssign::processConstants(Prog* prog) {
+}
+void ImplicitAssign::processConstants(Prog* prog) {
 }
 
 void Assignment::genConstraints(LocationSet& cons) {
@@ -3061,6 +3084,20 @@ void Assign::genConstraints(LocationSet& cons) {
         new Unary(opTypeOf,
             new RefExp(lhs->clone(), this)));
     if (con) cons.insert(con);
+}
+
+void PhiAssign::genConstraints(LocationSet& cons) {
+    // Generate a constraints st that all the phi's have to be the same type as
+    // result
+    Exp* result = new Unary(opTypeOf, lhs);
+    StatementVec::iterator uu;
+    for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
+        Exp* conjunct = new Binary(opEquals,
+            result,
+            new Unary(opTypeOf,
+                new RefExp(lhs, *uu)));
+        cons.insert(conjunct);
+    }
 }
 
 void CallStatement::genConstraints(LocationSet& cons) {
@@ -3171,13 +3208,78 @@ void CallStatement::genConstraints(LocationSet& cons) {
     }
 }
 
+#if 0   // Get rid of this: MVE
+void Exp::genConditionConstraints(LocationSet& cons) {
+    // cond should be of the form a relop b, where relop is opEquals, opLess
+    // etc
+    assert(getArity() == 2);
+    Exp* a = ((Binary*)this)->getSubExp1();
+    Exp* b = ((Binary*)this)->getSubExp2();
+    // Constraint typeof(a) == typeof(b)
+    // Generate constraints for a and b separately (if any)
+    Exp* Ta; Exp* Tb;
+    // MVE: are there other times when this is needed?
+    if (a->isSizeCast()) {
+        Ta = new Unary(opTypeOf, ((Binary*)a)->getSubExp2());
+        Exp* con = a->genConstraints(Ta);
+        if (con && !con->isTrue()) cons.insert(con);
+    } else
+        Ta = new Unary(opTypeOf, a);
+    if (b->isSizeCast()) {
+        Tb = new Unary(opTypeOf, ((Binary*)b)->getSubExp2());
+        Exp* con = b->genConstraints(Tb);
+        if (con && !con->isTrue()) cons.insert(con);
+    } else
+        Tb = new Unary(opTypeOf, b);
+    Exp* equ = new Binary(opEquals, Ta, Tb);
+    cons.insert(equ);
+}
+#endif
+
 void BranchStatement::genConstraints(LocationSet& cons) {
     if (pCond == NULL && VERBOSE) {
         LOG << "Warning: BranchStatment " << number <<
             " has no condition expression!\n";
         return;
     }
-    pCond->genConditionConstraints(cons);
+    Type* opsType;
+    if (bFloat)
+        opsType = new FloatType(0);
+    else
+        opsType = new IntegerType(0);
+    if (  jtCond == BRANCH_JUGE || jtCond == BRANCH_JULE ||
+          jtCond == BRANCH_JUG || jtCond == BRANCH_JUL) {
+        assert(!bFloat);
+        ((IntegerType*)opsType)->bumpSigned(-1);
+    } else if (jtCond == BRANCH_JSGE || jtCond == BRANCH_JSLE ||
+               jtCond == BRANCH_JSG  || jtCond == BRANCH_JSL) {
+        assert(!bFloat);
+        ((IntegerType*)opsType)->bumpSigned(+1);
+    }
+
+    // Constraints leading from the condition
+    assert(pCond->getArity() == 2);
+    Exp* a = ((Binary*)pCond)->getSubExp1();
+    Exp* b = ((Binary*)pCond)->getSubExp2();
+    // Generate constraints for a and b separately (if any)
+    // Often only need a size, since we get basic type and signedness from
+    // the branch condition (e.g. jump if unsigned less)
+    Exp* Ta; Exp* Tb;
+    if (a->isSizeCast()) {
+        opsType->setSize(((Const*)((Binary*)a)->getSubExp1())->getInt());
+        Ta = new Unary(opTypeOf, ((Binary*)a)->getSubExp2());
+    } else
+        Ta = new Unary(opTypeOf, a);
+    if (b->isSizeCast()) {
+        opsType->setSize(((Const*)((Binary*)b)->getSubExp1())->getInt());
+        Tb = new Unary(opTypeOf, ((Binary*)b)->getSubExp2());
+    } else
+        Tb = new Unary(opTypeOf, b);
+    // Constrain that Ta == opsType and Tb == opsType
+    Exp* con = new Binary(opEquals, Ta, new TypeVal(opsType));
+    cons.insert(con);
+         con = new Binary(opEquals, Tb, new TypeVal(opsType));
+    cons.insert(con);
 }
 
 int Statement::setConscripts(int n) {
@@ -3226,6 +3328,15 @@ bool Assign::accept(StmtExpVisitor* v) {
     if (ret && rhs) ret = rhs->accept(v->ev);
     return ret;
 }
+
+bool PhiAssign::accept(StmtExpVisitor* v) {
+    bool override;
+    bool ret = v->visit(this, override);
+    if (override) return ret;
+    if (ret && lhs) ret = lhs->accept(v->ev);
+    return ret;
+}
+
 
 bool GotoStatement::accept(StmtExpVisitor* v) {
     bool override;
@@ -3308,6 +3419,16 @@ bool Assign::accept(StmtModifier* v) {
         LOG << "Assignment changed: now " << this << "\n";
     return true;
 }
+bool PhiAssign::accept(StmtModifier* v) {
+    bool recur;
+    v->visit(this, recur);
+    v->mod->clearMod();
+    if (recur) lhs = lhs->accept(v->mod);
+    if (VERBOSE && v->mod->isMod())
+        LOG << "PhiAssign changed: now " << this << "\n";
+    return true;
+}
+
 
 bool GotoStatement::accept(StmtModifier* v) {
     bool recur;
@@ -3392,5 +3513,134 @@ void Statement::subscriptVar(Exp* e, Statement* def) {
     ExpSubscripter es(e, def);
     StmtSubscripter ss(&es);
     accept(&ss);
+}
+
+// Convert this PhiAssignment to an ordinary Assignment
+// Hopefully, this is the only place that Statements change from one form
+// to another.
+// All throughout the code, we assume that the addresses of Statement objects
+// do not change, so we need this slight hack
+void PhiAssign::convertToAssign(Exp* rhs) {
+    Assign* a = new Assign(type, lhs, rhs);
+    assert(sizeof(Assign) <= sizeof(PhiAssign));
+    memcpy(this, a, sizeof(PhiAssign));
+}
+
+
+
+// This is a hack.  If we have a phi which has one of its
+// elements referencing a statement which is defined as a 
+// function address, then we can use this information to
+// resolve references to indirect calls more aggressively.
+// Note that this is not technically correct and will give
+// the wrong result if the callee of an indirect call
+// actually modifies a function pointer in the caller. 
+bool PhiAssign::hasGlobalFuncParam()
+{
+    unsigned n = stmtVec.size();
+    for (unsigned i = 0; i < n; i++) {
+        Statement* u = stmtVec.getAt(i);
+        if (u == NULL) continue;
+        Exp *right = u->getRight();
+        if (right == NULL)
+            continue;
+        if (right->getOper() == opGlobal ||
+            (right->getOper() == opSubscript &&
+             right->getSubExp1()->getOper() == opGlobal)) {
+            Exp *e = right;
+            if (right->getOper() == opSubscript)
+                e = right->getSubExp1();
+            char *nam = ((Const*)e->getSubExp1())->getStr();
+            Proc *p = proc->getProg()->findProc(nam);
+            if (p == NULL)
+                p = proc->getProg()->getLibraryProc(nam);
+            if (p) {
+                if (VERBOSE)
+                    LOG << "statement " << i << " of " << this 
+                        << " is a global func\n";
+                return true;
+            }
+        }
+#if 0
+        // BAD: this can loop forever if we have a phi loop
+        if (u->isPhi() && u->getRight() != this &&
+            ((PhiExp*)u->getRight())->hasGlobalFuncParam(prog))
+            return true;
+#endif
+    }
+    return false;
+}
+
+void PhiAssign::simplify() {
+    lhs = lhs->simplify();
+
+    if (stmtVec.begin() != stmtVec.end()) {
+        StatementVec::iterator uu;
+        bool allSame = true;
+        uu = stmtVec.begin();
+        Statement* first;
+        for (first = *uu++; uu != stmtVec.end(); uu++) {
+            if (*uu != first) {
+                allSame = false;
+                break;
+            }
+        }
+
+        if (allSame) {
+            if (VERBOSE)
+                LOG << "all the same in " << this << "\n";
+            convertToAssign(new RefExp(lhs, first));
+        }
+
+        bool onlyOneNotThis = true;
+        Statement *notthis = (Statement*)-1;
+        for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
+            if (*uu == NULL || !(*uu)->isPhi() || (*uu) != this)
+                if (notthis != (Statement*)-1) {
+                    onlyOneNotThis = false;
+                    break;
+                } else notthis = *uu;
+        }
+
+        if (onlyOneNotThis && notthis != (Statement*)-1) {
+            if (VERBOSE)
+                LOG << "all but one not this in " << this << "\n";
+            convertToAssign(new RefExp(lhs, notthis));
+        }
+    }
+}
+
+void PhiAssign::simplifyRefs() {
+    StatementVec::iterator uu;
+    for (uu = stmtVec.begin(); uu != stmtVec.end(); ) {
+        // Look for a phi chain: *uu is an assignment whose RHS is the same
+        // expression as our LHS
+        // It is most likely a phi statement that was converted to an Assign
+        if (*uu && (*uu)->getRight() && 
+              (*uu)->getRight()->getOper() == opSubscript &&
+              *(*uu)->getRight()->getSubExp1() == *lhs) {
+            // If the assignment is to this phi...
+            if (((RefExp*)(*uu)->getRight())->getRef() == this) {
+                // ... then *uu can be removed
+                if (VERBOSE)
+                    LOG << "removing statement " << *uu << " from phi at " 
+                        << number << "\n";
+                uu = stmtVec.remove(uu);
+                continue;
+            }
+            // Else follow the chain, to get closer to the real, utlimate
+            // definition
+            if (VERBOSE)
+                LOG << "replacing " << (*uu)->getNumber() << " with ";
+            *uu = ((RefExp*)(*uu)->getRight())->getRef();
+            if (VERBOSE) {
+                int n = 0;
+                if (*uu) n = (*uu)->getNumber();
+                LOG << n << " in phi at " << number << " result is: " <<
+                  this << "\n";
+            }
+        }
+        uu++;
+    }
 }
 

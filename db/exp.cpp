@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149.2.6 $
+ * $Revision: 1.149.2.7 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -144,14 +144,6 @@ FlagDef::FlagDef(Exp* params, RTL* rtl)
     : Unary(opFlagDef, params), rtl(rtl) {}
 
 RefExp::RefExp(Exp* e, Statement* d) : Unary(opSubscript, e), def(d) {
-}
-
-PhiExp::PhiExp(Exp* e, Statement* d) : Unary(opPhi, e)
-{   stmtVec.putAt(0, d);
-}
-
-PhiExp::PhiExp(PhiExp& o) : Unary(opPhi, subExp1)
-{   stmtVec = o.stmtVec;      // No need to clone: statements never move
 }
 
 TypeVal::TypeVal(Type* ty) : Terminal(opTypeVal), val(ty)
@@ -355,12 +347,6 @@ Exp* TypedExp::clone() {
     TypedExp* c = new TypedExp(type, subExp1->clone());
     return c;
 }
-Exp* PhiExp::clone() {
-    PhiExp* c = new PhiExp(subExp1->clone());
-    c->stmtVec = stmtVec;
-    c->stmt = stmt;
-    return c;
-}
 Exp* RefExp::clone() {
     RefExp* c = new RefExp(subExp1->clone(), def);
     return c;
@@ -452,13 +438,6 @@ bool RefExp::operator==(const Exp& o) const {
     if ((int)def == -1) return true;
     if ((int)((RefExp&)o).def == -1) return true;
     return def == ((RefExp&)o).def;
-}
-
-bool PhiExp::operator==(const Exp& o) const {
-    if (((PhiExp&)o).op == opWild) return true;
-    if (((PhiExp&)o).op != opPhi) return false;
-    if (!( *subExp1 == *((PhiExp&)o).subExp1)) return false;
-    return stmtVec == ((PhiExp&)o).stmtVec;
 }
 
 bool TypeVal::operator==(const Exp& o) const {
@@ -588,14 +567,6 @@ bool RefExp::operator< (const Exp& o) const {
     return def < ((RefExp&)o).def;
 }
 
-bool PhiExp::operator< (const Exp& o) const {
-    if (opPhi < o.getOper()) return true;
-    if (opPhi > o.getOper()) return false;
-    if (*subExp1 < *((Unary&)o).getSubExp1()) return true;
-    if (*((Unary&)o).getSubExp1() < *subExp1) return false;
-    return stmtVec < ((PhiExp&)o).stmtVec;
-}
-
 bool TypeVal::operator< (const Exp& o) const {
     if (opTypeVal < o.getOper()) return true;
     if (opTypeVal > o.getOper()) return false;
@@ -663,15 +634,6 @@ bool RefExp::operator*=(Exp& o) {
     return *subExp1 *= *other;
 }
 
-bool PhiExp::operator*=(Exp& o) {
-    Exp* other = &o;
-    if (o.getOper() == opSubscript) other = o.getSubExp1();
-    if (((PhiExp*)other)->op == opWild) return true;
-    if (((PhiExp*)other)->op != opPhi) return false;
-    if (!( *subExp1 *= *((PhiExp*)other)->subExp1)) return false;
-    return stmtVec == ((PhiExp*)other)->stmtVec;
-}
-
 bool TypeVal::operator*=(Exp& o) {
     Exp* other = &o;
     if (o.getOper() == opSubscript) other = o.getSubExp1();
@@ -689,7 +651,7 @@ bool TypeVal::operator*=(Exp& o) {
 //  //  //  //
 //  Const   //
 //  //  //  //
-void Const::print(std::ostream& os, bool withUses) {
+void Const::print(std::ostream& os) {
     switch (op) {
         case opIntConst:
             os << std::dec << u.i;
@@ -711,17 +673,17 @@ void Const::print(std::ostream& os, bool withUses) {
         os << "\\" << std::dec << conscript << "\\";
 }
 
-void Const::printNoQuotes(std::ostream& os, bool withUses) {
+void Const::printNoQuotes(std::ostream& os) {
     if (op == opStrConst)
         os << u.p;
     else
-        print(os, withUses);
+        print(os);
 }
 
 //  //  //  //
 //  Binary  //
 //  //  //  //
-void Binary::printr(std::ostream& os, bool withUses) {
+void Binary::printr(std::ostream& os) {
     // The "r" is for recursive: the idea is that we don't want parentheses at
     // the outer level, but a subexpression (recursed from a higher level), we
     // want the parens (at least for standard infix operators)
@@ -730,7 +692,7 @@ void Binary::printr(std::ostream& os, bool withUses) {
         case opList:        // Otherwise, you get (a, (b, (c, d)))
             // There may be others
             // These are the noparen cases
-            print(os, withUses); return;
+            print(os); return;
         default:
             break;
     }
@@ -739,7 +701,7 @@ void Binary::printr(std::ostream& os, bool withUses) {
     os << "(" << this << ")";
 }
 
-void Binary::print(std::ostream& os, bool withUses) {
+void Binary::print(std::ostream& os) {
     Exp* p1 = ((Binary*)this)->getSubExp1();
     Exp* p2 = ((Binary*)this)->getSubExp2();
     // Special cases
@@ -749,13 +711,13 @@ void Binary::print(std::ostream& os, bool withUses) {
             // after m[...]
             // *size* is printed after the expression, even though it comes
             //  from the first subexpression
-            p2->printr(os, withUses); os << "*"; p1->printr(os, withUses);
+            p2->printr(os); os << "*"; p1->printr(os);
             os << "*";
             return;
         case opFlagCall:
             // The name of the flag function (e.g. ADDFLAGS) should be enough
-            ((Const*)p1)->printNoQuotes(os, withUses);
-            os << "( "; p2->printr(os, withUses); os << " )";
+            ((Const*)p1)->printNoQuotes(os);
+            os << "( "; p2->printr(os); os << " )";
             return;
         case opExpTable:
         case opNameTable:
@@ -769,22 +731,22 @@ void Binary::print(std::ostream& os, bool withUses) {
         case opList:
             // Because "," is the lowest precedence operator, we don't need
             // printr here. Also, same as UQBT, so easier to test
-            p1->print(os, withUses);
+            p1->print(os);
             if (!p2->isNil())
                 os << ", "; 
-            p2->print(os, withUses);
+            p2->print(os);
             return;
 
         case opMemberAccess:
-            p1->print(os, withUses);
+            p1->print(os);
             os << ".";
-            ((Const*)p2)->printNoQuotes(os, withUses);
+            ((Const*)p2)->printNoQuotes(os);
             return;
 
         case opArraySubscript:
-            p1->print(os, withUses);
+            p1->print(os);
             os << "[";
-            p2->print(os, withUses);
+            p2->print(os);
             os << "]";
             return;
 
@@ -796,7 +758,7 @@ void Binary::print(std::ostream& os, bool withUses) {
     if (p1 == NULL)
         os << "<NULL>";
     else
-        p1->printr(os, withUses);
+        p1->printr(os);
     switch (op) {
         case opPlus:    os << " + ";  break;
         case opMinus:   os << " - ";  break;
@@ -846,7 +808,7 @@ void Binary::print(std::ostream& os, bool withUses) {
     if (p2 == NULL)
         os << "<NULL>";
     else
-        p2->printr(os, withUses);
+        p2->printr(os);
 
 }
 
@@ -854,7 +816,7 @@ void Binary::print(std::ostream& os, bool withUses) {
 //  //  //  //  //
 //   Terminal   //
 //  //  //  //  //
-void Terminal::print(std::ostream& os, bool withUses) {
+void Terminal::print(std::ostream& os) {
     switch (op) {
         case opPC:      os << "%pc";   break;
         case opFlags:   os << "%flags"; break;
@@ -889,7 +851,7 @@ void Terminal::print(std::ostream& os, bool withUses) {
 //  //  //  //
 //   Unary  //
 //  //  //  //
-void Unary::print(std::ostream& os, bool withUses) {
+void Unary::print(std::ostream& os) {
     Exp* p1 = ((Unary*)this)->getSubExp1();
     switch (op) {
         //  //  //  //  //  //  //
@@ -902,7 +864,7 @@ void Unary::print(std::ostream& os, bool withUses) {
                 break;
             } else if (p1->isTemp()) {
                 // Just print the temp {   // balance }s
-                p1->print(os, withUses);
+                p1->print(os);
                 break;
             }
             // Else fall through
@@ -916,7 +878,7 @@ void Unary::print(std::ostream& os, bool withUses) {
                 case opKindOf:os << "K["; break;
                 default: break;     // Suppress compiler warning
             }
-            if (op == opVar) ((Const*)p1)->printNoQuotes(os, withUses);
+            if (op == opVar) ((Const*)p1)->printNoQuotes(os);
             // Use print, not printr, because this is effectively the top
             // level again (because the [] act as parentheses)
             else {
@@ -925,7 +887,7 @@ void Unary::print(std::ostream& os, bool withUses) {
                     os << std::hex << ((Const*)p1)->getInt();
                 else
 #endif
-                    p1->print(os, withUses);
+                    p1->print(os);
             }
             os << "]";
             break;
@@ -939,11 +901,11 @@ void Unary::print(std::ostream& os, bool withUses) {
             else if (op == opLNot) os << "L~";
             else if (op == opFNeg) os << "~f ";
             else                   os << "-";
-            p1->printr(os, withUses);
+            p1->printr(os);
             return;
 
         case opSignExt:
-            p1->printr(os, withUses);
+            p1->printr(os);
             os << "!";          // Operator after expression
             return;
 
@@ -973,13 +935,13 @@ void Unary::print(std::ostream& os, bool withUses) {
                 case opSuccessor: os << "succ("; break;
                 default: break;         // For warning
             }
-            p1->printr(os, withUses);
+            p1->printr(os);
             os << ")";
             return;
 
         //  Misc    //
         case opSgnEx:      // Different because the operator appears last
-            p1->printr(os, withUses);
+            p1->printr(os);
             os << "! ";
             return;
         case opTemp:
@@ -988,21 +950,21 @@ void Unary::print(std::ostream& os, bool withUses) {
         case opLocal:
         case opParam:
             // Print a more concise form than param["foo"] (just foo)
-            ((Const*)p1)->printNoQuotes(os, withUses);
+            ((Const*)p1)->printNoQuotes(os);
             return;
         case opPhi:
             os << "phi(";
-            p1->print(os, withUses);
+            p1->print(os);
             os << ")";
             return;
         case opFtrunc:
             os << "ftrunc(";
-            p1->print(os, withUses);
+            p1->print(os);
             os << ")";
             return;
         case opFabs:
             os << "fabs(";
-            p1->print(os, withUses);
+            p1->print(os);
             os << ")";
             return;
         default:
@@ -1015,7 +977,7 @@ void Unary::print(std::ostream& os, bool withUses) {
 //  //  //  //
 //  Ternary //
 //  //  //  //
-void Ternary::printr(std::ostream& os, bool withUses) {
+void Ternary::printr(std::ostream& os) {
     // The function-like operators don't need parentheses
     switch (op) {
         // The "function-like" ternaries
@@ -1024,7 +986,7 @@ void Ternary::printr(std::ostream& os, bool withUses) {
         case opFtoi:    case opFround:  case opFtrunc:
         case opOpTable:
             // No paren case
-            print(os, withUses); return;
+            print(os); return;
         default:
             break;
     }
@@ -1032,7 +994,7 @@ void Ternary::printr(std::ostream& os, bool withUses) {
     os << "(" << this << ")";
 }
 
-void Ternary::print(std::ostream& os, bool withUses) {
+void Ternary::print(std::ostream& os) {
     Exp* p1 = ((Ternary*)this)->getSubExp1();
     Exp* p2 = ((Ternary*)this)->getSubExp2();
     Exp* p3 = ((Ternary*)this)->getSubExp3();
@@ -1057,26 +1019,26 @@ void Ternary::print(std::ostream& os, bool withUses) {
             }
             // Use print not printr here, since , has the lowest precendence
             // of all. Also it makes it the same as UQBT, so it's easier to test
-            if (p1) p1->print(os, withUses); else os << "<NULL>"; os << ",";
-            if (p2) p2->print(os, withUses); else os << "<NULL>"; os << ",";
-            if (p3) p3->print(os, withUses); else os << "<NULL>"; os << ")";
+            if (p1) p1->print(os); else os << "<NULL>"; os << ",";
+            if (p2) p2->print(os); else os << "<NULL>"; os << ",";
+            if (p3) p3->print(os); else os << "<NULL>"; os << ")";
             return;
         default:
             break;
     }
     // Else must be ?: or @ (traditional ternary operators)
-    if (p1) p1->printr(os, withUses); else os << "<NULL>";
+    if (p1) p1->printr(os); else os << "<NULL>";
     if (op == opTern) {
         os << " ? ";
-        if (p2) p2->printr(os, withUses); else os << "<NULL>";
+        if (p2) p2->printr(os); else os << "<NULL>";
         os << " : ";        // Need wide spacing here
-        if (p3) p3->print(os, withUses); else os << "<NULL>";
+        if (p3) p3->print(os); else os << "<NULL>";
     } 
     else if (op == opAt) {
             os << "@";
-            if (p2) p2->printr(os, withUses); else os << "NULL>";
+            if (p2) p2->printr(os); else os << "NULL>";
             os << ":";
-            if (p3) p3->printr(os, withUses); else os << "NULL>";
+            if (p3) p3->printr(os); else os << "NULL>";
     } else {
         LOG << "Ternary::print invalid operator " << operStrings[op] <<
           "\n";
@@ -1087,44 +1049,30 @@ void Ternary::print(std::ostream& os, bool withUses) {
 //  //  //  //
 // TypedExp //
 //  //  //  //
-void TypedExp::print(std::ostream& os, bool withUses) {
+void TypedExp::print(std::ostream& os) {
     os << " ";
     type->starPrint(os);
     Exp* p1 = ((Ternary*)this)->getSubExp1();
-    p1->print(os, withUses);
+    p1->print(os);
 }
 
 
 //  //  //  //
 //  RefExp  //
 //  //  //  //
-void RefExp::print(std::ostream& os, bool withUses) {
-    subExp1->print(os, withUses);
-    if (withUses) {
-        os << "{";
-        if (def == (Statement*)-1) os << "WILD";
-        else if (def) def->printNum(os);
-        else os << "0";
-        os << "}";
-    }
-}
-
-//  //  //  //
-// PhiExp  //
-//  //  //  //
-void PhiExp::print(std::ostream& os, bool withUses) {
-    os << "phi";
-    if (withUses) {
-        os << "{";
-        stmtVec.printNums(os);
-        os << "}";
-    }
+void RefExp::print(std::ostream& os) {
+    subExp1->print(os);
+    os << "{";
+    if (def == (Statement*)-1) os << "WILD";
+    else if (def) def->printNum(os);
+    else os << "0";
+    os << "}";
 }
 
 //  //  //  //
 // TypeVal  //
 //  //  //  //
-void TypeVal::print(std::ostream& os, bool withUses) {
+void TypeVal::print(std::ostream& os) {
     os << "<" << val->getCtype() << ">";
 }
 
@@ -1137,7 +1085,7 @@ void TypeVal::print(std::ostream& os, bool withUses) {
 extern char debug_buffer[];
 char* Exp::prints() {
       std::ostringstream ost;
-      print(ost, true);
+      print(ost);
       strncpy(debug_buffer, ost.str().c_str(), 199);
       debug_buffer[199] = '\0';
       return debug_buffer;
@@ -2476,8 +2424,8 @@ Exp* Binary::polySimplify(bool& bMod) {
                 if (l->getOper() == opSubscript) {
                     RefExp *r = (RefExp*)l;
                     if (r->getRef() && r->getRef()->isPhi()) {
-                        PhiExp *p = (PhiExp*)r->getRef()->getRight();
-                        LOG << "argh: " << p->getAt(1) << "\n";
+                        PhiAssign *pa = (PhiAssign*)r->getRef();
+                        LOG << "argh: " << pa->getAt(1) << "\n";
                     }
                 }
                 bMod = true;
@@ -2729,7 +2677,7 @@ Exp* RefExp::polySimplify(bool& bMod) {
     if (def && def->isPhi() && def->getProc()->canProveNow()) {
         Exp *base = new RefExp(subExp1, NULL);
         StatementVec::iterator uu;
-        PhiExp *phi = (PhiExp*)def->getRight();
+        PhiAssign *phi = (PhiAssign*)def;
         for (uu = phi->begin(); uu != phi->end(); uu++)
             if (*uu && (*uu)->isAssign() && *(*uu)->getLeft() == *subExp1) {
                 bool allZero = true;
@@ -2777,89 +2725,6 @@ Exp* RefExp::polySimplify(bool& bMod) {
     }
 
     return res;
-}
-
-Exp* PhiExp::polySimplify(bool& bMod) {
-    Exp *res = this;
-    Exp *tmp = getSubExp1()->polySimplify(bMod);
-    if (bMod) {
-        subExp1 = tmp;
-        return res;
-    }
-
-    if (stmtVec.begin() != stmtVec.end()) {
-        StatementVec::iterator uu;
-        bool allSame = true;
-        uu = stmtVec.begin();
-        Statement* first;
-        for (first = *uu++; uu != stmtVec.end(); uu++) {
-            if (*uu != first) {
-                allSame = false;
-                break;
-            }
-        }
-
-        if (allSame) {
-            if (VERBOSE)
-                LOG << "all the same in " << this << "\n";
-            bMod = true;
-            res = new RefExp(subExp1, first);
-            return res;
-        }
-
-        bool onlyOneNotThis = true;
-        Statement *notthis = (Statement*)-1;
-        for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
-            if (*uu == NULL || !(*uu)->isPhi() || (*uu)->getRight() != this)
-                if (notthis != (Statement*)-1) {
-                    onlyOneNotThis = false;
-                    break;
-                } else notthis = *uu;
-        }
-
-        if (onlyOneNotThis && notthis != (Statement*)-1) {
-            if (VERBOSE)
-                LOG << "all but one not this in " << this << "\n";
-            bMod = true;
-            res = new RefExp(subExp1, notthis);
-            return res;
-        }
-    }
-
-    return res;
-}
-
-void PhiExp::simplifyRefs()
-{
-    if (stmtVec.begin() != stmtVec.end()) {
-        StatementVec::iterator uu;
-        for (uu = stmtVec.begin(); uu != stmtVec.end(); ) {
-            if (*uu && (*uu)->getRight() && 
-                (*uu)->getRight()->getOper() == opSubscript &&
-                *(*uu)->getRight()->getSubExp1() == *subExp1) {
-                if (((RefExp*)(*uu)->getRight())->getRef() == stmt) {
-                    if (VERBOSE)
-                        LOG << "removing statement " << *uu << " from phi at " 
-                            << stmt->getNumber() << "\n";
-                    uu = stmtVec.remove(uu);
-                    continue;
-                }
-                if (VERBOSE)
-                    LOG << "replacing " << (*uu)->getNumber() << " with ";
-                *uu = ((RefExp*)(*uu)->getRight())->getRef();
-                if (VERBOSE) {
-                    int n = 0;
-                    if (*uu) n = (*uu)->getNumber();
-                    LOG << n << " in phi at " <<
-                      ((stmt == NULL) ? 0 : stmt->getNumber()) <<
-                      " result is: " <<
-                      ((stmt == NULL) ? "NULL" : stmt->prints()) << "\n";
-                    
-                }
-            }
-            uu++;
-        }
-    }
 }
 
 /*==============================================================================
@@ -2916,9 +2781,9 @@ Exp* Ternary::simplifyAddr() {
  * PARAMETERS:      Output stream to send the output to
  * RETURNS:         <nothing>
  *============================================================================*/
-void Exp::printt(std::ostream& os /*= cout*/, bool withUses /* = false */)
+void Exp::printt(std::ostream& os /*= cout*/)
 {
-    print(os, withUses);
+    print(os);
     if (op != opTypedExp) return;
     Type* t = ((TypedExp*)this)->getType();
     os << "<" << std::dec << t->getSize();
@@ -2973,9 +2838,9 @@ std::ostream& operator<<(std::ostream& os, Exp* p)
 {
 #if 1
     // Useful for debugging, but can clutter the output
-    p->printt(os, true);
+    p->printt(os);
 #else
-    p->print(os, true);
+    p->print(os);
 #endif
     return os;
 }
@@ -3066,49 +2931,6 @@ Exp *Exp::removeSubscripts(bool& allZero)
 
 
 
-// This is a hack.  If we have a phi which has one of its
-// elements referencing a statement which is defined as a 
-// function address, then we can use this information to
-// resolve references to indirect calls more aggressively.
-// Note that this is not technically correct and will give
-// the wrong result if the callee of an indirect call
-// actually modifies a function pointer in the caller. 
-bool PhiExp::hasGlobalFuncParam(Prog *prog)
-{
-    unsigned n = stmtVec.size();
-    for (unsigned i = 0; i < n; i++) {
-        Statement* u = stmtVec.getAt(i);
-        if (u == NULL) continue;
-        Exp *right = u->getRight();
-        if (right == NULL)
-            continue;
-        if (right->getOper() == opGlobal ||
-            (right->getOper() == opSubscript &&
-             right->getSubExp1()->getOper() == opGlobal)) {
-            Exp *e = right;
-            if (right->getOper() == opSubscript)
-                e = right->getSubExp1();
-            char *nam = ((Const*)e->getSubExp1())->getStr();
-            Proc *p = prog->findProc(nam);
-            if (p == NULL)
-                p = prog->getLibraryProc(nam);
-            if (p) {
-                if (VERBOSE)
-                    LOG << "statement " << i << " of " << this 
-                        << " is a global func\n";
-                return true;
-            }
-        }
-#if 0
-        // BAD: this can loop forever if we have a phi loop
-        if (u->isPhi() && u->getRight() != this &&
-            ((PhiExp*)u->getRight())->hasGlobalFuncParam(prog))
-            return true;
-#endif
-    }
-    return false;
-}
-
 
 //
 // From SSA form
@@ -3151,20 +2973,6 @@ Exp* RefExp::fromSSA(igraph& ig) {
         return Location::local(strdup(name.c_str()), p);
     }
 }
-
-Exp* PhiExp::fromSSA(igraph& ig) {
-    // Almost nothing to be done yet; see UserProc::fromSSAform()
-    // Don't rename the top level, but if it's a unary (esp m[]),
-    // transform the grandchild
-    if (subExp1->getArity() == 1) {
-        Exp* grandChild = ((Unary*)subExp1)->getSubExp1();
-        Exp* newG = grandChild->fromSSA(ig);
-        if (newG != grandChild)
-            ((Unary*)subExp1)->setSubExp1ND(newG);
-    }
-    return this;
-}
-
 
 Exp* Unary::fromSSA(igraph& ig) {
     subExp1 = subExp1->fromSSA(ig);
@@ -3583,57 +3391,6 @@ Exp* Binary::genConstraints(Exp* result) {
     return new Terminal(opTrue);
 }
 
-Exp* PhiExp::genConstraints(Exp* result) {
-    // Generate a constraint that all the phi's have to be the same type as
-    // result
-    assert(result->isTypeOf());
-    Exp* base = ((Unary*)result)->getSubExp1();
-    assert(base->isSubscript());
-    base = ((RefExp*)base)->getSubExp1();
-    StatementVec::iterator uu;
-    Exp* ret = new Terminal(opTrue);
-    bool first = true;
-    for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
-        Exp* conjunct = new Binary(opEquals,
-            result,
-            new Unary(opTypeOf,
-                new RefExp(base, *uu)));
-        if (first) {
-            ret = conjunct;
-            first = false;
-        }
-        else
-            ret = new Binary(opAnd, ret, conjunct);
-    }
-    return ret->simplify();
-}
-
-void Exp::genConditionConstraints(LocationSet& cons) {
-    // cond should be of the form a relop b, where relop is opEquals, opLess
-    // etc
-    assert(getArity() == 2);
-    Exp* a = ((Binary*)this)->getSubExp1();
-    Exp* b = ((Binary*)this)->getSubExp2();
-    // Constraint typeof(a) == typeof(b)
-    // Generate constraints for a and b separately (if any)
-    Exp* Ta; Exp* Tb;
-    // MVE: are there other times when this is needed?
-    if (a->isSizeCast()) {
-        Ta = new Unary(opTypeOf, ((Binary*)a)->getSubExp2());
-        Exp* con = a->genConstraints(Ta);
-        if (con && !con->isTrue()) cons.insert(con);
-    } else
-        Ta = new Unary(opTypeOf, a);
-    if (b->isSizeCast()) {
-        Tb = new Unary(opTypeOf, ((Binary*)b)->getSubExp2());
-        Exp* con = b->genConstraints(Tb);
-        if (con && !con->isTrue()) cons.insert(con);
-    } else
-        Tb = new Unary(opTypeOf, b);
-    Exp* equ = new Binary(opEquals, Ta, Tb);
-    cons.insert(equ);
-}
-
 Exp* Location::polySimplify(bool& bMod) {
     Exp *res = Unary::polySimplify(bMod);
 
@@ -3735,7 +3492,7 @@ Type *RefExp::getType()
     if (def && def->getRight() && def->getRight()->getType())
         return def->getRight()->getType();
     if (def && def->isPhi()) {
-        PhiExp *phi = (PhiExp*)def->getRight();
+        PhiAssign *phi = (PhiAssign*)def;
 #if 1
         if (VERBOSE)
             LOG << "checking statements in " << phi << " for type of " << this 
@@ -3921,12 +3678,6 @@ bool   RefExp::accept(ExpVisitor* v) {
     if (override) return ret;
     if (ret) ret = subExp1->accept(v); return ret;
 }
-bool   PhiExp::accept(ExpVisitor* v) {
-    bool override, ret = v->visit(this, override);
-    if (override) return ret;
-    if (ret) ret = subExp1->accept(v);
-    return ret;
-}
 bool Location::accept(ExpVisitor* v) {
     bool override, ret = v->visit(this, override);
     if (override) return ret;
@@ -4011,13 +3762,6 @@ Exp* Location::accept(ExpModifier* v) {
     // (it makes a call to a different visitor member function).
     bool recur;
     Location* ret = (Location*)v->preVisit(this, recur);
-    if (recur) subExp1 = subExp1->accept(v);
-    return v->postVisit(ret);
-}
-
-Exp* PhiExp::accept(ExpModifier* v) {
-    bool recur;
-    PhiExp* ret = (PhiExp*)v->preVisit(this, recur);
     if (recur) subExp1 = subExp1->accept(v);
     return v->postVisit(ret);
 }

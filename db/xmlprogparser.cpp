@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.3.2.4 $
+ * $Revision: 1.3.2.5 $
  *
  * June 2004 - Trent: created
  */
@@ -1559,9 +1559,9 @@ void XMLProgParser::start_integertype(const char **attr)
     const char *n = getAttr(attr, "size");
     if (n)
 	ty->size = atoi(n);
-    n = getAttr(attr, "signd");
+    n = getAttr(attr, "signedness");
     if (n)
-	ty->signd = atoi(n);
+	ty->signedness = atoi(n);
 }
 
 void XMLProgParser::addToContext_integertype(Context *c, int e)
@@ -2227,7 +2227,8 @@ void XMLProgParser::persistToXML(std::ostream &out, Type *ty)
     }
     IntegerType *i = dynamic_cast<IntegerType*>(ty);
     if (i) {
-	out << "<integertype id=\"" << (int)ty << "\" size=\"" << i->size << "\" signd=\"" << i->signd << "\"/>\n";
+	out << "<integertype id=\"" << (int)ty << "\" size=\"" << i->size << 
+      "\" signedness=\"" << i->signedness << "\"/>\n";
 	return;
     }
     FloatType *fl = dynamic_cast<FloatType*>(ty);
@@ -2335,21 +2336,6 @@ void XMLProgParser::persistToXML(std::ostream &out, Exp *e)
 	out << "</location>\n";
 	return;
     } 
-    PhiExp *p = dynamic_cast<PhiExp*>(e);
-    if (p) {
-	out << "<phiexp id=\"" << (int)e << "\"";
-	if (p->stmt)
-	    out << " stmt=\"" << (int)p->stmt << "\"";
-	out << " op=\"" << operStrings[p->op] << "\">\n";
-	out << "<subexp1>\n";
-	persistToXML(out, p->subExp1);
-	out << "</subexp1>\n";
-	StatementVec::iterator it;
-	for (it = p->stmtVec.begin(); it != p->stmtVec.end(); it++)
-	    out << "<stmt>" << (int)(*it) << "</stmt>\n";
-	out << "</phiexp>\n";
-	return;
-    }
     RefExp *r = dynamic_cast<RefExp*>(e);
     if (r) {
 	out << "<refexp id=\"" << (int)e << "\"";
