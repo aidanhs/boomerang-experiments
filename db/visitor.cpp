@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.7 $
+ * $Revision: 1.14.2.8 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -630,7 +630,10 @@ bool ConstFinder::visit(Location* e, bool& override) {
 
 // Convert expressions to locals
 DfaLocalConverter::DfaLocalConverter(Type* ty, UserProc* proc) : parentType(ty), proc(proc) {
+// Example: BranchStatement... does the condition have a top level type?
+if (parentType == NULL) parentType = new VoidType();	// MVE: Hack for now
 	sig = proc->getSignature();
+	prog = proc->getProg();
 }
 
 Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
@@ -654,6 +657,17 @@ Exp* DfaLocalConverter::postVisit(Location* e) {
 		assert(pt);
 		parentType = pt->getPointsTo();
 	}
+	return e;
+}
+
+Exp* DfaLocalConverter::preVisit(Binary* e, bool& recur) {
+	// Check for sp -/+ K, but only if TA indicates this is a pointer
+	if (parentType->isPointer() && sig->isAddrOfStackLocal(prog, e)) {
+		recur = false;
+		mod = true;
+		return proc->getLocalExp(e, parentType, true);
+	}
+	recur = true;
 	return e;
 }
 

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.7 $
+ * $Revision: 1.126.2.8 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1672,6 +1672,7 @@ bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
  *============================================================================*/
 void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
+	// os << "*" << returnType << "* ";
  
 	os << "CALL ";
 	if (procDest)
@@ -2519,7 +2520,7 @@ if (def == NULL) continue;
  * PARAMETERS:		 None
  * RETURNS:			 <nothing>
  *============================================================================*/
-ReturnStatement::ReturnStatement() : nBytesPopped(0), retAddr(NO_ADDRESS) {
+ReturnStatement::ReturnStatement() : nBytesPopped(0), type(new VoidType), retAddr(NO_ADDRESS) {
 	kind = STMT_RET;
 }
 
@@ -2594,6 +2595,7 @@ void ReturnStatement::fromSSAform(igraph& ig) {
 
 void ReturnStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
+	// os << "*" << type << "* ";
 	os << "RET ";
 	for (unsigned i = 0; i < returns.size(); i++) {
 		if (i != 0)
@@ -3754,7 +3756,7 @@ bool ReturnStatement::accept(StmtModifier* v) {
 	v->visit(this, recur);
 	std::vector<Exp*>::iterator it;
 	for (it = returns.begin(); recur && it != returns.end(); it++)
-		*it = (*it)->accept(v->mod);
+		if (*it) *it = (*it)->accept(v->mod);
 	return true;
 }
 

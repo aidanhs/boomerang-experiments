@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.63.2.4 $
+ * $Revision: 1.63.2.5 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -307,7 +307,7 @@ virtual	void	dfaTypeAnalysis(bool& ch) {}
 		// Get the type for the given expression in this statement
 		Type	*getTypeFor(Exp *e, Prog *prog);
 
-virtual	Type*	getType() {return NULL;}			// Assignment and 
+virtual	Type*	getType() {return NULL;}			// Assignment, ReturnStatement, and 
 virtual	void	setType(Type* t) {assert(0);}		// CallStatement override
 
 protected:
@@ -1086,6 +1086,9 @@ protected:
 		// value returned
 		std::vector<Exp*> returns;
 
+		// Each return has a type. MVE: for now:
+		Type*	type;
+
 		// Native address of the (only) return instruction
 		// Needed for branching to this only return statement
 		ADDRESS	retAddr;
@@ -1140,10 +1143,13 @@ virtual bool	doReplaceRef(Exp* from, Exp* to);
 		void	addReturn(Exp *e);
 
 		// Get and set the native address for the first and only return statement
-	ADDRESS		getRetAddr() {return retAddr;}
-	void		setRetAddr(ADDRESS r) {retAddr = r;}
+		ADDRESS	getRetAddr() {return retAddr;}
+		void	setRetAddr(ADDRESS r) {retAddr = r;}
 
 virtual void	dfaTypeAnalysis(bool& ch);
+
+		Type*	getType() {return type;}			// TEMPORARY
+		void	setType(Type* ty) {type = ty;}
 
 	friend class XMLProgParser;
 };	// class ReturnStatement

@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.7 $
+ * $Revision: 1.8.2.8 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -417,6 +417,7 @@ public:
 class DfaLocalConverter : public ExpModifier {
 		Type*	parentType;
 		UserProc* proc;
+		Prog*	prog;
 		Signature* sig;		// Look up once (from proc) for speed
 public:
 				DfaLocalConverter(Type* ty, UserProc* proc);
@@ -425,6 +426,7 @@ public:
 
 		Exp*	preVisit(Location* e, bool& recur);
 		Exp*	postVisit(Location* e);
+		Exp*	preVisit(Binary* e, bool& recur);
 };
 
 // Convert any exp{0} with null definition so that the definition points instead to an implicit assignment
