@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.6 $
+ * $Revision: 1.22.2.7 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1614,12 +1614,16 @@ void BasicBlock::getReachIn(StatementSet &reachin, int phase) {
                 PBB inEdge = m_InEdges[i];
                 if (inEdge->m_nodeType == CALL) {
                     Proc* dest = inEdge->getDestProc();
-                    if (dest->isLib()) continue;        // Ignore lib calls
-                    StatementSet temp(inEdge->reachOut);
-                    Cfg* cfgDest = ((UserProc*)dest)->getCFG();
-                    temp.makeDiff(*cfgDest->getAvailExit());
-                    temp.makeUnion(*cfgDest->getReachExit());
-                    reachin.makeUnion(temp);
+                    if (dest->isLib()) {
+                        // Just union it in, like an ordinary in-edge
+                        reachin.makeUnion(inEdge->reachOut);
+                    } else {
+                        StatementSet temp(inEdge->reachOut);
+                        Cfg* cfgDest = ((UserProc*)dest)->getCFG();
+                        temp.makeDiff(*cfgDest->getAvailExit());
+                        temp.makeUnion(*cfgDest->getReachExit());
+                        reachin.makeUnion(temp);
+                    }
                 } else
                     // Just union it in: has to be an intra-procedural jump,
                     // flow-through (etc) edge
