@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.23.2.3 $
+ * $Revision: 1.23.2.4 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
@@ -248,7 +248,8 @@ int    CharType::getSize() const { return 8; }
 int    VoidType::getSize() const { return 0; }
 int    FuncType::getSize() const { return 0; /* always nagged me */ }
 int PointerType::getSize() const {
-    return 32; //points_to->getSize(); // yes, it was a good idea at the time
+    //points_to->getSize(); // yes, it was a good idea at the time
+    return STD_SIZE;
 }
 int ArrayType::getSize() const {
     return base_type->getSize() * length;
@@ -656,7 +657,9 @@ const char *IntegerType::getCtype(bool final) const {
             case  8: s += "char"; break;
             case  1: s += "bool"; break;
             case 64: s += "long long"; break;
-            default: s += "?int";
+            default: 
+                if (!final) s += "?";   // To indicate invalid/unknown size
+                s += "int";
         }
         return strdup(s.c_str());
     } else {
@@ -666,7 +669,8 @@ const char *IntegerType::getCtype(bool final) const {
             case  8: return "unsigned char"; break;
             case  1: return "bool"; break;
             case 64: return "unsigned long long"; break;
-            default: return "?";
+            default: if (final) return "unsigned int"; 
+                else return "?unsigned int";
         }
     }
 }
@@ -1036,7 +1040,7 @@ std::ostream& operator<<(std::ostream& os, Type* t) {
     if (t == NULL) return os;
     switch (t->getId()) {
         case eInteger: {
-            int sg = ((IntegerType*)t)->isSigned();
+            int sg = ((IntegerType*)t)->getSignedness();
             // 'j' for either i or u, don't know which
             os << (sg == 0 ? 'j' : sg>0 ? 'i' : 'u');
             os << std::dec << ((IntegerType*)t)->getSize();
@@ -1053,4 +1057,22 @@ std::ostream& operator<<(std::ostream& os, Type* t) {
             os << "?type?";
     }
     return os;
+}
+
+// Merge this IntegerType with another
+Type* IntegerType::mergeWith(Type* other) {
+    if (*this == *other) return this;
+    if (!other->isInteger()) return NULL;       // Can you merge with a pointer?
+    IntegerType* oth = (IntegerType*)other;
+    IntegerType* ret = (IntegerType*)this->clone();
+    if (size == 0) ret->setSize(oth->getSize());
+    if (signedness == 0) ret->setSigned(oth->getSignedness());
+    return ret;
+}
+
+// Merge this SizeType with another type
+Type* SizeType::mergeWith(Type* other) {
+    Type* ret = other->clone();
+    ret->setSize(size);
+    return ret;
 }

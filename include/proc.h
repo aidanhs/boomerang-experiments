@@ -16,7 +16,7 @@
  *             as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.91.2.4 $
+/* $Revision: 1.91.2.5 $
  * 20 Sep 01 - Brian: Added getSymbolicLocals() to return the list of symbolic
  *              locals for a procedure.
 */
@@ -688,6 +688,7 @@ public:
         assert(theReturnStatement == NULL);
         theReturnStatement = s;
         theReturnStatement->setRetAddr(r);}
+    ReturnStatement* getTheReturnStatement() {return theReturnStatement;}
 protected:
     friend class XMLProgParser;
     UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), decompileSeen(false), decompiled(false), isRecursive(false) { }

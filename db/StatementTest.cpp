@@ -4,7 +4,7 @@
  *              tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.14.2.6 $
+ * $Revision: 1.14.2.7 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -790,25 +790,29 @@ void StatementTest::testClone () {
             new Binary(opPlus,
                 Location::regOf(9),
                 new Const(99)));
-    Assign* a2 = new Assign(new IntegerType(16),
+    Assign* a2 = new Assign(new IntegerType(16, 1),
             new Location(opParam, new Const("x"), NULL),
             new Location(opParam, new Const("y"), NULL));
+    Assign* a3 = new Assign(new IntegerType(16, -1),
+            new Location(opParam, new Const("z"), NULL),
+            new Location(opParam, new Const("q"), NULL));
     Statement* c1 = a1->clone();
     Statement* c2 = a2->clone();
+    Statement* c3 = a3->clone();
     std::ostringstream o1, o2;
     a1->print(o1);
     delete a1;           // And c1 should still stand!
     c1->print(o2);
     a2->print(o1);
     c2->print(o2);
-    delete a2;
-    std::string expected("   0 ** r8 := r9 + 99   0 *j16* x := y");
+    a3->print(o1);
+    c3->print(o2);
+    std::string expected("   0 ** r8 := r9 + 99   0 *i16* x := y"
+        "   0 *u16* z := q");
     std::string act1(o1.str());
     std::string act2(o2.str());
     CPPUNIT_ASSERT_EQUAL(expected, act1); // Originals
     CPPUNIT_ASSERT_EQUAL(expected, act2); // Clones
-    delete c1;
-    delete c2;
 }
  
 /*==============================================================================

@@ -2692,8 +2692,8 @@ case 137:
                 if (size == 0) size = STD_SIZE;
                 switch (c) {
                     case 'i': yyval.typ = new IntegerType(size, 1); break;
-                    case 'j': yyval.typ = new IntegerType(size, -1); break;
-                    case 'u': yyval.typ = new IntegerType(size, 0); break;
+                    case 'j': yyval.typ = new IntegerType(size, 0); break;
+                    case 'u': yyval.typ = new IntegerType(size, -1); break;
                     case 'f': yyval.typ = new FloatType(size); break;
                     case 'c': yyval.typ = new CharType; break;
                     default:

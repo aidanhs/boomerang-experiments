@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.190.2.7 $
+ * $Revision: 1.190.2.8 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -2873,7 +2873,7 @@ void UserProc::fromSSAform() {
         s->fromSSAform(ig);
     }
 
-    // Now remove the phi's
+    // Now remove the phis
     for (it = stmts.begin(); it != stmts.end(); it++) {
         Statement* s = *it;
         if (!s->isPhi()) continue;
@@ -2941,7 +2941,7 @@ void UserProc::fromSSAform() {
             std::ostringstream os;
             os << "local" << tempNum++;
             std::string name = os.str();
-            ((Assign*)s)->setRight(Location::local(strdup(name.c_str()), this));
+            pa->convertToAssign(Location::local(strdup(name.c_str()), this));
         }
     }
 
@@ -3105,59 +3105,57 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis,
                             change = true;
                         }
                     }
-                } else if (s && s->getRight()) {
-                    if (s->getRight()->getOper() == opPhi) {
-                        // for a phi, we have to prove the query for every 
-                        // statement
-                        PhiAssign *pa = (PhiAssign*)s;
-                        StatementVec::iterator it;
-                        bool ok = true;
-                        if (lastPhis.find(pa) != lastPhis.end() ||
-                              pa == lastPhi) {
+                } else if (s && s->isPhi()) {
+                    // for a phi, we have to prove the query for every 
+                    // statement
+                    PhiAssign *pa = (PhiAssign*)s;
+                    StatementVec::iterator it;
+                    bool ok = true;
+                    if (lastPhis.find(pa) != lastPhis.end() ||
+                          pa == lastPhi) {
+                        if (DEBUG_PROOF)
+                            LOG << "phi loop detected ";
+                        ok = (*query->getSubExp2() == *phiInd);
+                        if (ok && DEBUG_PROOF)
+                            LOG << "(set true due to induction)\n";
+                        if (!ok && DEBUG_PROOF)
+                            LOG << "(set false " << 
+                                query->getSubExp2() << " != " << 
+                                phiInd << ")\n";
+                    } else {
+                        if (DEBUG_PROOF)
+                            LOG << "found " << s << " prove for each\n";
+                        for (it = pa->begin(); it != pa->end(); it++) {
+                            Exp *e = query->clone();
+                            RefExp *r1 = (RefExp*)e->getSubExp1();
+                            r1->setDef(*it);
                             if (DEBUG_PROOF)
-                                LOG << "phi loop detected ";
-                            ok = (*query->getSubExp2() == *phiInd);
-                            if (ok && DEBUG_PROOF)
-                                LOG << "(set true due to induction)\n";
-                            if (!ok && DEBUG_PROOF)
-                                LOG << "(set false " << 
-                                    query->getSubExp2() << " != " << 
-                                    phiInd << ")\n";
-                        } else {
-                            if (DEBUG_PROOF)
-                                LOG << "found " << s << " prove for each\n";
-                            for (it = pa->begin(); it != pa->end(); it++) {
-                                Exp *e = query->clone();
-                                RefExp *r1 = (RefExp*)e->getSubExp1();
-                                r1->setDef(*it);
-                                if (DEBUG_PROOF)
-                                    LOG << "proving for " << e << "\n";
-                                lastPhis.insert(lastPhi);
-                                if (!prover(e, lastPhis, cache, pa)) { 
-                                    ok = false; 
-                                    //delete e; 
-                                    break; 
-                                }
-                                lastPhis.erase(lastPhi);
-                                //delete e;
+                                LOG << "proving for " << e << "\n";
+                            lastPhis.insert(lastPhi);
+                            if (!prover(e, lastPhis, cache, pa)) { 
+                                ok = false; 
+                                //delete e; 
+                                break; 
                             }
-                            if (ok)
-                                cache[pa] = query->getSubExp2()->clone();
+                            lastPhis.erase(lastPhi);
+                            //delete e;
                         }
                         if (ok)
-                            query = new Terminal(opTrue);
-                        else 
-                            query = new Terminal(opFalse);
-                        change = true;
+                            cache[pa] = query->getSubExp2()->clone();
+                    }
+                    if (ok)
+                        query = new Terminal(opTrue);
+                    else 
+                        query = new Terminal(opFalse);
+                    change = true;
+                } else if (s && s->getRight()) {
+                    if (s && refsTo.find(s) != refsTo.end()) {
+                        LOG << "detected ref loop " << s << "\n";
+                        assert(false);
                     } else {
-                        if (s && refsTo.find(s) != refsTo.end()) {
-                            LOG << "detected ref loop " << s << "\n";
-                            assert(false);
-                        } else {
-                            refsTo.insert(s);
-                            query->setSubExp1(s->getRight()->clone());
-                            change = true;
-                        }
+                        refsTo.insert(s);
+                        query->setSubExp1(s->getRight()->clone());
+                        change = true;
                     }
                 }
             }
@@ -3422,6 +3420,7 @@ void UserProc::typeAnalysis(Prog* prog) {
                 int val = con->getInt();
                 if (ty->isFloat()) {
                     // Need heavy duty cast here
+                    // MVE: check this! Especially when a double prec float
                     con->setFlt(*(float*)&val);
                     con->setOper(opFltConst);
                 } else if (ty->isPointer() &&
@@ -3435,7 +3434,8 @@ void UserProc::typeAnalysis(Prog* prog) {
                     }
                 }
                 else {
-                    if (ty->isInteger() && ty->getSize() != STD_SIZE)
+                    if (ty->isInteger() && ty->getSize() &&
+                          ty->getSize() != STD_SIZE)
                         // Wrap the constant in a TypedExp (for a cast)
                         castConst(con->getConscript(), ty);
                 }

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.8 $
+ * $Revision: 1.112.2.9 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2186,28 +2186,91 @@ Exp *processConstant(Exp *e, Type *t, Prog *prog, UserProc* proc)
 }
 
 
+// This is temporarily horrible till types are consistently stored in
+// assignments (including implicit), BoolStatement, or CallStatement
 Type *Statement::getTypeFor(Exp *e, Prog *prog)
 {
     Type *ty = NULL;
-    if (e->getOper() == opGlobal) {
-        const char *nam = ((Const*)e->getSubExp1())->getStr();
-        ty = prog->getGlobalType((char*)nam);
-    }
-    if (e->getOper() == opLocal) {
-        const char *nam = ((Const*)e->getSubExp1())->getStr();
-        ty = proc->getLocalType((char*)nam);
-    }
-    if (e->getOper() == opMemberAccess) {
-        Type *tsubexp1 = getTypeFor(e->getSubExp1(), prog);
-        if (tsubexp1->resolvesToCompound()) {
-            CompoundType *compound = tsubexp1->asCompound();
-            const char *nam = ((Const*)e->getSubExp2())->getStr();
-            ty = compound->getType((char*)nam);
+    switch (e->getOper()) {
+        case opGlobal: {
+            const char *nam = ((Const*)e->getSubExp1())->getStr();
+            ty = prog->getGlobalType((char*)nam);
+            break;
         }
+        case opLocal: {
+            const char *nam = ((Const*)e->getSubExp1())->getStr();
+            ty = proc->getLocalType((char*)nam);
+            break;
+        }
+        case opMemberAccess: {
+            Type *tsubexp1 = getTypeFor(e->getSubExp1(), prog);
+            if (tsubexp1->resolvesToCompound()) {
+                CompoundType *compound = tsubexp1->asCompound();
+                const char *nam = ((Const*)e->getSubExp2())->getStr();
+                ty = compound->getType((char*)nam);
+            }
+            break;
+        }
+        case opSubscript: {
+            Statement* def = ((RefExp*)e)->getRef();
+            ty = def->getTypeFor(e->getSubExp1(), prog);
+            break;
+        }
+        default:
+            break;
     }
-    if (e->getOper() == opSubscript) {
-        ty = getTypeFor(e->getSubExp1(), prog);
+
+    // Defined by this statement
+    // Ick: this needs to be polymorphic - MVE
+    switch(kind) {
+        case STMT_ASSIGN:
+        case STMT_PHIASSIGN:
+        case STMT_IMPASSIGN:
+            if (*e == *((Assignment*)this)->getLeft())
+                return ((Assignment*)this)->getType();
+            break;
+        case STMT_CALL: {
+            CallStatement* call = (CallStatement*)this;
+            Proc* dest = call->getDestProc();
+            if (dest && !dest->isLib()) {
+                ReturnStatement* ret =
+                  ((UserProc*)dest)->getTheReturnStatement();
+                if (ret) {
+                    std::vector<Exp*>& retExps = ret->getReturns();
+                    std::vector<Exp*>::iterator rr;
+                    for (rr = retExps.begin(); rr != retExps.end(); rr++) {
+                        RefExp* r = (RefExp*)*rr;
+                        if (!r->isSubscript()) continue;
+                        Exp* base = r->getSubExp1();
+                        if (*base == *e) {
+                            Statement* def = r->getRef();
+                            return def->getTypeFor(e, prog);
+                        }
+                    }
+                }
+            }
+                
+#if 0
+            std::vector<Exp*>& rets = call->getReturns();
+            std::vector<Exp*>::iterator it;
+            int n = call->getNumReturns();
+            for (int i=0; i < n; i++) {
+                if (*e == *call->getReturnExp(i)) {
+                    // This call defines expression e.
+                    // How do we get the type?
+                }
+            }
+#endif
+                    
+        }
+        // MVE: a BoolStatement should be an Assign, or something close
+        case STMT_BOOL:
+            return new BooleanType;
+            break;
+        default:
+            break;
     }
+
     // MVE: not sure if this is right
     if (ty == NULL) ty = e->getType();  // May be m[blah].member
     return ty;
@@ -2682,7 +2745,7 @@ Statement* Assign::clone() {
 
 Statement* PhiAssign::clone() {
     PhiAssign* pa = new PhiAssign(type, lhs);
-    pa->stmtVec = stmtVec;      // Copy the vector of locations
+    pa->stmtVec = stmtVec;      // Copy the vector of Statement*s
     return pa;
 }
 
@@ -2864,9 +2927,9 @@ void PhiAssign::print(std::ostream& os) {
     os << std::setw(4) << std::dec << number << " ";
     os << "*" << type << "* ";
     if (lhs) lhs->print(os);
-    os << " := phi(";
+    os << " := phi{";
     stmtVec.printNums(os);
-    os << ")";
+    os << "}";
 }
 void ImplicitAssign::print(std::ostream& os) {
     os << std::setw(4) << std::dec << number << " ";
@@ -2962,18 +3025,17 @@ void PhiAssign::fromSSAform(igraph& ig) {
     lhs = lhs->fromSSAleft(ig, this);
 }
 
+// PhiExp and ImplicitExp:
+bool Assignment::usesExp(Exp* e) {
+    Exp *where = 0;
+    return lhs->isMemOf() && ((Unary*)lhs)->getSubExp1()->search(e, where);
+}
+
 bool Assign::usesExp(Exp *e) {
     Exp *where = 0;
     return (rhs->search(e, where) || (lhs->isMemOf() && 
         ((Unary*)lhs)->getSubExp1()->search(e, where)));
 }
-
-bool PhiAssign::usesExp(Exp* e) {
-    assert(0);      // Not written yet; take from PhiExp::usesExp
-}
-
-bool ImplicitAssign::usesExp(Exp* e) {return false;}    // Uses nothing
-
 
 bool Assign::doReplaceRef(Exp* from, Exp* to) {
     bool changeright = false;
@@ -3089,7 +3151,7 @@ void Assign::genConstraints(LocationSet& cons) {
 void PhiAssign::genConstraints(LocationSet& cons) {
     // Generate a constraints st that all the phi's have to be the same type as
     // result
-    Exp* result = new Unary(opTypeOf, lhs);
+    Exp* result = new Unary(opTypeOf, new RefExp(lhs, this));
     StatementVec::iterator uu;
     for (uu = stmtVec.begin(); uu != stmtVec.end(); uu++) {
         Exp* conjunct = new Binary(opEquals,
@@ -3522,8 +3584,11 @@ void Statement::subscriptVar(Exp* e, Statement* def) {
 // do not change, so we need this slight hack
 void PhiAssign::convertToAssign(Exp* rhs) {
     Assign* a = new Assign(type, lhs, rhs);
+    a->setNumber(number);
+    a->setProc(proc);
+    a->setBB(pbb);
     assert(sizeof(Assign) <= sizeof(PhiAssign));
-    memcpy(this, a, sizeof(PhiAssign));
+    memcpy(this, a, sizeof(Assign));
 }
 
 
@@ -3590,6 +3655,7 @@ void PhiAssign::simplify() {
             if (VERBOSE)
                 LOG << "all the same in " << this << "\n";
             convertToAssign(new RefExp(lhs, first));
+            return;
         }
 
         bool onlyOneNotThis = true;
@@ -3606,6 +3672,7 @@ void PhiAssign::simplify() {
             if (VERBOSE)
                 LOG << "all but one not this in " << this << "\n";
             convertToAssign(new RefExp(lhs, notthis));
+            return;
         }
     }
 }

@@ -16,7 +16,7 @@
  *             returns the list of SSL instruction and table definitions.
  *============================================================================*/
 
-/* $Revision: 1.24.2.4 $
+/* $Revision: 1.24.2.5 $
  * Updates:
  * Shane Sendall (original C version) Dec 1997
  * Doug Simon (C++ version) Jan 1998
@@ -1181,8 +1181,8 @@ assigntype:
                 if (size == 0) size = STD_SIZE;
                 switch (c) {
                     case 'i': $$ = new IntegerType(size, 1); break;
-                    case 'j': $$ = new IntegerType(size, -1); break;
-                    case 'u': $$ = new IntegerType(size, 0); break;
+                    case 'j': $$ = new IntegerType(size, 0); break;
+                    case 'u': $$ = new IntegerType(size, -1); break;
                     case 'f': $$ = new FloatType(size); break;
                     case 'c': $$ = new CharType; break;
                     default:

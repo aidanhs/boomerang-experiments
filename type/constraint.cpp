@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.12.2.4 $
+ * $Revision: 1.12.2.5 $
  *
  * 22 Aug 03 - Mike: Created
  */
@@ -42,6 +42,30 @@ char* ConstraintMap::prints() {
     strncpy(debug_buffer, ost.str().c_str(), 999);
     debug_buffer[999] = '\0';
     return debug_buffer;
+}
+
+void ConstraintMap::makeUnion(ConstraintMap& o) {
+              std::map<Exp*, Exp*, lessExpStar>::iterator it;
+    std::pair<std::map<Exp*, Exp*, lessExpStar>::iterator, bool> ret;
+    for (it = o.cmap.begin(); it != o.cmap.end(); it++) {
+        // Note: *it is a std::pair<Exp*, Exp*>
+        ret = cmap.insert(*it);
+        // If an insertion occured, ret will be std::pair<where, true>
+        // If no insertion occured, ret will be std::pair<where, false>
+        if (ret.second == false) {
+std::cerr << "ConstraintMap::makeUnion: want to overwrite " << ret.first->first
+ << " -> " << ret.first->second << " with " << it->first << " -> " << it->second
+ << "\n";
+            TypeVal* Tret = (TypeVal*)ret.first->second;
+            Type* ty1 = Tret->getType();
+            TypeVal* Toth = (TypeVal*)it->second;
+            Type* ty2 = Toth->getType();
+            if (*ty1 != *ty2) {
+                Tret->setType(ty1->mergeWith(ty2));
+std::cerr << "Now " << ret.first->first << " -> " << ret.first->second << "\n"; 
+            }
+        }
+    }
 }
 
 void ConstraintMap::insert(Exp* term) {
@@ -188,8 +212,18 @@ void Constraints::substIntoEquates(ConstraintMap& in) {
                     } else
                         extra[*ll] = val;   // A new constant constraint
                 }
-                // Remove the equate
-                equates.erase(it);
+                if (((TypeVal*)val)->getType()->isComplete()) {
+                    // We have a complete type equal to one or more variables
+                    // Remove the equate, and generate more fixed
+                    // e.g. Ta = Tb,Tc and Ta = K => Tb=K, Tc=K
+                    for (ll = ls.begin(); ll != ls.end(); ll++) {
+                        Exp* newFixed = new Binary(opEquals,
+                            *ll,        // e.g. Tb
+                            val);       // e.g. K
+                            extra.insert(newFixed);
+                    }
+                    equates.erase(it);
+                }
             }
         }
         fixed.makeUnion(extra);
@@ -446,7 +480,24 @@ LOG << "true\n";
         }
 LOG << (*xPointsTo == *yPointsTo) << "\n";
         return *xPointsTo == *yPointsTo;
+    } else if (xtype->isSize()) {
+        if (ytype->getSize() == 0) {   // Assume size=0 means unknown
+LOG << "true\n";
+            return true;
+        } else {
+LOG << (xtype->getSize() == ytype->getSize()) << "\n";
+            return xtype->getSize() == ytype->getSize();
+        }
+    } else if (ytype->isSize()) {
+        if (xtype->getSize() == 0) {   // Assume size=0 means unknown
+LOG << "true\n";
+            return true;
+        } else {
+LOG << (xtype->getSize() == ytype->getSize()) << "\n";
+            return xtype->getSize() == ytype->getSize();
+        }
     }
+    // Otherwise, just compare the sizes
 LOG << (*xtype == *ytype) << "\n";
     return *xtype == *ytype;
 }

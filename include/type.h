@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.29.2.3 $
+ * $Revision: 1.29.2.4 $
  *
  * 20 Mar 01 - Mike: Added operator*= (compare, ignore sign, and consider all
  *                  floats > 64 bits to be the same
@@ -32,6 +32,7 @@
 #include <functional>       // For binary_function
 #include <vector>
 #include <assert.h>
+#include "types.h"          // For STD_SIZE
 
 class Signature;
 class VoidType;
@@ -83,6 +84,9 @@ virtual bool isNamed() const { return false; }
 virtual bool isCompound() const { return false; }
 virtual bool isSize() const { return false; }
 
+// Return false if some info is missing, e.g. unknown sign, size or basic type
+virtual bool isComplete() {return true;}
+
     // These replace type casts
     VoidType *asVoid();
     FuncType *asFunc();
@@ -117,6 +121,9 @@ virtual bool    operator< (const Type& other) const = 0;// Considers sign
         bool    operator*=(const Type& other) const {   // Consider only
                     return id == other.id;}              // broad type
 virtual Exp *match(Type *pattern);
+    // Merge one type with another, e.g. size16 with integer-of-size-0
+    // -> int16
+virtual Type*   mergeWith(Type* other) { assert(0);}
 
     // Acccess functions
 virtual int     getSize() const = 0;
@@ -197,15 +204,17 @@ private:
                                     // evenly matched
 
 public:
-	IntegerType(int sz = 32, int sign = -1);
+	IntegerType(int sz = 32, int sign = 0);
 virtual ~IntegerType();
 virtual bool isInteger() const { return true; }
+virtual bool isComplete() {return signedness != 0 && size != 0;}
 
 virtual Type* clone() const;
 
 virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
 virtual bool    operator< (const Type& other) const;
+virtual Type*   mergeWith(Type* other);
 virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
@@ -216,6 +225,8 @@ virtual void    setSize(int sz) {size = sz;}
         void    bumpSigned(int sg) { signedness += sg; }
         // Do we need this? Set absolute signedness
         void    setSigned(int sg) {signedness = sg; }
+        // Get the signedness
+        int     getSignedness() {return signedness;}
 
 // Get the C type as a string. If full, output comments re the lack of sign
 // information (in IntegerTypes).
@@ -318,6 +329,7 @@ virtual bool    operator< (const Type& other) const;
 virtual Exp *match(Type *pattern);
 
 virtual int     getSize() const;
+virtual void    setSize(int sz) {assert(sz == STD_SIZE);}
 
 virtual const char *getCtype(bool full = true) const;
 
@@ -439,9 +451,12 @@ virtual Type*   clone() const;
 virtual bool    operator==(const Type& other) const;
 virtual bool    operator< (const Type& other) const;
 //virtual Exp     *match(Type *pattern);
+virtual Type*   mergeWith(Type* other);
+
 virtual int     getSize() const;
 virtual void    setSize(int sz) {size = sz;}
 virtual bool    isSize() const { return true; }
+virtual bool    isComplete() {return false;}    // Basic type is unknown
 virtual const char* getCtype(bool full = true) const;
 };
 

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149.2.7 $
+ * $Revision: 1.149.2.8 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -141,13 +141,11 @@ TypedExp::TypedExp(TypedExp& o) : Unary(opTypedExp)
 }
 
 FlagDef::FlagDef(Exp* params, RTL* rtl)
-    : Unary(opFlagDef, params), rtl(rtl) {}
+    : Unary(opFlagDef, params), rtl(rtl) { }
 
-RefExp::RefExp(Exp* e, Statement* d) : Unary(opSubscript, e), def(d) {
-}
+RefExp::RefExp(Exp* e, Statement* d) : Unary(opSubscript, e), def(d) { }
 
-TypeVal::TypeVal(Type* ty) : Terminal(opTypeVal), val(ty)
-{ }
+TypeVal::TypeVal(Type* ty) : Terminal(opTypeVal), val(ty) { }
 
 Location::Location(OPER op, Exp *exp, UserProc *proc) : Unary(op, exp), 
                                                         proc(proc), ty(NULL)

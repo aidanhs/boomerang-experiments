@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.7 $
+ * $Revision: 1.105.2.8 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -738,8 +738,8 @@ class RefExp : public Unary {
 public:
             // Constructor with expression (e) and statement defining it (def)
             RefExp(Exp* e, Statement* def);
-            RefExp(Exp* e);
-            RefExp(RefExp& o);
+            //RefExp(Exp* e);
+            //RefExp(RefExp& o);
 virtual Exp* clone();
 virtual bool operator==(const Exp& o) const;
 virtual bool operator< (const Exp& o) const;

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.60.2.4 $
+ * $Revision: 1.60.2.5 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -628,6 +628,9 @@ class Cfg {
     std::map<Exp*, std::set<int>, lessExpStar > defsites;
     // Array of sets of BBs needing phis
     std::map<Exp*, std::set<int>, lessExpStar> A_phi;
+    // A Boomerang requirement: Statements defining particular subscripted
+    // locations
+    std::map<Exp*, Statement*, lessExpStar> defStmts;
 
     /*
      * Renaming variables

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.74.2.5 $
+ * $Revision: 1.74.2.6 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -2114,8 +2114,9 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
     parent.resize(0);
     best.resize(0);
     bucket.resize(0);
-    defsites.clear();            // Clear defsites map
-    A_orig.clear();              // and A_orig
+    defsites.clear();           // Clear defsites map,
+    A_orig.clear();             // and A_orig,
+    defStmts.clear();           // and the map from variable to defining Stmt 
 
     // Set the sizes of needed vectors
     int numBB = indices.size();
@@ -2131,9 +2132,12 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
             LocationSet ls;
             LocationSet::iterator it;
             s->getDefinitions(ls);
-            for (it = ls.begin(); it != ls.end(); it++)
-                if ((*it)->getMemDepth() == memDepth)
+            for (it = ls.begin(); it != ls.end(); it++) {
+                if ((*it)->getMemDepth() == memDepth) {
                     A_orig[n].insert((*it)->clone());
+                    defStmts[*it] = s;
+                }
+            }
         }
     }
 
@@ -2149,6 +2153,7 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
     }
 
     // For each variable a (in defsites)
+    Prog* prog = myProc->getProg();
     std::map<Exp*, std::set<int>, lessExpStar>::iterator mm;
     for (mm = defsites.begin(); mm != defsites.end(); mm++) {
         Exp* a = (*mm).first;               // *mm is pair<Exp*, set<int>>
@@ -2167,8 +2172,9 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
                 std::set<int>& s = A_phi[a];
                 if (s.find(y) == s.end()) {
                     // Insert trivial phi function for a at top of block y
-                    // a := phi{}
-                    Statement* as = new PhiAssign(a->clone());
+                    // a := phi()
+                    Type* Ta = defStmts[a]->getTypeFor(a, prog);
+                    Statement* as = new PhiAssign(/*Ta*/NULL, a->clone());
                     PBB Ybb = BBs[y];
                     Ybb->prependStmt(as, proc);
                     // A_phi[a] <- A_phi[a] U {y}
