@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.8.2.1 $
+ * $Revision: 1.8.2.2 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -355,25 +355,25 @@ public:
 };
 
 class ExpSubscripter : public ExpModifier {
-	Exp*		search;
-	Statement*	def;
+		Exp*	search;
+		Statement* def;
+		Cfg*	cfg;			// Needed if search == NULL
 public:
-				ExpSubscripter(Exp* s, Statement* d) {
-					search = s; def = d; }
-	virtual Exp* preVisit(Location *e, bool& recur);
-	virtual Exp* preVisit(Terminal *e);
-	virtual Exp* preVisit(RefExp *e,   bool& recur);
+				ExpSubscripter(Exp* s, Statement* d, Cfg* cfg) : search(s), def(d), cfg(cfg) { }
+virtual Exp*	preVisit(Location *e, bool& recur);
+virtual Exp*	preVisit(Terminal *e);
+virtual Exp*	preVisit(RefExp *e,   bool& recur);
 };
 
 class StmtSubscripter : public StmtModifier {
 public:
 				StmtSubscripter(ExpModifier* em) : StmtModifier(em) {}
-	virtual		~StmtSubscripter() {}
+virtual			~StmtSubscripter() {}
 
-	virtual void visit(		   Assign *s, bool& recur);
-	virtual void visit(		PhiAssign *s, bool& recur);
-	virtual void visit(ImplicitAssign *s, bool& recur);
-	virtual void visit( CallStatement *s, bool& recur);
+virtual void	visit(		   Assign *s, bool& recur);
+virtual void	visit(		PhiAssign *s, bool& recur);
+virtual void	visit(ImplicitAssign *s, bool& recur);
+virtual void	visit( CallStatement *s, bool& recur);
 };
 
 class SizeStripper : public ExpModifier {

@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.114.2.1 $
+ * $Revision: 1.114.2.2 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -338,7 +338,11 @@ virtual Exp*	accept(ExpModifier* v) = 0;
 		Exp*	stripRefs();			// Strip all references
 		Exp*	stripSizes();			// Strip all size casts
 		// Subscript all e in this Exp with statement def:
-		Exp*	expSubscriptVar(Exp* e, Statement* def);
+		Exp*	expSubscriptVar(Exp* e, Statement* def, Cfg* cfg = NULL);
+		// Subscript all e in this Exp with 0 (implicit assignments)
+		Exp*	expSubscriptVarImp(Exp* e, Cfg* cfg);
+		// Subscript all locations in this expression with their implicit assignments
+		Exp*	expSubscriptAllImp(Cfg* cfg);
 virtual Memo	*makeMemo(int mId) = 0;
 virtual void	readMemo(Memo *m, bool dec) = 0;
 

@@ -4,7 +4,7 @@
  *				tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.21 $
+ * $Revision: 1.21.2.1 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -1232,9 +1232,9 @@ void StatementTest::testCallRefsFixer () {
 	// Find various needed statements
 	StatementList stmts;
 	proc->getStatements(stmts);
-	StatementList::iterator it;
-	it = stmts.begin();							// Statement 1
-	advance(it, 20-1);
+	StatementList::iterator it = stmts.begin();
+	while (!(*it)->isCall())
+		it++;
 	CallStatement* call = (CallStatement*)*it;	// Statement 20
 	call->setDestProc(proc);					// A recursive call
 	// std::cerr << "Call is " << call << "\n";

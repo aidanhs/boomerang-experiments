@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.1 $
+ * $Revision: 1.126.2.2 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -3786,7 +3786,7 @@ void Statement::addUsedLocs(LocationSet& used, bool final /* = false */) {
 
 // For all expressions in this Statement, replace any e with e{def}
 void Statement::subscriptVar(Exp* e, Statement* def) {
-	ExpSubscripter es(e, def);
+	ExpSubscripter es(e, def, NULL);
 	StmtSubscripter ss(&es);
 	accept(&ss);
 }

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.65.4.1 $
+ * $Revision: 1.65.4.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -1031,6 +1031,9 @@ public:
 	 */
 	bool decodeIndirectJmp(UserProc* proc);
 
+		// Implicit assignments
+		Statement* findTheImplicitAssign(Exp* x);		// Find the existing implicit assign for x
+		Statement* findImplicitAssign(Exp* x);			// Find or create an implicit assign for x
 
 		/*
 	 	 * Dominance frontier and SSA code
@@ -1041,10 +1044,6 @@ public:
 		void	Link(int p, int n);
 		void	computeDF(int n);
 		void	placePhiFunctions(int memDepth, UserProc* proc);
-private:
-		// Helper function for renameBlockVars
-		Statement* findImplicitAssign(Exp* x);
-public:
 		void 	renameBlockVars(int n, int memDepth, bool clearStack = false);
 		bool 	doesDominate(int n, int w);
 

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.86.2.1 $
+ * $Revision: 1.86.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -2203,20 +2203,21 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
 	}
 }
 
+Statement* Cfg::findTheImplicitAssign(Exp* x) {
+	// As per the below, but it's an error if the expression is not found
+	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
+	assert(it != implicitMap.end());
+	return it->second;
+}
+
 // A short helper function for renameBlockVars
 Statement* Cfg::findImplicitAssign(Exp* x) {
 	Statement* def;
-	if (x->isSubscript()) {
-assert(0);
-		// The very first pass, the x are never subscripted. But in later passes, they may well be.
-		// Strip the subscript off so that r29{0} is treated the same as r29
-Statement* def = ((RefExp*)x)->getRef();
-		x = ((RefExp*)x)->getSubExp1();
-if (def->getNumber() != 0)
-  std::cerr << "HACK! NE 0! " << x << "\n";
-	}
 	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
 	if (it == implicitMap.end()) {
+//std::cerr << "Creating new implicit for " << x << "; existing are ";
+//for (it = implicitMap.begin(); it != implicitMap.end(); it++)
+//  it->first->printx(0); std::cerr << ", "; std::cerr << "\n";
 		// A use with no explicit definition. Create a new implicit assignment
 		def = new ImplicitAssign(x->clone());
 		entryBB->prependStmt(def, myProc);
@@ -2261,10 +2262,6 @@ void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
 					// If the stack is empty, create or use an existing implicit assignment.
 					// This avoids having to initialise the stack for ALL
 					// variables (not just those that need phi functions)
-if (x->isSubscript()) {
-std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator ss;
-LOG << "Stack is: "; for (ss = Stack.begin(); ss != Stack.end(); ss++) LOG << ss->first << "=" << ss->second.size() << ", "; LOG << "\n";
-}
 					def = findImplicitAssign(x);
 				}
 				else

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.207.2.1 $
+ * $Revision: 1.207.2.2 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -871,7 +871,7 @@ void UserProc::generateCode(HLLCode *hll) {
 	hll->AddProcStart(signature);
 	
 	std::map<std::string, Type*>::iterator last = locals.end();
-	last--;
+	if (locals.size()) last--;
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++)
 		hll->AddLocal((*it).first.c_str(), (*it).second, it == last);
 
@@ -1625,7 +1625,8 @@ void UserProc::trimReturns() {
 			if (*e == *regsp) {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
-				e = e->expSubscriptVar(new Terminal(opWild), NULL);
+				e = e->expSubscriptAllImp(cfg);
+
 				if (!(*e == *theReturnStatement->getReturnExp(i))) {
 					if (VERBOSE)
 						LOG << "replacing in return statement " << theReturnStatement->getReturnExp(i) <<
@@ -1836,13 +1837,11 @@ void UserProc::trimParameters(int depth) {
 	for (i = 0; i < nparams; i++) {
 		referenced[i] = false;
 		// We want the 
-		params.push_back(signature->getParamExp(i)->clone()->
-							expSubscriptVar(new Terminal(opWild), NULL));
+		params.push_back(signature->getParamExp(i)->clone()->expSubscriptAllImp(cfg));
 	}
 	for (i = 0; i < signature->getNumImplicitParams(); i++) {
 		referenced[i + nparams] = false;
-		params.push_back(signature->getImplicitParamExp(i)->clone()->
-							expSubscriptVar(new Terminal(opWild), NULL));
+		params.push_back(signature->getImplicitParamExp(i)->clone()->expSubscriptAllImp(cfg));
 	}
 
 	std::set<Statement*> excluded;
@@ -1971,8 +1970,7 @@ void UserProc::addReturn(Exp *e)
 {
 	Exp *e1 = e->clone();
 	if (e1->getOper() == opMemOf) {
-		e1->refSubExp1() = e1->getSubExp1()->expSubscriptVar(
-												new Terminal(opWild), NULL);
+		e1->refSubExp1() = e1->getSubExp1()->expSubscriptAllImp(cfg);
 	}
 	if (theReturnStatement)
 		theReturnStatement->addReturn(e1);
@@ -2340,9 +2338,9 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
 		for (int i = 0; i < signature->getNumParams(); i++) {
-			if (signature->getParamExp(i)->getMemDepth() == depth || depth < 0) {
+			if (depth < 0 || signature->getParamExp(i)->getMemDepth() == depth) {
 				Exp *r = signature->getParamExp(i)->clone();
-				r = r->expSubscriptVar(new Terminal(opWild), NULL);
+				r = r->expSubscriptAllImp(cfg);
 				// Remove the outer {0}, for where it appears on the LHS, and because we want to have param1{0}
 				assert(r->isSubscript());	// There should always be one
 				// if (r->getOper() == opSubscript)
@@ -2361,8 +2359,7 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 	}
 }
 
-Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass)
-{
+Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 	Exp *e = NULL;
 	if (symbolMap.find(le) == symbolMap.end()) {
 		if (le->getOper() == opMemOf && le->getSubExp1()->getOper() == opMinus && *le->getSubExp1()->getSubExp1() ==
@@ -2429,7 +2426,7 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass)
 			assert(ty);
 			if (nty && !(*ty == *nty) && nty->getSize() >= ty->getSize()) {
 				if (VERBOSE)
-					LOG << "updating type of " << name.c_str() << " to " << nty->getCtype() << "\n";
+					LOG << "getLocalExp: updating type of " << name.c_str() << " to " << nty->getCtype() << "\n";
 				ty = nty;
 				locals[name] = ty;
 			}
@@ -2659,13 +2656,13 @@ bool UserProc::nameRegisters() {
 			std::string name = ((Const*)symbolMap[memref]->getSubExp1())->getStr();
 			if (memref->getType() != NULL)
 				locals[name] = memref->getType();
+			found = true;
 #if 0
 			locals[name] = s->updateType(memref, locals[name]);
-#endif
-			found = true;
 			if (VERBOSE)
-				LOG << "updating type of " << name.c_str() << " to " 
+				LOG << "updating type of named register " << name.c_str() << " to " 
 					<< locals[name]->getCtype() << "\n";
+#endif
 		}
 	}
 	delete match;
@@ -2790,7 +2787,7 @@ void UserProc::setLocalType(const char *nam, Type *ty)
 {
 	locals[nam] = ty;
 	if (VERBOSE)
-		LOG << "updating type of " << nam << " to " << ty->getCtype() << "\n";
+		LOG << "setLocalType: updating type of " << nam << " to " << ty->getCtype() << "\n";
 }
 
 void UserProc::setLocalExp(const char *nam, Exp *e)
@@ -3143,12 +3140,12 @@ bool UserProc::prove(Exp *query)
 
 	assert(query->getOper() == opEquals);
 	
-	// subscript locs on the right with {0}
+	// subscript locs on the right with {0} (note: no longer a NULL reference)
 	LocationSet locs;
 	query->getSubExp2()->addUsedLocs(locs);
 	LocationSet::iterator xx;
 	for (xx = locs.begin(); xx != locs.end(); xx++) {
-		query->refSubExp2() = query->getSubExp2()->expSubscriptVar(*xx, NULL);
+		query->refSubExp2() = query->getSubExp2()->expSubscriptVarImp(*xx, cfg);
 	}
 
 	if (query->getSubExp1()->getOper() != opSubscript) {
@@ -3620,7 +3617,6 @@ void UserProc::dfaTypeAnalysis() {
 		LOG << iter << " iterations\n";
 		for (it = stmts.begin(); it != stmts.end(); it++) {
 			Statement* s = *it;
-			Type* t = s->getType();
 			LOG << s << "\n";			// Print the statement; has dest type
 			// Now print type for each constant in this Statement
 			std::list<Const*> lc;

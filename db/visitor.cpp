@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.14.2.1 $
+ * $Revision: 1.14.2.2 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -491,16 +491,21 @@ bool UsedLocsVisitor::visit(BoolAssign* s, bool& override) {
 // Expression subscripter
 //
 Exp* ExpSubscripter::preVisit(Location* e, bool& recur) {
-	if (*e == *search) {
+	if (search == NULL || *e == *search) {
 		recur = e->isMemOf();	// Don't double subscript unless m[...]
-		return new RefExp(e, def);
+		if (search == NULL)
+			return new RefExp(e, cfg->findImplicitAssign(e));
+		else
+			return new RefExp(e, def);
 	}
 	recur = true;
 	return e;
 }
 
 Exp* ExpSubscripter::preVisit(Terminal* e) {
-	if (*e == *search)
+	if (search == NULL)
+		return new RefExp(e, cfg->findImplicitAssign(e));
+	else if (*e == *search)
 		return new RefExp(e, def);
 	return e;
 }
