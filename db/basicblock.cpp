@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.78.2.6 $
+ * $Revision: 1.78.2.7 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -346,6 +346,11 @@ void BasicBlock::printToLog() {
     std::ostringstream st;
     print(st);
     LOG << st.str().c_str();
+}
+
+// Another attempt at printing BBs that gdb doesn't like to print
+void printBB(PBB bb) {
+    bb->print(std::cerr);
 }
 
 /*==============================================================================
@@ -955,7 +960,7 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
     // the same as the first node in the loop, then this write out its body 
     // and return otherwise generate a goto
     if (isLatchNode())
-        if (indLevel == latch->loopHead->indentLevel + 
+        if (latch && indLevel == latch->loopHead->indentLevel + 
                         (latch->loopHead->lType == PreTested ? 1 : 0)) {
             WriteBB(hll, indLevel);
             return;
@@ -1670,6 +1675,18 @@ static Location* formA  = Location::memOf(
                 new Const(4)),
             new Terminal(opWildIntConst)));
 
+// With array processing, we get a new form, call it form 'o' (don't
+// confuse with form 'O'):
+// Pattern: <base>{}[<index>]{} where <index> could be <var> - <Kmin>
+// NOT COMPLETED YET!
+static Unary* formo = new RefExp(
+        new Binary(opArraySubscript,
+            new RefExp(
+                new Terminal(opWild),
+                (Statement*)-1),
+            new Terminal(opWild)),
+        (Statement*)-1);
+
 // Pattern: m[<expr> * 4 + T ] + T
 static Exp* formO  = new Binary(opPlus,
     Location::memOf(
@@ -1704,8 +1721,8 @@ static Exp* formr = new Binary(opPlus,
                 new Const(4)),
         new Terminal(opWildIntConst)))));
 
-static Exp* hlForms[] = {forma, formA, formO, formR, formr};
-static char chForms[] = {  'a',  'A',   'O',   'R',   'r'};
+static Exp* hlForms[] = {forma, formA, formo, formO, formR, formr};
+static char chForms[] = {  'a',  'A',   'o',   'O',   'R',   'r'};
 
 
 // Vcall high level patterns

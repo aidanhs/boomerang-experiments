@@ -15,8 +15,9 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.74.2.6 $
+ * $Revision: 1.74.2.7 $
  * 18 Apr 02 - Mike: Mods for boomerang
+ * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
 
 
@@ -729,7 +730,8 @@ void Cfg::sortByLastDFT()
 void Cfg::updateVectorBB()
 {
     m_vectorBB.clear();
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+      it++)
         m_vectorBB.push_back(*it);
 }
 
@@ -790,8 +792,8 @@ bool Cfg::wellFormCfg()
                                 ii != pBB->m_InEdges.end(); ii++)
                             if (*ii == *it) break;
                         if (ii == pBB->m_InEdges.end()) {
-                            std::cerr << "WellFormCfg: No in edge to BB at " << std::hex;
-                            std::cerr << (*it)->getLowAddr();
+                            std::cerr << "WellFormCfg: No in edge to BB at ";
+                            std::cerr << std::hex << (*it)->getLowAddr();
                             std::cerr << " from successor BB at ";
                             std::cerr << pBB->getLowAddr() << std::endl;
                             m_bWellFormed = false;  // At least one problem
@@ -1868,9 +1870,12 @@ void Cfg::generateDotFile(std::ofstream& of) {
         of << "    " << "bb" << std::hex << (*it)->getLowAddr() << " [";
         of << "label=\"";
         char* p = (*it)->getStmtNumber();
+        of << std::dec << indices[*it];
         if (p[0] != 'b')
             // If starts with 'b', no statements (something like bb8101c3c).
-            of << (*it)->getStmtNumber() << ": ";
+            of << ":" << (*it)->getStmtNumber();
+        else
+            of << " ";
         switch((*it)->getType()) {
             case ONEWAY: of << "oneway"; break;
             case TWOWAY: 
@@ -1968,16 +1973,7 @@ void Cfg::DFS(int p, int n) {
         PBB bb = BBs[n];
         std::vector<PBB>::iterator oo;
         for (oo = bb->m_OutEdges.begin(); oo != bb->m_OutEdges.end(); oo++) {
-            PBB succ = *oo;
-            int w;
-            if (indices.find(succ) == indices.end()) {
-                w = indices.size();
-                indices[succ] = w;
-                BBs[w] = succ;
-            }
-            else
-                w = indices[succ];
-            DFS(n, w);
+            DFS(n, indices[*oo]);
         }
     }
 }
@@ -1998,6 +1994,17 @@ void Cfg::dominators() {
     best.resize(numBB, -1);
     bucket.resize(numBB);
     DF.resize(numBB);
+    // Set up the BBs and indices vectors. Do this here because sometimes a
+    // BB can be unreachable (so relying on in-edges doesn't work)
+    std::list<PBB>::iterator ii;
+    int idx = 1;
+    for (ii = m_listBB.begin(); ii != m_listBB.end(); ii++) {
+        PBB bb = *ii;
+        if (bb != r) {     // Entry BB r already done
+            indices[bb] = idx;
+            BBs[idx++] = bb;
+        }
+    }
     DFS(-1, 0);
     int i;
     for (i=N-1; i >= 1; i--) {
@@ -2008,6 +2015,10 @@ void Cfg::dominators() {
         PBB bb = BBs[n];
         std::vector<PBB>::iterator it;
         for (it = bb->m_InEdges.begin(); it != bb->m_InEdges.end(); it++) {
+            if (indices.find(*it) == indices.end()) {
+                std::cerr << "BB not in indices: "; (*it)->print(std::cerr);
+                assert(false);
+            }
             int v = indices[*it];
             int sdash;
             if (dfnum[v] <= dfnum[n])
@@ -2120,6 +2131,7 @@ void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
 
     // Set the sizes of needed vectors
     int numBB = indices.size();
+    assert(numBB = (int)m_listBB.size());
     A_orig.resize(numBB);
 
     // We need to create A_orig for the current memory depth
@@ -2375,6 +2387,24 @@ void Cfg::appendBBs(std::list<PBB>& worklist, std::set<PBB>& workset) {
         workset.insert(*it);
 }
 
+#define DEBUG_SPLIT_FOR_BRANCH 0
+#if DEBUG_SPLIT_FOR_BRANCH
+void dumpBB(PBB bb) {
+    std::cerr << "For BB at " << std::hex << bb << ":\nIn edges: ";
+    int i, n;
+    std::vector<PBB> ins = bb->getInEdges();
+    std::vector<PBB> outs = bb->getOutEdges();
+    n = ins.size();
+    for (i=0; i < n; i++)
+      std::cerr << ins[i] << " ";
+    std::cerr << "\nOut Edges: ";
+    n = outs.size();
+    for (i=0; i < n; i++)
+      std::cerr << outs[i] << " ";
+    std::cerr << "\n";
+}
+#endif    
+
 /*  pBB-> +----+    +----+ <-pBB
  * Change | A  | to | A  | where A and B could be empty. S is the string
  *        |    |    |    | instruction (with will branch to itself and to the
@@ -2398,6 +2428,7 @@ void Cfg::appendBBs(std::list<PBB>& worklist, std::set<PBB>& workset) {
  * (so this function is highly specialised for the job of replacing the
  * %SKIP and %RPT parts of string instructions)
  */
+
 PBB Cfg::splitForBranch(PBB pBB, RTL* rtl, BranchStatement* br1,
   BranchStatement* br2, BB_IT& it) {
 
@@ -2501,8 +2532,8 @@ PBB Cfg::splitForBranch(PBB pBB, RTL* rtl, BranchStatement* br1,
     addOutEdge(rptBB, skipBB);
     addOutEdge(rptBB, newBb);
 
-    // For each out edge of newBb, change any in-edges to pBB to instead point
-    // to newBb
+    // For each out edge of newBb, change any in-edges from pBB to instead come
+    // from newBb
     if (haveB) {
         for (i=0; i < oldOutEdges; i++) {
             PBB succ = newBb->m_OutEdges[i];
@@ -2526,7 +2557,29 @@ PBB Cfg::splitForBranch(PBB pBB, RTL* rtl, BranchStatement* br1,
         }
     }
     if (!haveA) {
-        // Must delete pBB. Note that this effectively "increments" it
+        // There is no A any more. All A's in-edges have been copied to the
+        // skipBB. It is possible that the original BB had a self edge
+        // (branch to start of self). If so, this edge, now in to skipBB, must
+        // now come from newBb (if there is a B) or rptBB if none.
+        // Both of these will already exist, so delete it.
+        for (j=0; j < skipBB->m_InEdges.size(); j++) {
+            PBB pred = skipBB->m_InEdges[j];
+            if (pred == pBB) {
+                skipBB->deleteInEdge(pBB);
+                break;
+            }
+        }
+        
+#if DEBUG_SPLIT_FOR_BRANCH
+        std::cerr << "About to delete pBB: " << std::hex << pBB << "\n";
+        dumpBB(pBB);
+        dumpBB(skipBB);
+        dumpBB(rptBB);
+        dumpBB(newBb);
+#endif
+
+        // Must delete pBB. Note that this effectively "increments"
+        // iterator it
         it = m_listBB.erase(it);
         pBB = NULL;
     } else

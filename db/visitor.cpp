@@ -7,7 +7,7 @@
  *             classes.
  *============================================================================*/
 /*
- * $Revision: 1.6.2.5 $
+ * $Revision: 1.6.2.6 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -130,10 +130,10 @@ bool StmtConscriptSetter::visit(ReturnStatement* stmt) {
     return true;
 }
 
-bool StmtConscriptSetter::visit(BoolStatement* stmt) {
+bool StmtConscriptSetter::visit(BoolAssign* stmt) {
     SetConscripts sc(curConscript, bClear);
     stmt->getCondExpr()->accept(&sc);
-    stmt->getDest()->accept(&sc);
+    stmt->getLeft()->accept(&sc);
     curConscript = sc.getLast();
     return true;
 }
@@ -446,13 +446,13 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
     return true;                // Continue the recursion
 }
 
-bool UsedLocsVisitor::visit(BoolStatement* s, bool& override) {
+bool UsedLocsVisitor::visit(BoolAssign* s, bool& override) {
     Exp* pCond = s->getCondExpr();
     if (pCond)
         pCond->accept(ev);              // Condition is used
-    Exp* pDest = s->getDest();
-    if (pDest && pDest->isMemOf()) {    // If dest is of form m[x]...
-        Exp* x = ((Location*)pDest)->getSubExp1();
+    Exp* lhs = s->getLeft();
+    if (lhs && lhs->isMemOf()) {    // If dest is of form m[x]...
+        Exp* x = ((Location*)lhs)->getSubExp1();
         x->accept(ev);                  // ... then x is used
     }
     override = true;            // Don't do the normal accept logic
@@ -631,9 +631,9 @@ bool StmtConstCaster::visit(ReturnStatement *stmt) {
     }
     return true;
 }
-bool StmtConstCaster::visit(BoolStatement *stmt) {
-    Exp* e = stmt->getDest();
-    stmt->setDest(e->accept(ecc));
+bool StmtConstCaster::visit(BoolAssign *stmt) {
+    Exp* e = stmt->getLeft();
+    stmt->setLeft(e->accept(ecc));
     if (ecc->isChanged()) return false;
     e = stmt->getCondExpr();
     stmt->setCondExpr(e->accept(ecc));

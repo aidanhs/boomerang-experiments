@@ -15,10 +15,12 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.23.2.4 $
+ * $Revision: 1.23.2.5 $
  *
  * 28 Apr 02 - Mike: getTempType() returns a Type* now
  * 26 Aug 03 - Mike: Fixed operator< (had to re-introduce an enum... ugh)
+ * 17 Jul 04 - Mike: Fixed some functions that were returning the buffers
+ *             of std::strings allocated on the stack (affected Windows)
  * 23 Jul 04 - Mike: Implement SizeType
  */
 
@@ -690,7 +692,7 @@ const char *CharType::getCtype(bool final) const { return "char"; }
 const char *PointerType::getCtype(bool final) const {
      std::string s = points_to->getCtype(final);
      s += "*";
-     return s.c_str(); // memory..
+     return strdup(s.c_str()); // memory..
 }
 
 const char *ArrayType::getCtype(bool final) const {
@@ -698,7 +700,7 @@ const char *ArrayType::getCtype(bool final) const {
     std::ostringstream ost;
     ost << "[" << length << "]";
     s += ost.str().c_str();
-    return s.c_str(); // memory..
+    return strdup(s.c_str()); // memory..
 }
 
 const char *NamedType::getCtype(bool final) const { return name.c_str(); }
@@ -714,7 +716,7 @@ const char *CompoundType::getCtype(bool final) const {
         tmp += "; ";
     }
     tmp += "}";
-    return tmp.c_str();
+    return strdup(tmp.c_str());
 }
 
 const char* SizeType::getCtype(bool final) const {

@@ -4,7 +4,7 @@
  *              tests the RTL and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.12.2.2 $
+ * $Revision: 1.12.2.3 $
  *
  * 13 May 02 - Mike: Created
  */
@@ -22,12 +22,8 @@
 #include "prog.h"
 #include "visitor.h"
 
-#ifndef BOOMDIR
-#error Must define BOOMDIR
-#endif
-
-#define SWITCH_SPARC        BOOMDIR "/test/sparc/switch_cc"
-#define SWITCH_PENT         BOOMDIR "/test/pentium/switch_cc"
+#define SWITCH_SPARC        "test/sparc/switch_cc"
+#define SWITCH_PENT         "test/pentium/switch_cc"
 
 /*==============================================================================
  * FUNCTION:        RtlTest::registerTests
@@ -104,8 +100,8 @@ void RtlTest::testClone () {
                 Location::regOf(9),
                 new Const(99)));
     Assign* a2 = new Assign(new IntegerType(16),
-            new Unary(opParam, new Const("x")),
-            new Unary(opParam, new Const("y")));
+            new Location(opParam, new Const("x"), NULL),
+            new Location(opParam, new Const("y"), NULL));
     std::list<Statement*> ls;
     ls.push_back(a1);
     ls.push_back(a2);

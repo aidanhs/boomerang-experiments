@@ -13,25 +13,26 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.54.2.6 $
+ * $Revision: 1.54.2.7 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
  * 03 Apr 03 - Mike: Added StatementSet
  * 25 Jul 03 - Mike: Changed dataflow.h to statement.h
  * 15 Jul 04 - Mike: New Assignment hierarchy
+ * 11 Aug 04 - Mike: BoolStatement -> BoolAssign
  */
 
 #ifndef _STATEMENT_H_
 #define _STATEMENT_H_
 
-/* Class hierarchy:          Statement (abstract)
-                     _________/  |  \_________
-                    /            |            \
-             GotoStatement BoolStatement  Assignment (abstract)
- BranchStatement__/                       /    |    \
- ReturnStatement_/                   Assign    |   PhiAssign
- CallStatement__/                        ImplicitAssign
+/* Class hierarchy:      Statement (abstract)
+                         /       \
+                        /         \
+             GotoStatement  Assignment (abstract)
+ BranchStatement__/         /   / \   \
+ ReturnStatement_/     Assign  /   \  PhiAssign
+ CallStatement__/   ImplicitAssign BoolAssign
  CaseStatement_/
 */
 
@@ -81,6 +82,29 @@ enum STMT_KIND {
     STMT_BOOL,                  // For "setCC" instructions that set destination
                                 // to 1 or 0 depending on the condition codes.
     STMT_CASE,                  // Used to represent switch statements.
+};
+
+/*==============================================================================
+ * BRANCH_TYPE: These values indicate what kind of conditional jump or
+ * conditonal assign is being performed.
+ * Changing the order of these will result in save files not working - trent
+ *============================================================================*/
+enum BRANCH_TYPE {
+    BRANCH_JE = 0,          // Jump if equals
+    BRANCH_JNE,             // Jump if not equals
+    BRANCH_JSL,             // Jump if signed less
+    BRANCH_JSLE,            // Jump if signed less or equal
+    BRANCH_JSGE,            // Jump if signed greater or equal
+    BRANCH_JSG,             // Jump if signed greater
+    BRANCH_JUL,             // Jump if unsigned less
+    BRANCH_JULE,            // Jump if unsigned less or equal
+    BRANCH_JUGE,            // Jump if unsigned greater or equal
+    BRANCH_JUG,             // Jump if unsigned greater
+    BRANCH_JMI,             // Jump if result is minus
+    BRANCH_JPOS,            // Jump if result is positive
+    BRANCH_JOF,             // Jump if overflow
+    BRANCH_JNOF,            // Jump if no overflow
+    BRANCH_JPAR             // Jump if parity even (Intel only)
 };
 
 //  //  //  //  //  //  //  //  //  //  //  //  //  //
@@ -151,7 +175,7 @@ virtual bool    isBranch() { return kind == STMT_BRANCH; }
     // true if this statement is a call
     bool        isCall() { return kind == STMT_CALL; }
 
-    // true if this statement is a BoolStatement
+    // true if this statement is a BoolAssign
     bool        isBool() { return kind == STMT_BOOL; }
 
     // true if this statement is a ReturnStatement
@@ -537,6 +561,78 @@ virtual void    print(std::ostream& os);
 
 };  // class ImplicitAssign
 
+/*==============================================================================
+ * BoolAssign represents "setCC" type instructions, where some destination is
+ * set (to 1 or 0) depending on the condition codes. It has a condition
+ * Exp, similar to the BranchStatement class.
+ * *==========================================================================*/
+class BoolAssign: public Assignment {
+    BRANCH_TYPE jtCond;         // the condition for setting true
+    Exp*        pCond;          // Exp representation of the high level
+                                // condition: e.g. r[8] == 5
+    bool        bFloat;         // True if condition uses floating point CC
+    int         size;           // The size of the dest
+public:
+                BoolAssign(int size);
+virtual         ~BoolAssign();
+
+    // Make a deep copy, and make the copy a derived object if needed.
+virtual Statement* clone();
+
+    // Accept a visitor to this RTL
+virtual bool    accept(StmtVisitor* visitor);
+virtual bool    accept(StmtExpVisitor* visitor);
+virtual bool    accept(StmtModifier* visitor);
+
+    // Set and return the BRANCH_TYPE of this scond as well as whether the
+    // floating point condition codes are used.
+    void        setCondType(BRANCH_TYPE cond, bool usesFloat = false);
+    BRANCH_TYPE getCond(){return jtCond;}
+    bool        isFloat(){return bFloat;}
+    void        setFloat(bool b) { bFloat = b; }
+
+    // Set and return the Exp representing the HL condition
+    Exp*        getCondExpr();
+    void        setCondExpr(Exp* pss);
+    // As above, no delete (for subscripting)
+    void        setCondExprND(Exp* e) { pCond = e; }
+
+    int         getSize() {return size;}    // Return the size of the assignment
+    void        makeSigned();
+
+virtual void    print(std::ostream& os = std::cout);
+
+#if 0
+    // Used for type analysis. Stores type information that
+    // can be gathered from the RTL instruction inside a
+    // data structure within BBBlock inBlock
+    void storeUseDefineStruct(BBBlock& inBlock);       
+#endif
+
+    // code generation
+virtual void    generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+
+    // simplify all the uses/defs in this RTL
+virtual void    simplify();
+
+    // Statement functions
+virtual bool    isDefinition() { return true; }
+virtual void    getDefinitions(LocationSet &def);
+virtual Exp*    getRight() { return getCondExpr(); }
+virtual bool    usesExp(Exp *e);
+virtual void    processConstants(Prog *prog);
+virtual bool    search(Exp *search, Exp *&result);
+virtual bool    searchAll(Exp* search, std::list<Exp*>& result);
+virtual bool    searchAndReplace(Exp *search, Exp *replace);
+virtual bool    doReplaceRef(Exp* from, Exp* to);
+    // from SSA form
+virtual void    fromSSAform(igraph& ig);
+    // a hack for the SETS macro
+        void    setLeftFromList(std::list<Statement*>* stmts);
+
+    friend class XMLProgParser;
+};  // class BoolAssign
+
 /*=============================================================================
  * GotoStatement has just one member variable, an expression representing the
  * jump's destination (an integer constant for direct jumps; an expression
@@ -616,29 +712,6 @@ virtual bool    doReplaceRef(Exp*, Exp*) {return false;}
 
     friend class XMLProgParser;
 };      // class GotoStatement
-
-/*==============================================================================
- * BRANCH_TYPE: These values indicate what kind of conditional jump is being
- * performed.
- * changing the order of these will result in save files not working - trent
- *============================================================================*/
-enum BRANCH_TYPE {
-    BRANCH_JE = 0,          // Jump if equals
-    BRANCH_JNE,             // Jump if not equals
-    BRANCH_JSL,             // Jump if signed less
-    BRANCH_JSLE,            // Jump if signed less or equal
-    BRANCH_JSGE,            // Jump if signed greater or equal
-    BRANCH_JSG,             // Jump if signed greater
-    BRANCH_JUL,             // Jump if unsigned less
-    BRANCH_JULE,            // Jump if unsigned less or equal
-    BRANCH_JUGE,            // Jump if unsigned greater or equal
-    BRANCH_JUG,             // Jump if unsigned greater
-    BRANCH_JMI,             // Jump if result is minus
-    BRANCH_JPOS,            // Jump if result is positive
-    BRANCH_JOF,             // Jump if overflow
-    BRANCH_JNOF,            // Jump if no overflow
-    BRANCH_JPAR             // Jump if parity even (Intel only)
-};
 
 
 /*==============================================================================
@@ -1012,82 +1085,5 @@ virtual bool    doReplaceRef(Exp* from, Exp* to);
     friend class XMLProgParser;
 };  // class ReturnStatement
 
-
-/*==============================================================================
- * BoolStatement represents "setCC" type instructions, where some destination is
- * set (to 1 or 0) depending on the condition codes. It has a condition
- * Exp, similar to the BranchStatement class.
- * *==========================================================================*/
-class BoolStatement: public Statement {
-    BRANCH_TYPE jtCond;         // the condition for setting true
-    Exp*        pCond;          // Exp representation of the high level
-                                // condition: e.g. r[8] == 5
-    bool        bFloat;         // True if condition uses floating point CC
-    Exp*        pDest;          // The location assigned (with 0 or 1)
-    int         size;           // The size of the dest
-public:
-                BoolStatement(int size);
-virtual         ~BoolStatement();
-
-    // Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
-
-    // Accept a visitor to this RTL
-virtual bool    accept(StmtVisitor* visitor);
-virtual bool    accept(StmtExpVisitor* visitor);
-virtual bool    accept(StmtModifier* visitor);
-
-    // Set and return the BRANCH_TYPE of this scond as well as whether the
-    // floating point condition codes are used.
-    void        setCondType(BRANCH_TYPE cond, bool usesFloat = false);
-    BRANCH_TYPE getCond(){return jtCond;}
-    bool        isFloat(){return bFloat;}
-    void        setFloat(bool b) { bFloat = b; }
-
-    // Set and return the Exp representing the HL condition
-    Exp*        getCondExpr();
-    void        setCondExpr(Exp* pss);
-    // As above, no delete (for subscripting)
-    void        setCondExprND(Exp* e) { pCond = e; }
-
-    Exp*        getDest() {return pDest;}  // Return the destination of the set
-    void        setDest(Exp* e) {pDest = e;}
-    void        setDest(std::list<Statement*>* stmts);
-    int         getSize() {return size;}    // Return the size of the assignment
-
-    void        makeSigned();
-
-virtual void    print(std::ostream& os = std::cout);
-
-#if 0
-    // Used for type analysis. Stores type information that
-    // can be gathered from the RTL instruction inside a
-    // data structure within BBBlock inBlock
-    void storeUseDefineStruct(BBBlock& inBlock);       
-#endif
-
-    // code generation
-virtual void    generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
-
-    // simplify all the uses/defs in this RTL
-virtual void    simplify();
-
-    // Statement functions
-virtual bool    isDefinition() { return true; }
-virtual void    getDefinitions(LocationSet &def);
-virtual Exp*    getLeft() { return getDest(); }
-virtual Type*   getLeftType();
-virtual Exp*    getRight() { return getCondExpr(); }
-virtual bool    usesExp(Exp *e);
-virtual void    processConstants(Prog *prog);
-virtual bool    search(Exp *search, Exp *&result);
-virtual bool    searchAll(Exp* search, std::list<Exp*>& result);
-virtual bool    searchAndReplace(Exp *search, Exp *replace);
-virtual bool    doReplaceRef(Exp* from, Exp* to);
-    // from SSA form
-virtual void    fromSSAform(igraph& ig);
-
-    friend class XMLProgParser;
-};  // class BoolStatement
 
 #endif // __STATEMENT_H__

@@ -9,7 +9,7 @@
  *             and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.5.2.6 $
+ * $Revision: 1.5.2.7 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *   for searching: they have the capability of stopping the recursion,
@@ -43,14 +43,14 @@
 #include "exp.h"
 
 class Statement;
+class Assignment;
 class Assign;
-class PhiAssign;
 class ImplicitAssign;
+class BoolAssign;
 class CaseStatement;
 class CallStatement;
 class ReturnStatement;
 class GotoStatement;
-class BoolStatement;
 class BranchStatement;
 
 class RTL;
@@ -192,12 +192,12 @@ public:
     virtual bool visit(Assign *stmt)         { return true;}
     virtual bool visit(PhiAssign *stmt)      { return true;}
     virtual bool visit(ImplicitAssign *stmt) { return true;}
+    virtual bool visit(BoolAssign *stmt)  { return true;}
     virtual bool visit(GotoStatement *stmt)  { return true;}
     virtual bool visit(BranchStatement *stmt){ return true;}
     virtual bool visit(CaseStatement *stmt)  { return true;}
     virtual bool visit(CallStatement *stmt)  { return true;}
     virtual bool visit(ReturnStatement *stmt){ return true;}
-    virtual bool visit(BoolStatement *stmt)  { return true;}
 };
 
 class StmtConscriptSetter : public StmtVisitor {
@@ -211,10 +211,10 @@ public:
     virtual bool visit(Assign *stmt);
     virtual bool visit(PhiAssign *stmt);
     virtual bool visit(ImplicitAssign *stmt);
+    virtual bool visit(BoolAssign *stmt);
     virtual bool visit(CaseStatement *stmt);
     virtual bool visit(CallStatement *stmt);
     virtual bool visit(ReturnStatement *stmt);
-    virtual bool visit(BoolStatement *stmt);
     virtual bool visit(BranchStatement *stmt);
 };
 
@@ -232,6 +232,8 @@ public:
         {override = false; return true;}
     virtual bool visit(ImplicitAssign *stmt, bool& override)
         {override = false; return true;}
+    virtual bool visit(BoolAssign *stmt, bool& override)
+        {override = false; return true;}
     virtual bool visit(GotoStatement *stmt, bool& override)
         {override = false; return true;}
     virtual bool visit(BranchStatement *stmt, bool& override)
@@ -241,8 +243,6 @@ public:
     virtual bool visit(CallStatement *stmt, bool& override)
         {override = false; return true;}
     virtual bool visit(ReturnStatement *stmt, bool& override)
-        {override = false; return true;}
-    virtual bool visit(BoolStatement *stmt, bool& override)
         {override = false; return true;}
 };
 
@@ -264,12 +264,12 @@ public:
 virtual void visit(Assign *s,         bool& recur) {recur = true;}
 virtual void visit(PhiAssign *s,      bool& recur) {recur = true;}
 virtual void visit(ImplicitAssign *s, bool& recur) {recur = true;}
+virtual void visit(BoolAssign *s,  bool& recur) {recur = true;}
 virtual void visit(GotoStatement *s,  bool& recur) {recur = true;}
 virtual void visit(BranchStatement *s,bool& recur) {recur = true;}
 virtual void visit(CaseStatement *s,  bool& recur) {recur = true;}
 virtual void visit(CallStatement *s,  bool& recur) {recur = true;}
 virtual void visit(ReturnStatement *s,bool& recur) {recur = true;}
-virtual void visit(BoolStatement *s,  bool& recur) {recur = true;}
 };
 
 class PhiStripper : public StmtModifier {
@@ -355,12 +355,12 @@ public:
     virtual bool visit(        Assign *stmt, bool& override);
     virtual bool visit(     PhiAssign *stmt, bool& override);
     virtual bool visit(ImplicitAssign *stmt, bool& override);
+    // A BoolAssign uses its condition expression, but not its destination
+    // (unless it's an m[x], in which case x is used and not m[x])
+    virtual bool visit(BoolAssign *stmt, bool& override);
     // Returns aren't used (again, except where m[blah] where blah is used),
     // and there is special logic for when the pass is final
     virtual bool visit(CallStatement *stmt, bool& override);
-    // A BoolStatement uses its condition expression, but not its destination
-    // (unless it's an m[x], in which case x is used and not m[x])
-    virtual bool visit(BoolStatement *stmt, bool& override);
 };
 
 class ExpSubscripter : public ExpModifier {
@@ -415,12 +415,12 @@ public:
     virtual bool visit(Assign *stmt);
     virtual bool visit(PhiAssign *stmt);
     virtual bool visit(ImplicitAssign *stmt);
+    virtual bool visit(BoolAssign *stmt);
     virtual bool visit(GotoStatement *stmt);
     virtual bool visit(BranchStatement *stmt);
     virtual bool visit(CaseStatement *stmt);
     virtual bool visit(CallStatement *stmt);
     virtual bool visit(ReturnStatement *stmt);
-    virtual bool visit(BoolStatement *stmt);
 };
 
 #endif  // #ifndef __VISITOR_H__

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.8.2.3 $
+ * $Revision: 1.8.2.4 $
  *
  * 22 Aug 03 - Mike: Created
  */
@@ -103,6 +103,9 @@ class Constraints {
 public:
     Constraints() {}
     ~Constraints();
+
+    void    print(std::ostream& os);
+    char*   prints();
 
     LocationSet& getConstraints() {return conSet;}
     void    addConstraints(LocationSet& con) {conSet.makeUnion(con);}

@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.10 $
+ * $Revision: 1.112.2.11 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -925,7 +925,7 @@ bool BranchStatement::doReplaceRef(Exp* from, Exp* to) {
 }
 
 
-// Common to BranchStatement and BoolStatement
+// Common to BranchStatement and BoolAssign
 // Return true if this is now a floating point Branch
 bool condToRelational(Exp*& pCond, BRANCH_TYPE jtCond) {
     pCond = pCond->simplifyArith()->simplify();
@@ -2187,7 +2187,7 @@ Exp *processConstant(Exp *e, Type *t, Prog *prog, UserProc* proc)
 
 
 // This is temporarily horrible till types are consistently stored in
-// assignments (including implicit), BoolStatement, or CallStatement
+// assignments (including implicit), BoolAssign, or CallStatement
 Type *Statement::getTypeFor(Exp *e, Prog *prog)
 {
     Type *ty = NULL;
@@ -2263,7 +2263,7 @@ Type *Statement::getTypeFor(Exp *e, Prog *prog)
 #endif
                     
         }
-        // MVE: a BoolStatement should be an Assign, or something close
+        // MVE: a BoolAssign should be an Assign, or something close
         case STMT_BOOL:
             return new BooleanType;
             break;
@@ -2478,35 +2478,35 @@ bool ReturnStatement::doReplaceRef(Exp* from, Exp* to) {
 }
  
 /**********************************************************************
- * BoolStatement methods
+ * BoolAssign methods
  * These are for statements that set a destination (usually to 1 or 0)
  * depending in a condition code (e.g. Pentium)
  **********************************************************************/
 
 /*==============================================================================
- * FUNCTION:         BoolStatement::BoolStatement
+ * FUNCTION:         BoolAssign::BoolAssign
  * OVERVIEW:         Constructor.
  * PARAMETERS:       sz: size of the assignment
  * RETURNS:          <N/a>
  *============================================================================*/
-BoolStatement::BoolStatement(int sz): jtCond((BRANCH_TYPE)0), pCond(NULL),
-  bFloat(false), pDest(NULL), size(sz) {
+BoolAssign::BoolAssign(int sz): Assignment(NULL), jtCond((BRANCH_TYPE)0),
+  pCond(NULL), bFloat(false), size(sz) {
     kind = STMT_BOOL;
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::~BoolStatement
+ * FUNCTION:        BoolAssign::~BoolAssign
  * OVERVIEW:        Destructor
  * PARAMETERS:      None
  * RETURNS:         N/a
  *============================================================================*/
-BoolStatement::~BoolStatement() {
+BoolAssign::~BoolAssign() {
     if (pCond)
         ;//delete pCond;
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::setCondType
+ * FUNCTION:        BoolAssign::setCondType
  * OVERVIEW:        Sets the BRANCH_TYPE of this jcond as well as the flag
  *                  indicating whether or not the floating point condition codes
  *                  are used.
@@ -2515,23 +2515,20 @@ BoolStatement::~BoolStatement() {
  *                    condition codes
  * RETURNS:         a semantic string
  *============================================================================*/
-void hack() {std::cerr << "Bool HACK!\n";}
-void BoolStatement::setCondType(BRANCH_TYPE cond, bool usesFloat /*= false*/) {
-hack();
+void BoolAssign::setCondType(BRANCH_TYPE cond, bool usesFloat /*= false*/) {
     jtCond = cond;
     bFloat = usesFloat;
     setCondExpr(new Terminal(opFlags));
-    getDest();
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::makeSigned
+ * FUNCTION:        BoolAssign::makeSigned
  * OVERVIEW:        Change this from an unsigned to a signed branch
  * NOTE:            Not sure if this is ever going to be used
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void BoolStatement::makeSigned() {
+void BoolAssign::makeSigned() {
     // Make this into a signed branch
     switch (jtCond)
     {
@@ -2546,39 +2543,38 @@ void BoolStatement::makeSigned() {
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::getCondExpr
+ * FUNCTION:        BoolAssign::getCondExpr
  * OVERVIEW:        Return the Exp expression containing the HL condition.
  * PARAMETERS:      <none>
  * RETURNS:         a semantic string
  *============================================================================*/
-Exp* BoolStatement::getCondExpr() {
+Exp* BoolAssign::getCondExpr() {
     return pCond;
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::setCondExpr
+ * FUNCTION:        BoolAssign::setCondExpr
  * OVERVIEW:        Set the Exp expression containing the HL condition.
  * PARAMETERS:      Pointer to semantic string to set
  * RETURNS:         <nothing>
  *============================================================================*/
-void BoolStatement::setCondExpr(Exp* pss) {
+void BoolAssign::setCondExpr(Exp* pss) {
     if (pCond) ;//delete pCond;
     pCond = pss;
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::print
+ * FUNCTION:        BoolAssign::print
  * OVERVIEW:        Write a text representation to the given stream
  * PARAMETERS:      os: stream
  * RETURNS:         <Nothing>
  *============================================================================*/
-void BoolStatement::print(std::ostream& os /*= cout*/) {
+void BoolAssign::print(std::ostream& os /*= cout*/) {
     os << std::setw(4) << std::dec << number << " ";
     os << "BOOL ";
-    pDest->print(os);
+    lhs->print(os);
     os << " := CC(";
-    switch (jtCond)
-    {
+    switch (jtCond) {
         case BRANCH_JE:    os << "equals"; break;
         case BRANCH_JNE:   os << "not equals"; break;
         case BRANCH_JSL:   os << "signed less"; break;
@@ -2603,13 +2599,13 @@ void BoolStatement::print(std::ostream& os /*= cout*/) {
 }
 
 /*==============================================================================
- * FUNCTION:        BoolStatement::clone
+ * FUNCTION:        BoolAssign::clone
  * OVERVIEW:        Deep copy clone
  * PARAMETERS:      <none>
- * RETURNS:         Pointer to a new Statement, a clone of this BoolStatement
+ * RETURNS:         Pointer to a new Statement, a clone of this BoolAssign
  *============================================================================*/
-Statement* BoolStatement::clone() {
-    BoolStatement* ret = new BoolStatement(size);
+Statement* BoolAssign::clone() {
+    BoolAssign* ret = new BoolAssign(size);
     ret->jtCond = jtCond;
     if (pCond) ret->pCond = pCond->clone();
     else ret->pCond = NULL;
@@ -2623,89 +2619,85 @@ Statement* BoolStatement::clone() {
 }
 
 // visit this Statement
-bool BoolStatement::accept(StmtVisitor* visitor) {
+bool BoolAssign::accept(StmtVisitor* visitor) {
     return visitor->visit(this);
 }
 
-void BoolStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
-    assert(pDest);
+void BoolAssign::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
+    assert(lhs);
     assert(pCond);
-    // pDest := (pCond) ? 1 : 0
-    Assign as(pDest->clone(), new Ternary(opTern, pCond->clone(),
+    // lhs := (pCond) ? 1 : 0
+    Assign as(lhs->clone(), new Ternary(opTern, pCond->clone(),
       new Const(1), new Const(0)));
     hll->AddAssignmentStatement(indLevel, &as);
 }
 
-void BoolStatement::simplify() {
+void BoolAssign::simplify() {
     if (pCond)
         condToRelational(pCond, jtCond);
 }
 
-void BoolStatement::getDefinitions(LocationSet &defs) 
+void BoolAssign::getDefinitions(LocationSet &defs) 
 {
     defs.insert(getLeft());
 }
 
-Type* BoolStatement::getLeftType()
+bool BoolAssign::usesExp(Exp *e)
 {
-    return new BooleanType();
-}
-
-bool BoolStatement::usesExp(Exp *e)
-{
-    assert(pDest && pCond);
+    assert(lhs && pCond);
     Exp *where = 0;
-    return (pCond->search(e, where) || (pDest->isMemOf() && 
-        ((Unary*)pDest)->getSubExp1()->search(e, where)));
+    return (pCond->search(e, where) || (lhs->isMemOf() && 
+        ((Unary*)lhs)->getSubExp1()->search(e, where)));
 }
 
-void BoolStatement::processConstants(Prog *prog)
+void BoolAssign::processConstants(Prog *prog)
 {
 }
 
-bool BoolStatement::search(Exp *search, Exp *&result)
+bool BoolAssign::search(Exp *search, Exp *&result)
 {
-    assert(pDest);
-    if (pDest->search(search, result)) return true;
+    assert(lhs);
+    if (lhs->search(search, result)) return true;
     assert(pCond);
     return pCond->search(search, result);
 }
 
-bool BoolStatement::searchAll(Exp* search, std::list<Exp*>& result)
+bool BoolAssign::searchAll(Exp* search, std::list<Exp*>& result)
 {
     bool ch = false;
-    assert(pDest);
-    if (pDest->searchAll(search, result)) ch = true;
+    assert(lhs);
+    if (lhs->searchAll(search, result)) ch = true;
     assert(pCond);
     return pCond->searchAll(search, result) || ch;
 }
 
-bool BoolStatement::searchAndReplace(Exp *search, Exp *replace) {
+bool BoolAssign::searchAndReplace(Exp *search, Exp *replace) {
     bool change = false;
     assert(pCond);
-    assert(pDest);
+    assert(lhs);
     pCond = pCond->searchReplaceAll(search, replace, change);
-    pDest = pDest->searchReplaceAll(search, replace, change);
+     lhs  =   lhs->searchReplaceAll(search, replace, change);
     return change;
 }
 
 // Convert from SSA form
-void BoolStatement::fromSSAform(igraph& ig) {
+void BoolAssign::fromSSAform(igraph& ig) {
     pCond = pCond->fromSSA(ig); 
-    pDest = pDest->fromSSAleft(ig, this);
+    lhs   = lhs  ->fromSSAleft(ig, this);
 }
 
-bool BoolStatement::doReplaceRef(Exp* from, Exp* to) {
+bool BoolAssign::doReplaceRef(Exp* from, Exp* to) {
     searchAndReplace(from, to);
     simplify();
     return false;
 }
 
-void BoolStatement::setDest(std::list<Statement*>* stmts) {
+// This is for setting up SETcc instructions; see include/decoder.h macro SETS
+void BoolAssign::setLeftFromList(std::list<Statement*>* stmts) {
     assert(stmts->size() == 1);
     Assign* first = (Assign*)stmts->front();
     assert(first->getKind() == STMT_ASSIGN);
-    pDest = first->getLeft();
+    lhs = first->getLeft();
 }
 
 //  //  //  //
@@ -3462,7 +3454,7 @@ bool ReturnStatement::accept(StmtExpVisitor* v) {
     return ret;
 }
 
-bool BoolStatement::accept(StmtExpVisitor* v) {
+bool BoolAssign::accept(StmtExpVisitor* v) {
     bool override;
     bool ret = v->visit(this, override);
     if (override) return ret;
@@ -3547,13 +3539,13 @@ bool ReturnStatement::accept(StmtModifier* v) {
     return true;
 }
 
-bool BoolStatement::accept(StmtModifier* v) {
+bool BoolAssign::accept(StmtModifier* v) {
     bool recur;
     v->visit(this, recur);
     if (pCond && recur)
         pCond = pCond->accept(v->mod);
-    if (pDest && recur)
-        pDest = pDest->accept(v->mod);
+    if (lhs && recur)
+        lhs = lhs->accept(v->mod);
     return true;
 }
 

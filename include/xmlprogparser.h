@@ -12,7 +12,7 @@
  * OVERVIEW:    parses persisted XML output and creates a new prog.
  *============================================================================*/
 /*
- * $Revision: 1.2 $
+ * $Revision: 1.2.2.1 $
  * 13 Jun 04 - Trent: Created.
  */
 
@@ -61,6 +61,7 @@ class XMLProgParser
 	void addToContext_ ## x (Context *c, int e);
 
 	TAGD(prog) 
+	TAGD(procs) 
 	TAGD(global) 
 	TAGD(cluster) 
 	TAGD(libproc) 
@@ -77,6 +78,8 @@ class XMLProgParser
 	TAGD(implicitparam) 
 	TAGD(return) 
 	TAGD(rettype) 
+	TAGD(prefparam) 
+	TAGD(prefreturn) 
 	TAGD(cfg) 
 	TAGD(bb) 
 	TAGD(inedge) 
@@ -99,6 +102,7 @@ class XMLProgParser
 	TAGD(branchstmt) 
 	TAGD(cond)
 	TAGD(casestmt)
+	TAGD(boolasgn)
 	TAGD(type) 
 	TAGD(exp) 
 	TAGD(voidtype) 
@@ -116,6 +120,7 @@ class XMLProgParser
 	TAGD(terminal) 
 	TAGD(typedexp) 
 	TAGD(refexp)
+	TAGD(def)
 	TAGD(subexp1) 
 	TAGD(subexp2) 
 	TAGD(subexp3)	

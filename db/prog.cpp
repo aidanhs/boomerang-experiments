@@ -10,23 +10,18 @@
  */
 
 /*==============================================================================
- * FILE:        prog.cc
+ * FILE:        prog.cpp
  * OVERVIEW:    Implementation of the program class. Holds information of
  *              interest to the whole program.
  *============================================================================*/
 
 /*
- * $Revision: 1.99.2.3 $
+ * $Revision: 1.99.2.4 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
+ * 20 Jul 04 - Mike: Got rid of BOOMDIR
  */
-
-#ifndef BOOMDIR
-#ifndef WIN32
-#error BOOMDIR needs to be set
-#endif
-#endif
 
 /*==============================================================================
  * Dependencies.
@@ -42,6 +37,9 @@
 #include <sstream>
 #include <vector>
 #include <math.h>
+#ifdef WIN32
+#include <direct.h>                 // For Windows mkdir()
+#endif
 
 #include "cluster.h"
 #include "types.h"
@@ -49,7 +47,7 @@
 #include "exp.h"
 #include "cfg.h"
 #include "proc.h"
-#include "util.h"                   // For str()
+#include "util.h"                   // For lockFileWrite etc
 #include "register.h"
 #include "rtl.h"
 #include "BinaryFile.h"
@@ -178,17 +176,17 @@ void Prog::generateCode(Cluster *cluster) {
     std::string basedir = m_rootCluster->makeDirs();
     std::ofstream os;
     if (cluster == NULL || cluster == m_rootCluster) {
-    	os.open((basedir + "/" + getNameNoPath() + ".c").c_str());
-	HLLCode *code = Boomerang::get()->getHLLCode();
-	for (std::vector<Global*>::iterator it1 = globals.begin(); it1 != globals.end(); it1++) {
-	    // Check for an initial value
-	    Exp *e = NULL;
-	    e = (*it1)->getInitialValue(this);
-	    if (e)
-		code->AddGlobal((*it1)->getName(), (*it1)->getType(), e);
-	}
-	code->print(os);
-	delete code;
+            os.open(m_rootCluster->getOutPath("c"));
+        HLLCode *code = Boomerang::get()->getHLLCode();
+        for (std::vector<Global*>::iterator it1 = globals.begin(); it1 != globals.end(); it1++) {
+            // Check for an initial value
+            Exp *e = NULL;
+            e = (*it1)->getInitialValue(this);
+            if (e)
+                code->AddGlobal((*it1)->getName(), (*it1)->getType(), e);
+        }
+        code->print(os);
+        delete code;
     }
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
         Proc *pProc = *it;
@@ -198,46 +196,75 @@ void Prog::generateCode(Cluster *cluster) {
         p->getCFG()->compressCfg();
         HLLCode *code = Boomerang::get()->getHLLCode(p);
         p->generateCode(code);
-	if (p->getCluster() == m_rootCluster) {
-	    if (cluster == NULL || cluster == m_rootCluster)
-		code->print(os);
-	} else {
-	    if (cluster == NULL || cluster == p->getCluster()) {
-		std::string path = p->getCluster()->makeDirs();
-		std::ofstream out((path + "/" + p->getCluster()->getName() + ".c").c_str());
-		code->print(out);
-		out.close();
-	    }
-	}
+        if (p->getCluster() == m_rootCluster) {
+            if (cluster == NULL || cluster == m_rootCluster)
+                code->print(os);
+        } else {
+            if (cluster == NULL || cluster == p->getCluster()) {
+                p->getCluster()->openStream("c");
+                code->print(p->getCluster()->getStream());
+            }
+        }
         delete code;
     }
     os.close();
+    m_rootCluster->closeStreams();
 }
 
 const char *Cluster::makeDirs()
 {
     std::string path;
     if (parent)
-	path = parent->makeDirs();
+        path = parent->makeDirs();
     else
-	path = Boomerang::get()->getOutputPath();	
+        path = Boomerang::get()->getOutputPath();        
     if (getNumChildren() > 0 || parent == NULL) {
-	path = path + "/" + name;
-	mkdir(path.c_str(), 0777);
+        path = path + "/" + name;
+#ifdef WIN32
+        mkdir(path.c_str());
+#else
+        mkdir(path.c_str(), 0777);
+#endif
     }
     return path.c_str();
+}
+
+void Cluster::removeChild(Cluster *n)
+{
+    std::vector<Cluster*>::iterator it;
+    for (it = children.begin(); it != children.end(); it++)
+        if (*it == n)
+            break;
+    assert(it != children.end());
+    children.erase(it);
+}
+
+void Cluster::addChild(Cluster *n)
+{ 
+    if (n->parent)
+        n->parent->removeChild(n);
+    children.push_back(n); 
+    n->parent = this; 
 }
 
 Cluster *Cluster::find(const char *nam)
 {
     if (name == nam)
-	return this;
+        return this;
     for (unsigned i = 0; i < children.size(); i++) {
-	Cluster *c = children[i]->find(nam);
-	if (c)
-	    return c;
+        Cluster *c = children[i]->find(nam);
+        if (c)
+            return c;
     }
     return NULL;
+}
+
+bool Prog::clusterUsed(Cluster *c)
+{
+    for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++)
+        if ((*it)->getCluster() == c)
+            return true;
+    return false;
 }
 
 void Prog::generateCode(std::ostream &os) {
@@ -303,13 +330,14 @@ void Prog::clear() {
  *                decoding a call instruction). That way, it is given a name
  *                that can be displayed in the dot file, etc. If we assign it
  *                a number now, then it will retain this number always
- * PARAMETERS:  prog  - program to add the new procedure to
- *              uAddr - Native address of the procedure entry point
+ * PARAMETERS:  uAddr - Native address of the procedure entry point
  * RETURNS:     Pointer to the Proc object, or 0 if this is a deleted (not to
  *                be decoded) address
  *============================================================================*/
 Proc* Prog::setNewProc(ADDRESS uAddr) {
     // this test fails when decoding sparc, why?  Please investigate - trent
+    // Likely because it is in the Procedure Linkage Table (.plt)
+    // But should also fail for all Elf files e.g. Pentium Linux - MVE
     //assert(uAddr >= limitTextLow && uAddr < limitTextHigh);
     // Check if we already have this proc
     Proc* pProc = findProc(uAddr);
@@ -1029,7 +1057,7 @@ void Prog::printCallGraph() {
 void Prog::printCallGraphXML() {
     if (!Boomerang::get()->dumpXML)
         return;
-	std::list<Proc*>::iterator it;
+    std::list<Proc*>::iterator it;
     for (it = m_procs.begin(); it != m_procs.end();
          it++)
         (*it)->clearVisited();
@@ -1075,6 +1103,10 @@ void Prog::readSymbolFile(const char *fname)
         if ((*it)->sig) {
             // probably wanna do something with this
             Proc *p = newProc((*it)->sig->getName(), (*it)->addr,
+              pBF->IsDynamicLinkedProcPointer((*it)->addr) ||
+              // NODECODE isn't really the right modifier; perhaps we should
+              // have a LIB modifier, to specifically specify that this
+              // function obeys library calling conventions
               (*it)->mods->noDecode);
             if (!(*it)->mods->incomplete)
                 p->setSignature((*it)->sig->clone());

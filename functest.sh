@@ -1,5 +1,5 @@
 #!/bin/bash
-# functest.sh functional test script $Revision: 1.12 $
+# functest.sh functional test script $Revision: 1.12.2.1 $
 rm -rf functest
 mkdir functest
 rm -rf functests.out
@@ -34,4 +34,6 @@ rm -rf functests.out
 ./testOne.sh sparc   uns 2 3
 ./testOne.sh pentium fromssa2
 ./testOne.sh sparc   fromssa2
+./testOne.sh pentium bswap
+./testOne.sh pentium testset 2 3
 echo === Done ===
