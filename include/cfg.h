@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.2 $
+ * $Revision: 1.22.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -469,39 +469,9 @@ public:
 //  SSA
 //
 
-    /* Get all the definitions in this BB.  Returns true if the
-     * BB is in SSA form.
+    /* Transform the CFG to SSA form.
      */
-    bool getSSADefs(LocationSet &defs);
-
-    /* Return true if this expression is used in a phi
-     */
-    bool isUsedInPhi(Exp *e);
-    /* Subscript the definitions in this BB to SSA form.
-     */
-    void SSAsubscript(SSACounts counts);
-
-    /* Set the parameters of a phi function based on current
-     * counts.
-     */
-    void SSAsetPhiParams(SSACounts &counts);
-
-    /* Add phi functions in every BB with more than one in edge for every def.
-     * takes a map of unique definitions (lhs of assigns) to subscript values.
-     */
-    void SSAaddPhiFunctions(std::set<Exp*> &defs);
-
-    /* Minimise the number of phi functions in this node.
-     * returns true if anything changed.
-     */
-    bool minimiseSSAForm();
-
-    /* Reverse the SSA transformation on this node.
-     */
-    void revSSATransform();
-    void getUsesOf(LocationSet &uses, Exp *e);
-    void getDefs(LocationSet &defs, Exp *before_use = NULL);
-
+    void toSSAform();
 
 protected:
     // This is the set of statements whose definitions reach the end of this BB
@@ -952,35 +922,9 @@ public:
 //  SSA
 //
 
-    /* Get all the definitions in this CFG.
-     * Returns true if the CFG is in SSA form.
-     */
-    bool getSSADefs(LocationSet &defs);
-
     /* Transform the CFG to SSA form.
      */
-    void SSATransform(LocationSet &defs);
-
-    /* Transform the CFG from SSA form.
-     */
-    void revSSATransform();
-
-    /* Minimise the CFG, returns true if anything changed
-     */
-    bool minimiseSSAForm();
-    /* Get all uses of a given expression
-     */
-    void getAllUses(Exp *def, LocationSet &uses);
-    void getAllUses(LocationSet &uses);
-
-    /* Propogate a given expression forward in the CFG
-     */
-    void propagateForward(Exp *e);
-
-    /* Return true if this expression is used in a phi
-     */
-    bool isUsedInPhi(Exp *e);
-
+    void toSSAform();
 
 private:
 

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.4 $
+ * $Revision: 1.22.2.5 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -446,7 +446,7 @@ void BasicBlock::print(std::ostream& os, bool withDF) {
     if (withDF) {
         os << " reach in: ";
         StatementSet reachin;
-        getReachIn(reachin, 0);
+        getReachIn(reachin, 2);
         StmtSetIter it;
         Statement* s = reachin.getFirst(it);
         while (s) {
@@ -1941,3 +1941,45 @@ bool BasicBlock::inLoop(PBB header, PBB latch)
            latch->revLoopStamps[1] < revLoopStamps[1]);
 }
 
+void BasicBlock::toSSAform() {
+    // This set will be the set of reaching definitions before the current
+    // statement
+    StatementSet reachin;
+    getReachIn(reachin, 2);
+    for (std::list<RTL*>::iterator rit = m_pRtls->begin(); 
+      rit != m_pRtls->end(); rit++) {
+        RTL *rtl = *rit;
+        for (std::list<Exp*>::iterator it = rtl->getList().begin(); 
+          it != rtl->getList().end(); it++) {
+            Statement *s = dynamic_cast<Statement*>(*it);
+            if (s == NULL) continue;
+
+            // We have a statement, which is also an expression (usually an
+            // assignment expression)
+            // Subscript the LHS to point to self as definition
+            s->subscriptLeft(s);
+            StmtSetIter ssi;
+            for (Statement* rd = reachin.getFirst(ssi); rd;
+              rd = reachin.getNext(ssi)) {
+                Exp* left = rd->getLeft();
+                assert(left);           // Definitions must have a left!
+                // Update the expression (*it)'s uses info
+                (*it)->updateUses(rd, left);
+            }
+            if (rtl->getKind() == CALL_RTL) {
+                HLCall *call = (HLCall*)rtl;
+                call->calcReachOut(reachin);
+                // To be completed: fix up the parameters
+            }
+            else if (rtl->getKind() == JCOND_RTL) {
+                // Fix up the HL expression
+            }
+            else if (rtl->getKind() == SCOND_RTL) {
+                // HL expression?
+            }
+
+            // Update reachin to be the input for the next statement in this BB
+            s->calcReachOut(reachin);
+        }
+    }
+}

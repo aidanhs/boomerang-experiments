@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.3 $
+ * $Revision: 1.18.2.4 $
  * 18 Apr 02 - Mike: Mods for boomerang
  */
 
@@ -2262,112 +2262,9 @@ void Cfg::generateDotFile(const char *str)
     of.close();
 }
 
-//
-// SSA code
-//
-
-#if SSA
-bool Cfg::getSSADefs(LocationSet &defs) {
-	bool ssa = true;
-	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) 
-		ssa &= (*it)->getSSADefs(defs);
-	return ssa;
+void Cfg::toSSAform() {
+    BB_IT it;
+    for (it = m_listBB.begin(); it != m_listBB.end(); it++) {
+        (*it)->toSSAform();
+    }
 }
-
-void Cfg::getAllUses(Exp *def, LocationSet &uses) {
-	for (std::list<PBB>::iterator bit = m_listBB.begin(); bit != m_listBB.end();
-      bit++) 
-		(*bit)->getUsesOf(uses, def);
-}
-
-void Cfg::getAllUses(LocationSet &uses) {
-	for (std::list<PBB>::iterator bit = m_listBB.begin(); bit != m_listBB.end();
-      bit++) 
-		(*bit)->getUses(uses);
-}
-
-void Cfg::propagateForward(Exp *e) {
-	LocationSet defs;
-	assert(getSSADefs(defs));
-
-	Location d;
-	assert(defs.find(*e, d));
-
-	if (d.getRight()->isPhi())
-		return;
-
-	if (isUsedInPhi(e))
-		return;	
-
-	LocationSet u;
-	getAllUses(e, u);
-
-	for (LocationSet::iterator it = u.begin(); it != u.end(); it++) {
-		assert(*(*it).getExp() == *e);
-		Exp* &use = (*it).getExp();
-		delete use;
-		use = d.getRight()->clone();
-	}
-
-	// important to remove it so the subscripting will be maintained
-	d.remove();
-
-	simplify();
-
-	//SSACounts counts;
-	//unTraverse();
-	//getEntryBB()->SSAsubscript(counts);
-}
-
-bool Cfg::isUsedInPhi(Exp *e) {
-	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) 
-		if ((*it)->isUsedInPhi(e)) return true;
-	return false;
-}
-
-
-void Cfg::SSATransform(LocationSet &defs) {
-	if (getSSADefs(defs))
-		return;
-
-	// make a unique set of definitions
-	std::set<Exp*> udefs;
-	for (LocationSet::iterator it = defs.begin(); it != defs.end(); it++) {
-		Exp *def = (*it).getLeft();
-		bool found = false;
-		for (std::set<Exp*>::iterator sit = udefs.begin(); sit != udefs.end();
-          sit++)
-			if (*(*sit) == *def) {
-				found = true;
-				break;
-			}
-		if (!found)
-			udefs.insert(def);
-	}
-
-	for (std::list<PBB>::iterator bit = m_listBB.begin(); bit != m_listBB.end();
-      bit++) 
-		(*bit)->SSAaddPhiFunctions(udefs);
-
-	SSACounts counts;
-	counts.clearMaxes();
-	unTraverse();
-	getEntryBB()->SSAsubscript(counts);
-}
-
-void Cfg::revSSATransform() {
-	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) 
-		(*it)->revSSATransform();	
-}
-
-bool Cfg::minimiseSSAForm() {
-	bool change = true;
-	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) 
-		change &= (*it)->minimiseSSAForm();
-	return change;
-}
-#endif

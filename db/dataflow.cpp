@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.22.2.5 $
+ * $Revision: 1.22.2.6 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -822,7 +822,7 @@ void StatementList::prints() {
 static char debug_buffer[200];
 char* Statement::prints() {
       std::ostringstream ost;
-      print(ost);
+      print(ost, true);
       strncpy(debug_buffer, ost.str().c_str(), 199);
       debug_buffer[199] = '\0';
       return debug_buffer;

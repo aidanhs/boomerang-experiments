@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.39.2.4 $
+ * $Revision: 1.39.2.5 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -71,24 +71,20 @@ Terminal::Terminal(OPER op) : Exp(op) {}
 Terminal::Terminal(Terminal& o) : Exp(o.op) {}      // Copy constructor
 
 Unary::Unary(OPER op)
-    : Exp(op)
-{
+    : Exp(op) {
     subExp1 = 0;        // Initialise the pointer
 }
 Unary::Unary(OPER op, Exp* e)
-    : Exp(op)
-{
+    : Exp(op) {
     subExp1 = e;        // Initialise the pointer
 }
 Unary::Unary(Unary& o)
-    : Exp(o.op)
-{
+    : Exp(o.op) {
     subExp1 = o.subExp1->clone();
 }
 
 Binary::Binary(OPER op)
-    : Unary(op)
-{
+    : Unary(op) {
     subExp2 = 0;        // Initialise the 2nd pointer. The first
                         // pointer is initialised in the Unary constructor
 }
@@ -149,6 +145,13 @@ AssignExp::AssignExp(AssignExp& o) : Binary(opAssignExp), size(o.size)
 FlagDef::FlagDef(Exp* params, RTL* rtl)
     : Unary(opFlagDef, params), rtl(rtl) {}
 
+UsesExp::UsesExp(Exp* e, Statement* def) : Unary(opSubscript, e) {
+    stmtSet.insert(def);
+}
+UsesExp::UsesExp(UsesExp& o) : Unary(o) {
+    stmtSet = o.stmtSet;
+}
+
 /*==============================================================================
  * FUNCTION:        Unary::~Unary etc
  * OVERVIEW:        Destructors.
@@ -177,18 +180,15 @@ FlagDef::~FlagDef() {
  * NOTE:            If an expression already exists, it is deleted
  * RETURNS:         <nothing>
  *============================================================================*/
-void Unary::setSubExp1(Exp* e)
-{
+void Unary::setSubExp1(Exp* e) {
     if (subExp1 != 0) delete subExp1;
     subExp1 = e;
 }
-void Binary::setSubExp2(Exp* e)
-{
+void Binary::setSubExp2(Exp* e) {
     if (subExp2 != 0) delete subExp2;
     subExp2 = e;
 }
-void Ternary::setSubExp3(Exp* e)
-{
+void Ternary::setSubExp3(Exp* e) {
     if (subExp3 != 0) delete subExp3;
     subExp3 = e;
 }
@@ -354,8 +354,7 @@ bool Const::operator==(const Exp& o) const
     }
     return false;
 }
-bool Unary::operator==(const Exp& o) const
-{
+bool Unary::operator==(const Exp& o) const {
     //if (op == opWild) return true;
     if (((Unary&)o).op == opWild) return true;
     if (((Unary&)o).op == opWildRegOf && op == opRegOf) return true;
@@ -364,16 +363,15 @@ bool Unary::operator==(const Exp& o) const
     if (op != ((Unary&)o).op) return false;
     return *subExp1 == *((Unary&)o).getSubExp1();
 }
-bool Binary::operator==(const Exp& o) const
-{
+bool Binary::operator==(const Exp& o) const {
     //if (op == opWild) return true;
     if (((Binary&)o).op == opWild) return true;
     if (op != ((Binary&)o).op) return false;
     if (!( *subExp1 == *((Binary&)o).getSubExp1())) return false;
     return *subExp2 == *((Binary&)o).getSubExp2();
 }
-bool Ternary::operator==(const Exp& o) const
-{
+
+bool Ternary::operator==(const Exp& o) const {
     //if (op == opWild) return true;
     if (((Ternary&)o).op == opWild) return true;
     if (op != ((Ternary&)o).op) return false;
@@ -381,8 +379,7 @@ bool Ternary::operator==(const Exp& o) const
     if (!( *subExp2 == *((Ternary&)o).getSubExp2())) return false;
     return *subExp3 == *((Ternary&)o).getSubExp3();
 }
-bool Terminal::operator==(const Exp& o) const
-{
+bool Terminal::operator==(const Exp& o) const {
     if (op == opWildIntConst) return ((Terminal&)o).op == opIntConst;
     if (op == opWildMemOf) return ((Terminal&)o).op == opMemOf;
     if (op == opWildRegOf) return ((Terminal&)o).op == opRegOf;
@@ -391,8 +388,7 @@ bool Terminal::operator==(const Exp& o) const
       (((Terminal&)o).op == opWild) ||
       (op ==((Terminal&)o).op));
 }
-bool TypedExp::operator==(const Exp& o) const
-{
+bool TypedExp::operator==(const Exp& o) const {
     //if (op == opWild) return true;
     if (((TypedExp&)o).op == opWild) return true;
     if (((TypedExp&)o).op != opTypedExp) return false;
@@ -400,8 +396,7 @@ bool TypedExp::operator==(const Exp& o) const
     if (*type != *((TypedExp&)o).type) return false;
     return *((Unary*)this)->getSubExp1() == *((Unary&)o).getSubExp1();
 }
-bool AssignExp::operator==(const Exp& o) const
-{
+bool AssignExp::operator==(const Exp& o) const {
     if (op == opWild) return true;
     if (((AssignExp&)o).op == opWild) return true;
     if (((AssignExp&)o).op != opAssignExp) return false;
@@ -410,6 +405,24 @@ bool AssignExp::operator==(const Exp& o) const
            *((Binary*)this)->getSubExp2() == *((Binary&)o).getSubExp2();
 }
 
+bool UsesExp::operator==(const Exp& o) const {
+    if (op == opWild) return true;
+    if (((UsesExp&)o).op == opWild) return true;
+    if (((UsesExp&)o).op != opSubscript) return false;
+    if (!( *subExp1 == *((UsesExp&)o).subExp1)) return false;
+    return stmtSet == ((UsesExp&)o).stmtSet;
+}
+
+// Compare, ignoring subscripts
+bool Exp::operator*=(const Exp& o) const {
+    const Exp* one = this;
+    if (op == opSubscript)
+        one = ((UsesExp*)this)->getSubExp1();
+    Exp* two = const_cast<Exp*>(&o);
+    if (two->isSubscript())
+        two = ((UsesExp*)two)->getSubExp1();
+    return *one == *two;
+}
 
 /*==============================================================================
  * FUNCTION:        Const::operator%=() etc
@@ -540,7 +553,7 @@ bool AssignExp::operator<  (const Exp& o) const {        // Type sensitive
 //  //  //  //
 //  Const   //
 //  //  //  //
-void Const::print(std::ostream& os) {
+void Const::print(std::ostream& os, bool withUses) {
     switch (op) {
         case opIntConst:
             os << std::dec << u.i;
@@ -559,26 +572,26 @@ void Const::print(std::ostream& os) {
     }
 }
 
-void Const::printNoQuotes(std::ostream& os) {
+void Const::printNoQuotes(std::ostream& os, bool withUses) {
     if (op == opStrConst)
         os << u.p;
     else
-        print(os);
+        print(os, withUses);
 }
 
 //  //  //  //
 //  Binary  //
 //  //  //  //
-void Binary::printr(std::ostream& os) {
+void Binary::printr(std::ostream& os, bool withUses) {
     // The "r" is for recursive: the idea is that we don't want parentheses at
     // the outer level, but a subexpression (recursed from a higher level), we
     // want the parens (at least for standard infix operators)
     switch (op) {
         case opSize:
         case opList:        // Otherwise, you get (a, (b, (c, d)))
-        // There may be others
+            // There may be others
             // These are the noparen cases
-            print(os); return;
+            print(os, withUses); return;
         default:
             break;
     }
@@ -587,21 +600,21 @@ void Binary::printr(std::ostream& os) {
     os << "(" << this << ")";
 }
 
-void Binary::print(std::ostream& os)
-{
+void Binary::print(std::ostream& os, bool withUses) {
     Exp* p1; Exp* p2;
     p1 = ((Binary*)this)->getSubExp1();
     p2 = ((Binary*)this)->getSubExp2();
     // Special cases
     switch (op) {
         case opSize:
-            // {size} is printed after the expression
-            p2->printr(os); os << "{"; p1->printr(os); os << "}";
+            // *size* is printed after the expression
+            p2->printr(os, withUses); os << "*"; p1->printr(os, withUses);
+            os << "*";
             return;
         case opFlagCall:
             // The name of the flag function (e.g. ADDFLAGS) should be enough
-            ((Const*)p1)->printNoQuotes(os);
-            os << "( "; p2->printr(os); os << " )";
+            ((Const*)p1)->printNoQuotes(os, withUses);
+            os << "( "; p2->printr(os, withUses); os << " )";
             return;
         case opExpTable:
         case opNameTable:
@@ -615,17 +628,10 @@ void Binary::print(std::ostream& os)
         case opList:
             // Because "," is the lowest precedence operator, we don't need
             // printr here. Also, same as UQBT, so easier to test
-            p1->print(os);
+            p1->print(os, withUses);
             if (!p2->isNil())
                 os << ", "; 
-            p2->print(os);
-            return;
-
-        case opSubscript:
-            // Here we ignore the StatementSet, because we are in
-            // "abbreviated mode" (see Exp::printWithUses for the full
-            // print function)
-            p1->print(os);
+            p2->print(os, withUses);
             return;
 
         default:
@@ -633,7 +639,7 @@ void Binary::print(std::ostream& os)
     }
 
     // Ordinary infix operators. Emit parens around the binary
-    p1->printr(os);
+    p1->printr(os, withUses);
     switch (op) {
         case opPlus:    os << " + ";  break;
         case opMinus:   os << " - ";  break;
@@ -678,7 +684,7 @@ void Binary::print(std::ostream& os)
             assert(0);
     }
 
-    p2->printr(os);
+    p2->printr(os, withUses);
 
 }
 
@@ -686,7 +692,7 @@ void Binary::print(std::ostream& os)
 //  //  //  //  //
 //   Terminal   //
 //  //  //  //  //
-void Terminal::print(std::ostream& os) {
+void Terminal::print(std::ostream& os, bool withUses) {
     switch (op) {
         case opPC:      os << "%pc";   break;
     case opFlags:   os << "%flags"; break;
@@ -715,7 +721,7 @@ void Terminal::print(std::ostream& os) {
 //  //  //  //
 //   Unary  //
 //  //  //  //
-void Unary::print(std::ostream& os) {
+void Unary::print(std::ostream& os, bool withUses) {
     Exp* p1 = ((Unary*)this)->getSubExp1();
     switch (op) {
         //  //  //  //  //  //  //
@@ -730,10 +736,10 @@ void Unary::print(std::ostream& os) {
                 case opVar:   os << "v["; break;
                 default: break;     // Suppress compiler warning
             }
-            if (op == opVar) ((Const*)p1)->printNoQuotes(os);
+            if (op == opVar) ((Const*)p1)->printNoQuotes(os, withUses);
             // Use print, not printr, because this is effectively the top
             // level again (because the [] act as parentheses)
-            else p1->print(os);
+            else p1->print(os, withUses);
             os << "]";
             break;
 
@@ -745,11 +751,11 @@ void Unary::print(std::ostream& os) {
                  if (op == opNot)  os << "~";
             else if (op == opLNot) os << "L~";
             else                   os << "-";
-            p1->printr(os);
+            p1->printr(os, withUses);
             return;
 
         case opSignExt:
-            p1->printr(os);
+            p1->printr(os, withUses);
             os << "!";          // Operator after expression
             return;
 
@@ -779,13 +785,13 @@ void Unary::print(std::ostream& os) {
                 case opSuccessor: os << "succ("; break;
                 default: break;         // For warning
             }
-            p1->printr(os);
+            p1->printr(os, withUses);
             os << ")";
             return;
 
         //  Misc    //
         case opSgnEx:      // Different because the operator appears last
-            p1->printr(os);
+            p1->printr(os, withUses);
             os << "! ";
             return;
         case opTemp:
@@ -794,11 +800,11 @@ void Unary::print(std::ostream& os) {
         case opLocal:
         case opParam:
             // Print a more concise form than param["foo"] (just foo)
-            ((Const*)p1)->printNoQuotes(os);
+            ((Const*)p1)->printNoQuotes(os, withUses);
             return;
     case opPhi:
             os << "phi(";
-            p1->print(os);
+            p1->print(os, withUses);
             os << ")";
             return;
         default:
@@ -810,7 +816,7 @@ void Unary::print(std::ostream& os) {
 //  //  //  //
 //  Ternary //
 //  //  //  //
-void Ternary::printr(std::ostream& os) {
+void Ternary::printr(std::ostream& os, bool withUses) {
     // The function-like operators don't need parentheses
     switch (op) {
         // The "function-like" ternaries
@@ -818,7 +824,7 @@ void Ternary::printr(std::ostream& os) {
         case opSgnEx:   case opFsize:   case opItof:
         case opFtoi:    case opFround:  case opOpTable:
             // No paren case
-            print(os); return;
+            print(os, withUses); return;
         default:
             break;
     }
@@ -826,7 +832,7 @@ void Ternary::printr(std::ostream& os) {
     os << "(" << this << ")";
 }
 
-void Ternary::print(std::ostream& os) {
+void Ternary::print(std::ostream& os, bool withUses) {
     Exp* p1 = ((Ternary*)this)->getSubExp1();
     Exp* p2 = ((Ternary*)this)->getSubExp2();
     Exp* p3 = ((Ternary*)this)->getSubExp3();
@@ -849,26 +855,26 @@ void Ternary::print(std::ostream& os) {
             }
             // Use print not printr here, since , has the lowest precendence
             // of all. Also it makes it the same as UQBT, so it's easier to test
-            p1->print(os); os << ",";
-            p2->print(os); os << ",";
-            p3->print(os); os << ")";
+            p1->print(os, withUses); os << ",";
+            p2->print(os, withUses); os << ",";
+            p3->print(os, withUses); os << ")";
             return;
         default:
             break;
     }
     // Else must be ?: or @ (traditional ternary operators)
-    p1->printr(os);
+    p1->printr(os, withUses);
     if (op == opTern) {
         os << " ? ";
-        p2->printr(os);
+        p2->printr(os, withUses);
         os << " : ";        // Need wide spacing here
-        p3->print(os);
+        p3->print(os, withUses);
     } 
     else if (op == opAt) {
             os << "@";
-            p2->printr(os);
+            p2->printr(os, withUses);
             os << ":";
-            p3->printr(os);
+            p3->printr(os, withUses);
     } else {
         std::cerr << "Ternary::print invalid operator " << operStrings[op] <<
           std::endl;
@@ -879,35 +885,39 @@ void Ternary::print(std::ostream& os) {
 //  //  //  //
 // TypedExp //
 //  //  //  //
-void TypedExp::print(std::ostream& os) {
+void TypedExp::print(std::ostream& os, bool withUses) {
     os << "*" << std::dec << type->getSize() << "* ";
     Exp* p1 = ((Ternary*)this)->getSubExp1();
-    p1->print(os);
+    p1->print(os, withUses);
 }
 
 //  //  //  //
 // AssignExp //
 //  //  //  //
-void AssignExp::print(std::ostream& os) {
+void AssignExp::print(std::ostream& os, bool withUses) {
     os << "*" << std::dec << size << "* ";
     Exp* p1 = ((Binary*)this)->getSubExp1();
-    p1->print(os);
+    p1->print(os, withUses);
     os << " := ";
     Exp* p2 = ((Binary*)this)->getSubExp2();
-    p2->print(os);
-}
-
-void AssignExp::printWithUses(std::ostream& os) {
-    os << "*" << std::dec << size << "* ";
-    Exp* p1 = ((Binary*)this)->getSubExp1();
-    p1->printWithUses(os);
-    os << " := ";
-    Exp* p2 = ((Binary*)this)->getSubExp2();
-    p2->printWithUses(os);
+    p2->print(os, withUses);
 }
 
 void AssignExp::getDefinitions(LocationSet &defs) {
     defs.insert(getLeft());
+}
+
+
+//  //  //  //
+// UsesExp  //
+//  //  //  //
+void UsesExp::print(std::ostream& os, bool withUses) {
+    subExp1->print(os, withUses);
+    if (withUses) {
+        os << "{";
+        stmtSet.printNums(os);
+        os << "}";
+    }
 }
 
 /*==============================================================================
@@ -919,25 +929,10 @@ void AssignExp::getDefinitions(LocationSet &defs) {
 static char debug_buffer[200];
 char* Exp::prints() {
       std::ostringstream ost;
-      print(ost);
+      print(ost, true);
       strncpy(debug_buffer, ost.str().c_str(), 199);
       debug_buffer[199] = '\0';
       return debug_buffer;
-}
-
-void Exp::printWithUses(std::ostream& os) {
-    if (op == opSubscript) {
-        // opSubscript is a Binary with an ordinary expression (e.g. r[30])
-        // and a pointer to a StatementSet object
-        getSubExp1()->print(os);
-        os << "{";
-        StatementSet* pss = (StatementSet*)getSubExp2();
-        pss->printNums(os);
-        os << "}";
-    }
-    else
-        // Print without the cluttering {statementlist}
-        print(os);
 }
 
 
@@ -2203,13 +2198,13 @@ Exp* AssignExp::simplifyAddr() {
 /*==============================================================================
  * FUNCTION:        Exp::printt
  * OVERVIEW:        Print an infix representation of the object to the given
- *                  file stream, with it's type in <angle brackets>.
+ *                  file stream, with its type in <angle brackets>.
  * PARAMETERS:      Output stream to send the output to
  * RETURNS:         <nothing>
  *============================================================================*/
-void Exp::printt(std::ostream& os /*= cout*/)
+void Exp::printt(std::ostream& os /*= cout*/, bool withUses /* = false */)
 {
-    print(os);
+    print(os, withUses);
     if (op != opTypedExp) return;
     Type* t = ((TypedExp*)this)->getType();
     os << "<" << std::dec << t->getSize();
@@ -2264,9 +2259,9 @@ std::ostream& operator<<(std::ostream& os, Exp* p)
 {
 #if 1
     // Useful for debugging, but can clutter the output
-    p->printt(os);
+    p->printt(os, true);
 #else
-    p->print(os);
+    p->print(os, true);
 #endif
     return os;
 }
@@ -2536,12 +2531,14 @@ void AssignExp::killReach(StatementSet &reach) {
     for (Statement* s = reach.getFirst(it); s; s = reach.getNext(it)) {
         if (s->getLeft() == NULL) continue;     // Should never happen?
         bool isKilled = false;
-        if (*s->getLeft() == *subExp1)
+        // Note: *= is "subscript insensitive" comparison. If attempt to
+        // redo global dataflow in SSA form, may need to change this
+        if (*s->getLeft() *= *subExp1)
             isKilled = true;
         // MVE: Check this for conservatism
         isKilled |= mayAlias(s->getLeft(), subExp1, getSize());
         if (isKilled)
-        kills.insert(s);
+            kills.insert(s);
     }
     reach.makeDiff(kills);
 }
@@ -2586,6 +2583,7 @@ bool AssignExp::usesExp(Exp *e) {
     return (subExp2->search(e, where) || (subExp1->isMemOf() && 
         ((Unary*)subExp1)->getSubExp1()->search(e, where)));
 }
+
 
 void AssignExp::doReplaceUse(Statement *use) 
 {
@@ -2735,23 +2733,17 @@ void Ternary::addUsedLocs(LocationSet& used) {
  *                  left: the location being defined
  * RETURNS:         <nothing>
  *============================================================================*/
-Exp* Exp::insertSubscript(Statement* def) {
-    // Create a new opSubscript expression with this as the location being
-    // subscripted
-    StatementSet* ss = new StatementSet;
-    Binary* e = new Binary(opSubscript, this, (Exp*)ss);
-    // Insert this element into the set
-    ss->insert(def);
-    return e;
-}
-
 //  //  //  //
 //  Unary   //
 //  //  //  //
 Exp* Unary::updateUses(Statement* def, Exp* left) {
-    if (*left == *this)
-        return insertSubscript(def);
-    subExp1->updateUses(def, left);
+    // I think it's possible that left could change from non subscripted to
+    // subscripted during this call
+    Exp* trueLeft = left;
+    if (left->isSubscript()) trueLeft = ((UsesExp*)left)->getSubExp1();
+    if (*trueLeft == *this)
+        return new UsesExp(this, def);
+    subExp1 = subExp1->updateUses(def, left);
     return this;
 }
 
@@ -2759,20 +2751,56 @@ Exp* Unary::updateUses(Statement* def, Exp* left) {
 //  Binary  //
 //  //  //  //
 Exp* Binary::updateUses(Statement* def, Exp* left) {
-    if (*left == *this)
-        return insertSubscript(def);
-    subExp1->updateUses(def, left);
-    subExp2->updateUses(def, left);
+    // I think it's possible that left could change from non subscripted to
+    // subscripted during this call
+    Exp* trueLeft = left;
+    if (left->isSubscript()) trueLeft = ((UsesExp*)left)->getSubExp1();
+    if (*trueLeft == *this)
+        return new UsesExp(this, def);
+    subExp1 = subExp1->updateUses(def, left);
+    subExp2 = subExp2->updateUses(def, left);
     return this;            // This won't have changed
 }
 
 //  //  //  //  //
 //  AssignExp   //
 //  //  //  //  //
+void AssignExp::subscriptLeft(Statement* self) {
+    subExp1 = new UsesExp(subExp1, self);
+}
+
 Exp* AssignExp::updateUses(Statement* def, Exp* left) {
-    // Same as Binary, but no need to test for equality to left
-    subExp1->updateUses(def, left);
-    subExp2->updateUses(def, left);
+    // No need to test for equality to left
+    // No need to subscript the "outer" LHS; done in subscriptLeft (above)
+    // However, need to update aa iff LHS is m[aa]
+    Unary* baseLHS = (Unary*)((UsesExp*)subExp1)->getSubExp1();
+    if (baseLHS->isMemOf())
+        // Beware. Consider left == m[r[28]], baseLHS is the same.
+        // If we call subExp1->updateUses, we will double subscript our
+        // LHS (violating a basic property of SSA form)
+        // If we call baseLHS->updateUses, we would get a
+        // subscript of a subscript, also not what we want!
+        // Don't call setSubExp1 either, since it deletes the old
+        // expression (old expression is always needed)
+        baseLHS->setSubExp1ND(baseLHS->getSubExp1()->updateUses(def, left));
+    subExp2 = subExp2->updateUses(def, left);
+    return this;
+}
+
+//  //  //  //
+//  UsesExp //
+//  //  //  //
+Exp* UsesExp::updateUses(Statement* def, Exp* left) {
+    // I think it's possible that left could change from non subscripted to
+    // subscripted during this call
+    Exp* trueLeft = left;
+    if (left->isSubscript()) trueLeft = ((UsesExp*)left)->getSubExp1();
+    if (*trueLeft == *subExp1) {
+        // This means that we have a match with the current expression,
+        // and we need to append the use to our StatementList
+        stmtSet.insert(def);
+    } else
+        subExp1 = subExp1->updateUses(def, left);
     return this;
 }
 
@@ -2780,10 +2808,12 @@ Exp* AssignExp::updateUses(Statement* def, Exp* left) {
 // Ternary  //
 //  //  //  //
 Exp* Ternary::updateUses(Statement* def, Exp* left) {
-    if (*left == *this)
-        return insertSubscript(def);
-    subExp1->updateUses(def, left);
-    subExp2->updateUses(def, left);
-    subExp3->updateUses(def, left);
+    Exp* trueLeft = left;
+    if (left->isSubscript()) trueLeft = ((UsesExp*)left)->getSubExp1();
+    if (*trueLeft == *this)
+        return new UsesExp(this, def);
+    subExp1 = subExp1->updateUses(def, left);
+    subExp2 = subExp2->updateUses(def, left);
+    subExp3 = subExp3->updateUses(def, left);
     return this;
 }

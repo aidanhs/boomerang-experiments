@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.4 $
+ * $Revision: 1.33.2.5 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1660,10 +1660,5 @@ void UserProc::getReturnSet(LocationSet &ret)
 //
 
 void UserProc::toSSAform() {
-    StatementList stmts;
-    getStatements(stmts);
-    StmtListIter it;
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
-        ;
-
+    getCFG()->toSSAform();
 }

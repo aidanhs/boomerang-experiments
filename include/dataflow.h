@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.4 $
+ * $Revision: 1.18.2.5 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -174,6 +174,9 @@ public:
     // Adds (inserts) all locations (registers or memory) used by this statement
     virtual void addUsedLocs(LocationSet& used) = 0;
 
+    // Subscript the left hand side to "point to self"
+    virtual void subscriptLeft(Statement* self) {};
+
     // returns the statement which is used by this statement and has a
     // left like the given expression
     // MVE: is this useful?
@@ -211,8 +214,8 @@ public:
     virtual void replaceUse(Statement *use);
 
     // statements should be printable (for debugging)
-    virtual void print(std::ostream &os) = 0;
-    virtual void printWithUses(std::ostream& os) {print(os);}
+    virtual void print(std::ostream &os, bool withUses = false) = 0;
+    virtual void printWithUses(std::ostream& os) {print(os, true);}
             void printAsUse(std::ostream &os)   {os << std::dec << number;}
             void printAsUseBy(std::ostream &os) {os << std::dec << number;}
             void printNum(std::ostream &os)     {os << std::dec << number;}
@@ -229,6 +232,9 @@ public:
 
     // update the type information for an expression in this statement
     virtual Type *updateType(Exp *e, Type *curType) = 0;
+
+    // get the statement number
+    int     getNumber() {return number;}
 
     // update the statement number
     void    setNumber(int num) {number = num;}

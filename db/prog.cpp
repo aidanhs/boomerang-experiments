@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.18.2.4 $
+ * $Revision: 1.18.2.5 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -140,10 +140,21 @@ void Prog::analyse() {
 
 // Do decompilation
 void Prog::decompile() {
+int stmtNumber = 0;
+for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
+  it++) {
+    Proc *pProc = *it;
+    if (pProc->isLib()) continue;
+    UserProc *p = (UserProc*)pProc;
+    if (!p->isDecoded()) continue;
+
+    // Initialise (number, etc) the statements of this proc
+    p->initStatements(stmtNumber);
+}
     // First do forward-flow global dataflow
     forwardGlobalDataflow();
 
-    int stmtNumber = 0;
+    //int stmtNumber = 0;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
       it++) {
         Proc *pProc = *it;
@@ -152,7 +163,10 @@ void Prog::decompile() {
         if (!p->isDecoded()) continue;
 
         // Initialise (number, etc) the statements of this proc
-        p->initStatements(stmtNumber);
+      //p->initStatements(stmtNumber);
+
+        // Put this proc into implicit SSA form
+        p->toSSAform();
     }
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
@@ -709,7 +723,7 @@ int iter=0;
         change  = currBB->calcReaches(1);   // Reaching definitions
         change |= currBB->calcAvailable(1); // Available definitions
         if (change) updateWorkList(currBB, workList, workSet);
-std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
+//std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
     };
 
     // Phase 2
@@ -721,6 +735,10 @@ std::cerr << "Global DFA: phase 2\n";
         Cfg* cfg = proc->getCFG();
         // Clear the dataflow info for this proc's cfg
         proc->getCFG()->clearDataflow();
+        // Clear the return interprocedural edges
+        cfg->clearReturnInterprocEdges();
+        // Set the call interprocedural edges
+        cfg->setCallInterprocEdges();
         cfg->appendBBs(workList, workSet);
     }
 iter=0;
@@ -731,7 +749,7 @@ iter=0;
         change = currBB->calcReaches(2);   // Reaching definitions
         // Don't need available definitions in phase 2
         if (change) updateWorkList(currBB, workList, workSet);
-std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
+//std::cerr << "Prog::computeGlobalDataflow: change is " << change << " for iteration " << ++iter << "\n";
     };
 
     // For now, stay in phase 2. Going to "standard" ("phase 0") dataflow

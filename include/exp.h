@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.24.2.4 $
+ * $Revision: 1.24.2.5 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -66,15 +66,15 @@ virtual		~Exp() {}
     void    setOper(OPER x) {op = x;}     // A few simplifications use this
 
     // Print the expression to the given stream
-	// Don't default to std::cout because it makes debugging harder
-virtual void print(std::ostream& os) = 0;
-	void	 print() {print(std::cout);}
-    void     printt(std::ostream& os = std::cout);    // Print with <type>
+virtual void print(std::ostream& os, bool withUses = false) = 0;
+             // Print with <type>
+    void     printt(std::ostream& os = std::cout, bool withUses = false);
     void     printAsHL(std::ostream& os = std::cout); // Print with v[5] as v5
     char*    prints();      // Print to string (for debugging)
              // Recursive print: don't want parens at the top level
-virtual void printr(std::ostream& os) = 0;    // Recursive print
-    void     printWithUses(std::ostream& os);
+virtual void printr(std::ostream& os, bool withUses = false) = 0;
+             // Print with the "{1 2 3}" uses info
+        void printWithUses(std::ostream& os) {print(os, true);}
 
     // Display as a dotty graph
     void    createDotFile(char* name);
@@ -99,6 +99,8 @@ virtual bool operator< (const Exp& o)  const= 0;
 // Type insensitive less than. Class TypedExp overrides
 virtual bool operator<<(const Exp& o) const
     {return (*this < o);}
+// Comparison ignoring subscripts
+        bool operator*=(const Exp& o) const;
 
 // Return the number of subexpressions. This is only needed in rare cases,
 // Could use polymorphism for all those cases, but this is easier
@@ -141,7 +143,9 @@ virtual int getArity() {return 0;}      // Overridden for Unary, Binary, etc
     // True if is a post-var expression (var_op' in SSL file)
     bool isPostVar() {return op == opPostVar;}
     // True if this is an opSize (size case; deprecated)
-    bool isSizeCast() { return op == opSize;}
+    bool isSizeCast() {return op == opSize;}
+    // True if this is a subscripted expression (SSA)
+    bool isSubscript() {return op == opSubscript;}
     // True if this is a phi operation (SSA)
     bool isPhi() {return op == opPhi;}
     // Get the index for this var
@@ -236,9 +240,6 @@ virtual Exp* fixSuccessor() {return this;}
 	virtual bool serialize(std::ostream &ouf, int &len) = 0;
 	static Exp *deserialize(std::istream &inf);
 
-protected:
-    Exp* insertSubscript(Statement* def);       // Local function for updateUses
-
 };
 
 // Not part of the Exp class, but logically belongs with it:
@@ -283,10 +284,11 @@ public:
     void setStr(char* p)    {u.p = p;}
     void setAddr(ADDRESS a) {u.a = a;}
 
-    void    print(std::ostream& os);
-    void    printNoQuotes(std::ostream& os);
+    void    print(std::ostream& os, bool withUses = false);
+    void    printNoQuotes(std::ostream& os, bool withUses = false);
     // Print "recursive" (extra parens not wanted at outer levels)
-    void    printr(std::ostream& os) {print (os);}
+    void    printr(std::ostream& os, bool withUses = false) {
+                print (os, withUses); }
 
     void    appendDotFile(std::ofstream& of);
 
@@ -313,8 +315,9 @@ public:
     bool    operator==(const Exp& o) const;
     bool    operator< (const Exp& o) const;
 
-    void    print(std::ostream& os);
-    void    printr(std::ostream& os) {print (os);}
+    void    print(std::ostream& os, bool withUses = false);
+    void    printr(std::ostream& os, bool withUses = false) {
+                print (os, withUses);}
     void    appendDotFile(std::ofstream& of);
 
 	// serialization
@@ -351,13 +354,16 @@ virtual     ~Unary();
     int getArity() {return 1;}
 
     // Print
-    void    print(std::ostream& os);
+    void    print(std::ostream& os, bool withUses = false);
     // Only binary and higher arity get parentheses, so printr == print
-    void    printr(std::ostream& os) {print (os);}
+    void    printr(std::ostream& os, bool withUses = false) {
+                print (os, withUses);
+            }
     void    appendDotFile(std::ofstream& of);
 
     // Set first subexpression
     void    setSubExp1(Exp* e);
+    void    setSubExp1ND(Exp* e) {subExp1 = e;}
     // Get first subexpression
     Exp*    getSubExp1();
     // "Become" subexpression 1 (delete all but that subexpression)
@@ -415,8 +421,8 @@ virtual     ~Binary();
     int getArity() {return 2;}
 
     // Print
-    void    print(std::ostream& os);
-    void    printr(std::ostream& os);
+    void    print(std::ostream& os, bool withUses = false);
+    void    printr(std::ostream& os, bool withUses = false);
     void    appendDotFile(std::ofstream& of);
 
     // Set second subexpression
@@ -478,8 +484,8 @@ virtual     ~Ternary();
     int getArity() {return 3;}
 
     // Print
-    void    print(std::ostream& os);
-    void    printr(std::ostream& os);
+    void    print(std::ostream& os, bool withUses = false);
+    void    printr(std::ostream& os, bool withUses = false);
     void    appendDotFile(std::ofstream& of);
 
     // Set third subexpression
@@ -539,8 +545,10 @@ public:
     bool    operator<<(const Exp& o) const;
 
 
-    void    print(std::ostream& os);
-    void    printr(std::ostream& os) {print(os);}     // Printr same as print
+    void    print(std::ostream& os, bool withUses = false);
+    void    printr(std::ostream& os, bool withUses = false) {
+                print(os, withUses);
+            }     // Printr same as print
     void    appendDotFile(std::ofstream& of);
 
     // Get and set the type
@@ -582,8 +590,9 @@ public:
     bool    operator==(const Exp& o) const;
     bool    operator< (const Exp& o) const;
 
-    virtual void print(std::ostream& os);
-    void    printr(std::ostream& os) {print(os);}     // Printr same as print
+    virtual void print(std::ostream& os, bool withUses = false);
+    void    printr(std::ostream& os, bool withUses = false) {
+                print(os, withUses);}     // Printr same as print
     void    appendDotFile(std::ofstream& of);
 
     // Get and set the size
@@ -610,6 +619,7 @@ public:
     virtual void killLive(LocationSet &live);
     virtual void getDeadStatements(StatementSet &dead);
 	virtual bool usesExp(Exp *e);
+    virtual void subscriptLeft(Statement* self);
     virtual void addUsedLocs(LocationSet& used);
     // Update the "uses" information implicit in expressions
     // def is a statement defining left (pass left == getLeft(def))
@@ -628,7 +638,6 @@ public:
 	// special print functions
     //virtual void printAsUse(std::ostream &os);
     //virtual void printAsUseBy(std::ostream &os);
-    virtual void printWithUses(std::ostream &os);
 
 	// inline any constants in the statement
 	virtual void processConstants(Prog *prog);
@@ -669,6 +678,28 @@ virtual     ~FlagDef();                         // Destructor
 	virtual bool serialize(std::ostream &ouf, int &len);
 };
 
+/*==============================================================================
+ * UsesExp is a subclass of Unary, holding an ordinary Exp pointer, and
+ *  a StatementSet
+ * This is used for subscripting SSA variables. Example:
+ * m[1000] becomes m[1000]{3} if defined at statement 3
+ * m[r[28]+4] becomes m[r[28]{2 8}]{3} if r[28] is defined at 2 and 8, and
+ * the memof is defined at 3. The integers are really pointers to statements,
+ * printed as the statement number for compactness
+ *============================================================================*/
+class UsesExp : public Unary {
+    StatementSet    stmtSet;            // A set of pointers to statements
+
+public:
+            // Constructor with expression (e) and statement defining it (def)
+            UsesExp(Exp* e, Statement* def);
+            UsesExp(UsesExp& o);
+    bool    operator==(const Exp& o) const;
+    void    print(std::ostream& os, bool withUses = false);
+    Exp*    updateUses(Statement* def, Exp* left);
+};
+
+    
 /*
  * A class for comparing Exp*s (comparing the actual expressions)
  * Type sensitive
