@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91 $
+# $Revision: 1.91.2.1 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -118,19 +118,17 @@ distclean: clean
 	rm -f Makefile util/Makefile loader/Makefile db/Makefile frontend/Makefile transform/Makefile include/config.h \
 		config.log config.status frontend/mltk.sh
 
-TEST_OBJS = util/UtilTest.o db/ExpTest.o db/ParserTest.o db/ProcTest.o db/ProgTest.o db/RtlTest.o \
-	db/StatementTest.o db/CfgTest.o db/DfaTest.o frontend/FrontSparcTest.o frontend/FrontPentTest.o \
-	loader/BinaryFileStub.o c/CTest.o type/TypeTest.o 
+TEST_OBJS = util/UtilTest.o db/ExpTest.o db/ParserTest.o db/ProcTest.o db/ProgTest.o db/RtlTest.o db/StatementTest.o \
+	db/CfgTest.o db/DfaTest.o frontend/FrontSparcTest.o frontend/FrontPentTest.o loader/BinaryFileStub.o c/CTest.o \
+	type/TypeTest.o db/DataFlowTest.o
 
 # Needed because the test header files are in all these different directories
 INCLUDEALL = -Idb -Ifrontend -Ic -Itype
 
 UTIL_OBJS = 	  util/util.o
-DB_OBJS = db/basicblock.o db/proc.o db/sslscanner.o db/cfg.o db/prog.o \
-  db/table.o db/statement.o db/register.o db/sslparser.o db/exp.o db/rtl.o \
-  db/sslinst.o db/insnameelem.o db/signature.o db/managed.o \
-  c/ansi-c-parser.o c/ansi-c-scanner.o boomerang.o log.o db/visitor.o \
-  db/xmlprogparser.o
+DB_OBJS = db/basicblock.o db/proc.o db/sslscanner.o db/cfg.o db/prog.o db/table.o db/statement.o db/register.o \
+	db/sslparser.o db/exp.o db/rtl.o db/sslinst.o db/insnameelem.o db/signature.o db/managed.o c/ansi-c-parser.o \
+	c/ansi-c-scanner.o boomerang.o log.o db/visitor.o db/xmlprogparser.o db/dataflow.o
 TRANSFORM_OBJS = transform/rdi.o transform/transformer.o transform/generic.o \
   transform/transformation-parser.o transform/transformation-scanner.o
 FRONT_OBJS = frontend/frontend.o frontend/njmcDecoder.o \
@@ -173,9 +171,9 @@ transform/transformation-scanner.cpp transform/transformation-scanner.h: transfo
 
 # The .cpp's depend on the .m's
 $(MACH_SRC): frontend/%decoder.cpp : frontend/machine/%/core.spec \
-                                   frontend/machine/%/synth.spec \
-                                   frontend/machine/%/dis.spec \
-                                   frontend/machine/%/decoder.m
+									frontend/machine/%/synth.spec \
+									frontend/machine/%/dis.spec \
+									frontend/machine/%/decoder.m
 	frontend/mltk.sh -o $@ $^ 2> mltk.err
 
 
@@ -187,10 +185,10 @@ db/prog.o:					EXTRA = -Icodegen -Ic
 frontend/frontend.o:		EXTRA = -Ic
 db/ProgTest.o:				EXTRA = -Ifrontend
 db/ProcTest.o:				EXTRA = -Ifrontend
-db/RtlTest.o:               EXTRA = -Ifrontend
+db/RtlTest.o:				EXTRA = -Ifrontend
 db/StatementTest.o:			EXTRA = -Ifrontend
-db/CfgTest.o:               EXTRA = -Ifrontend
-type/TypeTest.o:            EXTRA = -Ifrontend
+db/DataFlowTest.o:			EXTRA = -Ifrontend
+type/TypeTest.o:			EXTRA = -Ifrontend
 frontend/pentiumdecoder.o:	EXTRA = -fno-exceptions
 
 # Compile ordinary files

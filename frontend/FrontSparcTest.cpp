@@ -4,7 +4,7 @@
  *				tests the sparc front end
  *============================================================================*/
 /*
- * $Revision: 1.24 $
+ * $Revision: 1.24.2.1 $
  *
  * 05 Apr 02 - Mike: Created
  * 21 May 02 - Mike: Mods for gcc 3.1
@@ -150,10 +150,10 @@ void FrontSparcTest::test2() {
 	std::ostringstream o1;
 	inst = pFE->decodeInstruction(0x10690);
 	inst.rtl->print(o1);
-	// This call is to out of range of the program's
-	// text limits (to the Program Linkage Table (PLT), calling printf)
+	// This call is to out of range of the program's text limits (to the Program Linkage Table (PLT), calling printf)
 	// This is quite normal.
-	expected = std::string("00010690    0 CALL 0x20800( implicit: )\n");
+	expected = std::string("00010690    0 CALL 0x20800()\n"
+		"              Reaching definitions: \n");
 	CPPUNIT_ASSERT_EQUAL(expected, std::string(o1.str()));
 
 	std::ostringstream o2;
@@ -198,7 +198,7 @@ void FrontSparcTest::test3() {
 	std::ostringstream o2;
 	inst = pFE->decodeInstruction(0x106a4);
 	inst.rtl->print(o2);
-	expected = std::string("000106a4    0 RET \n");
+	expected = std::string("000106a4    0 RET         Reaching definitions: \n");
 	CPPUNIT_ASSERT_EQUAL(expected, std::string(o2.str()));
 
 	std::ostringstream o3;

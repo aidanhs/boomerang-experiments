@@ -3,7 +3,7 @@
  * OVERVIEW:   Command line test of all of Boomerang
  *============================================================================*/
 /*
- * $Revision: 1.12 $
+ * $Revision: 1.12.2.1 $
  * 15 Jul 02 - Mike: Created from testDbase
 */
 
@@ -25,6 +25,7 @@
 #include "FrontPentTest.h"
 #include "CTest.h"
 #include "CfgTest.h"
+#include "DataFlowTest.h"
 
 #include "prog.h"
 
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
 	StatementTest stt("Statement Test");
 	CfgTest cfgt("Cfg Test");
 	DfaTest dfat("Dfa Test");
+	DataFlowTest dft("Df Test");
 
 	expt.registerTests(&suite);
 	progt.registerTests(&suite);
@@ -62,6 +64,7 @@ int main(int argc, char** argv)
 	stt.registerTests(&suite);
 	cfgt.registerTests(&suite);
 	dfat.registerTests(&suite);
+	dft.registerTests(&suite);
 
 	CppUnit::TextTestResult res;
 

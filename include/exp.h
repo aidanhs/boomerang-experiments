@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119 $
+ * $Revision: 1.119.2.1 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -59,6 +59,8 @@ class ExpVisitor;
 class ExpModifier;
 class XMLProgParser;
 typedef BasicBlock* PBB;
+
+#define DEBUG_BUFSIZE	5000		// Size of the debug print buffer
 
 
 /*==============================================================================

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33 $
+ * $Revision: 1.33.2.1 $
  * 
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
@@ -354,11 +354,12 @@ void RTL::print(std::ostream& os /*= cout*/) {
 }
 
 extern char debug_buffer[];
+
 char* RTL::prints() {
 	  std::ostringstream ost;
 	  print(ost);
-	  strncpy(debug_buffer, ost.str().c_str(), 199);
-	  debug_buffer[199] = '\0';
+	  strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	  debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	  return debug_buffer;
 }
 

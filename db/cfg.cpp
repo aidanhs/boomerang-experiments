@@ -10,12 +10,12 @@
  */
 
 /*==============================================================================
- * FILE:	   cfg.cc
+ * FILE:	   cfg.cpp
  * OVERVIEW:   Implementation of the CFG class.
  *============================================================================*/
 
 /*
- * $Revision: 1.95 $
+ * $Revision: 1.95.2.1 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -678,8 +678,7 @@ void Cfg::sortByFirstDFT()
 	m_listBB.sort(BasicBlock::lessFirstDFT);
 #else
 	updateVectorBB();
-	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-	  it++)
+	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
 		m_vectorBB[(*it)->m_DFTfirst-1] = *it;
 	m_listBB.clear();
 	for (size_t i = 0; i < m_vectorBB.size(); i++)
@@ -716,8 +715,7 @@ void Cfg::sortByLastDFT()
 void Cfg::updateVectorBB()
 {
 	m_vectorBB.clear();
-	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-	  it++)
+	for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
 		m_vectorBB.push_back(*it);
 }
 
@@ -733,26 +731,21 @@ void Cfg::updateVectorBB()
 bool Cfg::wellFormCfg()
 {
 	m_bWellFormed = true;
-	for (BB_IT it = m_listBB.begin(); it != m_listBB.end(); it++)
-	{
+	for (BB_IT it = m_listBB.begin(); it != m_listBB.end(); it++) {
 		// it iterates through all BBs in the list
 		// Check that it's complete
-		if ((*it)->m_bIncomplete)
-		{
+		if ((*it)->m_bIncomplete) {
 			m_bWellFormed = false;
 			MAPBB::iterator itm;
 			for (itm = m_mapBB.begin(); itm != m_mapBB.end(); itm++)
 				if ((*itm).second == *it) break;
 			if (itm == m_mapBB.end())
 				std::cerr << "WellFormCfg: incomplete BB not even in map!\n";
-			else
-			{
+			else {
 				std::cerr << "WellFormCfg: BB with native address ";
 				std::cerr << std::hex << (*itm).first << " is incomplete\n";
 			}
-		}
-		else
-		{
+		} else {
 			// Complete. Test the out edges
 			assert((int)(*it)->m_OutEdges.size() == (*it)->m_iNumOutEdges);
 			for (int i=0; i < (*it)->m_iNumOutEdges; i++) {
@@ -791,11 +784,9 @@ bool Cfg::wellFormCfg()
 			// (could have an extra in-edge, for example)
 			assert((int)(*it)->m_InEdges.size() == (*it)->m_iNumInEdges);
 			std::vector<PBB>::iterator ii;
-			for (ii = (*it)->m_InEdges.begin(); ii != (*it)->m_InEdges.end();
-					ii++) {
+			for (ii = (*it)->m_InEdges.begin(); ii != (*it)->m_InEdges.end(); ii++) {
 				std::vector<PBB>::iterator oo;
-				for (oo=(*ii)->m_OutEdges.begin();
-						oo != (*ii)->m_OutEdges.end(); oo++)
+				for (oo=(*ii)->m_OutEdges.begin(); oo != (*ii)->m_OutEdges.end(); oo++)
 					if (*oo == *it) break;
 				if (oo == (*ii)->m_OutEdges.end()) {
 					std::cerr << "WellFormCfg: No out edge to BB at " << std::hex;
@@ -1852,6 +1843,8 @@ void Cfg::removeUnneededLabels(HLLCode *hll) {
 	hll->RemoveUnusedLabels(Ordering.size());
 }
 
+#define BBINDEX 0				// Non zero to print <index>: before <statement number>
+#define BACK_EDGES 0			// Non zero to generate green back edges
 void Cfg::generateDotFile(std::ofstream& of) {
 	ADDRESS aret = NO_ADDRESS;
 	// The nodes
@@ -1859,12 +1852,13 @@ void Cfg::generateDotFile(std::ofstream& of) {
 	for (it = m_listBB.begin(); it != m_listBB.end(); it++) {
 		of << "	   " << "bb" << std::hex << (*it)->getLowAddr() << " [" << "label=\"";
 		char* p = (*it)->getStmtNumber();
+#if BBINDEX
 		of << std::dec << indices[*it];
 		if (p[0] != 'b')
 			// If starts with 'b', no statements (something like bb8101c3c).
-			of << ":" << (*it)->getStmtNumber();
-		else
-			of << " ";
+			of << ":";
+#endif
+		of << p << " ";
 		switch((*it)->getType()) {
 			case ONEWAY: of << "oneway"; break;
 			case TWOWAY: 
@@ -1877,8 +1871,16 @@ void Cfg::generateDotFile(std::ofstream& of) {
 				else
 					of << "twoway";
 				break;
-			case NWAY: of << "nway\" shape=trapezium];\n";
+			case NWAY: {
+				of << "nway";
+				Exp* de = (*it)->getDest();
+				if (de) {
+					of << "\\n";
+					of << de;
+				}
+				of << "\" shape=trapezium];\n";
 				continue;
+			}
 			case CALL: {
 				of << "call";
 				Proc* dest = (*it)->getDestProc();
@@ -1922,7 +1924,6 @@ void Cfg::generateDotFile(std::ofstream& of) {
 			of << " [color = \"blue\"];\n";
 		}
 	}
-#define BACK_EDGES 1
 #if BACK_EDGES
 	for (it = m_listBB.begin(); it != m_listBB.end(); it++) {
 		std::vector<PBB>& inEdges = (*it)->getInEdges();
@@ -1949,365 +1950,6 @@ void Cfg::insertArguments(StatementSet& rs) {
 }
 
 
-
-/*
- * Dominator frontier code largely as per Appel
- */
-
-void Cfg::DFS(int p, int n) {
-	if (dfnum[n] == 0) {
-		dfnum[n] = N; vertex[N] = n; parent[n] = p;
-		N++;
-		// For each successor w of n
-		PBB bb = BBs[n];
-		std::vector<PBB>::iterator oo;
-		for (oo = bb->m_OutEdges.begin(); oo != bb->m_OutEdges.end(); oo++) {
-			DFS(n, indices[*oo]);
-		}
-	}
-}
-
-void Cfg::dominators() {
-	PBB r = entryBB;
-	int numBB = m_listBB.size();
-	BBs.resize(numBB, (PBB)-1);
-	N = 0; BBs[0] = r; indices[r] = 0;
-	// Initialise to "none"
-	dfnum.resize(numBB, 0);
-	semi.resize(numBB, -1);
-	ancestor.resize(numBB, -1);
-	idom.resize(numBB, -1);
-	samedom.resize(numBB, -1);
-	vertex.resize(numBB, -1);
-	parent.resize(numBB, -1);
-	best.resize(numBB, -1);
-	bucket.resize(numBB);
-	DF.resize(numBB);
-	// Set up the BBs and indices vectors. Do this here because sometimes a
-	// BB can be unreachable (so relying on in-edges doesn't work)
-	std::list<PBB>::iterator ii;
-	int idx = 1;
-	for (ii = m_listBB.begin(); ii != m_listBB.end(); ii++) {
-		PBB bb = *ii;
-		if (bb != r) {	   // Entry BB r already done
-			indices[bb] = idx;
-			BBs[idx++] = bb;
-		}
-	}
-	DFS(-1, 0);
-	int i;
-	for (i=N-1; i >= 1; i--) {
-		int n = vertex[i]; int p = parent[n]; int s = p;
-		/* These lines calculate the semi-dominator of n, based on the Semidominator Theorem */
-		// for each predecessor v of n
-		PBB bb = BBs[n];
-		std::vector<PBB>::iterator it;
-		for (it = bb->m_InEdges.begin(); it != bb->m_InEdges.end(); it++) {
-			if (indices.find(*it) == indices.end()) {
-				std::cerr << "BB not in indices: "; (*it)->print(std::cerr);
-				assert(false);
-			}
-			int v = indices[*it];
-			int sdash;
-			if (dfnum[v] <= dfnum[n])
-				sdash = v;
-			else sdash = semi[ancestorWithLowestSemi(v)];
-			if (dfnum[sdash] < dfnum[s])
-				s = sdash;
-		}
-		semi[n] = s;
-		/* Calculation of n'd dominator is deferred until the path from s to n
-			has been linked into the forest */
-		bucket[s].insert(n);
-		Link(p, n);
-		// for each v in bucket[p]
-		std::set<int>::iterator jj;
-		for (jj=bucket[p].begin(); jj != bucket[p].end(); jj++) {
-			int v = *jj;
-			/* Now that the path from p to v has been linked into the spanning
-				forest, these lines calculate the dominator of v, based on the
-				first clause of the Dominator Theorem, or else defer the calc-
-				ulation until y's dominator is known. */
-			int y = ancestorWithLowestSemi(v);
-			if (semi[y] == semi[v])
-				idom[v] = p;		 // Success!
-			else samedom[v] = y;	 // Defer
-		}
-		bucket[p].clear();
-	}
-	for (i=1; i < N-1; i++) {
-		/* Now all the deferred dominator calculations, based on the second
-			clause of the Dominator Theorem, are performed. */
-		int n = vertex[i];
-		if (samedom[n] != -1) {
-			idom[n] = idom[samedom[n]];	   // Deferred success!
-		}
-	}
-	computeDF(0);				// Finally, compute the dominance frontiers
-}
-
-int Cfg::ancestorWithLowestSemi(int v) {
-	int a = ancestor[v];
-	if (ancestor[a] != -1) {
-		int b = ancestorWithLowestSemi(a);
-		ancestor[v] = ancestor[a];
-		if (dfnum[semi[b]] < dfnum[semi[best[v]]])
-			best[v] = b;
-	}
-	return best[v];
-}
-
-void Cfg::Link(int p, int n) {
-	ancestor[n] = p; best[n] = n;
-}
-
-// Return true if n dominates w
-bool Cfg::doesDominate(int n, int w) {
-	while (idom[w] != -1) {
-		if (idom[w] == n)
-			return true;
-		w = idom[w];	 // Move up the dominator tree
-	}
-	return false;
-}
-
-void Cfg::computeDF(int n) {
-	std::set<int> S;
-	/* THis loop computes DF_local[n] */
-	// for each node y in succ(n)
-	PBB bb = BBs[n];
-	std::vector<PBB>::iterator it;
-	for (it = bb->m_OutEdges.begin(); it != bb->m_OutEdges.end(); it++) {
-		int y = indices[*it];
-		if (idom[y] != n)
-			S.insert(y);
-	}
-	// for each child c of n in the dominator tree
-	// Note: this is a linear search!
-	int sz = ancestor.size();
-	for (int c = 0; c < sz; c++) {
-		if (idom[c] != n) continue;
-		computeDF(c);
-		/* This loop computes DF_up[c] */
-		// for each element w of DF[c]
-		std::set<int>& s = DF[c];
-		std::set<int>::iterator ww;
-		for (ww = s.begin(); ww != s.end(); ww++) {
-			int w = *ww;
-			// if n does not dominate w, or if n = w
-			if (n == w || !doesDominate(n, w)) {
-				S.insert(w);
-			}
-		}
-	}
-	DF[n] = S;
-}
-
-void Cfg::placePhiFunctions(int memDepth, UserProc* proc) {
-	// First free some memory no longer needed
-	dfnum.resize(0);
-	semi.resize(0);
-	ancestor.resize(0);
-	samedom.resize(0);
-	vertex.resize(0);
-	parent.resize(0);
-	best.resize(0);
-	bucket.resize(0);
-	defsites.clear();			// Clear defsites map,
-	A_orig.clear();				// and A_orig,
-	defStmts.clear();			// and the map from variable to defining Stmt 
-
-	// Set the sizes of needed vectors
-	int numBB = indices.size();
-	assert(numBB = (int)m_listBB.size());
-	A_orig.resize(numBB);
-
-	// We need to create A_orig for the current memory depth
-	int n;
-	for (n=0; n < numBB; n++) {
-		BasicBlock::rtlit rit; StatementList::iterator sit;
-		PBB bb = BBs[n];
-		for (Statement* s = bb->getFirstStmt(rit, sit); s;
-						s = bb->getNextStmt(rit, sit)) {
-			LocationSet ls;
-			LocationSet::iterator it;
-			s->getDefinitions(ls);
-			for (it = ls.begin(); it != ls.end(); it++) {
-				if ((*it)->getMemDepth() == memDepth) {
-					A_orig[n].insert((*it)->clone());
-					defStmts[*it] = s;
-				}
-			}
-		}
-	}
-
-	// For each node n
-	for (n=0; n < numBB; n++) {
-		// For each variable a in A_orig[n]
-		std::set<Exp*, lessExpStar>& s = A_orig[n];
-		std::set<Exp*, lessExpStar>::iterator aa;
-		for (aa = s.begin(); aa != s.end(); aa++) {
-			Exp* a = *aa;
-			defsites[a].insert(n);
-		}
-	}
-
-	// For each variable a (in defsites)
-	std::map<Exp*, std::set<int>, lessExpStar>::iterator mm;
-	for (mm = defsites.begin(); mm != defsites.end(); mm++) {
-		Exp* a = (*mm).first;				// *mm is pair<Exp*, set<int>>
-		std::set<int> W = defsites[a];	 // set copy
-		// While W not empty
-		while (W.size()) {
-			// Remove some node n from W
-			int n = *W.begin();				// Copy first element
-			W.erase(W.begin());				// Remove first element
-			// for each y in DF[n]
-			std::set<int>::iterator yy;
-			std::set<int>& DFn = DF[n];
-			for (yy = DFn.begin(); yy != DFn.end(); yy++) {
-				int y = *yy;
-				// if y not element of A_phi[a]
-				std::set<int>& s = A_phi[a];
-				if (s.find(y) == s.end()) {
-					// Insert trivial phi function for a at top of block y
-					// a := phi()
-					Statement* as = new PhiAssign(a->clone());
-					PBB Ybb = BBs[y];
-					Ybb->prependStmt(as, proc);
-					// A_phi[a] <- A_phi[a] U {y}
-					s.insert(y);
-					// if a !elementof A_orig[y]
-					if (A_orig[y].find(a) == A_orig[y].end()) {
-						// W <- W U {y}
-						W.insert(y);
-					}
-				}
-			}
-		}
-	}
-}
-
-// Subscript dataflow variables
-void Cfg::renameBlockVars(int n, int memDepth, bool clearStack /* = false */ ) {
-	// Need to clear the Stack of old, renamed locations like m[esp-4]
-	// (these will be deleted, and will cause compare failures in the Stack)
-	if (clearStack) Stack.clear();
-
-	// For each statement S in block n
-	BasicBlock::rtlit rit; StatementList::iterator sit;
-	PBB bb = BBs[n];
-	Statement* S;
-	for (S = bb->getFirstStmt(rit, sit); S; S = bb->getNextStmt(rit, sit)) {
-		// if S is not a phi function
-		if (1) { //!S->isPhi()) 
-			// For each use of some variable x in S (not just assignments)
-			LocationSet locs;
-			if (S->isPhi()) {
-				if (S->getLeft()->isMemOf() || S->getLeft()->isRegOf())
-					S->getLeft()->getSubExp1()->addUsedLocs(locs);
-			}
-			else
-				S->addUsedLocs(locs);
-			LocationSet::iterator xx;
-			for (xx = locs.begin(); xx != locs.end(); xx++) {
-				Exp* x = *xx;
-				// Ignore variables of the wrong memory depth
-				if (x->getMemDepth() != memDepth) continue;
-				// Ignore variables that have already been subscripted
-				if (x->isSubscript()) continue;
-				Statement* def;
-				if (Stack[x].empty()) {
-					// If the stack is empty, use a NULL definition. This will be changed into a pointer
-					// to an implicit definition at the start of type analysis, but not until all the m[...]
-					// have stopped changing their expressions (complicates implicit assignments considerably).
-					def = NULL;
-				}
-				else
-					def = Stack[x].top();
-				// Replace the use of x with x{def} in S
-				if (S->isPhi())
-					S->getLeft()->refSubExp1() = S->getLeft()->getSubExp1()->expSubscriptVar(x, def /*, this*/);
-				else S->subscriptVar(x, def /*, this */);
-			}
-		}
-		// For each definition of some variable a in S
-		LocationSet defs;
-		S->getDefinitions(defs);
-		LocationSet::iterator dd;
-		for (dd = defs.begin(); dd != defs.end(); dd++) {
-			Exp *a = *dd;
-			if (a->getMemDepth() == memDepth) {
-				// Push i onto Stack[a]
-				// Note: we clone a because otherwise it could be an expression
-				// that gets deleted through various modifications
-				// This is necessary because we do several passes of this algorithm
-				// with various memory depths
-				Stack[a->clone()].push(S);
-				// Replace definition of a with definition of a_i in S
-				// (we don't do this)
-			}
-			// MVE: do we need this awful hack?
-			if (a->getOper() == opLocal) {
-				a = S->getProc()->getLocalExp(((Const*)a->getSubExp1())->getStr());
-				// Note: used to assert(a) here. However, with switch
-				// statements and in other cases, a local may be created which
-				// does not represent memory at all (created with
-				// UserProc::newLocal()), and so there is no entry in symbolMap,
-				// and so a becomes NULL. This is not an error.
-				// Stack already has a definition for a (as just the bare local)
-				if (a && a->getMemDepth() == memDepth)
-					Stack[a->clone()].push(S);
-			}
-		}
-	}
-	// For each successor Y of block n
-	int numSucc = bb->m_OutEdges.size();
-	for (int succ = 0; succ < numSucc; succ++) {
-		PBB Ybb = bb->m_OutEdges[succ];
-		// Suppose n is the jth predecessor of Y
-		int j = Ybb->whichPred(bb);
-		// For each phi-function in Y
-		Statement* S;
-		for (S = Ybb->getFirstStmt(rit, sit); S; S = Ybb->getNextStmt(rit, sit)) {
-			PhiAssign* pa = dynamic_cast<PhiAssign*>(S);
-			// if S is not a phi function, then quit the loop (no more phi's)
-			// Wrong: do not quit the loop: there's an optimisation that turns a PhiAssign into
-			// an ordinary Assign. So continue, not break.
-			if (!pa) continue;
-			// Suppose the jth operand of the phi is a
-			// For now, just get the LHS
-			Exp* a = pa->getLeft();
-			// Only consider variables of the current memory depth
-			if (a->getMemDepth() != memDepth) continue;
-			Statement* def;
-			if (Stack[a].empty())
-				def = NULL;				// See comment above
-			else
-				def = Stack[a].top();
-			// "Replace jth operand with a_i"
-			pa->putAt(j, def, a);
-		}
-	}
-	// For each child X of n
-	// Note: linear search!
-	int numBB = m_listBB.size();
-	for (int X=0; X < numBB; X++) {
-		if (idom[X] == n)
-			renameBlockVars(X, memDepth);
-	}
-	// For each statement S in block n
-	for (S = bb->getFirstStmt(rit, sit); S; S = bb->getNextStmt(rit, sit)) {
-		// For each definition of some variable a in S
-		LocationSet defs;
-		S->getDefinitions(defs);
-		LocationSet::iterator dd;
-		for (dd = defs.begin(); dd != defs.end(); dd++) {
-			if ((*dd)->getMemDepth() == memDepth)
-				Stack[*dd].pop();
-		}
-	}
-}
 
 ////////////////////////////////////
 //			Liveness			 //
@@ -2636,14 +2278,6 @@ Statement* Cfg::findImplicitParamAssign(Parameter* param) {
 
 void Cfg::removeImplicitAssign(Exp* x) {
 	std::map<Exp*, Statement*, lessExpStar>::iterator it = implicitMap.find(x);
-if (it == implicitMap.end()) {
-  bool eq = *x == *(implicitMap.begin()->first);
-  std::cerr << "removeImplicitAssign of " << x << " failed; in the implicit map:\n";
-  for (it = implicitMap.begin(); it != implicitMap.end(); it++)
-    std::cerr << it->first << ", \t";
-  std::cerr << "\n" << std::flush;
-  assert(0);
-}
 	// assert(it != implicitMap.end());
 	implicitMap.erase(it);
 }

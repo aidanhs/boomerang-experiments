@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15 $
+ * $Revision: 1.15.2.1 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -24,6 +24,9 @@
 #include "managed.h"
 #include "statement.h"
 #include "exp.h"
+
+extern char debug_buffer[];		// For prints functions
+
 
 std::ostream& operator<<(std::ostream& os, StatementSet* ss) {
 	ss->print(os);
@@ -131,7 +134,6 @@ bool StatementSet::removeIfDefines(StatementSet& given) {
 	return found;
 }
 
-extern char debug_buffer[];		 // For prints functions
 // Print to a string, for debugging
 char* StatementSet::prints() {
 	std::ostringstream ost;
@@ -141,8 +143,8 @@ char* StatementSet::prints() {
 		ost << *it;
 	}
 	ost << "\n";
-	strncpy(debug_buffer, ost.str().c_str(), 199);
-	debug_buffer[199] = '\0';
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
 }
 
@@ -209,8 +211,8 @@ char* LocationSet::prints() {
 		ost << *it;
 	}
 	ost << "\n";
-	strncpy(debug_buffer, ost.str().c_str(), 199);
-	debug_buffer[199] = '\0';
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
 }
 
@@ -456,8 +458,8 @@ char* StatementList::prints() {
 	for (iterator it = slist.begin(); it != slist.end(); it++) {
 		ost << *it << ",\t";
 	}
-	strncpy(debug_buffer, ost.str().c_str(), 199);
-	debug_buffer[199] = '\0';
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
 }
 
@@ -507,8 +509,8 @@ char* StatementVec::prints() {
 	for (it = svec.begin(); it != svec.end(); it++) {
 		ost << *it << ",\t";
 	}
-	strncpy(debug_buffer, ost.str().c_str(), 199);
-	debug_buffer[199] = '\0';
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
 }
 

@@ -13,13 +13,19 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.1 $
+ * $Revision: 1.43.2.2 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
+
+#include <sstream>
 
 #include "dataflow.h"
 #include "cfg.h"
 #include "proc.h"
+#include "exp.h"
+
+extern char debug_buffer[];		 // For prints functions
+
 
 /*
  * Dominator frontier code largely as per Appel 2002 ("Modern Compiler Implementation in Java")
@@ -265,8 +271,8 @@ void DataFlow::placePhiFunctions(int memDepth, UserProc* proc) {
 
 // Subscript dataflow variables
 void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /* = false */ ) {
-	// Need to clear the Stack of old, renamed locations like m[esp-4]
-	// (these will be deleted, and will cause compare failures in the Stack)
+	// Need to clear the Stack of old, renamed locations like m[esp-4] (these will be deleted, and will cause compare
+	// failures in the Stack, so it can't be correctly ordered and hence balanced etc, and will lead to segfaults)
 	if (clearStack) Stack.clear();
 
 	// For each statement S in block n
@@ -306,7 +312,19 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 				else S->subscriptVar(x, def /*, this */);
 			}
 		}
+
 		// For each definition of some variable a in S
+		// MVE: Check for Call and Return Statements; these have Collector objects that need to be updated
+		// Do before the below, so CallStatements have not yet processed their returns
+		if (S->isCall() || S->isReturn()) {
+			Collector* col;
+			if (S->isCall())
+				col = ((CallStatement*)S)->getCollector();
+			else
+				col = ((ReturnStatement*)S)->getCollector();
+			col->updateLocs(Stack);
+		}
+
 		LocationSet defs;
 		S->getDefinitions(defs);
 		LocationSet::iterator dd;
@@ -314,28 +332,24 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 			Exp *a = *dd;
 			if (a->getMemDepth() == memDepth) {
 				// Push i onto Stack[a]
-				// Note: we clone a because otherwise it could be an expression
-				// that gets deleted through various modifications
-				// This is necessary because we do several passes of this algorithm
-				// with various memory depths
+				// Note: we clone a because otherwise it could be an expression that gets deleted through various
+				// modifications. This is necessary because we do several passes of this algorithm with various memory depths
 				Stack[a->clone()].push(S);
-				// Replace definition of a with definition of a_i in S
-				// (we don't do this)
+				// Replace definition of a with definition of a_i in S (we don't do this)
 			}
 			// MVE: do we need this awful hack?
 			if (a->getOper() == opLocal) {
 				a = S->getProc()->getLocalExp(((Const*)a->getSubExp1())->getStr());
-				// Note: used to assert(a) here. However, with switch
-				// statements and in other cases, a local may be created which
-				// does not represent memory at all (created with
-				// UserProc::newLocal()), and so there is no entry in symbolMap,
-				// and so a becomes NULL. This is not an error.
+				// Note: used to assert(a) here. However, with switch statements and in other cases, a local may be
+				// created which does not represent memory at all (created with UserProc::newLocal()), and so there
+				// is no entry in symbolMap, and so a becomes NULL. This is not an error.
 				// Stack already has a definition for a (as just the bare local)
 				if (a && a->getMemDepth() == memDepth)
 					Stack[a->clone()].push(S);
 			}
 		}
 	}
+
 	// For each successor Y of block n
 	std::vector<PBB>& outEdges = bb->getOutEdges();
 	unsigned numSucc = outEdges.size();
@@ -385,3 +399,40 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 	}
 }
 
+
+void Collector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack) {
+	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator it;
+	for (it = Stack.begin(); it != Stack.end(); it++) {
+		if (it->second.size() == 0)
+			continue;					// This variable's definition doesn't reach here
+		RefExp* re = new RefExp(it->first->clone(), it->second.top());
+		locs.insert(re);
+	}
+}
+
+// Find the definition for e that reaches this Collector. If none reaches here, return e{-}
+RefExp* Collector::findDef(Exp* e) {
+	RefExp re(e, (Statement*)-1);		// Wrap in a definition with a wild definition
+	std::set<RefExp*, lessExpStar>::iterator it = locs.find(&re);
+	if (it == locs.end())
+		return new RefExp(e, NULL);		// Not explicitly defined here
+	return *it;
+}
+
+void Collector::print(std::ostream& os) {
+	std::set<RefExp*, lessExpStar>::iterator it;
+	for (it=locs.begin(); it != locs.end(); ) {
+		os << *it;
+		it++;
+		if (it != locs.end())
+			os << ", ";
+	}
+}
+
+char* Collector::prints() {
+	std::ostringstream ost;
+	print(ost);
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
+	return debug_buffer;
+}

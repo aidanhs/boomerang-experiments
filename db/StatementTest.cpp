@@ -4,7 +4,7 @@
  *				tests the dataflow subsystems
  *============================================================================*/
 /*
- * $Revision: 1.27 $
+ * $Revision: 1.27.2.1 $
  *
  * 14 Jan 03 - Trent: Created
  * 17 Apr 03 - Mike: Added testRecursion to track down a nasty bug
@@ -20,6 +20,7 @@
 #include "boomerang.h"
 #include "exp.h"
 #include "managed.h"
+#include "dataflow.h"
 
 #include <sstream>
 #include <map>
@@ -977,10 +978,12 @@ void StatementTest::testAddUsedLocs () {
 	argl.push_back(Location::memOf(Location::regOf(27)));
 	argl.push_back(new RefExp(Location::regOf(28), g));
 	ca->setArguments(argl);
+#if 0
 	argl.clear();
 	argl.push_back(Location::memOf(Location::regOf(29)));
 	argl.push_back(Location::regOf(30));
 	ca->setImpArguments(argl);
+#endif
 	ca->addReturn(Location::regOf(31));
 	ca->addReturn(Location::memOf(Location::regOf(24)));
 	ca->addUsedLocs(l);
@@ -1163,10 +1166,12 @@ void StatementTest::testSubscriptVars () {
 	argl.push_back(Location::memOf(Location::regOf(27)));
 	argl.push_back(Location::regOf(28));
 	ca->setArguments(argl);
+#if 0
 	argl.clear();
 	argl.push_back(Location::memOf(Location::regOf(29)));
 	argl.push_back(Location::regOf(30));
 	ca->setImpArguments(argl);
+#endif
 	ca->addReturn(Location::regOf(28));
 	ca->addReturn(Location::memOf(Location::regOf(28)));
 	std::ostringstream ost5;
@@ -1185,10 +1190,12 @@ void StatementTest::testSubscriptVars () {
 	argl.push_back(Location::memOf(Location::regOf(27)));
 	argl.push_back(Location::regOf(29));
 	ca->setArguments(argl);
+#if 0
 	argl.clear();
 	argl.push_back(Location::memOf(Location::regOf(29)));
 	argl.push_back(Location::regOf(28));
 	ca->setImpArguments(argl);
+#endif
 	ca->addReturn(Location::regOf(31));
 	ca->addReturn(Location::memOf(Location::regOf(31)));
 	std::ostringstream ost5a;
@@ -1255,12 +1262,13 @@ void StatementTest::testCallRefsFixer () {
 	// Initialise statements
 	proc->initStatements();
 	// Compute dominance frontier
-	cfg->dominators();
+	DataFlow df;
+	df.dominators(cfg);
 	// Number the statements
 	int stmtNumber = 0;
 	proc->numberStatements(stmtNumber);
-	cfg->renameBlockVars(0, 0);		 // Block 0, mem depth 0
-	cfg->renameBlockVars(0, 1);		 // Block 0, mem depth 1
+	df.renameBlockVars(cfg, 0, 0);		 // Block 0, mem depth 0
+	df.renameBlockVars(cfg, 0, 1);		 // Block 0, mem depth 1
 	// Find various needed statements
 	StatementList stmts;
 	proc->getStatements(stmts);

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.1 $
+ * $Revision: 1.39.2.2 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -30,6 +30,7 @@
 class Cfg;
 class BasicBlock;
 class Exp;
+class RefExp;
 class Statement;
 class UserProc;
 
@@ -100,6 +101,54 @@ public:
 		int			getSemi(int node) {return semi[node];}
 		std::set<int>& getA_phi(Exp* e) {return A_phi[e];}
 
+};
+
+/**
+ * Collector class. This class collects all definitions that reach the statement that contains this collector.
+ */
+class Collector {
+
+		/*
+		 * The set of locations. Use lessExpStar to compare properly
+		 */
+		std::set<RefExp*, lessExpStar>	locs;
+public:
+		/*
+		 * Update the locations with the current set of reaching definitions
+		 */
+		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack);
+
+		/*
+		 * Clear the location set
+		 */
+		void		clear() {locs.clear();}
+
+		/**
+		 * Find the definition for a location
+		 */
+		RefExp*		findDef(Exp* e);
+
+		/*
+		 * Print the reaching definitions to stream os
+		 */
+		void		print(std::ostream& os);
+
+		/*
+		 * Print to string (for debugging)
+		 */
+		char*		prints();
+
+		/*
+		 * begin() and end() so we can iterate through the locations
+		 */
+		typedef std::set<RefExp*, lessExpStar>::iterator iterator;
+		iterator begin() {return locs.begin();}
+		iterator end()	 {return locs.end();}
+};
+
+class FlowBarrier {
+		Collector	col;
+public:
 };
 
 #endif	// _DATAFLOW_H_

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17 $
+ * $Revision: 1.17.2.1 $
  *
  * June 2004 - Trent: created
  */
@@ -1285,9 +1285,11 @@ void XMLProgParser::addToContext_callstmt(Context *c, int e)
 	case e_dest:
 		call->setDest(stack.front()->exp);
 		break;
+#if 0
 	case e_implicitarg:
 		call->appendImplicitArgument(stack.front()->exp);
 		break;
+#endif
 	case e_argument:
 		call->appendArgument(stack.front()->exp);
 		break;
@@ -2812,11 +2814,13 @@ void XMLProgParser::persistToXML(std::ostream &out, Statement *stmt)
 			out << "</argument>\n";
 		}
 
+#if 0
 		for (unsigned i = 0; i < c->implicitArguments.size(); i++) {
 			out << "<implicitarg>\n";
 			persistToXML(out, c->implicitArguments[i]);
 			out << "</implicitarg>\n";
 		}
+#endif
 
 		for (unsigned i = 0; i < c->returns.size(); i++) {
 			out << "<returnexp>\n";

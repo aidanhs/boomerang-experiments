@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76 $
+ * $Revision: 1.76.2.1 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -24,6 +24,7 @@
  * 17 Sep 04 - Mike: PhiExp in ordinary assignment replaced by PhiAssign statement
  * 27 Oct 04 - Mike: PhiAssign has vector of PhiInfo now; needed because a statement pointer alone does not uniquely
  *						define what is defined. It is now possible for all parameters of a phi to have different exps
+ * 15 Mar 05 - Mike: Removed implicit arguments; replaced with Collector
  */
 
 #ifndef _STATEMENT_H_
@@ -50,6 +51,7 @@
 #include "exphelp.h"	// For lessExpStar
 #include "types.h"
 #include "managed.h"
+#include "dataflow.h"	// For embedded object Collector
 
 class BasicBlock;
 typedef BasicBlock *PBB;
@@ -973,13 +975,10 @@ class CallStatement: public GotoStatement {
 	
 		// The list of arguments passed by this call
 		std::vector<Exp*> arguments;
-		// The list of arguments implicitly passed as a result of the calling 
-		// convention of the called procedure or the actual arguments
-		std::vector<Exp*> implicitArguments;
 
 		// The set of locations that are defined by this call, and their types
-		// Note: returns is not a great name, these are really definitions. The opposite of the returns in a
-		// ReturnStatement (which don't define anything, and hence don't store a type).
+        // Note: returns is a slightly confusing name; these are really definitions. The opposite of the returns in a
+        // ReturnStatement (which don't define anything, and hence don't store a type).
 		std::vector<ReturnInfo> returns;
 
 		// Destination of call
@@ -988,6 +987,9 @@ class CallStatement: public GotoStatement {
 		// The signature for this call. NOTE: this used to be stored in the Proc, but this does not make sense when
 		// the proc happens to have varargs
 		Signature*	signature;
+
+		// A Collector object to collect the reaching definitions
+		Collector	col;
 
 public:
 					CallStatement();
@@ -1003,7 +1005,7 @@ virtual bool		accept(StmtModifier* visitor);
 
 		void		setArguments(std::vector<Exp*>& arguments);
 		// Set implicit arguments: so far, for testing only:
-		void		setImpArguments(std::vector<Exp*>& arguments);
+		//void		setImpArguments(std::vector<Exp*>& arguments);
 		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
 		void		setSigArguments();			// Set arguments based on signature
 		std::vector<Exp*>& getArguments();		// Return call's arguments
@@ -1019,18 +1021,13 @@ virtual bool		accept(StmtModifier* visitor);
 		Signature*	getSignature() {return signature;}
 		// Substitute the various components of expression e with the appropriate actual arguments
 		Exp			*substituteParams(Exp *e);
-		void	addArgument(Exp *e);
-		// Treat e as the expression for a parameter, and return the actual, or failing that, the implicit parameter
-		Exp*		findArgument(Exp* e);
+		void		addArgument(Exp *e, UserProc* proc);
+		Exp*		findDefFor(Exp* e);			// Find the reaching definition for expression e
 		Exp*		getArgumentExp(int i);
-		Exp*		getImplicitArgumentExp(int i);
-		std::vector<Exp*>& getImplicitArguments() {return implicitArguments;}
-		int			getNumImplicitArguments() {return implicitArguments.size();}
 		void		setArgumentExp(int i, Exp *e);
 		void		setNumArguments(int i);
 		int			getNumArguments();
 		void		removeArgument(int i);
-		void		removeImplicitArgument(int i);
 		Type		*getArgumentType(int i);
 		void		truncateArguments();
 		void		clearLiveEntry();
@@ -1039,87 +1036,87 @@ virtual bool		accept(StmtModifier* visitor);
 virtual void		print(std::ostream& os = std::cout);
 
 		// general search
-virtual bool	search(Exp *search, Exp *&result);
+virtual bool		search(Exp *search, Exp *&result);
 
 		// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
+virtual bool		searchAndReplace(Exp* search, Exp* replace);
 	
 		// Searches for all instances of a given subexpression within this
 		// expression and adds them to a given list in reverse nesting order.
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+virtual bool		searchAll(Exp* search, std::list<Exp*> &result);
 
 		// Set and return whether the call is effectively followed by a return.
 		// E.g. on Sparc, whether there is a restore in the delay slot.
-		void	setReturnAfterCall(bool b);
-		bool	isReturnAfterCall();
+		void		setReturnAfterCall(bool b);
+		bool		isReturnAfterCall();
 
 		// Set and return the list of Exps that occur *after* the call (the
 		// list of exps in the RTL occur before the call). Useful for odd patterns.
-		void	setPostCallExpList(std::list<Exp*>* le);
+		void		setPostCallExpList(std::list<Exp*>* le);
 		std::list<Exp*>* getPostCallExpList();
 
 		// Set and return the destination proc.
-		void	setDestProc(Proc* dest);
-		Proc*	getDestProc();
+		void		setDestProc(Proc* dest);
+		Proc*		getDestProc();
 
 		// Generate constraints
-virtual void	genConstraints(LocationSet& cons);
+virtual void		genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
-		void	dfaTypeAnalysis(bool& ch, UserProc* proc);
+		void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 
 		// Replace registers with locals
-virtual	void	regReplace(UserProc* proc);
+virtual	void		regReplace(UserProc* proc);
 
 		// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
 		// dataflow analysis
-virtual bool	usesExp(Exp *e);
+virtual bool		usesExp(Exp *e);
 
 		// dataflow related functions
-virtual bool	propagateToAll() { assert(false); return false;}
+virtual bool		propagateToAll() { assert(false); return false;}
 
-virtual bool	isDefinition();
-virtual void	getDefinitions(LocationSet &defs);
+virtual bool		isDefinition();
+virtual void		getDefinitions(LocationSet &defs);
 
-virtual Exp*	getLeft() {return getReturnExp(0);}
-virtual void	setLeftFor(Exp* forExp, Exp* newExp);
+virtual Exp*		getLeft() {return getReturnExp(0);}
+virtual void		setLeftFor(Exp* forExp, Exp* newExp);
 		// get how to replace this statement in a use
-virtual Exp*	getRight() { return NULL; }
+virtual Exp*		getRight() { return NULL; }
 
 		// inline any constants in the statement
-virtual bool	processConstants(Prog *prog);
+virtual bool		processConstants(Prog *prog);
 
 		// simplify all the uses/defs in this RTL
-virtual void	simplify();
+virtual void		simplify();
 
-		void	setIgnoreReturnLoc(bool b);
+		void		setIgnoreReturnLoc(bool b);
 
-		void	decompile();
+		void		decompile();
 
-virtual void	fromSSAform(igraph& ig);
+virtual void		fromSSAform(igraph& ig);
 		
 		// Insert actual arguments to match formal parameters
-		void	insertArguments(StatementSet& rs);
+		void		insertArguments(StatementSet& rs);
 
-virtual	Type*	getTypeFor(Exp* e);				// Get the type defined by this Statement for this location
-virtual void	setTypeFor(Exp* e, Type* ty);	// Set the type for this location, defined in this statement
+virtual	Type*		getTypeFor(Exp* e);					// Get the type defined by this Statement for this location
+virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, defined in this statement
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the
 		// number of parameters if needed, and return true if any signature parameters added
-		bool	ellipsisProcessing(Prog* prog);
+		Collector*	getCollector() {return &col;}		// Return pointer to the collector object
+		bool		ellipsisProcessing(Prog* prog);
 private:
 		// Private helper function for the above
-		void	setSigParam(Type* ty, bool isScanf);
+		void		setSigParam(Type* ty, bool isScanf);
 
 protected:
-virtual bool	doReplaceRef(Exp* from, Exp* to);
-		bool	convertToDirect();
+virtual bool		doReplaceRef(Exp* from, Exp* to);
+		bool		convertToDirect();
 
-		void	updateArgumentWithType(int n);
-		void	updateReturnWithType(int n);
-		void	appendArgument(Exp *e) { arguments.push_back(e); }
-		void	appendImplicitArgument(Exp *e) { implicitArguments.push_back(e); }
+		void		updateArgumentWithType(int n);
+		void		updateReturnWithType(int n);
+		void		appendArgument(Exp *e) { arguments.push_back(e); }
 	friend class XMLProgParser;
 };		// class CallStatement
 
@@ -1130,72 +1127,76 @@ virtual bool	doReplaceRef(Exp* from, Exp* to);
 class ReturnStatement: public GotoStatement {
 protected:
 		// number of bytes that this return pops
-		int		nBytesPopped;
+		int			nBytesPopped;
 
 		// value returned. No types stored. To find the type of a return, call ascendType on the return expression
 		std::vector<Exp*> returns;
 
 		// Native address of the (only) return instruction
 		// Needed for branching to this only return statement
-		ADDRESS	retAddr;
+		ADDRESS		retAddr;
+
+		// A Collector object to collect the reaching definitions
+		Collector	col;
 
 public:
-				ReturnStatement();
-virtual			~ReturnStatement();
+					ReturnStatement();
+virtual				~ReturnStatement();
 
 		// Make a deep copy, and make the copy a derived object if needed.
 virtual Statement* clone();
 
 		// Accept a visitor to this RTL
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+virtual bool		accept(StmtVisitor* visitor);
+virtual bool		accept(StmtExpVisitor* visitor);
+virtual bool		accept(StmtModifier* visitor);
 
 		// print
-virtual void	print(std::ostream& os = std::cout);
+virtual void		print(std::ostream& os = std::cout);
 
 		// From SSA form
-virtual void	fromSSAform(igraph& igm);
+virtual void		fromSSAform(igraph& igm);
 
 		// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
 		// simplify all the uses/defs in this RTL
-virtual void	simplify();
+virtual void		simplify();
 
 		// general search
-virtual bool	search(Exp*, Exp*&);
+virtual bool		search(Exp*, Exp*&);
 
 		// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
+virtual bool		searchAndReplace(Exp* search, Exp* replace);
 	
 		// Searches for all instances of a given subexpression within this
 		// expression and adds them to a given list in reverse nesting order.	 
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+virtual bool		searchAll(Exp* search, std::list<Exp*> &result);
 
 		// returns true if this statement uses the given expression
-virtual bool	usesExp(Exp *e);
+virtual bool		usesExp(Exp *e);
 
-virtual bool	doReplaceRef(Exp* from, Exp* to);
-		int		getNumBytesPopped() { return nBytesPopped; }
-		void	setNumBytesPopped(int n) { nBytesPopped = n; }
+virtual bool		doReplaceRef(Exp* from, Exp* to);
+		int			getNumBytesPopped() { return nBytesPopped; }
+		void		setNumBytesPopped(int n) { nBytesPopped = n; }
 
-		int		getNumReturns() { return returns.size(); }
-		Exp		*getReturnExp(int n) { return returns[n]; }
-		void	setReturnExp(int n, Exp *e) { returns[n] = e; }
+		int			getNumReturns() { return returns.size(); }
+		Exp			*getReturnExp(int n) { return returns[n]; }
+		void		setReturnExp(int n, Exp *e) { returns[n] = e; }
 		std::vector<Exp*>& getReturns() {return returns;}
-		void	setSigArguments();	 // Set returns based on signature
-		void	removeReturn(int n);
-		void	addReturn(Exp *e);
+		void		setSigArguments();	 				// Set returns based on signature
+		void		removeReturn(int n);
+		void		addReturn(Exp *e);
+		Collector*	getCollector() {return &col;}		// Return pointer to the collector object
 
 		// Get and set the native address for the first and only return statement
-		ADDRESS	getRetAddr() {return retAddr;}
-		void	setRetAddr(ADDRESS r) {retAddr = r;}
+		ADDRESS		getRetAddr() {return retAddr;}
+		void		setRetAddr(ADDRESS r) {retAddr = r;}
 
-virtual void	dfaTypeAnalysis(bool& ch, UserProc* proc);
+virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 
 		// Replace registers with locals
-virtual	void	regReplace(UserProc* proc);
+virtual	void		regReplace(UserProc* proc);
 
 	friend class XMLProgParser;
 };	// class ReturnStatement

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238 $
+ * $Revision: 1.238.2.1 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -52,8 +52,11 @@
 #include "boomerang.h"
 #include "constraint.h"
 #include "visitor.h"
+#include "dataflow.h"
 
 typedef std::map<Statement*, int> RefCounter;
+
+extern char debug_buffer[];		// Defined in basicblock.cpp, size DEBUG_BUFSIZE
 
 /************************
  * Proc methods.
@@ -618,14 +621,13 @@ void UserProc::print(std::ostream &out) {
 	out << "\n";
 }
 
-extern char debug_buffer[];		// Defined in basicblock.cpp, size 5000
 char* UserProc::prints() {
 	std::ostringstream ost;
 	signature->print(ost);
 	cfg->print(ost);
 	ost << "\n";
-	strncpy(debug_buffer, ost.str().c_str(), 4999);
-	debug_buffer[4999] = '\0';
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE);
+	debug_buffer[DEBUG_BUFSIZE] = '\0';
 	return debug_buffer;
 }
 
@@ -805,15 +807,16 @@ void UserProc::fastx86decompile()
 	initStatements();
 
 	// Compute dominance frontier
-	cfg->dominators();
+	DataFlow df;
+	df.dominators(cfg);
 
 	// Number the statements
 	int stmtNumber = 0;
 	numberStatements(stmtNumber); 
 
-	cfg->placePhiFunctions(0, this);
+	df.placePhiFunctions(0, this);
 	numberPhiStatements(stmtNumber);
-	cfg->renameBlockVars(0, 0);
+	df.renameBlockVars(cfg, 0, 0);
 
     // x86 specific hacks start here
 
@@ -853,7 +856,7 @@ void UserProc::fastx86decompile()
 					Location::regOf(28),
 					new Const(4*(i+1)))));
     }
-    replaceExpressionsWithParameters(-1);
+    replaceExpressionsWithParameters(df, -1);
     //trimParameters();
 
     // 4) propagate everything at depth 0 again (this should give more now that we've recognised parameters)
@@ -953,7 +956,8 @@ std::set<UserProc*>* UserProc::decompile() {
 	initStatements();
 
 	// Compute dominance frontier
-	cfg->dominators();
+	DataFlow df;
+	df.dominators(cfg);
 
 	// Number the statements
 	int stmtNumber = 0;
@@ -976,7 +980,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		if (VERBOSE)
 			LOG << "placing phi functions at depth " << depth << "\n";
 		// Place the phi functions for this memory depth
-		cfg->placePhiFunctions(depth, this);
+		df.placePhiFunctions(depth, this);
 
 		if (VERBOSE)
 			LOG << "numbering phi statements at depth " << depth << "\n";
@@ -986,7 +990,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		if (VERBOSE)
 			LOG << "renaming block variables at depth " << depth << "\n";
 		// Rename variables
-		cfg->renameBlockVars(0, depth);
+		df.renameBlockVars(cfg, 0, depth);
 
 		printXML();
 
@@ -1006,7 +1010,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			fixCallRefs();
 			if (processConstants()) {
 				for (int i = 0; i <= maxDepth; i++) {
-					cfg->renameBlockVars(0, i, true); // Needed if there was an indirect call to an ellipsis function
+					df.renameBlockVars(cfg, 0, i, true); // Needed if there was an indirect call to an ellipsis function
 					propagateStatements(i, -1);
 				}
 			}
@@ -1031,10 +1035,10 @@ std::set<UserProc*>* UserProc::decompile() {
 						LOG << "parameter propagating at depth " << depth_tmp << " to depth " << td << "\n";
 					propagateStatements(depth_tmp, td);
 					for (int i = 0; i <= depth_tmp; i++)
-						cfg->renameBlockVars(0, i, true);
+						df.renameBlockVars(cfg, 0, i, true);
 				}
 			}
-			cfg->renameBlockVars(0, depth, true);
+			df.renameBlockVars(cfg, 0, depth, true);
 			printXML();
 			if (VERBOSE) {
 				LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth
@@ -1045,8 +1049,8 @@ std::set<UserProc*>* UserProc::decompile() {
 		}
 		// replacing expressions with Parameters as we go
 		if (!Boomerang::get()->noParameterNames) {
-			replaceExpressionsWithParameters(depth);
-			cfg->renameBlockVars(0, depth, true);
+			replaceExpressionsWithParameters(df, depth);
+			df.renameBlockVars(cfg, 0, depth, true);
 		}
 
 		// recognising locals early prevents them from becoming returns
@@ -1054,7 +1058,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		// replaceExpressionsWithLocals(depth == maxDepth);
 		if (!Boomerang::get()->noChangeSignatures) {
 			addNewReturns(depth);
-			cfg->renameBlockVars(0, depth, true);
+			df.renameBlockVars(cfg, 0, depth, true);
 			printXML();
 			if (VERBOSE) {
 				LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth <<
@@ -1089,7 +1093,7 @@ std::set<UserProc*>* UserProc::decompile() {
 				if (convert)
 					break;			// Just calling renameBlockVars now can cause problems
 				for (int i = 0; i <= depth; i++)
-					cfg->renameBlockVars(0, i, true);
+					df.renameBlockVars(cfg, 0, i, true);
 			}
 			// If you have an indirect to direct call conversion, some propagations that were blocked by
 			// the indirect call might now succeed, and may be needed to prevent alias problems
@@ -1099,7 +1103,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			if (convert) {
 				depth = 0;		// Start again from depth 0
 				// FIXME: is this needed?
-				cfg->renameBlockVars(0, 0, true);	 // Initial dataflow level 0
+				df.renameBlockVars(cfg, 0, 0, true);	 // Initial dataflow level 0
 				LOG << "\nAfter initial rename:\n";
 				printToLog();
 				LOG << "\nDone after initial rename:\n\n";
@@ -1163,7 +1167,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		bool first = true;
 		do {
 			if (!first)
-				propagateAtDepth(maxDepth);		// HACK: Can sometimes be needed, if call was indirect
+				propagateAtDepth(df, maxDepth);		// HACK: Can sometimes be needed, if call was indirect
 			first = false;
 			dfaTypeAnalysis();
 		} while (ellipsisProcessing());
@@ -1174,9 +1178,9 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
-			replaceExpressionsWithParameters(i);
+			replaceExpressionsWithParameters(df, i);
 			replaceExpressionsWithLocals(true);
-			//cfg->renameBlockVars(0, i, true);		// MVE: is this really needed?
+			//cfg->renameBlockVars(cfg, 0, i, true);		// MVE: is this really needed?
 		}
 		trimReturns();
 		fixCallRefs();
@@ -1205,18 +1209,18 @@ std::set<UserProc*>* UserProc::decompile() {
 	return cycleSet;
 }
 
-void UserProc::updateBlockVars()
+void UserProc::updateBlockVars(DataFlow& df)
 {
 	int depth = findMaxDepth() + 1;
 	for (int i = 0; i <= depth; i++)
-		cfg->renameBlockVars(0, i, true);
+		df.renameBlockVars(cfg, 0, i, true);
 }
 
-void UserProc::propagateAtDepth(int depth)
+void UserProc::propagateAtDepth(DataFlow& df, int depth)
 {
 	propagateStatements(depth, -1);
 	for (int i = 0; i <= depth; i++)
-		cfg->renameBlockVars(0, i, true);
+		df.renameBlockVars(cfg, 0, i, true);
 }
 
 int UserProc::findMaxDepth() {
@@ -1617,12 +1621,28 @@ void UserProc::addNewReturns(int depth) {
 	}
 }
 
-// m[WILD]{0}
+// m[WILD]{-}
 static RefExp *memOfWild = new RefExp(
 	Location::memOf(new Terminal(opWild)), NULL);
-// r[WILD INT]{0}
+// r[WILD INT]{-}
 static RefExp* regOfWild = new RefExp(
 	Location::regOf(new Terminal(opWildIntConst)), NULL);
+
+// Search for expressions without explicit definitions (i.e. WILDCARD{-}), which represent parameters (use before define).
+// Note: this identifies saved and restored locations as parameters (e.g. ebp in most Pentium procedures).
+// Would like to avoid this if possible. Marking the statements involved in saving and restoring, and ignoring these
+// here, does not work in all cases, e.g. this contrived procedure:
+// f1: a = a xor b
+//	c = a         // Keep a copy of a xor b
+//	b = a xor b
+//	a = a xor b
+//	print a       // Print original value of b
+//	print c       // Print (original a) xor (original b)
+//	a = ...
+//	a = a xor b
+//	b = a xor b
+//	a = a xor b
+//	ret
 
 void UserProc::addNewParameters() {
 
@@ -1638,14 +1658,14 @@ void UserProc::addNewParameters() {
 	StatementList::iterator it;
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
-		// For now, assume that all parameters will be m[]{0} or r[]{0} (Seems pretty reasonable)
+		// For now, assume that all parameters will be m[]{-} or r[]{-} (Seems pretty reasonable)
 		std::list<Exp*> results;
 		s->searchAll(memOfWild, results);
 		s->searchAll(regOfWild, results);
 		while (results.size()) {
 			bool allZero;
 			Exp *e = results.front()->clone()->removeSubscripts(allZero);
-			results.erase(results.begin());		// Remove first result
+			results.erase(results.begin());		// Remove current (=first) result from list
 			if (allZero && signature->findParam(e) == -1
 					// ? Often need to transfer from implit to explicit:
 				 	// && signature->findImplicitParam(e) == -1
@@ -1684,11 +1704,11 @@ void UserProc::addNewParameters() {
 					continue;
 				}
 #if 1
+				// Has to be r[] or m[esp+K]. NOTE: Won't suit some architectures!
 				if ((e->getOper() != opMemOf ||
-					e->getSubExp1()->getOper() != opPlus ||
-					!(*e->getSubExp1()->getSubExp1() == *Location::regOf(28)) ||
-					e->getSubExp1()->getSubExp2()->getOper() != opIntConst)
-					&& e->getOper() != opRegOf) {
+						e->getSubExp1()->getOper() != opPlus ||
+						!(*e->getSubExp1()->getSubExp1() == *Location::regOf(28)) ||
+						e->getSubExp1()->getSubExp2()->getOper() != opIntConst) && e->getOper() != opRegOf) {
 					if (VERBOSE)
 						LOG << "ignoring non pentium " << e << "\n";
 					continue;
@@ -1696,6 +1716,7 @@ void UserProc::addNewParameters() {
 #endif
 				if (VERBOSE)
 					LOG << "Found new parameter " << e << "\n";
+				// Add this parameter to the signature and all known callers
 				addParameter(e);
 			}
 		}
@@ -1733,6 +1754,7 @@ void UserProc::trimParameters(int depth) {
 
 	std::set<Statement*> excluded;
 	StatementList::iterator it;
+#if 0		// MVE: CHECK THIS!!!!!!!!!!!!!!!!!!!!!!
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
 		if (s->isCall() && ((CallStatement*)s)->getDestProc() == this) {
@@ -1748,6 +1770,7 @@ void UserProc::trimParameters(int depth) {
 			}
 		}
 	}
+#endif
 	
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
@@ -1829,6 +1852,7 @@ void Proc::removeParameter(Exp *e) {
 			(*it)->removeArgument(n);
 		}
 	}
+#if 0
 	n = signature->findImplicitParam(e);
 	if (n != -1) {
 		signature->removeImplicitParameter(n);
@@ -1840,6 +1864,7 @@ void Proc::removeParameter(Exp *e) {
 			(*it)->removeImplicitArgument(n);
 		}
 	}
+#endif
 }
 
 void Proc::addReturn(Exp *e) {
@@ -1859,12 +1884,13 @@ void UserProc::addReturn(Exp *e)
 	Proc::addReturn(e);
 }
 
-void Proc::addParameter(Exp *e) {
+// Add the parameter to the signature and all known callers
+void UserProc::addParameter(Exp *e) {
 	// In case it's already an implicit argument:
 	removeParameter(e);
 
 	for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++)
-		(*it)->addArgument(e);
+		(*it)->addArgument(e, this);
 	signature->addParameter(e);
 }
 
@@ -2170,7 +2196,7 @@ void UserProc::replaceExpressionsWithSymbols() {
 	}
 }
 
-void UserProc::replaceExpressionsWithParameters(int depth) {
+void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 	StatementList stmts;
 	getStatements(stmts);
 
@@ -2211,7 +2237,7 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 	if (found) {
 		// Must redo all the subscripting!
 		for (int d=0; d <= depth; d++)
-			cfg->renameBlockVars(0, d /* Memory depth */, true);
+			df.renameBlockVars(cfg, 0, d /* Memory depth */, true);
 	}
 
 	// replace expressions in regular statements with parameters
@@ -2874,22 +2900,26 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				ll++;
 				continue;
 			}
-			if (refCounts[s] == 0) {
-				// First adjust the counts. Need to be careful not to count
-				// two refs as two; refCounts is a count of the number of
-				// statements that use a definition, not the number of refs
-				StatementSet refs;
+			if (refCounts.find(s) == refCounts.end() || refCounts[s] == 0) {	// Care not to insert unnecessarily
+				// First adjust the counts, due to statements only referenced by statements that are themselves unused.
+				// Need to be careful not to count two refs as two; refCounts is a count of the number of statements
+				// that use a definition, not the total number of refs
+				StatementSet stmtsRefdByUnused;
 				LocationSet components;
 				s->addUsedLocs(components);
 				LocationSet::iterator cc;
 				for (cc = components.begin(); cc != components.end(); cc++) {
 					if ((*cc)->isSubscript()) {
-						refs.insert(((RefExp*)*cc)->getDef());
+						stmtsRefdByUnused.insert(((RefExp*)*cc)->getDef());
 					}
 				}
 				StatementSet::iterator dd;
-				for (dd = refs.begin(); dd != refs.end(); dd++)
+				for (dd = stmtsRefdByUnused.begin(); dd != stmtsRefdByUnused.end(); dd++) {
+					if (DEBUG_UNUSED_STMT)
+						LOG << "Decrementing ref count of " << (*dd?(*dd)->getNumber():0) << " because " << s->getNumber() <<
+							" is unused\n";
 					refCounts[*dd]--;
+				}
 				if (DEBUG_UNUSED_STMT)
 					LOG << "Removing unused statement " << s->getNumber() << " " << s << "\n";
 				removeStatement(s);

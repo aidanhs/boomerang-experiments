@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.93 $
+ * $Revision: 1.93.2.1 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -293,14 +293,15 @@ bool BasicBlock::isJumpReqd() {
  * PARAMETERS:		<none>
  * RETURNS:			Address of the static buffer
  *============================================================================*/
-char debug_buffer[5000];
+char debug_buffer[DEBUG_BUFSIZE];
+
 char* BasicBlock::prints() { 
 	std::ostringstream ost; 
 	print(ost);	
-	// Static buffer might have overflowed if we used it directly, hence we
-	// just copy and print the first 4999 bytes
-	strncpy(debug_buffer, ost.str().c_str(), 4999);
-	debug_buffer[4999] = '\0';
+	// Static buffer might have overflowed if we used it directly, hence we just copy and print the first
+	// DEBUG_BUFSIZE-1 bytes
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer; 
 }
 
@@ -719,6 +720,27 @@ Exp *BasicBlock::getCond() {
 	BranchStatement* bs = (BranchStatement*)last->getHlStmt();
 	if (bs && bs->getKind() == STMT_BRANCH)
 		return bs->getCondExpr();
+	return NULL;
+}
+
+/* Get the destiantion, if any */
+Exp *BasicBlock::getDest() {
+	// The destianation will be in the last rtl
+	assert(m_pRtls);
+	RTL *lastRtl = m_pRtls->back();
+	// It should contain a GotoStatement or derived class
+	Statement* lastStmt = lastRtl->getHlStmt();
+	CaseStatement* cs = static_cast<CaseStatement*>(lastStmt);
+	if (cs) {
+		// Get the expression from the switch info
+		SWITCH_INFO* si = cs->getSwitchInfo();
+		if (si)
+			return si->pSwitchVar;
+	} else {
+		GotoStatement* gs = (GotoStatement*)lastStmt;
+		if (gs)
+			return gs->getDest();
+	}
 	return NULL;
 }
 

@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172 $
+ * $Revision: 1.172.2.1 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -57,6 +57,8 @@
 #include "transformer.h"
 #include "visitor.h"
 #include <iomanip>			// For std::setw etc
+
+extern char debug_buffer[];		 // For prints functions
 
 /*==============================================================================
  * FUNCTION:		Const::Const etc
@@ -1107,12 +1109,11 @@ void TypeVal::print(std::ostream& os) {
  * PARAMETERS:		<none>
  * RETURNS:			Address of the static buffer
  *============================================================================*/
-extern char debug_buffer[];
 char* Exp::prints() {
 	std::ostringstream ost;
 	print(ost);
-	strncpy(debug_buffer, ost.str().c_str(), 399);
-	debug_buffer[399] = '\0';
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
 }
 

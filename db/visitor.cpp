@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23 $
+ * $Revision: 1.23.2.1 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -98,10 +98,12 @@ bool StmtConscriptSetter::visit(CallStatement* stmt) {
 	int i, n = args.size();
 	for (i=0; i < n; i++)
 		args[i]->accept(&sc);
+#if 0
 	std::vector<Exp*>& impargs = stmt->getImplicitArguments();
 	n = impargs.size();
 	for (i=0; i < n; i++)
 		impargs[i]->accept(&sc);
+#endif
 	n = stmt->getNumReturns();
 	for (i=0; i < n; i++) {
 		Exp* r = stmt->getReturnExp(i);
@@ -177,8 +179,8 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 			Exp* subExp1 = r->getSubExp1();
 			if (call->findReturn(subExp1) == -1) {
 				if (VERBOSE && !subExp1->isPC()) {
-					LOG << "nothing proven about " << subExp1 << " and yet it is referenced by " << r <<
-						", and not in returns of " << "\n" << "	" << call << "\n";
+					LOG << "nothing proven about " << subExp1 << " and yet it is referenced by stmt " <<
+						enclosingStmt->getNumber() << ", and not in returns of " << "\n" << "	" << call << "\n";
 				}
 			}
 		}
@@ -186,70 +188,6 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 	return ret;
 }
 
-#if 0
-Exp* CallRefsFixer::postVisit(PhiExp* p) {
-	Exp* ret = p;
-	// If child was modified, simplify now
-	if (!(unchanged & mask)) ret = p->simplify();
-	mask >>= 1;
-
-	std::vector<Statement*> remove;
-	std::vector<Statement*> insert;
-	unsigned n = p->getNumRefs();
-
-	bool oneIsGlobalFunc = false;
-	Prog *prog = NULL;
-	unsigned int i;
-	for (i=0; i < n; i++) {
-		Statement* u = p->getAt(i);
-		if (u) {
-			CallStatement *call = dynamic_cast<CallStatement*>(u);
-			if (call)
-				prog = call->getProc()->getProg();
-		}
-	}
-	if (prog)
-		oneIsGlobalFunc = p->hasGlobalFuncParam(prog);
-
-	for (i=0; i < n; i++) {
-		Statement* u = p->getAt(i);
-		CallStatement *call = dynamic_cast<CallStatement*>(u);
-		if (call) {
-			Exp* subExp1 = p->getSubExp1();
-			Exp *e = call->getProven(subExp1);
-			if (call->isComputed() && oneIsGlobalFunc) {
-				e = subExp1->clone();
-				if (VERBOSE)
-					LOG << "ignoring ref in phi to computed call with function pointer param " << e << "\n";
-			}
-			if (e) {
-				e = call->substituteParams(e->clone());
-				if (e && e->getOper() == opSubscript &&
-					*e->getSubExp1() == *subExp1) {
-					if (VERBOSE)
-						LOG << "fixcall refs replacing param " << i << " in "
-							<< p << " with " << e << "\n";
-					p->putAt(i, ((RefExp*)e)->getDef());
-					mod = true;
-				} else {
-					if (VERBOSE)
-						LOG << "cant update phi ref to " << e << "\n";
-				}
-			} else {
-				if (call->findReturn(subExp1) == -1) {
-					if (VERBOSE) {
-						LOG << "nothing proven about " << subExp1 <<
-							" and yet it is referenced by " << p <<
-							", and not in returns of " << "\n" <<
-							"	" << call << "\n";
-					}
-				}
-			}
-		}
-	}
-	return ret;
-}
-#endif
 
 Exp* CallRefsFixer::postVisit(Unary *e)	   {
 	bool isAddrOfMem = e->isAddrOf() && e->getSubExp1()->isMemOf();
@@ -406,12 +344,14 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 	std::vector<Exp*>& arguments = s->getArguments();
 	for (it = arguments.begin(); it != arguments.end(); it++)
 		(*it)->accept(ev);
+#if 0
 	if (!final) {
 		// Ignore the implicit arguments when final
 		int n = s->getNumImplicitArguments();
 		for (int i=0; i < n; i++)
 			s->getImplicitArgumentExp(i)->accept(ev);
 	}
+#endif
 	// For the final pass, also only consider the first return
 	int n = s->getNumReturns();
 	if (final) {
@@ -579,13 +519,15 @@ void StmtSubscripter::visit(CallStatement* s, bool& recur) {
 	int n = arguments.size();
 	for (int i=0; i < n; i++)
 		arguments[i] = arguments[i]->accept(mod);
+#if 0
 	// Subscript the implicit arguments
 	std::vector<Exp*>& implicits = s->getImplicitArguments();
 	n = implicits.size();
 	for (int i=0; i < n; i++)
 		implicits[i] = implicits[i]->accept(mod);
-	// Returns are like the LHS of an assignment; don't subscript them
-	// directly (only if m[x], and then only subscript the x's)
+#endif
+	// Returns are like the LHS of an assignment; don't subscript them directly (only if m[x],
+	// and then only subscript the x's)
 	n = s->getNumReturns();
 	for (int i=0; i < n; i++) {
 		Exp* r = s->getReturnExp(i);
@@ -630,8 +572,7 @@ bool ConstFinder::visit(Location* e, bool& override) {
 }
 
 // This is in the POST visit function, because it's important to process any child expressions first.
-// Otherwise, for m[r28{0} - 12]{0}, you could be adding an implicit assignment with a NULL definition
-// for r28.
+// Otherwise, for m[r28{0} - 12]{0}, you could be adding an implicit assignment with a NULL definition for r28.
 Exp* ImplicitConverter::postVisit(RefExp* e) {
 	if (e->getDef() == NULL)
 		e->setDef(cfg->findImplicitAssign(e->getSubExp1()));
@@ -647,3 +588,4 @@ void StmtImplicitConverter::visit(PhiAssign* s, bool& recur) {
 			uu->def = cfg->findImplicitAssign(uu->e);
 	recur = false;		// Already done LHS
 }
+
