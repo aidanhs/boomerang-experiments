@@ -4,7 +4,7 @@
  *              denote what the top level operator is
  *============================================================================*/
 /*
- * $Revision: 1.23 $
+ * $Revision: 1.23.2.1 $
  *
  * 05 Apr 02 - Mike: Created
  * 12 Apr 02 - Mike: INDEX -> OPER
@@ -109,7 +109,7 @@ enum OPER
     opVar,                  // Represents l[] (recovered locations)
 	opPhi,					// Represents phi(a1, a2, a3) .. ie SSA form merging
 	opSubscript,			// Represents subscript(e, n) .. ie SSA renaming
-    opParam,                // Parameter param`'
+    opParam,                // SSL parameter param`'
 	opArg,					// Used a temporary for arguments to calls
     opLocal,                // used to represent a local, takes a string
     opGlobal,               // used to represent a global, takes a string

@@ -16,7 +16,7 @@
  *             returns the list of SSL instruction and table definitions.
  *============================================================================*/
 
-/* $Revision: 1.24 $
+/* $Revision: 1.24.2.1 $
  * Updates:
  * Shane Sendall (original C version) Dec 1997
  * Doug Simon (C++ version) Jan 1998
@@ -61,6 +61,7 @@ class SSLScanner;
 //*============================================================================
 %union {
     Exp*            exp;
+    Location*       loc;
     char*           str;
     int             num;
     double          dbl;
@@ -120,7 +121,7 @@ static  Statement* parseExp(const char *str); /* Parse an expression or assignme
 /* The code for expanding tables and saving to the dictionary */ \
 void    expandTables(InsNameElem* iname, std::list<std::string>* params, RTL* o_rtlist, \
   RTLInstDict& Dict); \
-Exp*	makeSuccessor(Exp* e);	/* Get successor (of register expression) */ \
+Location*	makeSuccessor(Location* e);	/* Get successor (of register expr) */ \
 \
     /* \
      * The scanner. \
@@ -196,7 +197,8 @@ protected: \
                         // Another reason why ! is deprecated!
 %nonassoc AT
 
-%type <exp> exp location exp_term
+%type <exp> exp exp_term
+%type <loc> location
 %type <str> bin_oper param
 %type <regtransfer> rt assign_rt
 %type <typ> assigntype
@@ -220,7 +222,7 @@ specorasgn:
         }
     |   exp {
             the_asgn = new Assign(
-                new Terminal(opNil),
+                new Location(opNil),
                 $1);
         }
     |   specification
@@ -289,7 +291,8 @@ operand:
     |   param list_parameter func_parameter assigntype exp {
             std::map<std::string, InsNameElem*> m;
             ParamEntry &param = Dict.DetParamMap[$1];
-            Statement* asgn = new Assign($4, new Terminal(opNil), $5);
+            // Hmmph. Nowhere to put the type. Doesn't seem to be critical.
+            Statement* asgn = new Assign(new Location(opNil), $5);
             // Note: The below 2 copy lists of strings (to be deleted below!)
             param.params = *$2;
             param.funcParams = *$3;
@@ -745,7 +748,7 @@ rt:
                 bool bFloat = strcmp($1, "SETFFLAGS") == 0;
                 OPER op = bFloat ? opFflags : opFlags;
                 $$ = new Assign(
-                    new Terminal(op),
+                    new Location(op),
                     new Binary(opFlagCall,
                         new Const($1),
                         listExpToExp($2)));
@@ -824,7 +827,8 @@ assign_rt:
         // Size   guard =>   lhs    :=    rhs
         //  $1     $2         $4          $6
         assigntype exp THEN location EQUATE exp {
-            Assign* a = new Assign($1, $4, $6);
+            $4->setType($1);        // Type stored in the LHS now
+            Assign* a = new Assign($4, $6);
             a->setGuard($2);
             $$ = a;
         }
@@ -832,24 +836,25 @@ assign_rt:
         // $1       $2      $3   $4
     |   assigntype location EQUATE exp {
             // update the size of any generated RT's
-            $$ = new Assign($1, $2, $4);
+            $2->setType($1);
+            $$ = new Assign($2, $4);
         }
 
         // FPUSH and FPOP are special "transfers" with just a Terminal
     |   FPUSH {
             $$ = new Assign(
-                new Terminal(opNil),
+                new Location(opNil),
                 new Terminal(opFpush));
         }
     |   FPOP {
             $$ = new Assign(
-                new Terminal(opNil),
+                new Location(opNil),
                 new Terminal(opFpop));
         }
         // ? Just a RHS?
         //  $1      $2
     |   assigntype exp {
-            $$ = new Assign($1, NULL, $2);
+            $$ = new Assign(NULL, $2);
         }
     ;
 
@@ -975,7 +980,8 @@ exp_term:
     }
 
 	|		SUCCESSOR exp ')' {
-			$$ = makeSuccessor($2);
+            assert($2->isRegOf());
+			$$ = makeSuccessor((Location*)$2);
 		}
     ;
 
@@ -1081,10 +1087,10 @@ location:
                 // Return a Terminal for it
                 OPER op = strToTerm($1);
                 if (op) {
-                    $$ = new Terminal(op);
+                    $$ = new Location(op);
                 } else {
-                    $$ = new Unary(opMachFtr,    // Machine specific feature
-                            new Const($1));
+                    $$ = new Location(opMachFtr,    // Machine specific feature
+                            new Const($1), NULL);
                 }
             }
             else {
@@ -1111,24 +1117,27 @@ location:
     |   NAME {
         // This is a mixture of the param: PARM {} match
         // and the value_op: NAME {} match
-            Exp* s;
+            Location* s;
             std::set<std::string>::iterator it = Dict.ParamSet.find($1);
             if (it != Dict.ParamSet.end()) {
-                s = new Unary(opParam, new Const($1));
+                s = new Location(opParam, new Const($1), NULL);
             } else if (ConstTable.find($1) != ConstTable.end()) {
-                s = new Const(ConstTable[$1]);
+                // ? How can a constant table entry be a location?
+                // Maybe if it's just a parameter name, not a general expr
+                // s = new Const(ConstTable[$1]);
+                s = new Location(opParam, new Const(ConstTable[$1]), NULL);
             } else {
                 std::ostringstream ost;
                 ost << "`" << $1 << "' is not a constant, definition or a";
                 ost << " parameter of this instruction\n";
                 yyerror(STR(ost));
-                s = new Const(0);
+                s = new Location(opNil);
             }
             $$ = s;
         }
 
     |      exp AT '[' exp COLON exp ']' {
-            $$ = new Ternary(opAt, $1, $4, $6);
+            $$ = new TernaryLocation(opAt, $1, $4, $6);
         }
 
     |   TEMP {
@@ -1137,10 +1146,11 @@ location:
     
         // This indicates a post-instruction marker (var tick)
     |      location '\'' {
-            $$ = new Unary(opPostVar, $1);
+            $$ = new Location(opPostVar, $1, NULL);
         }
 	|		SUCCESSOR exp ')' {
-			$$ = makeSuccessor($2);
+            assert($2->isRegOf());
+			$$ = makeSuccessor((Location*)$2);
 		}
     ;
 
@@ -1610,6 +1620,6 @@ void SSLParser::expandTables(InsNameElem* iname, std::list<std::string>* params,
  * PARAMETERS:      The expression to find the successor of
  * RETURNS:         The modified expression
  *============================================================================*/
-Exp* SSLParser::makeSuccessor(Exp* e) {
-	return new Unary(opSuccessor, e);
+Location* SSLParser::makeSuccessor(Location* e) {
+	return new Location(opSuccessor, e, NULL);
 }

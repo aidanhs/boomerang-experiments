@@ -10,11 +10,12 @@
 /*==============================================================================
  * FILE:       managed.h
  * OVERVIEW:   Definition of "managed" classes such as StatementSet, which
- *              feature makeUnion etc
+ *              feature makeUnion etc. Basically wrapers around STL containers
  *============================================================================*/
 
 /*
- * 26/Aug/03 - Mike: Split off from statement.h
+ * 26 Aug 03 - Mike: Split off from statement.h
+ * 13 Jul 04 - Mike: LocationSet -> ExpressionSet
  */
 
 #ifndef __MANAGED_H__
@@ -29,6 +30,7 @@
 class Statement;
 class Exp;
 class RefExp;
+class Location;
 
 // A class to implement sets of statements
 // We may choose to implement these very differently one day
@@ -120,8 +122,8 @@ typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
         { return svec < o.svec;}
 };  // class StatementVec
 
-// For liveness, we need sets of locations (registers or memory)
-class LocationSet {
+// For various purposes, we need sets of expressions
+class ExpressionSet {
     // We use a standard set, but with a special "less than" operator
     // so that the sets are ordered by expression value. If this is not done,
     // then two expressions with the same value (say r[10]) but that happen to
@@ -131,32 +133,32 @@ class LocationSet {
     std::set<Exp*, lessExpStar> sset; 
 public:
 typedef std::set<Exp*, lessExpStar>::iterator iterator;
-    LocationSet() {}                        // Default constructor
-    virtual ~LocationSet() {}               // virtual destructor kills warning
-    LocationSet(const LocationSet& o);      // Copy constructor
-    LocationSet& operator=(const LocationSet& o); // Assignment
-    void makeUnion(LocationSet& other);     // Set union
-    void makeDiff (LocationSet& other);     // Set difference
-    void clear() {sset.clear();}            // Clear the set
+    ExpressionSet() {}                        // Default constructor
+    virtual ~ExpressionSet() {}               // virtual destr kills warning
+    ExpressionSet(const ExpressionSet& o);    // Copy constructor
+    ExpressionSet& operator=(const ExpressionSet& o); // Assignment
+    void makeUnion(ExpressionSet& other);     // Set union
+    void makeDiff (ExpressionSet& other);     // Set difference
+    void clear() {sset.clear();}              // Clear the set
     //Exp* getFirst(LocSetIter& it);          // Get the first Statement
     //Exp* getNext (LocSetIter& it);          // Get next
     iterator begin() {return sset.begin();}
     iterator end()   {return sset.end();}
-    void insert(Exp* loc) {sset.insert(loc);}// Insert the given location
-    void remove(Exp* loc);                  // Remove the given location
-    void remove(iterator ll);           // Remove location, given iterator
-    void removeIfDefines(StatementSet& given);// Remove locs defined in given
-    int  size() const {return sset.size();} // Number of elements
-    bool operator==(const LocationSet& o) const; // Compare
+    void insert(Exp* e) {sset.insert(e);}   // Insert the given expression
+    void remove(Exp* e);                    // Remove the given expression
+    void remove(iterator ll);               // Remove expression, given iterator
+    void removeIfDefines(StatementSet& given);// Remove exps defined in given
+    unsigned size() const {return sset.size();} // Number of elements
+    bool operator==(const ExpressionSet& o) const; // Compare
     void substitute(Statement& s);          // Substitute the statement to all
     char* prints();                         // Print to cerr for debugging
     void  print(std::ostream& os);          // Print to os
     // Return true if the location exists in the set
-    bool find(Exp* e);
+    bool find(Location* e);
     // Find a location with a different def, but same expression
     // For example, pass r28{10}, return true if r28{20} in the set
-    bool findDifferentRef(RefExp* e, Exp *&dr);
+    bool findDifferentRef(RefExp* e, Location *&dr);
     void addSubscript(Statement* def);      // Add a subscript to all elements
-};  // class LocationSet
+};  // class ExpressionSet
 
 #endif  // #ifdef __MANAGED_H__

@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.70 $
+# $Revision: 1.70.2.1 $
 # 21 Aug 02 - Icer: added codegen/chllcode.cpp to the build process
 #		    by adding it in STATIC_OBJ
 # 20 Aug 02 - Icer: removed test from all, test code is broken
@@ -25,8 +25,8 @@ MACH_FE_SRC=$(patsubst %, frontend/%frontend.cpp, $(MACHS))
 MACH_FE_OBJ=$(patsubst %, frontend/%frontend.o, $(MACHS))
 
 
-C = gcc -g -Wall -O4
-CC = g++ -g -Wall -O4
+C = gcc -g -Wall -O0
+CC = g++ -g -Wall -O0
 CXX=$(CC)
 
 # HOST_GNU_LD is true if the linker on this host machine is GNU
@@ -81,7 +81,7 @@ clean:
 	cd frontend && ${MAKE} clean
 	cd analysis && ${MAKE} clean
 	cd transform && ${MAKE} clean
-	rm -f *.o codegen/*.o boomerang testAll.o c/*.o
+	rm -f *.o codegen/*.o log.o boomerang.o driver.o boomerang testAll.o c/*.o
 
 #20 Aug 02 icer
 #added config.h config.log config.status and analysis/Makefile

@@ -4,7 +4,7 @@
  *              tests the Exp and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.24 $
+ * $Revision: 1.24.2.1 $
  *
  * 05 Apr 02 - Mike: Fixed problems caused by lack of clone() calls
  * 09 Apr 02 - Mike: Compare, searchReplace
@@ -198,7 +198,7 @@ void ExpTest::testUnaries () {
     delete u;
 
     std::ostringstream ost2;
-    u = new Unary(opLNot, new Terminal(opCF));
+    u = new Unary(opLNot, new Location(opCF));
     u->print(ost2);
     CPPUNIT_ASSERT_EQUAL (std::string("L~%CF"), std::string(ost2.str()));
     delete u;
@@ -1216,54 +1216,54 @@ void ExpTest::testSetConscripts() {
 void ExpTest::testAddUsedLocs() {
     // Null case
     Exp* e = new Terminal(opNil);
-    LocationSet l;
-    e->addUsedLocs(l);
-    CPPUNIT_ASSERT(l.size() == 0);
+    ExpressionSet es;
+    e->addUsedLocs(es);
+    CPPUNIT_ASSERT(es.size() == 0);
 
     // Const: "foo"
     e = new Const("foo");
-    e->addUsedLocs(l);
-    CPPUNIT_ASSERT(l.size() == 0);
+    e->addUsedLocs(es);
+    CPPUNIT_ASSERT(es.size() == 0);
 
     // Simple terminal: %pc
-    e = new Terminal(opPC);
-    e->addUsedLocs(l);
+    e = new Location(opPC);
+    e->addUsedLocs(es);
     std::string expected = "%pc\n";
     std::ostringstream ost1;
-    l.print(ost1);
+    es.print(ost1);
     std::string actual = ost1.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
     // Simple location: r28
-    l.clear();
+    es.clear();
     e = Location::regOf(28);
-    e->addUsedLocs(l);
+    e->addUsedLocs(es);
     expected = "r28\n";
     std::ostringstream ost2;
-    l.print(ost2);
+    es.print(ost2);
     actual = ost2.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
     // Memory location: m[r28-4]
-    l.clear();
+    es.clear();
     e = Location::memOf(
         new Binary(opMinus,
             Location::regOf(28),
             new Const(4)));
-    e->addUsedLocs(l);
+    e->addUsedLocs(es);
     expected = "m[r28 - 4],\tr28\n";
     std::ostringstream ost3;
-    l.print(ost3);
+    es.print(ost3);
     actual = ost3.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
     // Unary: a[m[r28-4]]
-    l.clear();
+    es.clear();
     e = new Unary(opAddrOf, e);
-    e->addUsedLocs(l);
+    e->addUsedLocs(es);
     expected = "m[r28 - 4],\tr28\n";
     std::ostringstream ost4;
-    l.print(ost4);
+    es.print(ost4);
     actual = ost4.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
@@ -1351,7 +1351,7 @@ void ExpTest::testSubscriptVars() {
     Assign s9(new Terminal(opNil), new Terminal(opNil));
     s9.setNumber(9);
     Exp* search = Location::regOf(28);
-    Exp* e = new Terminal(opPC);
+    Exp* e = new Location(opPC);
     e = e->expSubscriptVar(search, &s9);
     std::string expected("%pc");
     std::ostringstream ost1;

@@ -20,12 +20,13 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.190 $
+ * $Revision: 1.190.2.1 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
  * 31 Jan 03 - Mike: Tabs and indenting
  * 03 Feb 03 - Mike: removeStatement no longer linear searches for the BB
+ * 13 Jul 04 - Mike: Mods for types in Location
  */
 
 /*==============================================================================
@@ -175,7 +176,7 @@ void Proc::printDetailsXML()
         out << "/>\n";
     }
     for (i = 0; i < signature->getNumReturns(); i++)
-        out << "   <return exp=\"" << signature->getReturnExp(i) << "\" "
+        out << "   <return exp=\"" << signature->getReturnLoc(i) << "\" "
             << "type=\"" << signature->getReturnType(i)->getCtype() << "\"/>\n";
     out << "</proc>\n";
     out.close();
@@ -258,9 +259,9 @@ void UserProc::printUseGraph()
         Statement* s = *it;
         if (s->isPhi())
             out << s->getNumber() << " [shape=diamond];\n";
-        LocationSet refs;
+        ExpressionSet refs;
         s->addUsedLocs(refs);
-        LocationSet::iterator rr;
+        ExpressionSet::iterator rr;
         for (rr = refs.begin(); rr != refs.end(); rr++) {
             if (((Exp*)*rr)->isSubscript()) {
                 RefExp *r = (RefExp*)*rr;
@@ -609,7 +610,7 @@ std::ostream& LibProc::put(std::ostream& os) {
     return os << std::hex << address << std::endl;
 }
 
-Exp *LibProc::getProven(Exp *left)
+Location *LibProc::getProven(Location *left)
 {
     // Just use the signature information (all we have, after all)
     return signature->getProven(left);
@@ -959,9 +960,9 @@ void UserProc::getStatements(StatementList &stmts) {
 void UserProc::removeStatement(Statement *stmt) {
     // remove anything proven about this statement
     for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++) {
-        LocationSet refs;
+        ExpressionSet refs;
         (*it)->addUsedLocs(refs);
-        LocationSet::iterator rr;
+        ExpressionSet::iterator rr;
     bool usesIt = false;
         for (rr = refs.begin(); rr != refs.end(); rr++) {
             Exp* r = *rr;
@@ -1381,7 +1382,7 @@ void UserProc::removeRedundantPhis() {
                         if (VERBOSE || DEBUG_UNUSED_STMT)
                             LOG << "removing phi using shakey hack:\n";
                         unused = true;
-                        removeReturn(p->getSubExp1());
+                        removeReturn(p->getBase());
                     }
                 }
             } else {
@@ -1391,11 +1392,11 @@ void UserProc::removeRedundantPhis() {
                 // or to NULL. If so, they will (would have been?) removed in
                 // the fromSSA code. Removing them here allows some pesky
                 // statements (e.g. assignments to %pc) to be removed
-                LocationSet refs;
+                ExpressionSet refs;
                 p->addUsedLocs(refs);
                 Exp* first = *refs.begin();
                 bool same = true;
-                LocationSet::iterator rr;
+                ExpressionSet::iterator rr;
                 for (rr = refs.begin(); rr != refs.end(); rr++) {
                     if (!(**rr *= *first)) {       // Ref-insensitive compare
                         same = false;
@@ -1480,7 +1481,7 @@ void UserProc::removeRedundantPhis() {
 }
 
 void UserProc::trimReturns() {
-    std::set<Exp*> preserved;
+    std::set<Location*> preserved;
     bool stdsp = false;
     bool stdret = false;
 
@@ -1509,12 +1510,12 @@ void UserProc::trimReturns() {
         // Prove that pc is set to the return value
         if (DEBUG_PROOF)
             LOG << "attempting to prove %pc = m[sp]\n";
-        stdret = prove(new Binary(opEquals, new Terminal(opPC), 
+        stdret = prove(new Binary(opEquals, new Location(opPC), 
                        Location::memOf(Location::regOf(sp))));
 
         // prove preservation for each parameter
         for (int i = 0; i < signature->getNumReturns(); i++) {
-            Exp *p = signature->getReturnExp(i);
+            Location *p = signature->getReturnLoc(i);
             Exp *e = new Binary(opEquals, p->clone(), p->clone());
             if (DEBUG_PROOF)
                 LOG << "attempting to prove " << p << " is preserved by " 
@@ -1525,7 +1526,7 @@ void UserProc::trimReturns() {
         }
     }
     if (stdsp) {
-        Unary *regsp = Location::regOf(sp);
+        Location *regsp = Location::regOf(sp);
         // I've been removing sp from the return set as it makes 
         // the output look better, but this only works for recursive
         // procs (because no other proc call them and fixCallRefs can
@@ -1543,7 +1544,7 @@ void UserProc::trimReturns() {
         //removeReturn(regsp);
         // also check for any locals that slipped into the returns
         for (int i = 0; i < signature->getNumReturns(); i++) {
-            Exp *e = signature->getReturnExp(i);
+            Location *e = signature->getReturnLoc(i);
             if (e->getOper() == opMemOf && 
                 e->getSubExp1()->getOper() == opMinus &&
                 *e->getSubExp1()->getSubExp1() == *regsp &&
@@ -1553,20 +1554,20 @@ void UserProc::trimReturns() {
                 assert(theReturnStatement);
                 Exp *e = getProven(regsp)->clone();
                 e = e->expSubscriptVar(new Terminal(opWild), NULL);
-                if (!(*e == *theReturnStatement->getReturnExp(i))) {
+                if (!(*e == *theReturnStatement->getReturnLoc(i))) {
                     if (VERBOSE)
                         LOG << "replacing in return statement " 
-                            << theReturnStatement->getReturnExp(i) <<
+                            << theReturnStatement->getReturnLoc(i) <<
                             " with " << e << "\n";
-                    theReturnStatement->setReturnExp(i, e);
+                    theReturnStatement->setReturnLoc(i, (Location*)e);
                 }
             }
         }
     }
     if (!signature->isPromoted()) {
         if (stdret)
-            removeReturn(new Terminal(opPC));
-        for (std::set<Exp*>::iterator it = preserved.begin(); 
+            removeReturn(new Location(opPC));
+        for (std::set<Location*>::iterator it = preserved.begin(); 
              it != preserved.end(); it++)
             removeReturn(*it);
     }
@@ -1603,10 +1604,10 @@ void UserProc::addNewReturns(int depth) {
     StatementList::iterator it;
     for (it = stmts.begin(); it != stmts.end(); it++) {
         Statement* s = (Statement*)*it;
-        Exp *left = s->getLeft();
+        Location *left = s->getLeft();
         if (left) {
             bool allZero = true;
-            Exp *e = left->clone()->removeSubscripts(allZero);
+            Location *e = (Location*)left->clone()->removeSubscripts(allZero);
             if (allZero && signature->findReturn(e) == -1 &&
                 getProven(e) == NULL) {
                 if (e->getOper() == opLocal) {
@@ -1635,7 +1636,7 @@ void UserProc::addNewReturns(int depth) {
                 }
                 if (VERBOSE)
                     LOG << "Found new return " << e << "\n";
-                addReturn(e);
+                addReturn((Location*)e);
             }
         }
     }
@@ -1669,7 +1670,8 @@ void UserProc::addNewParameters() {
         s->searchAll(regOfWild, results);
         while (results.size()) {
             bool allZero;
-            Exp *e = results.front()->clone()->removeSubscripts(allZero);
+            Location *e = (Location*)results.front()->clone()->
+              removeSubscripts(allZero);
             results.erase(results.begin());     // Remove first result
             if (allZero && signature->findParam(e) == -1
                   // ? Often need to transfer from implit to explicit:
@@ -1744,20 +1746,22 @@ void UserProc::trimParameters(int depth) {
     // find parameters that are referenced (ignore calls to this)
     int nparams = signature->getNumParams();
     int totparams = nparams + signature->getNumImplicitParams();
-    std::vector<Exp*> params;
+    std::vector<Location*> params;
     bool referenced[64];
     assert(totparams <= (int)(sizeof(referenced)/sizeof(bool)));
     int i;
     for (i = 0; i < nparams; i++) {
         referenced[i] = false;
         // We want the 
-        params.push_back(signature->getParamExp(i)->clone()->
-                            expSubscriptVar(new Terminal(opWild), NULL));
+        params.push_back((Location*)
+            signature->getParamExp(i)->clone()->
+            expSubscriptVar(new Terminal(opWild), NULL));
     }
     for (i = 0; i < signature->getNumImplicitParams(); i++) {
         referenced[i + nparams] = false;
-        params.push_back(signature->getImplicitParamExp(i)->clone()->
-                            expSubscriptVar(new Terminal(opWild), NULL));
+        params.push_back((Location*)
+            signature->getImplicitParamExp(i)->clone()->
+            expSubscriptVar(new Terminal(opWild), NULL));
     }
 
     std::set<Statement*> excluded;
@@ -1818,91 +1822,91 @@ void UserProc::trimParameters(int depth) {
         if (!referenced[i] && (depth == -1 || 
               params[i]->getMemDepth() == depth)) {
             bool allZero;
-            Exp *e = params[i]->removeSubscripts(allZero);
+            Location *l = (Location*)params[i]->removeSubscripts(allZero);
             if (VERBOSE) 
-                LOG << "removing unused parameter " << e << "\n";
-            removeParameter(e);
+                LOG << "removing unused parameter " << l << "\n";
+            removeParameter(l);
         }
     }
 }
 
-void Proc::removeReturn(Exp *e)
+void Proc::removeReturn(Location *l)
 {
-    signature->removeReturn(e);
+    signature->removeReturn(l);
     for (std::set<CallStatement*>::iterator it = callerSet.begin();
          it != callerSet.end(); it++) {
             if (VERBOSE)
-                LOG << "removing return " << e << " from " << *it 
+                LOG << "removing return " << l << " from " << *it 
                           << "\n";
-            (*it)->removeReturn(e);
+            (*it)->removeReturn(l);
     }
 }
 
-void UserProc::removeReturn(Exp *e)
+void UserProc::removeReturn(Location *l)
 {
-    int n = signature->findReturn(e);
+    int n = signature->findReturn(l);
     if (n != -1) {
-        Proc::removeReturn(e);
+        Proc::removeReturn(l);
         if (theReturnStatement)
             theReturnStatement->removeReturn(n);
     }
 }
 
-void Proc::removeParameter(Exp *e)
+void Proc::removeParameter(Location *l)
 {
-    int n = signature->findParam(e);
+    int n = signature->findParam(l);
     if (n != -1) {
         signature->removeParameter(n);
         for (std::set<CallStatement*>::iterator it = callerSet.begin();
              it != callerSet.end(); it++) {
             if (VERBOSE)
-                LOG << "removing argument " << e << " in pos " << n 
+                LOG << "removing argument " << l << " in pos " << n 
                           << " from " << *it << "\n";
             (*it)->removeArgument(n);
         }
     }
-    n = signature->findImplicitParam(e);
+    n = signature->findImplicitParam(l);
     if (n != -1) {
         signature->removeImplicitParameter(n);
         for (std::set<CallStatement*>::iterator it = callerSet.begin();
              it != callerSet.end(); it++) {
             if (VERBOSE)
-                LOG << "removing implicit argument " << e << " in pos " << n 
+                LOG << "removing implicit argument " << l << " in pos " << n 
                           << " from " << *it << "\n";
             (*it)->removeImplicitArgument(n);
         }
     }
 }
 
-void Proc::addReturn(Exp *e)
+void Proc::addReturn(Location *l)
 {
     for (std::set<CallStatement*>::iterator it = callerSet.begin();
          it != callerSet.end(); it++)
-            (*it)->addReturn(e);
-    signature->addReturn(e);
+            (*it)->addReturn(l);
+    signature->addReturn(l);
 }
 
-void UserProc::addReturn(Exp *e)
+void UserProc::addReturn(Location *l)
 {
-    Exp *e1 = e->clone();
-    if (e1->getOper() == opMemOf) {
-        e1->refSubExp1() = e1->getSubExp1()->expSubscriptVar(
+    Location *l1 = l->clone();
+    if (l1->isMemOf()) {
+        l1->refSubExp1() = l1->getSubExp1()->expSubscriptVar(
                                                 new Terminal(opWild), NULL);
     }
     if (theReturnStatement)
-        theReturnStatement->addReturn(e1);
-    Proc::addReturn(e);
+        theReturnStatement->addReturn(l1);
+    Proc::addReturn(l);
 }
 
-void Proc::addParameter(Exp *e)
+void Proc::addParameter(Location *l)
 {
     // In case it's already an implicit argument:
-    removeParameter(e);
+    removeParameter(l);
 
     for (std::set<CallStatement*>::iterator it = callerSet.begin();
          it != callerSet.end(); it++)
-            (*it)->addArgument(e);
-    signature->addParameter(e);
+            (*it)->addArgument(l);
+    signature->addParameter(l);
 }
 
 void UserProc::processFloatConstants()
@@ -2009,9 +2013,9 @@ void UserProc::replaceExpressionsWithGlobals() {
         Statement* s = *it;
 
         // (a) Definitions
-        LocationSet defs;
+        ExpressionSet defs;
         s->getDefinitions(defs);
-        LocationSet::iterator rr;
+        ExpressionSet::iterator rr;
         for (rr = defs.begin(); rr != defs.end(); rr++) {
             if ((*rr)->getOper() == opMemOf &&
                 (*rr)->getSubExp1()->getOper() == opIntConst) {
@@ -2030,8 +2034,10 @@ void UserProc::replaceExpressionsWithGlobals() {
                                 new Const(r)), this);
                     } else {
                         Type *ty = prog->getGlobalType((char*)gloName);
-                        if (s->isAssign() && ((Assign*)s)->getType()) {
-                            int bits = ((Assign*)s)->getType()->getSize();
+                        if (s->isAssign() && ((Assign*)s)->getLeft()->getType())
+                        {
+                            int bits = ((Assign*)s)->getLeft()->getType()->
+                              getSize();
                             if (ty == NULL || ty->getSize() == 0)
                                 prog->setGlobalType((char*)gloName,
                                     new IntegerType(bits));
@@ -2049,7 +2055,7 @@ void UserProc::replaceExpressionsWithGlobals() {
         }
 
         // (b) Uses
-        LocationSet refs;
+        ExpressionSet refs;
         s->addUsedLocs(refs);
         for (rr = refs.begin(); rr != refs.end(); rr++) {
             if (((Exp*)*rr)->isSubscript()) {
@@ -2698,14 +2704,14 @@ void UserProc::countRefs(RefCounter& refCounts) {
         }
         if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS && s->isReturn())
             LOG << "counting references in " << s << "\n";
-        LocationSet refs;
+        ExpressionSet refs;
 #define IGNORE_IMPLICITS 1
 #if IGNORE_IMPLICITS
         s->addUsedLocs(refs, true);
 #else
         s->addUsedLocs(refs);
 #endif
-        LocationSet::iterator rr;
+        ExpressionSet::iterator rr;
         for (rr = refs.begin(); rr != refs.end(); rr++) {
             if (((Exp*)*rr)->isSubscript()) {
                 Statement *ref = ((RefExp*)*rr)->getRef();
@@ -2727,9 +2733,9 @@ void UserProc::removeUnusedLocals() {
     StatementList::iterator ss;
     for (ss = stmts.begin(); ss != stmts.end(); ss++) {
         Statement* s = *ss;
-        LocationSet refs;
+        ExpressionSet refs;
         s->addUsedLocs(refs);
-        LocationSet::iterator rr;
+        ExpressionSet::iterator rr;
         for (rr = refs.begin(); rr != refs.end(); rr++) {
             Exp* r = *rr;
             if (r->isSubscript())
@@ -2786,10 +2792,10 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
                 if (VERBOSE)
                     LOG << "clearing return set of unused call " << s << "\n";
                 CallStatement *call = (CallStatement*)s;
-                std::vector<Exp*> returns;
+                std::vector<Location*> returns;
                 int i;
                 for (i = 0; i < call->getNumReturns(); i++)
-                    returns.push_back(call->getReturnExp(i));
+                    returns.push_back(call->getReturnLoc(i));
                 for (i = 0; i < (int)returns.size(); i++)
                     if (depth < 0 || returns[i]->getMemDepth() <= depth)
                     //           if (returns[i]->getMemDepth() <= depth)
@@ -2837,9 +2843,9 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
                 // two refs as two; refCounts is a count of the number of
                 // statements that use a definition, not the number of refs
                 StatementSet refs;
-                LocationSet components;
+                ExpressionSet components;
                 s->addUsedLocs(components);
-                LocationSet::iterator cc;
+                ExpressionSet::iterator cc;
                 for (cc = components.begin(); cc != components.end(); cc++) {
                     if ((*cc)->isSubscript()) {
                         refs.insert(((RefExp*)*cc)->getRef());
@@ -2889,11 +2895,11 @@ void UserProc::fromSSAform() {
         if (!s->isPhi()) continue;
         // Check that the base variables are all the same
         PhiExp* p = (PhiExp*)s->getRight();
-        LocationSet refs;
+        ExpressionSet refs;
         p->addUsedLocs(refs);
         Exp* first = *refs.begin();
         bool same = true;
-        LocationSet::iterator rr;
+        ExpressionSet::iterator rr;
         for (rr = refs.begin(); rr != refs.end(); rr++) {
             if (!(**rr *= *first)) {       // Ref-insensitive compare
                 same = false;
@@ -2928,9 +2934,8 @@ void UserProc::fromSSAform() {
             for (rr = p->begin(); rr != p->end(); p++) {
                 // Start with the original name, in the left of the phi
                 // (note: this has not been renamed above)
-                Exp* right = p->getSubExp1()->clone();
                 // Wrap it in a ref to *rr
-                right = new RefExp(right, *rr);
+                Exp* right = new RefExp(p->getBase()->clone(), *rr);
                 // Check the interference graph for a new name
                 if (ig.find(right) != ig.end()) {
                     std::ostringstream os;
@@ -2990,9 +2995,9 @@ bool UserProc::prove(Exp *query)
     assert(query->getOper() == opEquals);
     
     // subscript locs on the right with {0}
-    LocationSet locs;
+    ExpressionSet locs;
     query->getSubExp2()->addUsedLocs(locs);
-    LocationSet::iterator xx;
+    ExpressionSet::iterator xx;
     for (xx = locs.begin(); xx != locs.end(); xx++) {
         query->refSubExp2() = query->getSubExp2()->expSubscriptVar(*xx, NULL);
     }
@@ -3002,10 +3007,10 @@ bool UserProc::prove(Exp *query)
         // replace expression from return set with expression in return 
         if (theReturnStatement) {
             for (int i = 0; i < signature->getNumReturns(); i++) {
-                Exp *e = signature->getReturnExp(i); 
+                Exp *e = signature->getReturnLoc(i); 
                 if (*e == *query->getSubExp1()) {
                     query->refSubExp1() = 
-                        theReturnStatement->getReturnExp(i)->clone();
+                        theReturnStatement->getReturnLoc(i)->clone();
                     gotdef = true;
                     break;
                 }
@@ -3091,7 +3096,7 @@ bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis,
                 Statement *s = r->getRef();
                 CallStatement *call = dynamic_cast<CallStatement*>(s);
                 if (call) {
-                    Exp *right = call->getProven(r->getSubExp1());
+                    Location *right = call->getProven(r->getBase());
                     if (right) {
                         right = right->clone();
                         if (callwd.find(call) != callwd.end() && 
@@ -3108,7 +3113,7 @@ bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis,
                                     << call->getDestProc()->getName() << " " 
                                     << r->getSubExp1() 
                                     << " = " << right << "\n";
-                            right = call->substituteParams(right);
+                            right = (Location*)call->substituteParams(right);
                             if (DEBUG_PROOF)
                                 LOG << "right with subs: " << right << "\n";
                             query->setSubExp1(right);
@@ -3240,17 +3245,17 @@ bool UserProc::prover(Exp *query, std::set<PhiExp*>& lastPhis,
     return query->getOper() == opTrue;
 }
 
-// Get the set of locations defined by this proc. In other words, the define set,
-// currently called returns
-void UserProc::getDefinitions(LocationSet& ls) {
+// Get the set of locations defined by this proc. In other words, the define
+// set, currently called returns
+void UserProc::getDefinitions(ExpressionSet& ls) {
     int n = signature->getNumReturns();
     for (int j=0; j < n; j++) {
-        ls.insert(signature->getReturnExp(j));
+        ls.insert((Location*)signature->getReturnLoc(j));
     }
 }
 
 // "Local" member function, used below
-void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
+void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Location* loc)
 {
     if (def == NULL) return;
     CallStatement* call = dynamic_cast<CallStatement*>(def);
@@ -3272,12 +3277,12 @@ void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
     // are done in the call's return list as part of decompilation
     int n = call->findReturn(loc);
     if (n != -1) {
-        Exp *ret = NULL;
+        Location *ret = NULL;
         if (proc)
-            ret = proc->getSignature()->getReturnExp(n);
+            ret = proc->getSignature()->getReturnLoc(n);
         else {
             assert(call->isComputed());
-            std::vector<Exp*> &returns = getProg()->getDefaultReturns();
+            std::vector<Location*>& returns = getProg()->getDefaultReturns();
             assert(n < (int)returns.size());
             ret = returns[n];
         }
@@ -3293,36 +3298,36 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
     StatementList::iterator ss;
     // For each statement this proc
     for (ss = stmts.begin(); ss != stmts.end(); ss++) {
-        LocationSet used;
+        ExpressionSet used;
         (*ss)->addUsedLocs(used);
-        LocationSet::iterator ll;
+        ExpressionSet::iterator ll;
         // For each use this statement
         for (ll = used.begin(); ll != used.end(); ll++) {
             Statement* def;
             if ((*ll)->isSubscript()) {
                 // for this one reference
                 def = ((RefExp*)*ll)->getRef();
-                doCountReturns(def, rc, ((RefExp*)*ll)->getSubExp1());
+                doCountReturns(def, rc, ((RefExp*)*ll)->getBase());
             } else if ((*ll)->isPhi()) {
                 StatementVec::iterator rr;
                 PhiExp& pe = (PhiExp&)**ll;
                 // for each reference this phi expression
                 for (rr = pe.begin(); rr != pe.end(); rr++)
-                    doCountReturns(*rr, rc, pe.getSubExp1());
+                    doCountReturns(*rr, rc, pe.getBase());
             }
         }
     }
 }
 
 bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
-    std::set<Exp*, lessExpStar> removes;    // Else iterators confused
-    std::set<Exp*, lessExpStar>& useSet = rc[this];
+    std::set<Location*, lessExpStar> removes;
+    std::set<Location*, lessExpStar>& useSet = rc[this];
     for (int i = 0; i < signature->getNumReturns(); i++) {
-        Exp *ret = signature->getReturnExp(i);
+        Location *ret = signature->getReturnLoc(i);
         if (useSet.find(ret) == useSet.end())
             removes.insert(ret);
     }
-    std::set<Exp*, lessExpStar>::iterator it;
+    std::set<Location*, lessExpStar>::iterator it;
     Exp* stackExp = NULL;
     if (signature->isPromoted()) {
         stackExp = Location::regOf(signature->getStackRegister());
@@ -3361,9 +3366,9 @@ void UserProc::addCallees(std::set<UserProc*>& callees) {
 
 void UserProc::typeAnalysis(Prog* prog) {
     if (DEBUG_TA)
-        LOG << "Procedure " << getName() << "\n";
+        LOG << "Type analysis for procedure " << getName() << "\n";
     Constraints consObj;
-    LocationSet cons;
+    ExpressionSet cons;
     StatementList stmts;
     getStatements(stmts);
     StatementList::iterator ss;
@@ -3444,7 +3449,7 @@ void UserProc::typeAnalysis(Prog* prog) {
 
 bool UserProc::searchAndReplace(Exp *search, Exp *replace)
 {
-    bool ch;
+    bool ch = false;
     StatementList stmts;
     getStatements(stmts);
     StatementList::iterator it;
@@ -3472,12 +3477,12 @@ void UserProc::stripRefs() {
         removeStatement(*it);
 }
 
-Exp *UserProc::getProven(Exp *left)
+Location *UserProc::getProven(Location *left)
 {
     for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); 
          it != proven.end(); it++) 
         if (*(*it)->getSubExp1() == *left)
-            return (*it)->getSubExp2();
+            return (Location*)(*it)->getSubExp2();
     // not found, try the signature
     // Shouldn't this only be for library functions?
     //return signature->getProven(left);

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69 $
+ * $Revision: 1.69.2.1 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -866,7 +866,7 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn)
 {
     std::ostringstream s;
     indent(s, indLevel);
-    Type* asgnType = asgn->getType();
+    Type* asgnType = asgn->getLeft()->getType();
     if (asgn->getLeft()->getOper() == opMemOf && asgnType) 
         appendExp(s,
             new TypedExp(
@@ -898,11 +898,11 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn)
 }
 
 void CHLLCode::AddCallStatement(int indLevel, Proc *proc, 
-    const char *name, std::vector<Exp*> &args, std::vector<Exp*>& rets)
+    const char *name, std::vector<Exp*> &args, std::vector<Location*>& rets)
 {
     std::ostringstream s;
     indent(s, indLevel);
-    std::vector<Exp*>::iterator it;
+    std::vector<Location*>::iterator it;
     if (rets.size() >= 1) {
         it = rets.begin();
         appendExp(s, rets.front(), PREC_ASSIGN);
@@ -963,7 +963,7 @@ void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp,
 }
 
 
-void CHLLCode::AddReturnStatement(int indLevel, std::vector<Exp*> &returns)
+void CHLLCode::AddReturnStatement(int indLevel, std::vector<Location*> &returns)
 {
     std::ostringstream s;
     indent(s, indLevel);

@@ -9,7 +9,7 @@
  *             and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.5 $
+ * $Revision: 1.5.2.1 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *   for searching: they have the capability of stopping the recursion,
@@ -56,7 +56,7 @@ class UserProc;
 class BasicBlock;
 typedef BasicBlock* PBB;
 
-class LocationSet;
+class ExpressionSet;
 
 class ExpVisitor {
 
@@ -316,12 +316,12 @@ virtual Exp* postVisit(TypeVal *e);
 };
 
 class UsedLocsFinder : public ExpVisitor {
-    LocationSet* used;
+    ExpressionSet* used;
 public:
-                 UsedLocsFinder(LocationSet& used) {this->used = &used;}
+                 UsedLocsFinder(ExpressionSet& used) {this->used = &used;}
                  ~UsedLocsFinder() {}
 
-    LocationSet* getLocSet() {return used;}
+    ExpressionSet* getLocSet() {return used;}
     virtual bool visit(RefExp *e,   bool& override);
     virtual bool visit(Location *e, bool& override);
     virtual bool visit(Terminal* e);

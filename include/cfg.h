@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.60 $
+ * $Revision: 1.60.2.1 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -34,7 +34,7 @@
 #include <string>
 #include <stack>
 #include "types.h"
-#include "exp.h"        // For LocationSet
+#include "exp.h"        // For ExpressionSet
 #include "exphelp.h"    // For lessExpStar
 
 //#include "bitset.h"     // Saves time. Otherwise, any implementation file that 
@@ -43,7 +43,7 @@
 class Proc;
 class UserProc;
 class UseSet;
-class LocationSet;
+class ExpressionSet;
 class SSACounts;
 class BinaryFile;
 class BasicBlock;
@@ -393,7 +393,7 @@ protected:
     bool            m_iTraversed;   // traversal marker
 
 /* Liveness */
-    LocationSet     liveIn;         // Set of locations live at BB start
+    ExpressionSet     liveIn;         // Set of locations live at BB start
 
 public:
 
@@ -519,7 +519,7 @@ public:
 
     // Liveness
     bool calcLiveness(igraph& ig, int& tempNum);
-    void getLiveOut(LocationSet& live);
+    void getLiveOut(ExpressionSet& live);
 
     // Find indirect jumps and calls
     bool decodeIndirectJmp(UserProc* proc);
@@ -621,9 +621,9 @@ class Cfg {
      * Inserting phi-functions
      */
     // Array of sets of locations defined in BB n
-    std::vector<std::set<Exp*, lessExpStar> > A_orig;
-    // Map from expression to set of block numbers
-    std::map<Exp*, std::set<int>, lessExpStar > defsites;
+    std::vector<std::set<Location*, lessExpStar> > A_orig;
+    // Map from location (variable) to set of block numbers (where defined)
+    std::map<Location*, std::set<int>, lessExpStar > defsites;
     // Array of sets of BBs needing phis
     std::map<Exp*, std::set<int>, lessExpStar> A_phi;
 

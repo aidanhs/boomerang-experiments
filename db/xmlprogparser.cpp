@@ -2494,7 +2494,7 @@ void XMLProgParser::persistToXML(std::ostream &out, BasicBlock *bb)
     for (unsigned i = 0; i < bb->m_OutEdges.size(); i++)
 	out << "<outedge bb=\"" << (int)bb->m_OutEdges[i] << "\"/>\n";
 
-    LocationSet::iterator it;
+    ExpressionSet::iterator it;
     for (it = bb->liveIn.begin(); it != bb->liveIn.end(); it++) {
 	out << "<livein>\n";
 	persistToXML(out, *it);

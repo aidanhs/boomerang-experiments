@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76 $
+ * $Revision: 1.76.2.1 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -76,7 +76,7 @@ namespace CallingConvention {
         virtual bool operator==(Signature& other);
         static bool qualified(UserProc *p, Signature &candidate);
 
-        virtual void addReturn(Type *type, Exp *e = NULL);
+        virtual void addReturn(Type *type, Location *l = NULL);
         virtual void addParameter(Type *type, const char *nam = NULL, 
                                   Exp *e = NULL);
         virtual Exp *getArgumentExp(int n);
@@ -390,7 +390,7 @@ Exp *CallingConvention::Win32TcSignature::getProven(Exp *left)
 
 void CallingConvention::Win32Signature::getInternalStatements(StatementList &stmts)
 {
-    static Assign *fixpc = new Assign(new Terminal(opPC),
+    static Assign *fixpc = new Assign(new Location(opPC),
             Location::memOf(Location::regOf(28)));
     static Assign *fixesp = new Assign(Location::regOf(28),
             new Binary(opPlus, Location::regOf(28),
@@ -546,7 +546,7 @@ Exp *CallingConvention::StdC::PentiumSignature::getProven(Exp *left)
 void CallingConvention::StdC::PentiumSignature::getInternalStatements(
   StatementList &stmts) {
     // pc := m[r28]
-    static Assign *fixpc = new Assign(new Terminal(opPC),
+    static Assign *fixpc = new Assign(new Location(opPC),
             Location::memOf(Location::regOf(28)));
     // r28 := r28 + 4;
     static Assign *fixesp = new Assign(Location::regOf(28),
@@ -929,9 +929,9 @@ int Signature::findImplicitParam(Exp *e) {
     return -1;
 }
 
-int Signature::findReturn(Exp *e) {
+int Signature::findReturn(Location *e) {
     for (int i = 0; i < getNumReturns(); i++)
-        if (*getReturnExp(i) == *e)
+        if (*getReturnLoc(i) == *e)
             return i;
     return -1;
 }
@@ -959,12 +959,12 @@ int Signature::getNumReturns() {
     return returns.size();
 }
 
-Exp *Signature::getReturnExp(int n) {
+Location *Signature::getReturnExp(int n) {
     return returns[n]->getExp();
 }
 
-void Signature::setReturnExp(int n, Exp* e) {
-    returns[n]->setExp(e);
+void Signature::setReturnExp(int n, Location* l) {
+    returns[n]->setExp(l);
 }
 
 Type *Signature::getReturnType(int n) {
@@ -1331,7 +1331,7 @@ Exp* Signature::getEarlyParamExp(int n, Prog* prog) {
 StatementList& Signature::getStdRetStmt(Prog* prog) {
     // pc := m[r[28]]
     static Assign pent1ret(
-        new Terminal(opPC),
+        new Location(opPC),
         Location::memOf(Location::regOf(28)));
     // r[28] := r[28] + 4
     static Assign pent2ret(

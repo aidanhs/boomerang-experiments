@@ -1406,7 +1406,7 @@ void SparcFrontEnd::emitCopyPC(std::list<RTL*>* pRtls, ADDRESS uAddr)
     // Emit %o7 = %pc
     Assign* a = new Assign(
         Location::regOf(15),      // %o7 == r[15]
-        new Terminal(opPC));
+        new Location(opPC));
     // Add the Exp to an RTL
     RTL* pRtl = new RTL(uAddr);
     pRtl->appendStmt(a);

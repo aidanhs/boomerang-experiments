@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.40 $
+ * $Revision: 1.40.2.1 $
  * 21 Oct 98 - Mike: converted from frontsparc.cc
  * 21 May 02 - Mike: Mods for boomerang
  * 27 Nov 02 - Mike: Fixed a bug in the floating point fixup code, which was
@@ -233,7 +233,7 @@ std::vector<Exp*> &PentiumFrontEnd::getDefaultReturns()
         returns.push_back(Location::regOf(37/*st5*/));
         returns.push_back(Location::regOf(38/*st6*/));
         returns.push_back(Location::regOf(39/*st7*/));
-        returns.push_back(new Terminal(opPC));
+        returns.push_back(new Location(opPC));
     }
     return returns;
 }

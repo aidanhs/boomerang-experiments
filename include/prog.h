@@ -14,7 +14,7 @@
  * OVERVIEW:    interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.57 $
+ * $Revision: 1.57.2.1 $
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -203,8 +203,8 @@ public:
 
     Signature *getDefaultSignature(const char *name);
 
-    std::vector<Exp*> &getDefaultParams();
-    std::vector<Exp*> &getDefaultReturns();
+    std::vector<Location*> &getDefaultParams();
+    std::vector<Location*> &getDefaultReturns();
 
     // Returns true if this is a win32 program
     bool isWin32();

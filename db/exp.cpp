@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149 $
+ * $Revision: 1.149.2.1 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -143,7 +143,7 @@ TypedExp::TypedExp(TypedExp& o) : Unary(opTypedExp)
 FlagDef::FlagDef(Exp* params, RTL* rtl)
     : Unary(opFlagDef, params), rtl(rtl) {}
 
-RefExp::RefExp(Exp* e, Statement* d) : Unary(opSubscript, e), def(d) {
+RefExp::RefExp(Location* l, Statement* d) : Unary(opSubscript, l), def(d) {
 }
 
 PhiExp::PhiExp(Exp* e, Statement* d) : Unary(opPhi, e)
@@ -278,6 +278,14 @@ void TypedExp::setType(Type* ty)
     type = ty;
 }
 
+bool Exp::isLocation() {
+    return  op == opMemOf   || op == opRegOf ||
+            op == opGlobal  || op == opLocal ||
+            op == opParam   || op == opPC    ||
+            op == opCF      || op == opZF    ||
+            op == opFlags   || op == opFflags;
+}
+
 /*==============================================================================
  * FUNCTION:        Binary::commute
  * OVERVIEW:        Swap the two subexpressions
@@ -326,52 +334,52 @@ Exp* Ternary::becomeSubExp3() {
  * PARAMETERS:      <none>
  * RETURNS:         Pointer to cloned object
  *============================================================================*/
-Exp* Const::clone() {
+Const* Const::clone() {
     return new Const(*this);
 }
-Exp* Terminal::clone() {
+Terminal* Terminal::clone() {
     return new Terminal(*this);
 }
-Exp* Unary::clone() {
+Unary* Unary::clone() {
     Unary* c = new Unary(op);
     c->subExp1 = subExp1->clone();
     return c;
 }
-Exp* Binary::clone() {
+Binary* Binary::clone() {
     Binary* c = new Binary(op);
     c->subExp1 = subExp1->clone();
     c->subExp2 = subExp2->clone();
     return c;
 }
 
-Exp* Ternary::clone() {
+Ternary* Ternary::clone() {
     Ternary* c = new Ternary(op);
     c->subExp1 = subExp1->clone();
     c->subExp2 = subExp2->clone();
     c->subExp3 = subExp3->clone();
     return c;
 }
-Exp* TypedExp::clone() {
+TypedExp* TypedExp::clone() {
     TypedExp* c = new TypedExp(type, subExp1->clone());
     return c;
 }
-Exp* PhiExp::clone() {
+PhiExp* PhiExp::clone() {
     PhiExp* c = new PhiExp(subExp1->clone());
     c->stmtVec = stmtVec;
     c->stmt = stmt;
     return c;
 }
-Exp* RefExp::clone() {
-    RefExp* c = new RefExp(subExp1->clone(), def);
+RefExp* RefExp::clone() {
+    RefExp* c = new RefExp((Location*)subExp1->clone(), def);
     return c;
 }
 
-Exp* TypeVal::clone() {
+TypeVal* TypeVal::clone() {
     TypeVal* c = new TypeVal(val->clone());
     return c;
 }
 
-Exp* Location::clone() {
+Location* Location::clone() {
     Location* c = new Location(op, subExp1->clone(), proc);
     if (ty)
         c->ty = ty->clone();
@@ -855,10 +863,8 @@ void Binary::print(std::ostream& os, bool withUses) {
 //  //  //  //  //
 void Terminal::print(std::ostream& os, bool withUses) {
     switch (op) {
-        case opPC:      os << "%pc";   break;
         case opFlags:   os << "%flags"; break;
         case opFflags:  os << "%fflags"; break;
-        case opCF:      os << "%CF";   break;
         case opZF:      os << "%ZF";   break;
         case opOF:      os << "%OF";   break;
         case opNF:      os << "%NF";   break;
@@ -1004,11 +1010,18 @@ void Unary::print(std::ostream& os, bool withUses) {
             p1->print(os, withUses);
             os << ")";
             return;
+        case opPC: os << "%pc"; return;
+        case opCF: os << "%CF";   break;
         default:
             LOG << "Unary::print invalid operator " << operStrings[op] <<
               "\n";
             assert(0);
     }
+}
+
+void Location::print(std::ostream& os, bool withUses) {
+    if (withUses) os << "*" << ty << "* ";
+    Unary::print(os, withUses);
 }
 
 //  //  //  //
@@ -2725,7 +2738,7 @@ Exp* RefExp::polySimplify(bool& bMod) {
 
     // hack to fixing refs to phis which don't do anything
     if (def && def->isPhi() && def->getProc()->canProveNow()) {
-        Exp *base = new RefExp(subExp1, NULL);
+        Exp *base = new RefExp((Location*)subExp1, NULL);
         StatementVec::iterator uu;
         PhiExp *phi = (PhiExp*)def->getRight();
         for (uu = phi->begin(); uu != phi->end(); uu++)
@@ -2738,7 +2751,7 @@ Exp* RefExp::polySimplify(bool& bMod) {
                 }
             }
         bool allProven = true;
-        LocationSet used;
+        ExpressionSet used;
         base->addUsedLocs(used);
         if (used.size() == 0) {
             allProven = false;
@@ -2749,13 +2762,13 @@ Exp* RefExp::polySimplify(bool& bMod) {
         // Experiment MVE: compare 1 to 2, 1 to 3 ... 1 to n instead of
         // base to 1, base to 2, ... base to n
         // Seems to work
-        Exp* first = new RefExp(subExp1->clone(), *phi->begin());
+        Exp* first = new RefExp((Location*)subExp1->clone(), *phi->begin());
         //for (uu = phi->begin(); allProven && uu != phi->end(); uu++) { // }
         for (uu = ++phi->begin(); allProven && uu != phi->end(); uu++) {
             //Exp *query = new Binary(opEquals, new RefExp(subExp1->clone(),
             //   *uu), base->clone());
             Exp* query = new Binary(opEquals, first,
-              new RefExp(subExp1->clone(), *uu));
+              new RefExp((Location*)subExp1->clone(), *uu));
             if (Boomerang::get()->debugProof)
                 LOG << "attempting to prove " << query << " for ref to phi\n";
             if (!def->getProc()->prove(query)) {
@@ -2800,7 +2813,7 @@ Exp* PhiExp::polySimplify(bool& bMod) {
             if (VERBOSE)
                 LOG << "all the same in " << this << "\n";
             bMod = true;
-            res = new RefExp(subExp1, first);
+            res = new RefExp((Location*)subExp1, first);
             return res;
         }
 
@@ -2818,7 +2831,7 @@ Exp* PhiExp::polySimplify(bool& bMod) {
             if (VERBOSE)
                 LOG << "all but one not this in " << this << "\n";
             bMod = true;
-            res = new RefExp(subExp1, notthis);
+            res = new RefExp((Location*)subExp1, notthis);
             return res;
         }
     }
@@ -3042,9 +3055,9 @@ bool Exp::isTemp() {
 Exp *Exp::removeSubscripts(bool& allZero)
 {
     Exp *e = this;
-    LocationSet locs;
+    ExpressionSet locs;
     e->addUsedLocs(locs);
-    LocationSet::iterator xx; 
+    ExpressionSet::iterator xx; 
     allZero = true;
     for (xx = locs.begin(); xx != locs.end(); xx++) {
         if ((*xx)->getOper() == opSubscript) {
@@ -3179,8 +3192,10 @@ Exp* Ternary::fromSSA(igraph& ig) {
     return this;
 }
 
+// MVE: should be a member of Location!
 Exp* Exp::fromSSAleft(igraph& ig, Statement* d) {
-    RefExp* r = new RefExp(this, d);       // "Wrap" in a ref
+    assert(isLocation());
+    RefExp* r = new RefExp((Location*)this, d);       // "Wrap" in a ref
     return r->fromSSA(ig);
     // Note: r will be ;//deleted in fromSSA! Do not ;//delete here!
 }
@@ -3545,7 +3560,7 @@ Exp* PhiExp::genConstraints(Exp* result) {
         Exp* conjunct = new Binary(opEquals,
             result,
             new Unary(opTypeOf,
-                new RefExp(base, *uu)));
+                new RefExp((Location*)base, *uu)));
         if (first) {
             ret = conjunct;
             first = false;
@@ -3579,7 +3594,7 @@ Exp* Location::polySimplify(bool& bMod) {
     return res;
 }
 
-void Location::getDefinitions(LocationSet& defs) {
+void Location::getDefinitions(ExpressionSet& defs) {
     // This is a hack to fix aliasing (replace with something general)
     if (op == opRegOf && ((Const*)subExp1)->getInt() == 24) {
         defs.insert(Location::regOf(0));
@@ -4059,7 +4074,7 @@ char* Exp::getAnyStrConst() {
 
 // Find the locations used by this expression. Use the UsedLocsFinder visitor
 // class
-void Exp::addUsedLocs(LocationSet& used) {
+void Exp::addUsedLocs(ExpressionSet& used) {
     UsedLocsFinder ulf(used);
     accept(&ulf);
 }

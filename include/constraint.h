@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.8 $
+ * $Revision: 1.8.2.1 $
  *
  * 22 Aug 03 - Mike: Created
  */
@@ -77,15 +77,15 @@ typedef std::map<Exp*, Exp*, lessExpStar>::iterator iterator;
 // Ta = Tb and also as Tb = Ta. So to find out if Ta is involved in an
 // equate, only have to look up Ta in the map (on the LHS, which is fast)
 class EquateMap {
-    std::map<Exp*, LocationSet, lessExpStar> emap;
+    std::map<Exp*, ExpressionSet, lessExpStar> emap;
 public:
-typedef std::map<Exp*, LocationSet, lessExpStar>::iterator iterator;
+typedef std::map<Exp*, ExpressionSet, lessExpStar>::iterator iterator;
     iterator begin() {return emap.begin();}
     iterator end()   {return emap.end();}
     void erase(iterator it) {emap.erase(it);}
     int  size() {return emap.size();}
     // Add an equate (both ways)
-    void addEquate(Exp* a, Exp* b) {
+    void addEquate(Location* a, Location* b) {
         emap[a].insert(b); emap[b].insert(a);}
     iterator find(Exp* e) {return emap.find(e);}
     void print(std::ostream& os);
@@ -93,7 +93,7 @@ typedef std::map<Exp*, LocationSet, lessExpStar>::iterator iterator;
 };
 
 class Constraints {
-    LocationSet     conSet;
+    ExpressionSet     conSet;
     std::list<Exp*> disjunctions;
     // Map from location to a fixed type (could be a pointer to a variable
     // type, i.e. an alpha).
@@ -105,8 +105,8 @@ public:
     Constraints() {}
     ~Constraints();
 
-    LocationSet& getConstraints() {return conSet;}
-    void    addConstraints(LocationSet& con) {conSet.makeUnion(con);}
+    ExpressionSet& getConstraints() {return conSet;}
+    void    addConstraints(ExpressionSet& con) {conSet.makeUnion(con);}
     // Substitute the given constraintMap into the disjuncts
     void    substIntoDisjuncts(ConstraintMap& in);
     // Substitute the given constraintMap into the equates

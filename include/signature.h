@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.40 $
+ * $Revision: 1.40.2.1 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -64,21 +64,21 @@ protected:
 class Return {
 private:
     Type *type;
-    Exp *exp;
+    Location *loc;
 
 public:
-    Return(Type *type, Exp *exp) : type(type), exp(exp) { }
-    ~Return() { delete type; delete exp; }
+    Return(Type *type, Location *loc) : type(type), loc(loc) { }
+    ~Return() { delete type; delete loc; }
     bool    operator==(Return& other);
 
     Type *getType() { return type; }
     void setType(Type *ty) { type = ty; }
-    Exp *getExp() { return exp; }
-    Exp*& getRefExp() {return exp;}
-    void setExp(Exp* e) { exp = e; }
+    Exp *getExp() { return loc; }
+    Location*& getRefExp() {return loc;}
+    void setExp(Location* l) { loc = l; }
 protected:
     friend class XMLProgParser;
-    Return() : type(NULL), exp(NULL) { }
+    Return() : type(NULL), loc(NULL) { }
 };
 
 class Signature {
@@ -112,13 +112,14 @@ public:
     virtual Signature *clone();
 
     // get the return location
-    virtual void addReturn(Type *type, Exp *e = NULL);
-    virtual void addReturn(Exp *e);
+    virtual void addReturn(Type *type, Location *l = NULL);
+    virtual void addReturn(Location *e);
     virtual void addReturn(Return *ret) { returns.push_back(ret); }
-    virtual void removeReturn(Exp *e);
+    virtual void removeReturn(Location *e);
     virtual int getNumReturns();
-    virtual Exp *getReturnExp(int n);
-    void         setReturnExp(int n, Exp* e);
+    // Get the location representing the return location
+    virtual Location *getReturnLoc(int n);
+    void         setReturnLoc(int n, Location* l);
     virtual Type *getReturnType(int n);
     virtual void setReturnType(int n, Type *ty);
     virtual int findReturn(Exp *e);
@@ -208,7 +209,7 @@ static Exp* getReturnExp2(BinaryFile* pBF);
 static StatementList& getStdRetStmt(Prog* prog);
 
     // get anything that can be proven as a result of the signature
-    virtual Exp *getProven(Exp *left) { return NULL; }
+    virtual Location *getProven(Location *left) { return NULL; }
 
     virtual bool isPromoted() { return false; }
 

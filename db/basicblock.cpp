@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.78 $
+ * $Revision: 1.78.2.1 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1514,7 +1514,7 @@ void BasicBlock::prependStmt(Statement* s, UserProc* proc) {
 
 bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
     // Start with the liveness at the bottom of the BB
-    LocationSet liveLocs;
+    ExpressionSet liveLocs;
     getLiveOut(liveLocs);
     // For each RTL in this BB
     std::list<RTL*>::reverse_iterator rit;
@@ -1524,7 +1524,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
         // For each statement this RTL
         for (sit = stmts.rbegin(); sit != stmts.rend(); sit++) {
             Statement* s = *sit;
-            LocationSet defs;
+            ExpressionSet defs;
             s->getDefinitions(defs);
             // The definitions don't have refs yet
             defs.addSubscript(s);
@@ -1539,17 +1539,17 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
             // This is done in getLiveOut()
             if (s->isPhi()) continue;
             // Check for livenesses that overlap
-            LocationSet uses;
+            ExpressionSet uses;
             s->addUsedLocs(uses);
             // For each new use
-            LocationSet::iterator uu;
+            ExpressionSet::iterator uu;
             for (uu = uses.begin(); uu != uses.end(); uu++) {
-                Exp* u = (Exp*)*uu;
+                Exp* u = *uu;
                 // Only interested in subscripted vars
                 if (!u->isSubscript()) continue;
                 // Interference if we can find a live variable which differs
                 // only in the reference
-                Exp *dr;
+                Location *dr;
                 if (liveLocs.findDifferentRef((RefExp*)u, dr)) {
                     // We have an interference. Record it, but only if new
                     igraph::iterator gg = ig.find(u);
@@ -1596,7 +1596,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
 
 // Locations that are live at the end of this BB are the union of the
 // locations that are live at the start of its successors
-void BasicBlock::getLiveOut(LocationSet &liveout) {
+void BasicBlock::getLiveOut(ExpressionSet &liveout) {
     liveout.clear();
     for (unsigned i = 0; i < m_OutEdges.size(); i++) {
         PBB currBB = m_OutEdges[i];
@@ -1618,9 +1618,8 @@ void BasicBlock::getLiveOut(LocationSet &liveout) {
             // Get the jth operand to the phi function; it has a use
             // from BB *this
             Statement* def = phi->getAt(j);
-            // This will leak
             RefExp* r = new RefExp((*it)->getLeft()->clone(), def);
-            liveout.insert(r);
+            liveout.insert((Location*)r);
             if (Boomerang::get()->debugLiveness)
                 LOG << " ## Liveness: adding " << r <<
                   " due to ref to phi " << *it << " in BB at " << 
@@ -1656,9 +1655,9 @@ int BasicBlock::whichPred(PBB pred) {
 // confuse with form 'A'):
 // Pattern: <base>{}[<index>]{} where <index> could be <var> - <Kmin>
 static Unary* forma = new RefExp(
-        new Binary(opArraySubscript,
+        new BinaryLocation(opArraySubscript,
             new RefExp(
-                new Terminal(opWild),
+                new Location(opWild),
                 (Statement*)-1),
             new Terminal(opWild)),
         (Statement*)-1);
@@ -1684,9 +1683,9 @@ static Exp* formO  = new Binary(opPlus,
 // Pattern: %pc + m[%pc  + (<expr> * 4) + k]
 // where k is a small constant, typically 28 or 20
 static Exp* formR = new Binary(opPlus,
-    new Terminal(opPC),
+    new Location(opPC),
     Location::memOf(new Binary(opPlus,
-        new Terminal(opPC),
+        new Location(opPC),
         new Binary(opPlus,
             new Binary(opMult,
                 new Terminal(opWild),
@@ -1696,9 +1695,9 @@ static Exp* formR = new Binary(opPlus,
 // Pattern: %pc + m[%pc + ((<expr> * 4) - k)] - k
 // where k is a smallish constant, e.g. 288 (/usr/bin/vi 2.6, 0c4233c).
 static Exp* formr = new Binary(opPlus,
-    new Terminal(opPC),
+    new Location(opPC),
     Location::memOf(new Binary(opPlus,
-        new Terminal(opPC),
+        new Location(opPC),
         new Binary(opMinus,
             new Binary(opMult,
                 new Terminal(opWild),
