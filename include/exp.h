@@ -7,7 +7,7 @@
  *             subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.105.2.1 $
+ * $Revision: 1.105.2.2 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -16,22 +16,22 @@
  * 29 Apr 02 - Mike: TypedExp takes Type& and Exp* in opposite order; consistent
  * 10 May 02 - Mike: Added refSubExp1 etc
  * 21 May 02 - Mike: Mods for gcc 3.1
- * 13 Jul 04 - Mike: Mods for struct use of Location (as left of assign, etc)
+ * 13 Jul 04 - Mike: Location is now zero arity, with UnaryLoc etc subclasses
  */
 
 #ifndef __EXP_H_
 #define __EXP_H_
 
-/* Main class hierarchy:    Exp (abstract)
-                      _____/ | \
-                     /       |  \
-                  Unary    Const Terminal
-     TypedExp____/  |   \         \
-      FlagDef___/ Binary Location  TypeVal
-       RefExp__/    |     \
-       PhiExp_/  Ternary   BinaryLocation
-                            \
-                             TernaryLocation
+/* Main class hierarchy:   Exp (abstract)
+                      _____//\\___________
+                     /     /  \           \
+                  Unary  Const Terminal  Location
+     TypedExp____/  |   \         \         \
+      FlagDef___/ Binary Location  TypeVal  UnaryLoc
+       RefExp__/    |     \                   \
+       PhiExp_/  Ternary   BinaryLocation     BinaryLoc
+                                                \
+                                               TernaryLoc
 */
 
 #include <iostream>
@@ -208,6 +208,8 @@ virtual int getArity() {return 0;}      // Overridden for Unary, Binary, etc
     bool isTypeVal() { return op == opTypeVal;}
     // True if this is a machine feature
     bool isMachFtr() {return op == opMachFtr;}
+    // True if this is an array subscript
+    bool isArraySub() {return op == opArraySubscript;}
     // True if this is a location
     bool isLocation();
                  
@@ -655,8 +657,8 @@ protected:
 
 /*==============================================================================
  * TypedExp is a subclass of Unary, holding one subexpression and a Type
- * It is somewhat deprecated now; mostly, class Location (or a child class)
- *  can replace it
+ * It is somewhat deprecated now; mostly, class Location (or one of its child
+ * classes) can replace it
  *============================================================================*/
 class TypedExp : public Unary {
     Type   *type;
@@ -858,29 +860,16 @@ protected:
     friend class XMLProgParser;
 };  // class TypeVal
 
-class Location : public Unary {
+class Location : public Exp {
 protected:
     UserProc *proc;
     Type *ty;
 
 public:
-    // Constructor with ID, subexpression, and UserProc*
-            Location(OPER op, Exp* e, UserProc *proc);
+    // Constructor with ID and UserProc*
+            Location(OPER op, UserProc *proc);
     // Copy constructor
             Location(Location& o);
-    // Custom constructor
-    static Location* regOf(int r) {return new Location(opRegOf, new Const(r),
-        NULL);}
-    static Location* regOf(Exp *e) {return new Location(opRegOf, e, NULL);}
-    static Location* memOf(Exp *e, UserProc* p = NULL) {
-        return new Location(opMemOf, e, p);}
-    static Location* tempOf(Exp* e) {return new Location(opTemp, e, NULL);}
-    static Location* global(const char *nam, UserProc *p) {
-        return new Location(opGlobal, new Const((char*)nam), p);}
-    static Location* local(const char *nam, UserProc *p) {
-        return new Location(opLocal, new Const((char*)nam), p);}
-    static Location* param(const char *nam, UserProc *p = NULL) {
-        return new Location(opParam, new Const((char*)nam), p);}
     // Clone
     virtual Location* clone();
 
@@ -904,28 +893,56 @@ virtual void    print(std::ostream& os, bool withUses = false);
     Location(OPER op) : Unary(op), proc(NULL), ty(NULL) { }
 };  // Class Location
 
-class BinaryLocation : public Location {
+class UnaryLoc: public Location {
+    // Constructor with ID, subexpression, and UserProc*
+            UnaryLoc(OPER op, Exp* e1, UserProc *proc);
+    // Copy constructor
+            UnaryLoc(UnaryLoc& o);
+    // Custom constructors
+    static Location* regOf(int r) {return new UnaryLoc(opRegOf, new Const(r),
+        NULL);}
+    static Location* regOf(Exp *e) {return new UnaryLoc(opRegOf, e, NULL);}
+    static Location* memOf(Exp *e, UserProc* p = NULL) {
+        return new UnaryLoc(opMemOf, e, p);}
+    static Location* tempOf(Exp* e) {return new UnaryLoc(opTemp, e, NULL);}
+    static Location* global(const char *nam, UserProc *p) {
+        return new UnaryLoc(opGlobal, new Const((char*)nam), p);}
+    static Location* local(const char *nam, UserProc *p) {
+        return new UnaryLoc(opLocal, new Const((char*)nam), p);}
+    static Location* param(const char *nam, UserProc *p = NULL) {
+        return new UnaryLoc(opParam, new Const((char*)nam), p);}
+    // Clone
+    virtual UnaryLoc* clone();
+};
+
+class BinaryLoc : public UnaryLoc {
     // Needed for opArraySubscript, maybe others
 protected:
     Exp*    subExp2;        // Already has subExp1 in parent class
 public:
-            BinaryLocation(OPER op) : Location(op) {}
-            BinaryLocation(OPER op, Exp* e1, Exp* e2) :
+            BinaryLoc(OPER op) : Location(op) {}
+            BinaryLoc(OPER op, Exp* e1, Exp* e2) :
                 Location(op, e1, NULL), subExp2(e2) {}
-            BinaryLocation(OPER op, Exp* e1, Exp* e2, UserProc* proc) :
+            BinaryLoc(OPER op, Exp* e1, Exp* e2, UserProc* proc) :
                 Location(op, e1, proc), subExp2(e2) {}
+    // Clone
+    virtual BinaryLoc* clone();
+    Exp*    getSubExp2() {return subExp2;}
 };
 
-class TernaryLocation : public BinaryLocation {
+class TernaryLoc : public BinaryLoc{
     // Needed for opAt, maybe others
 protected:
     Exp*    subExp3;        // Already has subExp1,2 in parent class
 public:
-            TernaryLocation(OPER op) : BinaryLocation(op) {}
-            TernaryLocation(OPER op, Exp* e1, Exp* e2, Exp* e3) :
-                BinaryLocation(op, e1, e2, NULL), subExp3(e3) {}
-            TernaryLocation(OPER op, Exp* e1, Exp* e2, Exp* e3, UserProc* proc)
-              : BinaryLocation(op, e1, e2, proc), subExp3(e2) {}
+            TernaryLoc(OPER op) : BinaryLoc(op) {}
+            TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3) :
+                BinaryLoc(op, e1, e2, NULL), subExp3(e3) {}
+            TernaryLoc(OPER op, Exp* e1, Exp* e2, Exp* e3, UserProc* proc)
+              : BinaryLoc(op, e1, e2, proc), subExp3(e2) {}
+    // Clone
+    virtual TernaryLoc* clone();
+    Exp*    getSubExp3() {return subExp3;}
 
 };
     

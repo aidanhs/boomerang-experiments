@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.149.2.1 $
+ * $Revision: 1.149.2.2 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -160,8 +160,7 @@ TypeVal::TypeVal(Type* ty) : Terminal(opTypeVal), val(ty)
 Location::Location(OPER op, Exp *exp, UserProc *proc) : Unary(op, exp), 
                                                         proc(proc), ty(NULL)
 {
-    assert(op == opRegOf || op == opMemOf || op == opLocal ||
-           op == opGlobal || op == opParam || op == opTemp);
+    assert(isLocation());
     if (proc == NULL) {
         // eep.. this almost always causes problems
         Exp *e = exp;
@@ -279,11 +278,20 @@ void TypedExp::setType(Type* ty)
 }
 
 bool Exp::isLocation() {
-    return  op == opMemOf   || op == opRegOf ||
-            op == opGlobal  || op == opLocal ||
-            op == opParam   || op == opPC    ||
-            op == opCF      || op == opZF    ||
-            op == opFlags   || op == opFflags;
+    // A location is any expression that can be assigned to
+    switch (op) {
+        case opMemOf:   case opRegOf:
+        case opGlobal:  case opLocal: case opTemp:
+        case opParam:           // An SSL special thing
+        case opPC:
+        case opCF: case opZF: case opNF: case opOF:
+        case opFlags:   case opFflags:
+        case opArraySubscript: case opAt:
+        case opMachFtr:         // Machine feature
+            return true;
+        default:
+            return false;
+    }
 }
 
 /*==============================================================================
@@ -380,7 +388,33 @@ TypeVal* TypeVal::clone() {
 }
 
 Location* Location::clone() {
-    Location* c = new Location(op, subExp1->clone(), proc);
+    Location* c;
+    c = new Location(op, proc);
+    if (ty)
+        c->ty = ty->clone();
+    return c;
+}
+
+UnaryLoc* UnaryLoc::clone() {
+    UnaryLoc* c;
+    c = new UnaryLoc(op, subExp1->clone(), proc);
+    if (ty)
+        c->ty = ty->clone();
+    return c;
+}
+
+BinaryLoc* BinaryLoc::clone() {
+    UnaryLoc* c;
+    c = new BinaryLoc(op, subExp1->clone(), subExp2->clone(), proc);
+    if (ty)
+        c->ty = ty->clone();
+    return c;
+}
+
+TernaryLoc* TernaryLoc::clone() {
+    TernaryLoc* c;
+    c = new TernaryLoc(op, subExp1->clone(), subExp2->clone(), 
+        subExp3->clone(), proc);
     if (ty)
         c->ty = ty->clone();
     return c;
@@ -1480,7 +1514,7 @@ void Exp::doSearchChildren(Exp* search, std::list<Exp**>& li, bool once) {
     return;         // Const and Terminal do not override this
 }
 void Unary::doSearchChildren(Exp* search, std::list<Exp**>& li, bool once) {
-    subExp1->doSearch(search, subExp1, li, once);
+        subExp1->doSearch(search, subExp1, li, once);
 }
 void Binary::doSearchChildren(Exp* search, std::list<Exp**>& li, bool once) {
     getSubExp1()->doSearch(search, subExp1, li, once);

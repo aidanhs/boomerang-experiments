@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.112.2.2 $
+ * $Revision: 1.112.2.3 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2716,7 +2716,7 @@ Assign::Assign(Assign& o) {
 
 Statement* Assign::clone() {
     Assign* a = new Assign(lhs->clone(), rhs->clone());
-    a->guard = guard->clone();
+    if (guard) a->guard = guard->clone(); else a->guard = NULL;
     // Statement members
     a->pbb = pbb;
     a->proc = proc;
@@ -2807,7 +2807,7 @@ void Assign::simplify() {
     // Mike writes some decent type analysis.
 //
 //  HACK
-//  HACK ME AWAY
+//  HACK ME AWAY: MVE
 //  HACK
     if (lhs->getOper() == opMemOf && 
         lhs->getSubExp1()->getOper() == opSubscript) {

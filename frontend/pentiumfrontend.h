@@ -34,8 +34,8 @@ virtual platform getFrontEndId() { return PLAT_PENTIUM; }
 virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
                 bool frag = false, bool spec = false);
 
-virtual std::vector<Exp*> &getDefaultParams();
-virtual std::vector<Exp*> &getDefaultReturns();
+virtual std::vector<Location*> &getDefaultParams();
+virtual std::vector<Location*> &getDefaultReturns();
 
 virtual ADDRESS getMainEntryPoint( bool &gotMain );
 
@@ -49,14 +49,15 @@ private:
     /*
      * Emit a set instruction.
      */
-        void 	emitSet(std::list<RTL*>* pRtls, std::list<RTL*>::iterator& itRtl, ADDRESS uAddr,
-  			Exp* pLHS, Exp* cond);
+        void 	emitSet(std::list<RTL*>* pRtls,
+            std::list<RTL*>::iterator& itRtl, ADDRESS uAddr, Location* pLHS,
+            Exp* cond);
 
     /*
      * Handle the case of being in state 23 and encountering a set instruction.
      */
-    	void 	State25(Exp* pLHS, Exp* pRHS, std::list<RTL*>* pRtls, std::list<RTL*>::iterator& rit,
-    			ADDRESS uAddr);
+    	void 	State25(Location* pLHS, Exp* pRHS, std::list<RTL*>* pRtls,
+            std::list<RTL*>::iterator& rit, ADDRESS uAddr);
 
 	int idPF;              // Parity flag
 

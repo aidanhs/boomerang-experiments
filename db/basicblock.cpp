@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.78.2.1 $
+ * $Revision: 1.78.2.2 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1549,7 +1549,7 @@ bool BasicBlock::calcLiveness(igraph& ig, int& localNum) {
                 if (!u->isSubscript()) continue;
                 // Interference if we can find a live variable which differs
                 // only in the reference
-                Location *dr;
+                Exp *dr;
                 if (liveLocs.findDifferentRef((RefExp*)u, dr)) {
                     // We have an interference. Record it, but only if new
                     igraph::iterator gg = ig.find(u);

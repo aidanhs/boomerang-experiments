@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.12.2.1 $
+ * $Revision: 1.12.2.2 $
  *
  * 22 Aug 03 - Mike: Created
  */
@@ -296,8 +296,8 @@ conSet.print(os); LOG << os.str().c_str();
         Exp* rem = c, *term;
         while ((term = nextConjunct(rem)) != NULL) {
             assert(term->isEquality());
-            Exp* lhs = ((Binary*)term)->getSubExp1();
-            Exp* rhs = ((Binary*)term)->getSubExp2();
+            Location* lhs = (Location*)((Binary*)term)->getSubExp1();
+            Location* rhs = (Location*)((Binary*)term)->getSubExp2();
             if (rhs->isTypeOf()) {
                 // Of the form typeof(x) = typeof(z)
                 // Insert into equates 

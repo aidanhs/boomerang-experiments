@@ -43,8 +43,8 @@ virtual platform getFrontEndId() { return PLAT_SPARC; }
 virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
     bool frag = false, bool spec = false);
 
-virtual std::vector<Exp*> &getDefaultParams();
-virtual std::vector<Exp*> &getDefaultReturns();
+virtual std::vector<Location*> &getDefaultParams();
+virtual std::vector<Location*> &getDefaultReturns();
 
 virtual ADDRESS getMainEntryPoint( bool &gotMain );
 
@@ -88,7 +88,7 @@ private:
 	void 	emitNop(std::list<RTL*>* pRtls, ADDRESS uAddr);
 	void 	emitCopyPC(std::list<RTL*>* pRtls, ADDRESS uAddr);
 	unsigned fetch4(unsigned char* ptr);
-	void 	appendAssignment(Exp* lhs, Exp* rhs, Type* type, ADDRESS addr,
+	void 	appendAssignment(Location* lhs, Exp* rhs, Type* type, ADDRESS addr,
               std::list<RTL*>* lrtl);
 	void 	quadOperation(ADDRESS addr, std::list<RTL*>* lrtl, OPER op);
 

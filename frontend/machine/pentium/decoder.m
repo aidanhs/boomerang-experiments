@@ -14,7 +14,7 @@
  *              instructions are processed in decoder_low.m
  *============================================================================*/ 
 /*
- * $Revision: 1.28 $
+ * $Revision: 1.28.2.1 $
  *
  * 26 Apr 02 - Mike: Changes for boomerang
  * 18 Nov 02 - Mike: Mods for MOV.Ed.Iv^od etc. Also suppressed warning re name
@@ -2361,9 +2361,9 @@ void genBSFR(ADDRESS pc, Exp* dest, Exp* modrm, int init, int size,
     switch (BSFRstate) {
         case 0:
             s = new Assign(
-                new IntegerType(1),
-                new Terminal(opZF),
+                new Location(opZF),
                 new Const(1));
+            ((Assign*)s)->getLeft()->setType(new IntegerType(1));
             stmts->push_back(s);
             b = new BranchStatement;
             b->setDest(pc+numBytes);
@@ -2376,23 +2376,23 @@ void genBSFR(ADDRESS pc, Exp* dest, Exp* modrm, int init, int size,
             break;
         case 1:
             s = new Assign(
-                new IntegerType(1),
-                new Terminal(opZF),
+                new Location(opZF),
                 new Const(0));
+            ((Assign*)s)->getLeft()->setType(new IntegerType(1));
             stmts->push_back(s);
             s = new Assign(
-                new IntegerType(size),
-                dest->clone(),
+                (Location*)dest->clone(),
                 new Const(init));
+            ((Assign*)s)->getLeft()->setType(new IntegerType(size));
             stmts->push_back(s);
             break;
         case 2:
             s = new Assign(
-                new IntegerType(size),
-                dest->clone(),
+                (Location*)dest->clone(),
                 new Binary(incdec,
                     dest->clone(),
                     new Const(1)));
+            ((Assign*)s)->getLeft()->setType(new IntegerType(size));
             stmts->push_back(s);
             b = new BranchStatement;
             b->setDest(pc+2);

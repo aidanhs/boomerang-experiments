@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.40.2.1 $
+ * $Revision: 1.40.2.2 $
  * 21 Oct 98 - Mike: converted from frontsparc.cc
  * 21 May 02 - Mike: Mods for boomerang
  * 27 Nov 02 - Mike: Fixed a bug in the floating point fixup code, which was
@@ -196,9 +196,9 @@ bool PentiumFrontEnd::processProc(ADDRESS uAddr, UserProc* pProc,
     return true;
 }
 
-std::vector<Exp*> &PentiumFrontEnd::getDefaultParams()
+std::vector<Location*> &PentiumFrontEnd::getDefaultParams()
 {
-    static std::vector<Exp*> params;
+    static std::vector<Location*> params;
     if (params.size() == 0) {
         params.push_back(Location::regOf(24/*eax*/));
         params.push_back(Location::regOf(25/*ecx*/));
@@ -213,9 +213,9 @@ std::vector<Exp*> &PentiumFrontEnd::getDefaultParams()
     return params;
 }
 
-std::vector<Exp*> &PentiumFrontEnd::getDefaultReturns()
+std::vector<Location*> &PentiumFrontEnd::getDefaultReturns()
 {
-    static std::vector<Exp*> returns;
+    static std::vector<Location*> returns;
     if (returns.size() == 0) {
         returns.push_back(Location::regOf(24/*eax*/));
         returns.push_back(Location::regOf(25/*ecx*/));
@@ -930,7 +930,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
 // Emit Rtl of the form *8* lhs = [cond ? 1 : 0]
 // Insert before rit
 void PentiumFrontEnd::emitSet(std::list<RTL*>* BB_rtls, std::list<RTL*>::iterator& rit,
-  ADDRESS uAddr, Exp* lhs, Exp* cond) {
+  ADDRESS uAddr, Location* lhs, Exp* cond) {
 
     Statement* asgn = new Assign(
         lhs,
@@ -945,7 +945,7 @@ void PentiumFrontEnd::emitSet(std::list<RTL*>* BB_rtls, std::list<RTL*>::iterato
     BB_rtls->insert(rit, pRtl);
 }
 
-void PentiumFrontEnd::State25(Exp* lhs, Exp* rhs, std::list<RTL*>* BB_rtls,
+void PentiumFrontEnd::State25(Location* lhs, Exp* rhs, std::list<RTL*>* BB_rtls,
   std::list<RTL*>::iterator& rit, ADDRESS uAddr) {
     Binary cfOrZf(opOr, new Terminal(opCF), new Terminal(opZF));
     Unary notZf(opNot, new Terminal(opZF));
