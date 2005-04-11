@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.3 $
+ * $Revision: 1.148.2.4 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -41,7 +41,9 @@
 #include "util.h"
 #include "signature.h"
 #include "visitor.h"
+#include "dataflow.h"
 #include <sstream>
+#include <algorithm>
 
 
 extern char debug_buffer[];		 // For prints functions
@@ -1274,12 +1276,11 @@ void CaseStatement::simplify() {
 
 /*==============================================================================
  * FUNCTION:		 CallStatement::CallStatement
- * OVERVIEW:		 Constructor for a call that we have extra information
- *					 for and is part of a prologue.
+ * OVERVIEW:		 Constructor for a call
  * PARAMETERS:		 None
  * RETURNS:			 <nothing>
  *============================================================================*/
-CallStatement::CallStatement(): returnAfterCall(false) {
+CallStatement::CallStatement(): returnAfterCall(false), returns(NULL) {
 	kind = STMT_CALL;
 	procDest = NULL;
 	signature = NULL;
@@ -1292,15 +1293,6 @@ CallStatement::CallStatement(): returnAfterCall(false) {
  * RETURNS:		  <nothing>
  *============================================================================*/
 CallStatement::~CallStatement() {
-#if 0
-	unsigned int i;
-	for (i = 0; i < arguments.size(); i++)
-		delete arguments[i];
-	for (i = 0; i < returns.size(); i++) {
-		delete returns[i].e;
-		delete returns[i].type;
-	}
-#endif
 }
 
 /*==============================================================================
@@ -1314,10 +1306,12 @@ std::vector<Exp*>& CallStatement::getArguments() {
 	return arguments;
 }
 
-int CallStatement::getNumReturns() {
-	return returns.size();
+unsigned CallStatement::getNumReturns() {
+	if (returns == NULL) return 0;
+	return returns->getNumReturns();
 }
 
+#if 0
 Exp *CallStatement::getReturnExp(int i) {
 	if (i >= (int)returns.size()) return NULL;
 	return returns[i].e;
@@ -1329,14 +1323,17 @@ int CallStatement::findReturn(Exp *e) {
 			return i;
 	return -1;
 }
+#endif
 
-void CallStatement::removeReturn(Exp *e)
-{
-	int i = findReturn(e);
-	if (i != -1) {
-		for (unsigned j = i+1; j < returns.size(); j++)
-			returns[j-1] = returns[j];			// Struct assignment
-		returns.resize(returns.size()-1);
+#if 0		// No, this will happen from the callee now
+void CallStatement::removeReturn(Exp *e) {
+	if (returns == NULL) return;
+	ReturnStatement::iterator it;
+	for (it = returns->begin(); it != returns->end(); it++) {
+		if ((*it)->getLeft() == e) {
+			returns->erase(it);
+			return;
+		}
 	}
 }
 
@@ -1353,16 +1350,12 @@ void CallStatement::ignoreReturn(int n)
 	returns[n].e = NULL;
 }
 
-void CallStatement::addReturn(Exp *e, Type* ty /* = NULL */)
-{
-	ReturnInfo ri;
-	ri.e = e;
-	if (ty == NULL)
-		ri.type = new VoidType();
-	else
-		ri.type = ty;
-	returns.push_back(ri);
+void CallStatement::addReturn(Assign* a) {
+std::cerr << "Call statement " << number << " having a return " << a << " added!\n";
+	if (returns == NULL) returns = new ReturnStatement;
+	returns->push_back(a);
 }
+#endif
 
 Exp *CallStatement::getProven(Exp *e) {
 	if (procDest)
@@ -1484,32 +1477,16 @@ void CallStatement::setArguments(std::vector<Exp*>& arguments) {
 /*==============================================================================
  * FUNCTION:	  CallStatement::setSigArguments
  * OVERVIEW:	  Set the arguments of this call based on signature info
+ * NOTE:		  Should only be called for calls to library functions
  * PARAMETERS:	  None
  * RETURNS:		  <nothing>
  *============================================================================*/
 void CallStatement::setSigArguments() {
 	if (signature) return;				// Already done
 	if (procDest == NULL) {
-		if (proc == NULL) return; 		// do it later
-		unsigned i;
-#if 0
-		// computed calls must have their arguments initialized to something 
-		std::vector<Exp*> &params = proc->getProg()->getDefaultParams();
-		implicitArguments.resize(params.size(), NULL);
-		for (i = 0; i < params.size(); i++) {
-			implicitArguments[i] = params[i]->clone();
-			implicitArguments[i]->fixLocationProc(proc);
-		}
-#endif
-		std::vector<Exp*> &rets = proc->getProg()->getDefaultReturns();
-		returns.resize(0);
-		for (i = 0; i < rets.size(); i++) {
-			if (!(*rets[i] == *pDest)) {
-				ReturnInfo ri;
-				ri.e = rets[i]->clone();
-				returns.push_back(ri);
-			}
-		}
+assert(0);		// FIXME: Check MVE HACK!
+		// if (proc == NULL) return; 		// do it later (?)
+		returns = new DefineAll;
 		return;
 	} else 
 		// Clone here because each call to procDest could have a different signature, modified by ellipsisProcessing
@@ -1547,13 +1524,7 @@ void CallStatement::setSigArguments() {
 #endif
  
 	// initialize returns
-	returns.clear();
-	for (i = 0; i < signature->getNumReturns(); i++) {
-		ReturnInfo ri;
-		ri.e = signature->getReturnExp(i)->clone();
-		ri.type = signature->getReturnType(i)->clone();
-		returns.push_back(ri);
-	}
+	returns = new DefineAll;
 }
 
 #if 0
@@ -1574,14 +1545,8 @@ Exp* CallStatement::getReturnLoc() {
 bool CallStatement::search(Exp* search, Exp*& result) {
 	result = NULL;
 	unsigned int i;
-	for (i = 0; i < returns.size(); i++) {
-		if (returns[i].e && *returns[i].e == *search) {
-			result = returns[i].e;
-			return true;
-		}
-		if (returns[i].e && returns[i].e->search(search, result)) 
-			return true;
-	}
+	if (returns && returns->search(search, result))
+		return true;
 	for (i = 0; i < arguments.size(); i++) {
 		if (*arguments[i] == *search) {
 			result = arguments[i];
@@ -1611,14 +1576,7 @@ bool CallStatement::search(Exp* search, Exp*& result) {
 bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
 	bool change = GotoStatement::searchAndReplace(search, replace);
 	unsigned int i;
-	for (i = 0; i < returns.size(); i++) 
-		if (returns[i].e) {
-			bool ch;
-			returns[i].e = returns[i].e->searchReplaceAll(search, replace, ch);
-			if (ch)
-				updateReturnWithType(i);
-			change |= ch;
-		}
+	change |= returns->searchAndReplace(search, replace);
 	for (i = 0; i < arguments.size(); i++) {
 		bool ch;
 		arguments[i] = arguments[i]->searchReplaceAll(search, replace, ch);
@@ -1626,13 +1584,6 @@ bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
 			updateArgumentWithType(i);
 		change |= ch;
 	}
-#if 0
-	for (i = 0; i < implicitArguments.size(); i++) {
-		bool ch;
-		implicitArguments[i] = implicitArguments[i]->searchReplaceAll(search, replace, ch);
-		change |= ch;
-	}
-#endif
 	return change;
 }
 
@@ -1649,14 +1600,7 @@ bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
 	for (i = 0; i < arguments.size(); i++)
 		if (arguments[i]->searchAll(search, result))
 			found = true;
-#if 0
-	for (i = 0; i < implicitArguments.size(); i++)
-		if (implicitArguments[i]->searchAll(search, result))
-			found = true;
-#endif
-	 for (i = 0; i < returns.size(); i++)
-		if (returns[i].e && returns[i].e->searchAll(search, result))
-			found = true;
+	found |= returns->searchAll(search, result);
 	return found;
 }
 
@@ -1668,8 +1612,23 @@ bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
  *============================================================================*/
 void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
-	// os << "*" << returnType << "* ";
  
+	// Return(s), if any
+	if (returns->getNumReturns()) {
+		os << "{";
+		RetStatement::iterator rr;
+		bool first = true;
+		for (rr = returns->begin(); rr != returns->end(); rr++) {
+			if (first)
+				first = false;
+			else
+				os << ", ";
+			(*rr)->getType()->starPrint(os);
+			os << " " << (*rr)->getLeft();				// e.g. *32* r24
+		}
+		os << "} := ";
+	}
+
 	os << "CALL ";
 	if (procDest)
 		os << procDest->getName();
@@ -1700,23 +1659,11 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 #endif
 	os << ")";
 
-	// And the return locations 
-	if (getNumReturns()) {
-		os << " { ";
-		for (int i = 0; i < getNumReturns(); i++) {
-			if (i != 0)
-				os << ", ";
-			if (getReturnExp(i) == NULL)
-				os << "NULL";
-			else
-				os << getReturnExp(i);
-		}
-		os << " }";
-	}
-
+#if 1
 	// Collected reaching definitions
 	os << "\n              Reaching definitions: ";
 	col.print(os);
+#endif
 }
 
 /*==============================================================================
@@ -1819,14 +1766,6 @@ void CallStatement::simplify() {
 	}
 #endif
 
-	if (DFA_TYPE_ANALYSIS) return;
-	for (i = 0; i < returns.size(); i++) {
-		
-		if (returns[i].e == NULL)
-			continue;
-
-		returns[i].e = returns[i].e->simplifyArith()->simplify();
-	}
 }
 
 #if 0
@@ -1860,20 +1799,16 @@ bool CallStatement::usesExp(Exp *e) {
 		}
 	}
 #endif
-	for (i = 0; i < returns.size(); i++) {
-		if (returns[i].e && returns[i].e->isMemOf() && returns[i].e->getSubExp1()->search(e, where))
+	RetStatement::iterator rr;
+	for (rr = returns->begin(); rr != returns->end(); rr++) {
+		Exp* lhs = (*rr)->getLeft();
+		if (lhs->isMemOf() && ((Location*)lhs)->getSubExp1()->search(e, where))
 			return true;
 	}
 	if (procDest == NULL)
 		// No destination (e.g. indirect call)
 		// For now, just return true (overstating uses is safe)
 		return true;
-#if 0	// Huh? This was wrong anyway!
-	if (!procDest->isLib()) {
-		// Get the info that was summarised on the way down
-		if (liveEntry.find(e)) return true;
-	}
-#endif
 	return false;
 }
 
@@ -1885,9 +1820,8 @@ bool CallStatement::isDefinition()
 }
 
 void CallStatement::getDefinitions(LocationSet &defs) {
-	for (unsigned i = 0; i < returns.size(); i++) 
-		if (returns[i].e)
-			defs.insert(returns[i].e);
+	if (returns)
+		returns->getDefinitions(defs);
 }
 
 bool CallStatement::convertToDirect() {
@@ -1948,10 +1882,18 @@ bool CallStatement::convertToDirect() {
 		Signature *sig = p->getSignature();
 
 		// 1
-		returns.resize(sig->getNumReturns());
-		int i;
-		for (i = 0; i < sig->getNumReturns(); i++)
-			returns[i].e = sig->getReturnExp(i)->clone();
+		if (procDest->isLib()) {
+			int i;
+			returns = new ReturnStatement;
+        	for (i = 0; i < sig->getNumReturns(); i++) {
+				ImplicitAssign* ia = new ImplicitAssign(sig->getReturnExp(i)->clone());
+            	returns->addReturn(ia);
+			}
+		}
+		else
+			if (procDest)
+				returns = (RetStatement*)((UserProc*)procDest)->getTheReturnStatement()->clone();
+			// else it remains as a DefineAll
 
 		// 2
 		proc->fixCallRefs();
@@ -2006,6 +1948,7 @@ bool CallStatement::convertToDirect() {
 		assert((int)arguments.size() == sig->getNumParams());
 #else
 		arguments.resize(sig->getNumParams(), NULL);
+		int i;
 		for (i = 0; i < sig->getNumParams(); i++) {
 			arguments[i] = sig->getParamExp(i);
 		}
@@ -2051,25 +1994,6 @@ void CallStatement::updateArgumentWithType(int n)
 	}
 }
 
-// Remove when dfa type analysis stable
-void CallStatement::updateReturnWithType(int n)
-{
-	if (procDest) {
-		Type *ty = procDest->getSignature()->getReturnType(n);
-		if (ty) {
-			Exp *e = returns[n].e;
-			if (e->isSubscript()) e = e->getSubExp1();
-			if (e->isLocation())
-				((Location*)e)->setType(ty->clone());
-			else {
-				Const *c = dynamic_cast<Const*>(e);
-				if (c)
-					c->setType(ty->clone());
-			}
-		}
-	}
-}
-
 bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 	bool change = false;
 	bool convertIndirect = false;
@@ -2082,7 +2006,10 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 		}
 	}
 	unsigned int i;
-	for (i = 0; i < returns.size(); i++)
+
+	// Do we ever want to substitute into returns? (Even m[xxx]?) For now, no...
+#if 0
+	for (i = 0; i < returns.size(); i++) {
 		if (returns[i].e && returns[i].e->getOper() == opMemOf) {
 			Exp *e = findDefFor(returns[i].e->getSubExp1());
 			if (e)
@@ -2094,9 +2021,11 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 				if (0 & VERBOSE)
 					LOG << "doReplaceRef: updated return[" << i << "] with " << returns[i].e << "\n";
 
-				updateReturnWithType(i);
 			}
-		}	 
+		}
+	}
+#endif
+
 	for (i = 0; i < arguments.size(); i++) {
 		arguments[i] = arguments[i]->searchReplaceAll(from, to, change);
 		if (change) {
@@ -2168,16 +2097,8 @@ void CallStatement::fromSSAform(igraph& ig) {
 	for (i=0; i < n; i++) {
 		arguments[i] = arguments[i]->fromSSA(ig);
 	}
-#if 0
-	n = implicitArguments.size();
-	for (i=0; i < n; i++) {
-		implicitArguments[i] = implicitArguments[i]->fromSSA(ig);
-	}
-#endif
-	n = returns.size();
-	for (i=0; i < n; i++) 
-		if (returns[i].e)
-			returns[i].e = returns[i].e->fromSSAleft(ig, this);
+	if (returns)
+		returns->fromSSAform(ig);
 }
 
 
@@ -2291,28 +2212,18 @@ void Assignment::setTypeFor(Exp* e, Type* ty) {
 
 // Scan the returns for e. If found, return the type associated with that return
 Type* CallStatement::getTypeFor(Exp* e) {
-	int n = returns.size();
-	for (int i=0; i < n; i++) {
-		if (returns[i].e && *returns[i].e == *e)
-			return returns[i].type;
-	}
-	return NULL;
+	if (returns == NULL) return NULL;
+	return returns->getTypeFor(e);
 }
 
 void CallStatement::setTypeFor(Exp* e, Type* ty) {
-	int n = returns.size();
-	for (int i=0; i < n; i++) {
-		if (returns[i].e && *returns[i].e == *e) {
-			returns[i].type = ty;
-			return;
-		}
-	}
-	assert(0);
+	assert(returns);
+	returns->setTypeFor(e, ty);
 }
 
 
-// This is temporarily horrible till types are consistently stored in
-// assignments (including implicit and BoolAssign), and CallStatement
+// This is temporarily horrible till types are consistently stored in assignments (including implicit and BoolAssign),
+// and CallStatement
 Type *Statement::getTypeFor(Exp *e, Prog *prog)
 {
 	Type *ty = NULL;
@@ -2358,11 +2269,10 @@ Type *Statement::getTypeFor(Exp *e, Prog *prog)
 			CallStatement* call = (CallStatement*)this;
 			Proc* dest = call->getDestProc();
 			if (dest && !dest->isLib()) {
-				ReturnStatement* ret = ((UserProc*)dest)->getTheReturnStatement();
+				RetStatement* ret = call->getReturns();
 				if (ret) {
-					std::vector<Exp*>& retExps = ret->getReturns();
-					std::vector<Exp*>::iterator rr;
-					for (rr = retExps.begin(); rr != retExps.end(); rr++) {
+					RetStatement::iterator rr;
+					for (rr = ret->begin(); rr != ret->end(); rr++) {
 						RefExp* r = (RefExp*)*rr;
 						if (!r->isSubscript()) continue;
 						Exp* base = r->getSubExp1();
@@ -2435,7 +2345,8 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 	// Hack to remove locals that really aren't used
 	if (getDestProc() && getDestProc()->isLib()) {
 		int sp = signature->getStackRegister(prog);
-		ignoreReturn(Location::regOf(sp));
+		//ignoreReturn(Location::regOf(sp));
+		removeReturn(Location::regOf(sp));
 #if 0
 		unsigned int i;
 		for (i = 0; i < implicitArguments.size(); i++) {
@@ -2600,7 +2511,7 @@ void CallStatement::setSigParam(Type* ty, bool isScanf) {
  * PARAMETERS:		 None
  * RETURNS:			 <nothing>
  *============================================================================*/
-ReturnStatement::ReturnStatement() : nBytesPopped(0), retAddr(NO_ADDRESS) {
+ReturnStatement::ReturnStatement() : retAddr(NO_ADDRESS) {
 	kind = STMT_RET;
 }
 
@@ -2621,8 +2532,13 @@ ReturnStatement::~ReturnStatement() {
  *============================================================================*/
 Statement* ReturnStatement::clone() {
 	ReturnStatement* ret = new ReturnStatement();
-	ret->pDest = NULL;						// pDest should be null
-	ret->m_isComputed = m_isComputed;
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ++rr)
+		ret->defs.insert((*rr)->clone());
+	ret->retAddr = retAddr;
+	DefCollector::iterator cc;
+	for (cc = col.begin(); cc != col.end(); ++cc)
+		ret->col.insert(*cc);
 	// Statement members
 	ret->pbb = pbb;
 	ret->proc = proc;
@@ -2645,11 +2561,6 @@ void ReturnStatement::simplify() {
 		returns[i] = returns[i]->simplify();
 }
 
-void ReturnStatement::setSigArguments() {
-	for (int i = 0; i < proc->getSignature()->getNumReturns(); i++)
-		returns.push_back(proc->getSignature()->getReturnExp(i)->clone());
-}
-
 void ReturnStatement::removeReturn(int n)
 {
 	int i = n;
@@ -2660,10 +2571,10 @@ void ReturnStatement::removeReturn(int n)
 	}
 }
 
-void ReturnStatement::addReturn(Exp *e)
-{
-	returns.push_back(e);
+void RetStatement::addReturn(Assignment* a) {
+	defs.insert(a);
 }
+
 
 // Convert from SSA form
 void ReturnStatement::fromSSAform(igraph& ig) {
@@ -2677,10 +2588,11 @@ void ReturnStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
 	// os << "*" << type << "* ";
 	os << "RET ";
-	for (unsigned i = 0; i < returns.size(); i++) {
-		if (i != 0)
+	std::set<Assignment*, lessExpStar>::iterator it;
+	for (it = returns.begin(); it != returns.end(); it++) {
+		if (it+1 != returns.end())
 			os << ", ";
-		os << returns[i];
+		(*it)->printCompact(os);
 	}
 	// Collected reaching definitions
 	os << "\t\tReaching definitions: ";
@@ -2828,8 +2740,7 @@ void BoolAssign::setCondExpr(Exp* pss) {
  * PARAMETERS:		os: stream
  * RETURNS:			<Nothing>
  *============================================================================*/
-void BoolAssign::print(std::ostream& os /*= cout*/) {
-	os << std::setw(4) << std::dec << number << " ";
+void BoolAssign::printCompact(std::ostream& os /*= cout*/) {
 	os << "BOOL ";
 	lhs->print(os);
 	os << " := CC(";
@@ -3189,8 +3100,11 @@ void Assign::fixSuccessor() {
 	rhs = rhs->fixSuccessor();
 }
 
-void Assign::print(std::ostream& os) {
+void Assignment::print(std::ostream& os) {
 	os << std::setw(4) << std::dec << number << " ";
+	printCompact(os);
+}
+void Assign::printCompact(std::ostream& os) {
 	os << "*" << type << "* ";
 	if (guard) 
 		os << guard << " => ";
@@ -3198,8 +3112,7 @@ void Assign::print(std::ostream& os) {
 	os << " := ";
 	if (rhs) rhs->print(os);
 }
-void PhiAssign::print(std::ostream& os) {
-	os << std::setw(4) << std::dec << number << " ";
+void PhiAssign::printCompact(std::ostream& os) {
 	os << "*" << type << "* ";
 	if (lhs) lhs->print(os);
 	os << " := phi";
@@ -3243,8 +3156,7 @@ void PhiAssign::print(std::ostream& os) {
 		os << ")";
 	}
 }
-void ImplicitAssign::print(std::ostream& os) {
-	os << std::setw(4) << std::dec << number << " ";
+void ImplicitAssign::printCompact(std::ostream& os) {
 	os << "*" << type << "* ";
 	if (lhs) lhs->print(os);
 	os << " := -";
@@ -3404,10 +3316,8 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
 	}
 	if (!changeright && !changeleft) {
 		if (VERBOSE) {
-			// I used to be hardline about this and assert fault,
-			// but now I do such weird propagation orders that this can
-			// happen.	It does however mean that some dataflow information
-			// is wrong somewhere.	- trent
+			// I used to be hardline about this and assert fault, but now I do such weird propagation orders that this 
+			// can happen.	It does however mean that some dataflow information is wrong somewhere.	- trent
 			LOG << "could not change " << from << " to " << to << " in " << this << " !!\n";
 		}
 	}
@@ -4154,3 +4064,74 @@ void CallStatement::setLeftFor(Exp* forExp, Exp* newExp) {
 	}
 }
 
+// Copy the given reaching definitions to the return statement, at depth d
+void ReturnStatement::copyReachingDefs(int d) {
+	Collector::iterator it;
+	for (it = col.begin(); it != col.end(); it++) {
+		if ((*it)->getMemDepth() == d) {
+			addReturnWithCheck(*it);
+std::cerr << "HACK: ReturnStatement now " << this << "\n";
+		}
+	}
+}
+
+// Copy the given reaching definitions to the returns for this call, at depth d
+void CallStatement::copyToReturns(Collector* col, int d) {
+	Collector::iterator it;
+	for (it = col->begin(); it != col->end(); it++) {
+		if ((*it)->getMemDepth() == d) {
+			ReturnInfo* ri = new ReturnInfo;
+			ri->e = (*it)->getSubExp1();
+			Statement* def = (*it)->getDef();
+			if (def)
+				ri->type = def->getTypeFor(ri->e);
+			else
+				ri->type = new VoidType();
+			returns.push_back(*ri);
+		}
+	}
+}
+
+bool Assignment::defines(Exp* loc) {
+	return (*lhs == *loc);
+}
+
+bool CallStatement::defines(Exp* loc) {
+	if (returns == NULL) return false;		// Should never happen?
+	return returns->defines(loc);			// Delegate to the ReturnStatement object
+}
+
+// Does a ReturnStatement define anything? I say yes, so we can propagate into the ReturnStatement, and delete the
+// original definitions (something needs to define it). Also, now CallStatements delegate define() here (see above)
+bool ReturnStatement::defines(Exp* loc) {
+	iterator it;
+	for (it = returns.begin(); it != returns.end(); it++) {
+		if ((*it)->defines(loc)) return true;
+	}
+	return false;
+}
+
+void RetStatement::getDefinitions(LocationSet& defs) {
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); rr++)
+		(*rr)->getDefinitions(defs);
+}
+
+Type* RetStatement::getTypeFor(Exp* e) {
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); rr++) {
+		if (*(*rr)->getLeft() == *e)
+			return (*rr)->getType();
+	}
+}
+
+void RetStatement::setTypeFor(Exp*e, Type* ty) {
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); rr++) {
+		if (*(*rr)->getLeft() == *e) {
+			(*rr)->setType(ty);
+			return;
+		}
+	}
+	assert(0);
+}

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.3 $
+ * $Revision: 1.76.2.4 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -24,20 +24,20 @@
  * 17 Sep 04 - Mike: PhiExp in ordinary assignment replaced by PhiAssign statement
  * 27 Oct 04 - Mike: PhiAssign has vector of PhiInfo now; needed because a statement pointer alone does not uniquely
  *						define what is defined. It is now possible for all parameters of a phi to have different exps
- * 15 Mar 05 - Mike: Removed implicit arguments; replaced with Collector
+ * 15 Mar 05 - Mike: Removed implicit arguments; replaced with DefCollector
+ * 11 Apr 05 - Mike: Added RetStatement, DefineAll
  */
 
 #ifndef _STATEMENT_H_
 #define _STATEMENT_H_
 
-/* Class hierarchy:		 Statement (abstract)
-						 /		 \
-						/		  \
-			 GotoStatement	Assignment (abstract)
- BranchStatement__/			/	/|\	  \
- ReturnStatement_/	   Assign  / | \  PhiAssign
- CallStatement__/ ImplicitAssign |  BoolAssign
- CaseStatement_/			SigmaAssign (soon)
+/* Class hierarchy:   Statement*			(* = abstract)
+                    __/   |   \________
+                   /      |            \
+       GotoStatement  Assignment*      RetStatement*
+ BranchStatement_/     /  | | \          \__ReturnStatement
+ CaseStatement__/  Assign | | BoolAssign  \_DefineAll
+ CallStatement_/  PhiAssign ImplicitAssign
 */
 
 #include <vector>
@@ -51,7 +51,7 @@
 #include "exphelp.h"	// For lessExpStar
 #include "types.h"
 #include "managed.h"
-#include "dataflow.h"	// For embedded object Collector
+#include "dataflow.h"	// For embedded objects DefCollector and UseCollector
 
 class BasicBlock;
 typedef BasicBlock *PBB;
@@ -72,6 +72,7 @@ class HLLCode;
 class Assign;
 class RTL;
 class XMLProgParser;
+class RetStatement;
 
 // The map of interferences. It maps locations such as argc{55} to a local, e.g. local17
 typedef std::map<Exp*, Exp*, lessExpStar> igraph;
@@ -207,8 +208,7 @@ virtual bool		isBranch() { return kind == STMT_BRANCH; }
 		bool		isFpop();
 
 		// returns a set of locations defined by this statement
-		// Classes with no definitions (e.g. GotoStatement and children) don't
-		// override this
+		// Classes with no definitions (e.g. GotoStatement and children) don't override this
 virtual void		getDefinitions(LocationSet &def) {}
 
 		// returns an expression that would be used to reference the value
@@ -358,7 +358,12 @@ virtual			~Assignment();
 	// Clone
 virtual Statement* clone() = 0;
 
-	// Accept a visitor to this Statement
+		// We also want operator< for assignments. For example, we want ReturnStatement to contain a set of (pointers
+		// to) Assignments, so we can automatically make sure that existing assignments are not duplicated
+		// Assume that we won't want sets of assignments differing by anything other than LHSs
+		bool	operator<(const Assignment& o) {return lhs < o.lhs;}
+
+		// Accept a visitor to this Statement
 virtual bool	accept(StmtVisitor* visitor) = 0;
 virtual bool	accept(StmtExpVisitor* visitor) = 0;
 virtual bool	accept(StmtModifier* visitor) = 0;
@@ -378,7 +383,7 @@ virtual bool	isDefinition() { return true; }
 virtual void	getDefinitions(LocationSet &defs);
 		
 	// get how to access this lvalue
-virtual Exp*		getLeft() { return lhs; }
+virtual Exp*		getLeft() { return lhs; }		// Note: now only defined for Assignments, not all Statements
 virtual	void		setLeftFor(Exp* forExp, Exp* newExp) {lhs = newExp; }
 
 		// set the lhs to something new
@@ -960,12 +965,6 @@ virtual	void	regReplace(UserProc* proc);
 	friend class XMLProgParser;
 };			// class CaseStatement
 
-struct ReturnInfo {
-		Exp*	e;
-		Type*	type;
-				ReturnInfo();
-};
-
 /*==============================================================================
  * CallStatement: represents a high level call. Information about parameters and
  * the like are stored here.
@@ -976,20 +975,19 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call
 		std::vector<Exp*> arguments;
 
-		// The set of locations that are defined by this call, and their types
-        // Note: returns is a slightly confusing name; these are really definitions. The opposite of the returns in a
-        // ReturnStatement (which don't define anything, and hence don't store a type).
-		std::vector<ReturnInfo> returns;
+		// The set of locations that are defined by this call, and their types, are now store in a RetStatement.
+		// Where a callee is known, it will be an ordinary ReturnStatement. Otherwise, it will be a DefineAll.
+		RetStatement* returns;
 
-		// Destination of call
+		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
 		Proc*		procDest;
 
 		// The signature for this call. NOTE: this used to be stored in the Proc, but this does not make sense when
 		// the proc happens to have varargs
 		Signature*	signature;
 
-		// A Collector object to collect the reaching definitions
-		Collector	col;
+		// A DefCollector object to collect the reaching definitions
+		DefCollector col;
 
 public:
 					CallStatement();
@@ -1009,14 +1007,14 @@ virtual bool		accept(StmtModifier* visitor);
 		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
 		void		setSigArguments();			// Set arguments based on signature
 		std::vector<Exp*>& getArguments();		// Return call's arguments
-		int			getNumReturns();
-		Exp			*getReturnExp(int i);
-		int			findReturn(Exp *e);
-		void		removeReturn(Exp *e);
-		void		ignoreReturn(Exp *e);
-		void		ignoreReturn(int n);
-		void		addReturn(Exp *e, Type* ty = NULL);
-		std::vector<ReturnInfo>& getReturns() {return returns;}
+		unsigned	getNumReturns();
+		//Exp			*getReturnExp(int i);
+		//int			findReturn(Exp *e);
+		//void		removeReturn(Exp *e);
+		//void		ignoreReturn(Exp *e);
+		//void		ignoreReturn(int n);
+		//void		addReturn(Exp *e, Type* ty = NULL);
+		RetStatement* getReturns() {return returns;}
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
@@ -1082,7 +1080,8 @@ virtual bool		propagateToAll() { assert(false); return false;}
 virtual bool		isDefinition();
 virtual void		getDefinitions(LocationSet &defs);
 
-virtual Exp*		getLeft() {return getReturnExp(0);}
+//virtual Exp*		getLeft() {return getReturnExp(0);}		// Deprecated now: could be multiple returns
+virtual bool		defines(Exp* loc) {return false;}		// True if this Statement defines loc
 virtual void		setLeftFor(Exp* forExp, Exp* newExp);
 		// get how to replace this statement in a use
 virtual Exp*		getRight() { return NULL; }
@@ -1104,9 +1103,10 @@ virtual void		fromSSAform(igraph& ig);
 
 virtual	Type*		getTypeFor(Exp* e);					// Get the type defined by this Statement for this location
 virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, defined in this statement
-		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the
-		// number of parameters if needed, and return true if any signature parameters added
-		Collector*	getCollector() {return &col;}		// Return pointer to the collector object
+		DefCollector*	getCollector() {return &col;}	// Return pointer to the collector object
+		void		copyToReturns(DefCollector* col, int d);// Copy the given reaching definitions to the return set
+		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
+		// parameters if needed, and return true if any signature parameters added
 		bool		ellipsisProcessing(Prog* prog);
 private:
 		// Private helper function for the above
@@ -1123,47 +1123,25 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
 };		// class CallStatement
 
 
-/*==============================================================================
- * ReturnStatement: represents a high level return.
- *============================================================================*/
-class ReturnStatement: public GotoStatement {
+
+
+/*===================================================================================================================
+ * RetStatement: Abstract class representing either an ordinary return (class ReturnStatement), or a DefineAll, which
+ * is a special statement representing the return of a callee that can't be found through analysis
+ *=================================================================================================================*/
+class RetStatement {
 protected:
-		// number of bytes that this return pops
-		int			nBytesPopped;
-
-		// value returned. No types stored. To find the type of a return, call ascendType on the return expression
-		std::vector<Exp*> returns;
-
-		// Native address of the (only) return instruction
-		// Needed for branching to this only return statement
-		ADDRESS		retAddr;
-
-		// A Collector object to collect the reaching definitions
-		Collector	col;
+		// A set of assignments of locations to expressions (or in rare cases, implicit assignments to all)
+		std::set<Assignment*, lessExpStar> defs;
 
 public:
-					ReturnStatement();
-virtual				~ReturnStatement();
+					RetStatement();
+virtual				~RetStatement() {}
 
-		// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
-
-		// Accept a visitor to this RTL
-virtual bool		accept(StmtVisitor* visitor);
-virtual bool		accept(StmtExpVisitor* visitor);
-virtual bool		accept(StmtModifier* visitor);
-
-		// print
-virtual void		print(std::ostream& os = std::cout);
-
-		// From SSA form
-virtual void		fromSSAform(igraph& igm);
-
-		// code generation
-virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
-
-		// simplify all the uses/defs in this RTL
-virtual void		simplify();
+typedef	std::set<Assignment*, lessExpStar>::iterator iterator;
+		iterator	begin() {return defs.begin();}
+		iterator	end() {return defs.end();}
+		unsigned	getNumReturns() { return defs.size(); }
 
 		// general search
 virtual bool		search(Exp*, Exp*&);
@@ -1179,21 +1157,65 @@ virtual bool		searchAll(Exp* search, std::list<Exp*> &result);
 virtual bool		usesExp(Exp *e);
 
 virtual bool		doReplaceRef(Exp* from, Exp* to);
-		int			getNumBytesPopped() { return nBytesPopped; }
-		void		setNumBytesPopped(int n) { nBytesPopped = n; }
 
-		int			getNumReturns() { return returns.size(); }
-		Exp			*getReturnExp(int n) { return returns[n]; }
-		void		setReturnExp(int n, Exp *e) { returns[n] = e; }
-		std::vector<Exp*>& getReturns() {return returns;}
-		void		setSigArguments();	 				// Set returns based on signature
-		void		removeReturn(int n);
-		void		addReturn(Exp *e);
-		Collector*	getCollector() {return &col;}		// Return pointer to the collector object
+virtual void	getDefinitions(LocationSet &defs);
+
+		void		removeReturn(Exp* loc);
+		void		addReturn(Assignment* a);
+
+		Type*		getTypeFor(Exp* e);
+		void		setTypeFor(Exp* e, Type* ty);
+
+		// From SSA form
+virtual void		fromSSAform(igraph& igm);
+
+};
+
+
+/*===========================================================
+ * ReturnStatement: represents an ordinary high level return.
+ *==========================================================*/
+class ReturnStatement: public RetStatement {
+
+		// Native address of the (only) return instruction. Needed for branching to this only return statement
+		ADDRESS		retAddr;
+
+		// A DefCollector object to collect the reaching definitions
+		DefCollector col;
+
+public:
+					ReturnStatement();
+virtual				~ReturnStatement();
+
+		// Make a deep copy, and make the copy a derived object if needed.
+virtual Statement* clone();
+
+		// Accept a visitor to this RTL
+virtual bool		accept(StmtVisitor* visitor);
+virtual bool		accept(StmtExpVisitor* visitor);
+virtual bool		accept(StmtModifier* visitor);
+
+		// print
+		void		print(std::ostream& os);		// Standard print with statement number
+virtual void		printCompact(std::ostream& os);	// Without statement number
+
+		// code generation
+virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+
+		// simplify all the uses/defs in this RTL
+virtual void		simplify();
+
+		//Exp			*getReturnExp(int n) { return returns[n]; }
+		//void		setReturnExp(int n, Exp *e) { returns[n] = e; }
+		//void		setSigArguments();	 				// Set returns based on signature
+		DefCollector* getCollector() {return &col;}		// Return pointer to the collector object
 
 		// Get and set the native address for the first and only return statement
 		ADDRESS		getRetAddr() {return retAddr;}
 		void		setRetAddr(ADDRESS r) {retAddr = r;}
+
+		// Copy reaching definitions (only depth d) to the set of locations being returned
+		void		copyReachingDefs(int d);
 
 virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 
@@ -1202,6 +1224,15 @@ virtual	void		regReplace(UserProc* proc);
 
 	friend class XMLProgParser;
 };	// class ReturnStatement
+
+/*============================================================================================
+ Class DefineAll: represents the return statement of a callee that can't be found by analysis.
+=============================================================================================*/
+class DefineAll : public RetStatement {
+		UseCollector col;							// Collector of live variables using this definition
+public:
+					DefineAll();
+};
 
 
 #endif // __STATEMENT_H__
