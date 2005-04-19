@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.5 $
+ * $Revision: 1.238.2.6 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -658,9 +658,11 @@ void UserProc::initStatements() {
 			if (call) {
 				call->setSigArguments();
 			}
+#if 0
 			ReturnStatement *ret = dynamic_cast<ReturnStatement*>(s);
 			if (ret)
 				ret->setSigArguments();
+#endif
 		}
 	}
 }
@@ -794,118 +796,6 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
 	assert(false);			// Should have found this statement in this BB
 }
 
-void UserProc::fastx86decompile()
-{
-    if (decompiled)
-        return;
-    if (!decoded)
-        return;
-
-	// Sort by address, so printouts make sense
-	cfg->sortByAddress();
-	// Initialise statements
-	initStatements();
-
-	// Compute dominance frontier
-	DataFlow df;
-	df.dominators(cfg);
-
-	// Number the statements
-	int stmtNumber = 0;
-	numberStatements(stmtNumber); 
-
-	df.placePhiFunctions(0, this);
-	numberPhiStatements(stmtNumber);
-	df.renameBlockVars(cfg, 0, 0);
-
-    // x86 specific hacks start here
-
-    // 1) fix call statements
-    StatementList stmts;
-    getStatements(stmts);
-	StatementList::iterator it;
-	for (it = stmts.begin(); it != stmts.end(); it++) {
-        Statement *s = *it;
-        if (s->isCall()) {
-            CallStatement *call = (CallStatement*)s;
-            if (call->getDestProc() == NULL) {
-                std::cerr << "indirect call in proc " << getName() << " cannot complete fast decompile.\n";
-                return;
-            }
-            if (!call->getDestProc()->isLib() && call->getProven(Location::regOf(28)) == NULL) {
-                // assume that all calls to non-lib procs are standard-c calling convention (eg, esp = esp + 4)
-                UserProc *u = (UserProc*)call->getDestProc();
-                u->proven.insert(new Binary(opEquals,
-					Location::regOf(28),
-					new Binary(opPlus,
-						Location::regOf(28),
-						new Const(4))));
-            }
-        }
-    }
-
-    // 2) propagate everything at depth 0 as much as possible
-    fixCallRefs();
-    propagateStatements(0, -1);
-
-    // 3) recognise parameters
-    if (signature->getNumParams() == 0) {
-        for (int i = 0; i < 8; i++)
-            addParameter(Location::memOf(
-				new Binary(opPlus,
-					Location::regOf(28),
-					new Const(4*(i+1)))));
-    }
-    replaceExpressionsWithParameters(df, -1);
-    //trimParameters();
-
-    // 4) propagate everything at depth 0 again (this should give more now that we've recognised parameters)
-    propagateStatements(0, -1);
-
-    // 5) ok, now we should be able to remove all assignments to r28
-    //    whilst we're here we'll remove any statements assigning %pc or to %pc and any statements assigning to flags
-
-    // let's just do a little check to make sure I'm right.
-    for (it = stmts.begin(); it != stmts.end(); it++) {
-        Statement *s = *it;
-        LocationSet refs;
-        s->addUsedLocs(refs);
-		LocationSet::iterator rr;
-		for (rr = refs.begin(); rr != refs.end(); rr++) {
-            if (!(*rr)->isSubscript())
-                continue;
-            if ((*rr)->getSubExp1()->isRegOfK() && ((Const*)(*rr)->getSubExp1()->getSubExp1())->getInt() == 28) {
-                Statement *def = ((RefExp*)*rr)->getDef();
-                if (def && def->isAssign()) {
-                    std::cerr << "there's still references to assignments to r28 in " << getName() 
-                              << ", cannot continue fast decompile.\n";
-                    return;
-                }
-            }
-        }
-    }
-
-	for (it = stmts.begin(); it != stmts.end(); it++) {
-        Statement *s = *it;
-        if (!s->isAssign())
-            continue;
-        if (s->getLeft() && s->getLeft()->isRegOfK() && ((Const*)s->getLeft()->getSubExp1())->getInt() == 28)
-            removeStatement(s);
-        else if (s->getLeft() && s->getLeft()->getOper() == opPC)
-            removeStatement(s);
-        else if (s->getLeft() && s->getRight()->getOper() == opSubscript &&
-				s->getRight()->getSubExp1()->getOper() == opPC)
-            removeStatement(s);
-        else if (s->getLeft() && s->getLeft()->isFlags())
-            removeStatement(s);
-    }
-
-	processConstants();
-	sortParameters();
-
-    decompiled = true;
-}
-
 // Decompile this UserProc
 std::set<UserProc*>* UserProc::decompile() {
 	// Prevent infinite loops when there are cycles in the call graph
@@ -992,11 +882,16 @@ std::set<UserProc*>* UserProc::decompile() {
 		// Rename variables
 		df.renameBlockVars(cfg, 0, depth);
 
+		// Seed the return statement with reaching definitions
+		if (theReturnStatement)
+			theReturnStatement->copyReachingDefs(depth);
+
 		printXML();
 
 		// Print if requested
 		if (VERBOSE) {		// was if debugPrintSSA
-			LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth << " (no propagations) ===\n";
+			LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth << " (no propagations) ==="
+				"\n";
 			printToLog();
 			LOG << "=== End Debug Print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 		}
@@ -1060,7 +955,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		// But with indirect procs in a loop, the propagation is not yet complete
 		// replaceExpressionsWithLocals(depth == maxDepth);
 		if (!Boomerang::get()->noChangeSignatures) {
-			addNewReturns(depth);
+			// addNewReturns(depth);
 			df.renameBlockVars(cfg, 0, depth, true);
 			printXML();
 			if (VERBOSE) {
@@ -1258,16 +1153,14 @@ void UserProc::removeRedundantPhis() {
 		Statement* s = *it;
 		if (s->isPhi()) {
 			bool unused = false;
-			PhiAssign *p = (PhiAssign*)s;
+			PhiAssign *pa = (PhiAssign*)s;
 			if (refCounts[s] == 0)
 				unused = true;
 			else if (refCounts[s] == 1) {
-				/* This looks pretty good, if all the statements in a phi
-				 * are either NULL or a call to this proc, then 
-				 * the phi is redundant.  However, we only remove it if 
-				 * the only use is in the return statement.
+				/* This looks pretty good, if all the statements in a phi are either NULL or a call to this proc, then 
+				 * the phi is redundant.  However, we only remove it if the only use is in the return statement.
 				 */
-				RefExp *r = new RefExp(s->getLeft()->clone(), s);
+				RefExp *r = new RefExp(pa->getLeft()->clone(), s);
 				bool usedInRet = false;
 				if (theReturnStatement)
 					usedInRet = theReturnStatement->usesExp(r);
@@ -1275,7 +1168,7 @@ void UserProc::removeRedundantPhis() {
 				if (usedInRet) {
 					bool allZeroOrSelfCall = true;
 					PhiAssign::iterator it1;
-					for (it1 = p->begin(); it1 != p->end(); it1++) {
+					for (it1 = pa->begin(); it1 != pa->end(); it1++) {
 						Statement* s1 = it1->def;
 						if (s1 && (!s1->isCall() || ((CallStatement*)s1)->getDestProc() != this))
 							allZeroOrSelfCall = false;
@@ -1284,7 +1177,7 @@ void UserProc::removeRedundantPhis() {
 						if (VERBOSE || DEBUG_UNUSED_STMT)
 							LOG << "removing phi using shakey hack:\n";
 						unused = true;
-						removeReturn(p->getLeft());
+						removeReturn(pa->getLeft());
 					}
 				}
 			} else {
@@ -1380,7 +1273,7 @@ void UserProc::removeRedundantPhis() {
 }
 
 void UserProc::trimReturns() {
-	std::set<Exp*> preserved;
+	std::set<Exp*> removes;
 	bool stdsp = false;
 	bool stdret = false;
 
@@ -1417,7 +1310,7 @@ void UserProc::trimReturns() {
 			if (DEBUG_PROOF)
 				LOG << "attempting to prove " << p << " is preserved by " << getName() << "\n";
 			if (prove(e)) {
-				preserved.insert(p);	
+				removes.insert(p);	
 			}
 		}
 	}
@@ -1427,7 +1320,6 @@ void UserProc::trimReturns() {
 		promoteSignature();
 
 	if (stdsp) {
-		Unary *regsp = Location::regOf(sp);
 		// I've been removing sp from the return set as it makes the output look better, but this only works for
 		// recursive procs (because no other proc calls them and fixCallRefs can replace refs to the call with a valid
 		// expression). Not removing sp will make basically every procedure that doesn't preserve sp return it, and take
@@ -1439,10 +1331,12 @@ void UserProc::trimReturns() {
 		// be.
 		//removeReturn(regsp);
 		// also check for any locals that slipped into the returns
+#if 0
+		Unary *regsp = Location::regOf(sp);
 		for (int i = 0; i < signature->getNumReturns(); i++) {
 			Exp *e = signature->getReturnExp(i);
 			if (signature->isStackLocal(prog, e))
-				preserved.insert(e);
+				removes.insert(e);
 			else if (*e == *regsp) {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
@@ -1462,11 +1356,24 @@ void UserProc::trimReturns() {
 				}
 			}
 		}
+#else	// Assume that sp doesn't need special processing, so just remove any locals
+		if (theReturnStatement) {
+			RetStatement::iterator rr;
+			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
+				Exp* loc = (*rr)->getLeft();
+				if (signature->isStackLocal(prog, loc)) {
+					if (VERBOSE)
+						LOG << "Removing local " << loc << " from theReturnStatement\n";
+					theReturnStatement->removeReturn(loc);
+				}
+			}
+		}
+#endif
 	}
 	if (!signature->isFullSignature()) {
 		if (stdret)
 			removeReturn(new Terminal(opPC));
-		for (std::set<Exp*>::iterator it = preserved.begin(); it != preserved.end(); it++)
+		for (std::set<Exp*>::iterator it = removes.begin(); it != removes.end(); it++)
 			removeReturn(*it);
 	}
 
@@ -1484,11 +1391,19 @@ void UserProc::updateReturnTypes()
 {
 	if (theReturnStatement == NULL)
 		return;
-	for (int n = 0; n < theReturnStatement->getNumReturns(); n++) {
-		Exp *e = theReturnStatement->getReturnExp(n);
+	RetStatement::iterator rr;
+	for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
+		Exp *e = (*rr)->getLeft();
 		Type *ty = e->getType();
 		if (ty && !ty->isVoid()) {
-			signature->setReturnType(n, ty->clone());
+			// UGH! Remove when ad hoc TA is removed!
+			int n = signature->getNumReturns();
+			for (int i=0; i < n; i++) {
+				if (*signature->getReturnExp(i) == *e) {
+					signature->setReturnType(n, ty->clone());
+					break;
+				}
+			}
 		}
 	}
 }
@@ -1569,6 +1484,7 @@ void UserProc::finalSimplify()
 	}
 }
 
+#if 0			// Now done by dataflow
 void UserProc::addNewReturns(int depth) {
 
 	if (signature->isFullSignature())
@@ -1583,8 +1499,11 @@ void UserProc::addNewReturns(int depth) {
 	StatementList::iterator it;
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = (Statement*)*it;
-		Exp *left = s->getLeft();
-		if (left) {
+		LocationSet defs;
+		s->getDefinitions(defs);
+		LocationSet::iterator ll;
+		for (ll = defs.begin(); ll != defs.end(); ll++) {
+			Exp *left = *ll;
 			bool allZero = true;
 			Exp *e = left->clone()->removeSubscripts(allZero);
 			if (allZero && signature->findReturn(e) == -1 &&
@@ -1620,6 +1539,7 @@ void UserProc::addNewReturns(int depth) {
 		}
 	}
 }
+#endif
 
 // m[WILD]{-}
 static RefExp *memOfWild = new RefExp(
@@ -1747,11 +1667,13 @@ int totparams = nparams;
 		// Push parameters implicitly defined e.g. m[r28{0}+8]{0}, (these are the parameters for the current proc)
 		params.push_back(signature->getParamExp(i)->clone()->expSubscriptAllNull());
 	}
+#if 0
 	for (i = 0; i < signature->getNumImplicitParams(); i++) {
 		referenced[i + nparams] = false;
 		// Same for the implicit parameters
 		params.push_back(signature->getImplicitParamExp(i)->clone()->expSubscriptAllNull());
 	}
+#endif
 
 	std::set<Statement*> excluded;
 	StatementList::iterator it;
@@ -1778,13 +1700,13 @@ int totparams = nparams;
 		if (!s->isCall() || ((CallStatement*)s)->getDestProc() != this) {
 			for (int i = 0; i < totparams; i++) {
 				Exp *p, *pe;
-				if (i < nparams) {
+				//if (i < nparams) {
 					p = Location::param(signature->getParamName(i), this);
 					pe = signature->getParamExp(i);
-				} else {
-					p = Location::param(signature->getImplicitParamName( i - nparams), this);
-					pe = signature->getImplicitParamExp(i - nparams);
-				}
+				//} else {
+				//	p = Location::param(signature->getImplicitParamName( i - nparams), this);
+				//	pe = signature->getImplicitParamExp(i - nparams);
+				//}
 				if (!referenced[i] && excluded.find(s) == excluded.end() && 
 						// Search for the named parameter (e.g. param1), and just in case, also for the expression
 						// (e.g. r8{0})
@@ -1796,7 +1718,7 @@ int totparams = nparams;
 					}
 				}
 				if (!referenced[i] && excluded.find(s) == excluded.end() &&
-						s->isPhi() && *s->getLeft() == *pe) {
+						s->isPhi() && *((PhiAssign*)s)->getLeft() == *pe) {
 					if (DEBUG_UNUSED_RETS_PARAMS)
 						LOG << "searching " << s << " for uses of " << params[i] << "\n";
 					PhiAssign *pa = (PhiAssign*)s;
@@ -1825,22 +1747,9 @@ int totparams = nparams;
 	}
 }
 
-void Proc::removeReturn(Exp *e) {
-	signature->removeReturn(e);
-	for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
-			if (DEBUG_UNUSED_RETS_PARAMS)
-				LOG << "removing return " << e << " from " << *it << "\n";
-			(*it)->removeReturn(e);
-	}
-}
-
 void UserProc::removeReturn(Exp *e) {
-	int n = signature->findReturn(e);
-	if (n != -1) {
-		Proc::removeReturn(e);
-		if (theReturnStatement)
-			theReturnStatement->removeReturn(n);
-	}
+	if (theReturnStatement)
+		theReturnStatement->removeReturn(e);
 }
 
 void Proc::removeParameter(Exp *e) {
@@ -1868,9 +1777,14 @@ void Proc::removeParameter(Exp *e) {
 #endif
 }
 
-void Proc::addReturn(Exp *e) {
-	for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++)
-		(*it)->addReturn(e);
+void Proc::removeReturn(Exp *e)
+{
+	signature->removeReturn(e);
+}
+
+#if 0		// This is done by dataflow now
+void Proc::addReturn(Exp *e)
+{
 	signature->addReturn(e);
 }
 
@@ -1884,6 +1798,7 @@ void UserProc::addReturn(Exp *e)
 		theReturnStatement->addReturn(e1);
 	Proc::addReturn(e);
 }
+#endif
 
 // Add the parameter to the signature and all known callers
 void UserProc::addParameter(Exp *e) {
@@ -2446,7 +2361,7 @@ void UserProc::replaceExpressionsWithLocals(bool lastPass) {
 			int n = ((Const*)result->getSubExp1()->getSubExp2())->getInt();
 			arr->setProc(this);
 			Type *base = new IntegerType();
-			if (s->isAssign() && s->getLeft() == result)
+			if (s->isAssign() && ((Assign*)s)->getLeft() == result)
 				if(((Assign*)s)->getType()->getSize() != 0)
 					base = ((Assign*)s)->getType()->clone();
 			arr->setType(new ArrayType(base, n / (base->getSize() / 8)));
@@ -2496,7 +2411,7 @@ void UserProc::searchRegularLocals(OPER minusOrPlus, bool lastPass, int sp, Stat
 		for (std::list<Exp*>::iterator it1 = results.begin(); it1 != results.end(); it1++) {
 			Exp *result = *it1;
 			Type *ty = result->getType();
-			if (s->isAssign() && s->getLeft() == result)
+			if (s->isAssign() && ((Assign*)s)->getLeft() == result)
 				ty = ((Assign*)s)->getType();
 			Exp *e = getLocalExp(result, ty, lastPass);
 			if (e) {
@@ -2704,8 +2619,6 @@ void UserProc::promoteSignature() {
 
 Exp* UserProc::newLocal(Type* ty) {
 	std::ostringstream os;
-if (nextLocal == 11)
- std::cerr << "HACK!\n";
 	os << "local" << nextLocal++;
 	std::string name = os.str();
 	locals[name] = ty;
@@ -2858,6 +2771,7 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 		StatementList::iterator ll = stmts.begin();
 		while (ll != stmts.end()) {
 			Statement* s = *ll;
+#if 0			// No need to do this any more!
 			if (s->isCall() && refCounts[s] == 0) {
 				if (VERBOSE)
 					LOG << "clearing return set of unused call " << s << "\n";
@@ -2868,35 +2782,38 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				ll++;
 				continue;
 			}
+#endif
 			if (!s->isAssignment()) {
 				// Never delete a statement other than an assignment
 				// (e.g. nothing "uses" a Jcond)
 				ll++;
 				continue;
 			}
-			if (s->getLeft() && depth >= 0 && s->getLeft()->getMemDepth() > depth) {
+			Assignment* as = (Assignment*)s;
+			Exp* asLeft = as->getLeft();
+			if (asLeft && depth >= 0 && asLeft->getMemDepth() > depth) {
 				ll++;
 				continue;
 			}
-			if (s->getLeft() && s->getLeft()->getOper() == opGlobal) {
+			if (asLeft && asLeft->getOper() == opGlobal) {
 				// assignments to globals must always be kept
 				ll++;
 				continue;
 			}
-			if (s->getLeft()->getOper() == opMemOf &&
-					(s->getRight() == NULL || !(*new RefExp(s->getLeft(), NULL) == *s->getRight()))) {
-				// ? Is the above right? Looking for m[x] := m[x]{0} ???
+			if (asLeft->getOper() == opMemOf &&
+					(!as->isAssign() || !(*new RefExp(asLeft, NULL) == *((Assign*)s)->getRight()))) {
+				// ? Is the above right? Looking for m[x] := m[x]{-} ???
 				// assignments to memof anything must always be kept
 				ll++;
 				continue;
 			}
-			// if (s->getLeft()->getOper() == opParam) {
+			// if (asLeft->getOper() == opParam) {
 				// we actually want to remove this if no-one is using it
 				// otherwise we'll create an interference that we can't handle
 				//ll++;
 				//continue;
 			// }
-			if (s->getLeft()->getOper() == opMemberAccess || s->getLeft()->getOper() == opArraySubscript) {
+			if (asLeft->getOper() == opMemberAccess || asLeft->getOper() == opArraySubscript) {
 				// can't say with these
 				ll++;
 				continue;
@@ -2916,8 +2833,9 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				}
 				StatementSet::iterator dd;
 				for (dd = stmtsRefdByUnused.begin(); dd != stmtsRefdByUnused.end(); dd++) {
+					if (*dd == NULL) continue;
 					if (DEBUG_UNUSED_STMT)
-						LOG << "Decrementing ref count of " << (*dd?(*dd)->getNumber():0) << " because "
+						LOG << "Decrementing ref count of " << (*dd)->getNumber() << " because "
 							<< s->getNumber() << " is unused\n";
 					refCounts[*dd]--;
 				}
@@ -3124,18 +3042,18 @@ bool UserProc::prove(Exp *query)
 		bool gotdef = false;
 		// replace expression from return set with expression in return 
 		if (theReturnStatement) {
-			for (int i = 0; i < signature->getNumReturns(); i++) {
-				Exp *e = signature->getReturnExp(i); 
+			RetStatement::iterator rr;
+			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
+				Exp *e = (*rr)->getLeft();
 				if (*e == *query->getSubExp1()) {
-					query->refSubExp1() = theReturnStatement->getReturnExp(i)->clone();
+					query->refSubExp1() = ((Assign*)*rr)->getRight();
 					gotdef = true;
 					break;
 				}
 			}
 		}
 		if (!gotdef && DEBUG_PROOF) {
-			LOG << "not in return set: " << query->getSubExp1() << "\n";
-			LOG << "prove returns false\n";
+			LOG << "not in return set: " << query->getSubExp1() << "\n" << "prove returns false\n";
 			inProve = false;
 			return false;
 		}
@@ -3271,13 +3189,13 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 					else 
 						query = new Terminal(opFalse);
 					change = true;
-				} else if (s && s->getRight()) {
+				} else if (s && s->isAssign()) {
 					if (s && refsTo.find(s) != refsTo.end()) {
 						LOG << "detected ref loop " << s << "\n";
 						assert(false);
 					} else {
 						refsTo.insert(s);
-						query->setSubExp1(s->getRight()->clone());
+						query->setSubExp1(((Assign*)s)->getRight()->clone());
 						change = true;
 					}
 				}
@@ -3308,8 +3226,8 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 				getStatements(stmts);
 				StatementList::iterator it;
 				for (it = stmts.begin(); it != stmts.end(); it++) {
-					Statement* s = *it;
-					if (s->getLeft() && s->getRight() && *s->getRight() == *query->getSubExp2() &&
+					Assign* s = (Assign*)*it;
+					if (s->isAssign() && *s->getRight() == *query->getSubExp2() &&
 							s->getLeft()->getOper() == opMemOf) {
 						query->refSubExp2() = s->getLeft()->clone();
 						change = true;
@@ -3353,6 +3271,7 @@ void UserProc::getDefinitions(LocationSet& ls) {
 	}
 }
 
+#if 0			// All going well, we don't need this any more
 // "Local" member function, used below
 void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
 {
@@ -3423,6 +3342,8 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
 		}
 	}
 }
+#endif
+
 
 bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
 	std::set<Exp*, lessExpStar> removes;	// Else iterators confused

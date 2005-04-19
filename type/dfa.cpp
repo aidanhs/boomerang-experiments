@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, Mike Van Emmerik
+ * Copyright (C) 2004-2005, Mike Van Emmerik
  *
  * See the file "LICENSE.TERMS" for information on usage and
  * redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -8,12 +8,12 @@
 
 /*==============================================================================
  * FILE:	   dfa.cpp
- * OVERVIEW:   Implementation of class Type functions related to solving
- *             type analysis in an iterative, data-flow-based manner
+ * OVERVIEW:   Implementation of class Type functions related to solving type analysis in an iterative, data-flow-based
+ *				manner
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.2 $
+ * $Revision: 1.30.2.3 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -91,12 +91,13 @@ void UserProc::dfaTypeAnalysis() {
 			}
 			// If s is a call, also display its return types
 			if (s->isCall()) {
-				std::vector<ReturnInfo>& returns = ((CallStatement*)s)->getReturns();
-				int n = returns.size();
-				if (n) {
+				CallStatement* call = (CallStatement*)s;
+				RetStatement* returns = call->getReturns();
+				RetStatement::iterator rr;
+				if (returns->getNumReturns()) {
 					LOG << "       Returns: ";
-					for (int i=0; i < n; i++)
-						if (returns[i].e) LOG << returns[i].type->getCtype() << " " << returns[i].e << "  ";
+					for (rr = returns->begin(); rr != returns->end(); ++rr)
+						LOG << (*rr)->getType()->getCtype() << " " << (*rr)->getLeft() << "  ";
 					LOG << "\n";
 				}
 			}
@@ -1036,12 +1037,9 @@ void StmtDfaLocalConverter::visit(BranchStatement* s, bool& recur) {
 	recur = false;
 }
 void StmtDfaLocalConverter::visit(ReturnStatement* s, bool& recur) {
-	int n = s->getNumReturns();
-	for (int i=0; i < n; i++) {
-		Exp* ret = s->getReturnExp(i);
-		((DfaLocalConverter*)mod)->setType(ret->ascendType());
-		s->setReturnExp(i, ret->accept(mod));
-	}
+	RetStatement::iterator rr;
+	for (rr = s->begin(); rr != s->end(); ++rr)
+		(*rr)->accept(this);
 	recur = false;
 }
 void StmtDfaLocalConverter::visit(CallStatement* s, bool& recur) {
@@ -1075,6 +1073,7 @@ void StmtDfaLocalConverter::visit(CallStatement* s, bool& recur) {
 		*it = (*it)->accept(mod);
 	}
 #endif
+#if 0
 	std::vector<ReturnInfo>::iterator rr;
 	std::vector<ReturnInfo>& returns = s->getReturns();
 	for (rr = returns.begin(); recur && rr != returns.end(); rr++) {
@@ -1082,6 +1081,7 @@ void StmtDfaLocalConverter::visit(CallStatement* s, bool& recur) {
 		((DfaLocalConverter*)mod)->setType(rr->type);
 		rr->e = rr->e->accept(mod);
 	}
+#endif
 	recur = false;
 }
 

@@ -14,7 +14,7 @@
  * OVERVIEW:   This file contains the machine independent
  *			   decoding functionality.
  *
- * $Revision: 1.19 $
+ * $Revision: 1.19.2.1 $
  *============================================================================*/ 
 /*
  * 27 Apr 02 - Mike: Mods for boomerang
@@ -127,7 +127,7 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...) {
 	}
 	// Start with the RHS
 	assert(ent.asgn->getKind() == STMT_ASSIGN);
-	Exp* result = ent.asgn->getRight()->clone();
+	Exp* result = ((Assign*)ent.asgn)->getRight()->clone();
 
 	va_list args;
 	va_start(args,name);

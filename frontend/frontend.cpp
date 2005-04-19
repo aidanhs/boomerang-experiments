@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.89 $
+ * $Revision: 1.89.2.1 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness rather than machine type)
@@ -358,18 +358,22 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 		bool spec /* = false */) {
 	PBB pBB;					// Pointer to the current basic block
 
+#if 0
 	// if (!frag && !pProc->getSignature()->isPromoted()) {	// }
 	if (!frag) {
 		if (VERBOSE)
 			LOG << "adding default params and returns for " << pProc->getName() << "\n";
-		std::vector<Exp*> &params = getDefaultParams();
 		std::vector<Exp*>::iterator it;
+#if 0
+		std::vector<Exp*> &params = getDefaultParams();
 		for (it = params.begin(); it != params.end(); it++)
 			pProc->getSignature()->addImplicitParameter((*it)->clone());
+#endif
 		std::vector<Exp*> &returns = getDefaultReturns();
 		for (it = returns.begin(); it != returns.end(); it++)
 			pProc->getSignature()->addReturn((*it)->clone());
 	}
+#endif
 	
 	// We have a set of CallStatement pointers. These may be disregarded if this is a speculative decode
 	// that fails (i.e. an illegal instruction is found). If not, this set will be used to add to the set of calls

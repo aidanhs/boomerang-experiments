@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98 $
+ * $Revision: 1.98.2.1 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -183,8 +183,8 @@ namespace CallingConvention {
 
 CallingConvention::Win32Signature::Win32Signature(const char *nam) : Signature(nam) {
 	Signature::addReturn(Location::regOf(28));
-	Signature::addImplicitParameter(new PointerType(new IntegerType()), "esp",
-									Location::regOf(28), NULL);
+	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "esp",
+	//								Location::regOf(28), NULL);
 }
 
 CallingConvention::Win32Signature::Win32Signature(Signature &old) : Signature(old) {
@@ -192,8 +192,8 @@ CallingConvention::Win32Signature::Win32Signature(Signature &old) : Signature(ol
 
 CallingConvention::Win32TcSignature::Win32TcSignature(const char *nam) : Win32Signature(nam) {
 	Signature::addReturn(Location::regOf(28));
-	Signature::addImplicitParameter(new PointerType(new IntegerType()), "esp",
-									Location::regOf(28), NULL);
+	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "esp",
+	//								Location::regOf(28), NULL);
 }
 
 CallingConvention::Win32TcSignature::Win32TcSignature(Signature &old) : Win32Signature(old) {
@@ -206,12 +206,14 @@ static void cloneVec(std::vector<Parameter*>& from, std::vector<Parameter*>& to)
 		to[i] = from[i]->clone();
 }
 
+#if 0
 static void cloneVec(std::vector<ImplicitParameter*>& from, std::vector<ImplicitParameter*>& to) {
 	unsigned n = from.size();
 	to.resize(n);
 	for (unsigned i=0; i < n; i++)
 		to[i] = from[i]->clone();
 }
+#endif
 
 static void cloneVec(std::vector<Return*>& from, std::vector<Return*>& to) {
 	unsigned n = from.size();
@@ -224,11 +226,13 @@ Parameter* Parameter::clone() {
 	return new Parameter(type->clone(), name.c_str(), exp->clone());
 }
 
+#if 0
 ImplicitParameter* ImplicitParameter::clone() {
 	Parameter* par = parent;
 	if (par) par = par->clone();	// Do we really need to clone the parent pointer? MVE
 	return new ImplicitParameter(getType()->clone(), getName(), getExp()->clone(), par);
 }
+#endif
 
 Return* Return::clone() {
 	return new Return(type->clone(), exp->clone());
@@ -238,7 +242,7 @@ Signature *CallingConvention::Win32Signature::clone()
 {
 	Win32Signature *n = new Win32Signature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -253,7 +257,7 @@ Signature *CallingConvention::Win32TcSignature::clone()
 {
 	Win32TcSignature *n = new Win32TcSignature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -405,8 +409,8 @@ Exp *CallingConvention::Win32TcSignature::getProven(Exp *left)
 CallingConvention::StdC::PentiumSignature::PentiumSignature(const char *nam) : Signature(nam)
 {
 	Signature::addReturn(Location::regOf(28));
-	Signature::addImplicitParameter(new PointerType(new IntegerType()), "esp",
-									Location::regOf(28), NULL);
+	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "esp",
+	// 								Location::regOf(28), NULL);
 }
 
 CallingConvention::StdC::PentiumSignature::PentiumSignature(Signature &old) : Signature(old)
@@ -418,7 +422,7 @@ Signature *CallingConvention::StdC::PentiumSignature::clone()
 {
 	PentiumSignature *n = new PentiumSignature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -546,15 +550,15 @@ Exp *CallingConvention::StdC::PentiumSignature::getProven(Exp *left) {
 
 CallingConvention::StdC::PPCSignature::PPCSignature(const char *nam) : Signature(nam) {
 	Signature::addReturn(Location::regOf(1));
-	Signature::addImplicitParameter(new PointerType(new IntegerType()), "r1",
-									Location::regOf(1), NULL);
+	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "r1",
+	// 								Location::regOf(1), NULL);
 	// FIXME: Should also add m[r1+4] as an implicit parameter? Holds return address
 }
 
 Signature *CallingConvention::StdC::PPCSignature::clone() {
 	PPCSignature *n = new PPCSignature(name.c_str());
 	n->params = params;
-	n->implicitParams = implicitParams;
+	// n->implicitParams = implicitParams;
 	n->returns = returns;
 	n->ellipsis = ellipsis;
 	n->rettype = rettype;
@@ -633,8 +637,8 @@ bool CallingConvention::StdC::PPCSignature::isAddrOfStackLocal(Prog* prog, Exp* 
 
 CallingConvention::StdC::SparcSignature::SparcSignature(const char *nam) : Signature(nam) {
 	Signature::addReturn(Location::regOf(14));
-	Signature::addImplicitParameter(new PointerType(new IntegerType()), "sp",
-									Location::regOf(14), NULL);
+	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "sp",
+	//								Location::regOf(14), NULL);
 }
 
 CallingConvention::StdC::SparcSignature::SparcSignature(Signature &old) : Signature(old) {
@@ -643,7 +647,7 @@ CallingConvention::StdC::SparcSignature::SparcSignature(Signature &old) : Signat
 Signature *CallingConvention::StdC::SparcSignature::clone() {
 	SparcSignature *n = new SparcSignature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -658,7 +662,7 @@ Signature *CallingConvention::StdC::SparcSignature::clone() {
 Signature *CallingConvention::StdC::SparcLibSignature::clone() {
 	SparcLibSignature *n = new SparcLibSignature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -683,6 +687,7 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p, Signature &
 
 	Exp* provenStack = p->getProven(Location::regOf(14));
 	// Don't remove the clone() below; the original is still in the proven set
+	if (!provenStack) return false;
 	provenStack = provenStack->clone()->simplify();		// Could be r[14] + 0
 	if (!(*provenStack == *Location::regOf(14)))
 		return false;
@@ -791,8 +796,8 @@ void CustomSignature::setSP(int nsp)
 	sp = nsp;
 	if (sp) {
 		addReturn(Location::regOf(sp));
-		addImplicitParameter(new PointerType(new IntegerType()), "sp",
-									Location::regOf(sp), NULL);
+		// addImplicitParameter(new PointerType(new IntegerType()), "sp",
+		//							Location::regOf(sp), NULL);
 	}
 }
 
@@ -800,7 +805,7 @@ Signature *Signature::clone()
 {
 	Signature *n = new Signature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -816,7 +821,7 @@ Signature *CustomSignature::clone()
 {
 	CustomSignature *n = new CustomSignature(name.c_str());
 	cloneVec(params, n->params);
-	cloneVec(implicitParams, n->implicitParams);
+	// cloneVec(implicitParams, n->implicitParams);
 	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
@@ -901,7 +906,7 @@ void Signature::addParameter(Type *type, const char *nam /*= NULL*/, Exp *e /*= 
 	}
 	Parameter *p = new Parameter(type, nam, e); 
 	addParameter(p);
-	addImplicitParametersFor(p);
+	// addImplicitParametersFor(p);
 }
 
 void Signature::addParameter(Parameter *param)
@@ -1010,6 +1015,7 @@ int Signature::findParam(const char *nam) {
 	return -1;
 }
 
+#if 0
 int Signature::getNumImplicitParams() {
 	return implicitParams.size();
 }
@@ -1038,6 +1044,7 @@ int Signature::findImplicitParam(Exp *e) {
 			return i;
 	return -1;
 }
+#endif
 
 int Signature::findReturn(Exp *e) {
 	for (int i = 0; i < getNumReturns(); i++)
@@ -1163,6 +1170,7 @@ void Signature::print(std::ostream &out)
 		out << params[i]->getType()->getCtype() << " " << params[i]->getName() << " " << params[i]->getExp();
 		if (i != params.size()-1) out << ", ";
 	}
+#if 0
 	out << "   implicit: ";
 	for (i = 0; i < implicitParams.size(); i++) {
 		out << implicitParams[i]->getType()->getCtype() << " " << implicitParams[i]->getName() << " " 
@@ -1170,6 +1178,9 @@ void Signature::print(std::ostream &out)
 		if (i != implicitParams.size()-1) out << ", ";
 	}
 	out << ") { "; 
+#else
+	out << "  { "; 
+#endif
 	for (i = 0; i < returns.size(); i++) {
 		out << returns[i]->getExp();
 		if (i != returns.size()-1) out << ", ";
@@ -1215,7 +1226,8 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach, int 
 				bool hasDef = false;
 					StatementSet::iterator it1;
 					for (it1 = reachin.begin(); it1 != reachin.end(); it1++) {
-						if (*(*it1)->getLeft() == *getParamExp(i)) {
+						Assignment* as = (Assignment*)*it1;
+						if (as->isAssignment() && *as->getLeft() == *getParamExp(i)) {
 							hasDef = true; break; 
 						}
 					}
@@ -1228,6 +1240,7 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach, int 
 	return n > (getNumParams() - 1);
 }
 
+#if 0
 void Signature::addImplicitParametersFor(Parameter *pn)
 {
 	Type *type = pn->getType();
@@ -1274,6 +1287,7 @@ void Signature::removeImplicitParameter(int i) {
 		implicitParams[j-1] = implicitParams[j];
 	implicitParams.resize(implicitParams.size()-1);
 }
+#endif
 
 // Special for Mike: find the location where the first outgoing (actual) parameter is conventionally held
 Exp* Signature::getFirstArgLoc(Prog* prog) {
@@ -1298,9 +1312,8 @@ Exp* e = Location::memOf(Location::regOf(28));
 	return 0;
 }
 
-// A bit of a cludge. Problem is that we can't call the polymorphic
-// getReturnExp() until signature promotion has happened. For the switch
-// logic, that happens way too late. So for now, we have this cludge.
+// A bit of a cludge. Problem is that we can't call the polymorphic getReturnExp() until signature promotion has
+// happened. For the switch logic, that happens way too late. So for now, we have this cludge.
 // This is very very hacky! (trent)
 /*static*/ Exp* Signature::getReturnExp2(BinaryFile* pBF) {
 	switch (pBF->GetMachine()) {
@@ -1315,9 +1328,8 @@ Exp* e = Location::memOf(Location::regOf(28));
 	return NULL;
 }
 
-// Not very satisfying to do things this way. Problem is that the polymorphic
-// CallingConvention objects are set up very late in the decompilation
-// Get the set of registers that are not saved in library functions (or any
+// Not very satisfying to do things this way. Problem is that the polymorphic CallingConvention objects are set up
+// very late in the decompilation. Get the set of registers that are not saved in library functions (or any
 // procedures that follow the calling convention)
 // Caller is to delete the list (unless NULL, of course)
 std::list<Exp*> *Signature::getCallerSave(Prog* prog) {
@@ -1464,7 +1476,7 @@ public:
 
 	std::string name;		// name of procedure
 	std::vector<Parameter*> params;
-	std::vector<ImplicitParameter*> implicitParams;
+	// std::vector<ImplicitParameter*> implicitParams;
 	std::vector<Return*> returns;
 	Type *rettype;
 	bool ellipsis;
@@ -1478,7 +1490,7 @@ Memo *Signature::makeMemo(int mId)
 	SignatureMemo *m = new SignatureMemo(mId);
 	m->name = name;
 	m->params = params;
-	m->implicitParams = implicitParams;
+	// m->implicitParams = implicitParams;
 	m->returns = returns;
 	m->rettype = rettype;
 	m->ellipsis = ellipsis;
@@ -1488,8 +1500,8 @@ Memo *Signature::makeMemo(int mId)
 
 	for (std::vector<Parameter*>::iterator it = params.begin(); it != params.end(); it++)
 		(*it)->takeMemo(mId);
-	for (std::vector<ImplicitParameter*>::iterator it = implicitParams.begin(); it != implicitParams.end(); it++)
-		(*it)->takeMemo(mId);
+	// for (std::vector<ImplicitParameter*>::iterator it = implicitParams.begin(); it != implicitParams.end(); it++)
+	//	(*it)->takeMemo(mId);
 	for (std::vector<Return*>::iterator it = returns.begin(); it != returns.end(); it++)
 		(*it)->takeMemo(mId);
 	if (rettype)
@@ -1505,7 +1517,7 @@ void Signature::readMemo(Memo *mm, bool dec)
 
 	name = m->name;
 	params = m->params;
-	implicitParams = m->implicitParams;
+	// implicitParams = m->implicitParams;
 	returns = m->returns;
 	rettype = m->rettype;
 	ellipsis = m->ellipsis;
@@ -1515,8 +1527,8 @@ void Signature::readMemo(Memo *mm, bool dec)
 
 	for (std::vector<Parameter*>::iterator it = params.begin(); it != params.end(); it++)
 		(*it)->restoreMemo(m->mId, dec);
-	for (std::vector<ImplicitParameter*>::iterator it = implicitParams.begin(); it != implicitParams.end(); it++)
-		(*it)->restoreMemo(m->mId, dec);
+	// for (std::vector<ImplicitParameter*>::iterator it = implicitParams.begin(); it != implicitParams.end(); it++)
+	//	(*it)->restoreMemo(m->mId, dec);
 	for (std::vector<Return*>::iterator it = returns.begin(); it != returns.end(); it++)
 		(*it)->restoreMemo(m->mId, dec);
 	if (rettype)
@@ -1560,6 +1572,7 @@ void Parameter::readMemo(Memo *mm, bool dec)
 }
 
 
+#if 0
 class ImplicitParameterMemo : public ParameterMemo {
 public:
 	ImplicitParameterMemo(int m) : ParameterMemo(m) { }
@@ -1593,6 +1606,7 @@ void ImplicitParameter::readMemo(Memo *mm, bool dec)
 	m->type->restoreMemo(m->mId, dec);
 	m->exp->restoreMemo(m->mId, dec);
 }
+#endif
 
 class ReturnMemo : public Memo {
 public:

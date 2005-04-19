@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.4 $
+ * $Revision: 1.43.2.5 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -285,8 +285,10 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 			// For each use of some variable x in S (not just assignments)
 			LocationSet locs;
 			if (S->isPhi()) {
-				if (S->getLeft()->isMemOf() || S->getLeft()->isRegOf())
-					S->getLeft()->getSubExp1()->addUsedLocs(locs);
+				PhiAssign* pa = (PhiAssign*)S;
+				Exp* phiLeft = pa->getLeft();
+				if (phiLeft->isMemOf() || phiLeft->isRegOf())
+					phiLeft->getSubExp1()->addUsedLocs(locs);
 			}
 			else
 				S->addUsedLocs(locs);
@@ -307,17 +309,18 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 				else
 					def = Stack[x].top();
 				// Replace the use of x with x{def} in S
-				if (S->isPhi())
-					S->getLeft()->refSubExp1() = S->getLeft()->getSubExp1()->expSubscriptVar(x, def /*, this*/);
-				else S->subscriptVar(x, def /*, this */);
+				if (S->isPhi()) {
+					Exp* phiLeft = ((PhiAssign*)S)->getLeft();
+					phiLeft->refSubExp1() = phiLeft->getSubExp1()->expSubscriptVar(x, def /*, this*/);
+				} else
+					S->subscriptVar(x, def /*, this */);
 			}
 		}
 
-		// For each definition of some variable a in S
 		// MVE: Check for Call and Return Statements; these have Collector objects that need to be updated
 		// Do before the below, so CallStatements have not yet processed their returns
 		if (S->isCall() || S->isReturn()) {
-			Collector* col;
+			DefCollector* col;
 			if (S->isCall())
 				col = ((CallStatement*)S)->getCollector();
 			else
@@ -325,6 +328,7 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 			col->updateLocs(Stack);
 		}
 
+		// For each definition of some variable a in S
 		LocationSet defs;
 		S->getDefinitions(defs);
 		LocationSet::iterator dd;
@@ -333,7 +337,8 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 			if (a->getMemDepth() == memDepth) {
 				// Push i onto Stack[a]
 				// Note: we clone a because otherwise it could be an expression that gets deleted through various
-				// modifications. This is necessary because we do several passes of this algorithm with various memory depths
+				// modifications. This is necessary because we do several passes of this algorithm with various memory
+				// depths
 				Stack[a->clone()].push(S);
 				// Replace definition of a with definition of a_i in S (we don't do this)
 			}
@@ -400,7 +405,7 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 }
 
 
-void Collector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack) {
+void DefCollector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack) {
 	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator it;
 	for (it = Stack.begin(); it != Stack.end(); it++) {
 		if (it->second.size() == 0)
@@ -412,16 +417,16 @@ void Collector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& 
 }
 
 // Find the definition for e that reaches this Collector. If none reaches here, return NULL
-RefExp* Collector::findDef(Exp* e) {
+RefExp* DefCollector::findDef(Exp* e) {
 	RefExp re(e, (Statement*)-1);		// Wrap in a definition with a wild definition
-	std::set<RefExp*, lessExpStar>::iterator it = locs.find(&re);
+	LocationSet::iterator it = locs.find(&re);
 	if (it == locs.end())
 		return NULL;					// Not explicitly defined here
-	return *it;
+	return (RefExp*)*it;
 }
 
 void Collector::print(std::ostream& os) {
-	std::set<RefExp*, lessExpStar>::iterator it;
+	LocationSet::iterator it;
 	for (it=locs.begin(); it != locs.end(); ) {
 		os << *it;
 		it++;
@@ -437,3 +442,11 @@ char* Collector::prints() {
 	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
 }
+
+void Collector::makeCloneOf(Collector& other) {
+	initialised = other.initialised;
+	locs.clear();
+	for (iterator it = other.begin(); it != other.end(); ++it)
+		locs.insert((*it)->clone());
+}
+

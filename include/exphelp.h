@@ -7,6 +7,7 @@
 #define __EXPHELP_H__
 
 class Exp;
+class Assignment;
 
 // A helper file for comparing Exp*'s sensibly
 class lessExpStar : public std::binary_function<Exp*, Exp*, bool> {
@@ -24,4 +25,9 @@ public:
 	bool operator()(const Exp* x, const Exp* y) const;
 };
 
+// Compare assignments by their left hand sides (only). Implemented in statement.cpp
+class lessAssignment : public std::binary_function<Assignment*, Assignment*, bool> {
+public:
+	bool operator()(const Assignment* x, const Assignment* y) const;
+};
 #endif		// __EXPHELP_H__

@@ -33,7 +33,8 @@ class Type;
 class Signature;
 class Assign;
 class LocationSet;
-struct ReturnInfo;
+class RetStatement;
+class ReturnStatement;
 
 class HLLCode {
 protected:
@@ -100,9 +101,9 @@ virtual void	RemoveUnusedLabels(int maxOrd) = 0;
 		// sequential statements
 virtual void	AddAssignmentStatement(int indLevel, Assign *s) = 0;
 virtual void	AddCallStatement(int indLevel, Proc *proc, const char *name, std::vector<Exp*> &args,
-					std::vector<ReturnInfo>& rets) = 0;
+					RetStatement* rets) = 0;
 virtual void	AddIndCallStatement(int indLevel, Exp *exp, std::vector<Exp*> &args) = 0;
-virtual void	AddReturnStatement(int indLevel, std::vector<Exp*> &returns) = 0;
+virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs) = 0;
 
 		// procedure related
 virtual void	AddProcStart(Signature *signature) = 0;

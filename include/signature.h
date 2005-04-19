@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53 $
+ * $Revision: 1.53.2.1 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -51,6 +51,7 @@ protected:
 	Parameter() : type(NULL), name(""), exp(NULL) { }
 };
 
+#if 0
 class ImplicitParameter : public Parameter {
 private:
 	Parameter *parent;
@@ -71,6 +72,7 @@ protected:
 	friend class XMLProgParser;
 	ImplicitParameter() : Parameter(), parent(NULL) { }
 };
+#endif
 
 class Return : public Memoisable {
 private:
@@ -101,7 +103,7 @@ class Signature : public Memoisable {
 protected:
 		std::string	name;		// name of procedure
 		std::vector<Parameter*> params;
-		std::vector<ImplicitParameter*> implicitParams;
+		// std::vector<ImplicitParameter*> implicitParams;
 		std::vector<Return*> returns;
 		Type		*rettype;
 		bool		ellipsis;
@@ -114,8 +116,8 @@ protected:
 		void		updateParams(UserProc *p, Statement *stmt, bool checkreach = true);
 		bool		usesNewParam(UserProc *p, Statement *stmt, bool checkreach, int &n);
 
-		void		addImplicitParametersFor(Parameter *p);
-		void		addImplicitParameter(Type *type, const char *name, Exp *e, Parameter *parent);
+		//void		addImplicitParametersFor(Parameter *p);
+		//void		addImplicitParameter(Type *type, const char *name, Exp *e, Parameter *parent);
 
 public:
 					Signature(const char *nam);
@@ -181,6 +183,7 @@ virtual bool		hasEllipsis() { return ellipsis; }
 
 		void		renameParam(const char *oldName, const char *newName);
 
+#if 0
 	// add a new implicit parameter
 virtual void addImplicitParameter(Exp *e);
 virtual void removeImplicitParameter(int i);
@@ -191,6 +194,7 @@ virtual const char *getImplicitParamName(int n);
 virtual Exp *getImplicitParamExp(int n);
 virtual Type *getImplicitParamType(int n);
 virtual int findImplicitParam(Exp *e);
+#endif
 
 		// analysis determines parameters / return type
 		//virtual void analyse(UserProc *p);
@@ -254,36 +258,36 @@ static char*		conventionName(callconv cc);
 virtual platform	getPlatform() { return PLAT_GENERIC; }
 virtual callconv	getConvention() { return CONV_NONE; }
 
-	// prefered format
-	void setPreferedReturn(Type *ty) { preferedReturn = ty; }
-	void setPreferedName(const char *nam) { preferedName = nam; }
-	void addPreferedParameter(int n) { preferedParams.push_back(n); }
-	Type *getPreferedReturn() { return preferedReturn; }
-	const char *getPreferedName() { return preferedName.c_str(); }
-	unsigned int getNumPreferedParams() { return preferedParams.size(); }
-	int getPreferedParam(int n) { return preferedParams[n]; }
+		// prefered format
+		void		setPreferedReturn(Type *ty) { preferedReturn = ty; }
+		void		setPreferedName(const char *nam) { preferedName = nam; }
+		void		addPreferedParameter(int n) { preferedParams.push_back(n); }
+		Type		*getPreferedReturn() { return preferedReturn; }
+		const char	*getPreferedName() { return preferedName.c_str(); }
+		unsigned int getNumPreferedParams() { return preferedParams.size(); }
+		int			getPreferedParam(int n) { return preferedParams[n]; }
 
-	virtual Memo *makeMemo(int mId);
-	virtual void readMemo(Memo *m, bool dec);
+virtual Memo		*makeMemo(int mId);
+virtual void		readMemo(Memo *m, bool dec);
 
 protected:
-	friend class XMLProgParser;
-	Signature() : name(""), rettype(NULL), ellipsis(false), preferedReturn(NULL), preferedName("") { }
-	void appendParameter(Parameter *p) { params.push_back(p); }
-	void appendImplicitParameter(ImplicitParameter *p) { implicitParams.push_back(p); }
-	void appendReturn(Return *r) { returns.push_back(r); }
+		friend class XMLProgParser;
+					Signature() : name(""), rettype(NULL), ellipsis(false), preferedReturn(NULL), preferedName("") { }
+		void		appendParameter(Parameter *p) { params.push_back(p); }
+		//void		appendImplicitParameter(ImplicitParameter *p) { implicitParams.push_back(p); }
+		void appendReturn(Return *r) { returns.push_back(r); }
 };	// class Signature
 
 class CustomSignature : public Signature {
 protected:
-	int sp;
+		int			sp;
 public:
 	CustomSignature(const char *nam);
-	virtual ~CustomSignature() { }
-	virtual bool isPromoted() { return true; }
-	virtual Signature *clone();
-	void setSP(int nsp);
-	virtual int	 getStackRegister(			) {return sp; };
+virtual ~CustomSignature() { }
+virtual	bool		isPromoted() { return true; }
+virtual Signature	*clone();
+		void		setSP(int nsp);
+virtual int			getStackRegister() {return sp; };
 };
 
 #endif

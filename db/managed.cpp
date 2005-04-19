@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.1 $
+ * $Revision: 1.15.2.2 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -102,19 +102,18 @@ bool StatementSet::exists(Statement* s) {
 // Find a definition for loc in this Statement set. Return true if found
 bool StatementSet::defines(Exp* loc) {
 	for (iterator it = sset.begin(); it != sset.end(); it++) {
-		Exp* lhs = (*it)->getLeft();
-		if (lhs && (*lhs == *loc))
+		if ((*it)->defines(loc))
 			return true;
 	}
 	return false;
 }
 
+#if 0
 // Remove if defines the given expression
 bool StatementSet::removeIfDefines(Exp* given) {
 	bool found = false;
 	for (iterator it = sset.begin(); it != sset.end(); it++) {
-		Exp* left = (*it)->getLeft();
-		if (left && *left == *given) {
+		if ((*it)->defines(given)) {
 			// Erase this Statement
 			sset.erase(it);
 			found = true;
@@ -133,6 +132,7 @@ bool StatementSet::removeIfDefines(StatementSet& given) {
 	}
 	return found;
 }
+#endif
 
 // Print to a string, for debugging
 char* StatementSet::prints() {
@@ -248,11 +248,13 @@ void LocationSet::remove(LocSetIter ll) {
 // Used for killing in liveness sets
 void LocationSet::removeIfDefines(StatementSet& given) {
 	StatementSet::iterator it;
-	for (it = given.begin(); it != given.end(); it++) {
+	for (it = given.begin(); it != given.end(); ++it) {
 		Statement* s = (Statement*)*it;
-		Exp* givenLeft = s->getLeft();
-		if (givenLeft)
-			sset.erase(givenLeft);
+		LocationSet defs;
+		s->getDefinitions(defs);
+		LocationSet::iterator dd;
+		for (dd = defs.begin(); dd != defs.end(); ++dd) 
+			sset.erase(*dd);
 	}
 }
 
@@ -300,7 +302,7 @@ bool LocationSet::operator==(const LocationSet& o) const {
 	return true;
 }
 
-bool LocationSet::find(Exp* e) {
+bool LocationSet::exists(Exp* e) {
 	return sset.find(e) != sset.end();
 }
 
@@ -337,17 +339,15 @@ void LocationSet::addSubscript(Statement* d /* , Cfg* cfg */) {
 }
 
 // Substitute s into all members of the set
-void LocationSet::substitute(Statement& s) {
-	Exp* lhs = s.getLeft();
+void LocationSet::substitute(Assign& a) {
+	Exp* lhs = a.getLeft();
 	if (lhs == NULL) return;
-	Exp* rhs = s.getRight();
+	Exp* rhs = a.getRight();
 	if (rhs == NULL) return;		// ? Will this ever happen?
 	std::set<Exp*, lessExpStar>::iterator it;
-	// Note: it's important not to change the pointer in the set of pointers
-	// to expressions, without removing and inserting again. Otherwise, the
-	// set becomes out of order, and operations such as set comparison fail!
-	// To avoid any funny behaviour when iterating the loop, we use the follow-
-	// ing two sets
+	// Note: it's important not to change the pointer in the set of pointers to expressions, without removing and
+	// inserting again. Otherwise, the set becomes out of order, and operations such as set comparison fail!
+	// To avoid any funny behaviour when iterating the loop, we use the following two sets
 	LocationSet removeSet;			// These will be removed after the loop
 	LocationSet removeAndDelete;	// These will be removed then deleted
 	LocationSet insertSet;			// These will be inserted after the loop
@@ -483,24 +483,6 @@ StatementVec::iterator StatementVec::remove(iterator it) {
 	return oldoldit;
 */
 	return svec.erase(it);
-}
-
-// Print only the left hand sides to stream os
-void StatementVec::printLefts(std::ostream& os) {
-	for (iterator it = svec.begin(); it != svec.end(); ) {
-		if (*it) {
-			Exp* left = (*it)->getLeft();
-			if (left) {
-				left->print(os);
-				os << "{" << std::dec << (*it)->getNumber() << "}";
-			} else 
-				os << "-";
-		}
-		else
-			os << "-";
-		if (++it != svec.end())
-			os << " ";
-	}
 }
 
 char* StatementVec::prints() {

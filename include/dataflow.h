@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.4 $
+ * $Revision: 1.39.2.5 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -25,7 +25,8 @@
 #include <set>
 #include <stack>
 
-#include "exphelp.h"
+#include "exphelp.h"		// For lessExpStar, etc
+#include "managed.h"		// For LocationSet
 
 class Cfg;
 class BasicBlock;
@@ -104,23 +105,29 @@ public:
 };
 
 /**
- * Collector class. This class collects all definitions that reach the statement that contains this collector.
+ * Collector class. Common code and data for Def and Use Collectors.
  */
 class Collector {
+protected:
 		/*
-		 * True if initialised. When not initialised, callees should not subscript parameters inserted into the associated
-		 * CallStatement
+		 * True if initialised. When not initialised, callees should not subscript parameters inserted into the
+		 * associated CallStatement
 		 */
 		bool		initialised;
-		/*
+		/**
 		 * The set of locations. Use lessExpStar to compare properly
 		 */
-		std::set<RefExp*, lessExpStar>	locs;
+		LocationSet	locs;
 public:
-		/*
+		/**
 		 * Constructor
 		 */
-					Collector() : initialised(false) { }
+					Collector() : initialised(false) {}
+
+		/**
+		 * makeCloneOf(): clone the given Collector into this one
+		 */
+		void		makeCloneOf(Collector& other);
 
 		/*
 		 * Return true if initialised
@@ -128,22 +135,16 @@ public:
 		bool		isInitialised() {return initialised;}
 
 		/*
-		 * Update the locations with the current set of reaching definitions
-		 */
-		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack);
-
-		/*
 		 * Clear the location set
 		 */
 		void		clear() {locs.clear(); initialised = false;}
 
-		/**
-		 * Find the definition for a location. If not found, return NULL
-		 */
-		RefExp*		findDef(Exp* e);
-
 		/*
-		 * Print the reaching definitions to stream os
+		 * Insert a new member
+		 */
+		void		insert(Exp* e) {locs.insert(e);}
+		/*
+		 * Print the collected locations to stream os
 		 */
 		void		print(std::ostream& os);
 
@@ -155,15 +156,50 @@ public:
 		/*
 		 * begin() and end() so we can iterate through the locations
 		 */
-		typedef std::set<RefExp*, lessExpStar>::iterator iterator;
+		typedef LocationSet::iterator iterator;
 		iterator begin() {return locs.begin();}
 		iterator end()	 {return locs.end();}
 };
 
-class FlowBarrier {
-		Collector	col;
+/**
+ * DefCollector class. This class collects all definitions that reach the statement that contains this collector.
+ */
+class DefCollector : public Collector{
 public:
+		/*
+		 * Constructor
+		 */
+					DefCollector() { }
+
+		/*
+		 * Clone
+		 */
+		DefCollector* clone();
+
+		/*
+		 * Update the locations with the current set of reaching definitions
+		 */
+		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack);
+
+		/**
+		 * Find the definition for a location. If not found, return NULL
+		 */
+		RefExp*		findDef(Exp* e);
 };
+
+/**
+ * UseCollector class. This class collects all uses (live variables) that will be defined by the statement that 
+ * contains this collector.
+ */
+class UseCollector : public Collector {
+public:
+		/*
+		 * Add a new use from Statement u
+		 */
+		void		updateLocs(Statement* u);
+
+};
+
 
 #endif	// _DATAFLOW_H_
 

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90 $
+ * $Revision: 1.90.2.1 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1009,18 +1009,13 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn) {
 }
 
 void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, std::vector<Exp*> &args,
-	std::vector<ReturnInfo>& rets) {
+		RetStatement* rets) {
 	std::ostringstream s;
 	indent(s, indLevel);
-	unsigned n = 0;
-	if (rets.size() >= 1) {
-		for (n = 0; n < rets.size(); n++) {
-			if (rets[n].e) {
-				appendExp(s, rets[n].e, PREC_ASSIGN);
-				s << " = ";
-				break;
-			}
-		}
+	if (rets->getNumReturns() >= 1) {
+		// FIXME: Need chaning if more than one real return location (return a struct)
+		appendExp(s, (*rets->begin())->getLeft(), PREC_ASSIGN);
+		s << " = ";
 	}
 	s << name << "(";
 	for (unsigned int i = 0; i < args.size(); i++) {
@@ -1039,26 +1034,25 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, std:
 		if (i < args.size() - 1) s << ", ";
 	}
 	s << ");";
-	bool first = true;
-	for (n++; n < rets.size(); n++) 
-		if (rets[n].e) {
+	if (rets->getNumReturns() > 1) {
+		RetStatement::iterator rr;
+		bool first = true;
+		s << " // OUT: ";
+		for (rr = rets->begin(); rr != rets->end(); rr++) {
 			if (first)
-				s << " // OUT: ";
+				first = false;
 			else
 				s << ", ";
-			appendExp(s, rets[n].e, PREC_COMMA);
-			first = false;
+			appendExp(s, (*rr)->getLeft(), PREC_COMMA);
 		}
-	std::string str = s.str();	// Copy the whole string
-	n = str.length();
-	if (str.substr(n-2, 2) == ", ")
-		str = str.substr(0, n-2);
-	lines.push_back(strdup(str.c_str()));
+	}
+			
+	lines.push_back(strdup(s.str().c_str()));
 }
 
-// Ugh - almost the same as the above, but it needs to take an expression,
-// not a Proc*
+// Ugh - almost the same as the above, but it needs to take an expression, // not a Proc*
 void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp, std::vector<Exp*> &args) {
+//	FIXME: Needs to take a RetStatement*, since we can infer some possible return locations
 	std::ostringstream s;
 	indent(s, indLevel);
 	s << "(*";
@@ -1073,26 +1067,30 @@ void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp, std::vector<Exp*> &ar
 }
 
 
-void CHLLCode::AddReturnStatement(int indLevel, std::vector<Exp*> &returns) {
+void CHLLCode::AddReturnStatement(int indLevel, ReturnStatement& rs) {
+	// FIXME: should be returning a struct of more than one real return */
 	std::ostringstream s;
 	indent(s, indLevel);
 	s << "return";
-	if (returns.size() >= 1) {
+	int n = rs.getNumReturns();
+	if (n >= 1) {
 		s << " ";
-		appendExp(s, returns[0], PREC_NONE);
+		appendExp(s, (*rs.begin())->getLeft(), PREC_NONE);
 	}
 	s << ";";
-	if (returns.size() > 1) {
-		s << "/* ";
-	}
-	for (unsigned i = 1; i < returns.size(); i++) {
-		if (i != 1)
+
+	if (n > 1)
+		s << "\t/* ";
+	bool first = true;
+	for (RetStatement::iterator rr = ++rs.begin(); rr != rs.end(); ++rr) {
+		if (first)
+			first = false;
+		else
 			s << ", ";
-		appendExp(s, returns[i], PREC_NONE);
+		appendExp(s, (*rr)->getLeft(), PREC_NONE);
 	}
-	if (returns.size() > 1) {
-		s << "*/";
-	}
+	if (n > 1)
+		s << " */";
 	lines.push_back(strdup(s.str().c_str()));
 }
 

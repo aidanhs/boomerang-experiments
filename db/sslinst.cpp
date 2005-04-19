@@ -18,7 +18,7 @@
  *============================================================================*/
  
 /*
- * $Revision: 1.27 $
+ * $Revision: 1.27.2.1 $
  *
  * 27 Apr 02 - Mike: Mods for boomerang
  * 17 Jul 02 - Mike: readSSLFile resets internal state as well
@@ -310,8 +310,7 @@ void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcPar
 	ParamEntry &param = DetParamMap[s];
 
 	if( param.params.size() == 0 ) {
-		std::cerr << "Error in SSL File: Variant operand "
-			 << s << " has no branches. Well that's really useful...\n";
+		std::cerr << "Error in SSL File: Variant operand " << s << " has no branches. Well that's really useful...\n";
 		return;
 	}
 	if( param.mark == mark )
@@ -337,10 +336,9 @@ void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcPar
 		}
 
 		if (funcParams.size() != sub.funcParams.size() ) {
-			std::cerr << "Error in SSL File: Variant operand " << s
-				 << " does not have a fixed number of functional parameters:\n"
-				 << "Expected " << funcParams.size() << ", but branch "
-				 << *it << " has " << sub.funcParams.size() << ".\n";
+			std::cerr << "Error in SSL File: Variant operand " << s <<
+				" does not have a fixed number of functional parameters:\n" <<
+				"Expected " << funcParams.size() << ", but branch " << *it << " has " << sub.funcParams.size() << ".\n";
 		} else if (funcParams != sub.funcParams && sub.asgn != NULL ) {
 			/* Rename so all the parameter names match */
 			std::list<std::string>::iterator i,j;
@@ -388,8 +386,7 @@ std::pair<std::string,unsigned> RTLInstDict::getSignature(const char* name) {
 
 /*==============================================================================
  * FUNCTION:		 RTLInstDict::partialType
- * OVERVIEW:		 Scan the Exp* pointed to by exp; if its top level
- *						operator indicates even a partial type, then set
+ * OVERVIEW:		 Scan the Exp* pointed to by exp; if its top level operator indicates even a partial type, then set
  *						the expression's type, and return true
  * NOTE:			 This version only inspects one expression
  * PARAMETERS:		 exp - points to a Exp* to be scanned
@@ -411,11 +408,9 @@ bool RTLInstDict::partialType(Exp* exp, Type& ty)
 
 /*==============================================================================
  * FUNCTION:		 RTLInstDict::instantiateRTL
- * OVERVIEW:		 Returns an instance of a register transfer list for
- *					 the instruction named 'name' with the actuals
+ * OVERVIEW:		 Returns an instance of a register transfer list for the instruction named 'name' with the actuals
  *					 given as the second parameter.
- * PARAMETERS:		 name - the name of the instruction (must correspond to one
- *					   defined in the SSL file).
+ * PARAMETERS:		 name - the name of the instruction (must correspond to one defined in the SSL file).
  *					 actuals - the actual values
  * RETURNS:			 the instantiated list of Exps
  *============================================================================*/
@@ -528,12 +523,11 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
 	// First pass: Scan for post-variables and usages of their referents
 	for( rt = rts->begin(); rt != rts->end(); rt++ ) {
 		// ss appears to be a list of expressions to be searched
-		// It is either the LHS and RHS of an assignment, 
-		// or it's the parameters of a flag call
+		// It is either the LHS and RHS of an assignment, or it's the parameters of a flag call
 		Binary* ss;
 		if( (*rt)->isAssign()) {
-			Exp* lhs = (*rt)->getLeft();
-			Exp* rhs = (*rt)->getRight();
+			Exp* lhs = ((Assign*)*rt)->getLeft();
+			Exp* rhs = ((Assign*)*rt)->getRight();
 
 			// Look for assignments to post-variables
 			if (lhs && lhs->isPostVar()) {
@@ -543,15 +537,12 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
 					el.used = false;
 					el.type = ((Assign*)*rt)->getType();
 					
-					// Constuct a temporary. We should probably be smarter
-					// and actually check that it's not otherwise used here.
-					std::string tmpname = el.type->getTempName() + (tmpcount++)
-					  + "post" ;
-					el.tmp = Location::tempOf(new Const(
-					  (char*)tmpname.c_str()));
+					// Constuct a temporary. We should probably be smarter and actually check that it's not otherwise
+					// used here.
+					std::string tmpname = el.type->getTempName() + (tmpcount++) + "post" ;
+					el.tmp = Location::tempOf(new Const((char*)tmpname.c_str()));
 
-					// Keep a copy of the referrent. For example, if the
-					// lhs is r[0]', base is r[0]
+					// Keep a copy of the referrent. For example, if the lhs is r[0]', base is r[0]
 					el.base = lhs->getSubExp1();
 					el.post = lhs;	   // The whole post-var, e.g. r[0]'
 					el.isNew = true;
@@ -565,27 +556,26 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
 					
 				}
 			}
-			// For an assignment, the two expressions to search are the
-			// left and right hand sides (could just put the whole assignment
-			// on, I suppose)
-			ss = new Binary(opList, lhs->clone(),
-					new Binary(opList, rhs->clone(), new Terminal(opNil)));
+			// For an assignment, the two expressions to search are the left and right hand sides (could just put the
+			// whole assignment on, I suppose)
+			ss = new Binary(opList,
+				lhs->clone(),
+				new Binary(opList,
+					rhs->clone(),
+					new Terminal(opNil)));
 		} else if( (*rt)->isFlagAssgn()) {
-			// An opFlagCall is assumed to be a Binary with a string and an
-			// opList of parameters
+			// An opFlagCall is assumed to be a Binary with a string and an opList of parameters
 			ss = (Binary*) ((Binary*)*rt)->getSubExp2();
 		} else
 			ss = NULL;
 
 		/* Look for usages of post-variables' referents
-		 * Trickier than you'd think, as we need to make sure to skip over
-		 * the post-variables themselves. ie match r[0] but not r[0]'
-		 * Note: back with SemStrs, we could use a match expression which
-		 * was a wildcard prepended to the base expression; this would
-		 * match either the base (r[0]) or the post-var (r[0]').
-		 * Can't really use this with Exps, so we search twice; once for
-		 * the base, and once for the post, and if we get more with the
-		 * former, then we have a use of the base (consider r[0] + r[0]')
+		 * Trickier than you'd think, as we need to make sure to skip over the post-variables themselves. ie match
+		 * r[0] but not r[0]'
+		 * Note: back with SemStrs, we could use a match expression which was a wildcard prepended to the base
+		 * expression; this would match either the base (r[0]) or the post-var (r[0]').
+		 * Can't really use this with Exps, so we search twice; once for the base, and once for the post, and if we
+		 * get more with the former, then we have a use of the base (consider r[0] + r[0]')
 		 */
 		for (std::map<Exp*,transPost,lessExpStar>::iterator sr = vars.begin();
 			 sr != vars.end(); sr++ ) {
@@ -608,8 +598,7 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
 				s->searchAll( sr->second.base, res1 );
 				s->searchAll( sr->second.post, res2 );
 				// Each match of a post will also match the base.
-				// But if there is a bare (non-post) use of the base, there
-				// will be a result in res1 that is not in res2
+				// But if there is a bare (non-post) use of the base, there will be a result in res1 that is not in res2
 				if (res1.size() > res2.size())
 					sr->second.used = true;
 			}
@@ -630,8 +619,7 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
 
 	// Finally: Append assignments where needed from temps to base vars
 	// Example: esp' = esp-4; m[esp'] = modrm; FLAG(esp)
-	// all the esp' are replaced with say tmp1,
-	// you need a "esp = tmp1" at the end to actually make the change
+	// all the esp' are replaced with say tmp1, you need a "esp = tmp1" at the end to actually make the change
 	for( std::map<Exp*,transPost,lessExpStar>::iterator sr = vars.begin();
 	  sr != vars.end(); sr++ ) {
 		if( sr->second.used ) {
@@ -640,8 +628,7 @@ std::list<Statement*>* RTLInstDict::transformPostVars(
 					sr->second.tmp);
 			rts->push_back( te );
 		} else {
-			// The temp is either used (uncloned) in the assignment, or is
-			// deleted here
+			// The temp is either used (uncloned) in the assignment, or is deleted here
 			//delete sr->second.tmp;
 		}
 	}

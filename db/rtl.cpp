@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.33.2.1 $
+ * $Revision: 1.33.2.2 $
  * 
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
@@ -479,10 +479,10 @@ void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, Type* type	 /* NULL */) {
 	std::list<Statement*>::iterator it;
 	// First skip all assignments with temps on LHS
 	for (it = stmtList.begin(); it != stmtList.end(); it++) {
-	Statement *e = *it;
-		if (!e->isAssign())
+		Statement *s = *it;
+		if (!s->isAssign())
 			break;
-		Exp* LHS = e->getLeft();
+		Exp* LHS = ((Assign*)s)->getLeft();
 		if (LHS->isTemp())
 			break;
 	}
@@ -609,13 +609,10 @@ bool RTL::isCompare(int& iReg, Exp*& expOperand) {
 	do {
 		cur = elementAt(i);
 		if (cur->getKind() != STMT_ASSIGN) return false;
-		rhs = cur->getRight();
+		rhs = ((Assign*)cur)->getRight();
 		i++;
 	} while (rhs->getOper() != opMinus && i < getNumStmt());
 	if (rhs->getOper() != opMinus) return false;
-	// We should be rid of all r[tmp] now...
-	  // Exp* lhs = cur->getLeft();
-	  // if (!lhs->isRegOf()) return false;
 	// We have a subtract assigning to a register.
 	// Check if there is a subflags last
 	Statement* last = elementAt(getNumStmt()-1);

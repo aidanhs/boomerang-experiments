@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.4 $
+ * $Revision: 1.23.2.5 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -104,11 +104,13 @@ bool StmtConscriptSetter::visit(CallStatement* stmt) {
 	for (i=0; i < n; i++)
 		impargs[i]->accept(&sc);
 #endif
+#if 0		// Note sure...
 	n = stmt->getNumReturns();
 	for (i=0; i < n; i++) {
 		Exp* r = stmt->getReturnExp(i);
 		if (r) r->accept(&sc);
 	}
+#endif
 	curConscript = sc.getLast();
 	return true;
 }
@@ -125,11 +127,9 @@ bool StmtConscriptSetter::visit(CaseStatement* stmt) {
 
 bool StmtConscriptSetter::visit(ReturnStatement* stmt) {
 	SetConscripts sc(curConscript, bClear);
-	int n = stmt->getNumReturns();
-	for (int i=0; i < n; i++) {
-		Exp* r = stmt->getReturnExp(i);
-		r->accept(&sc);
-	}
+	RetStatement::iterator rr;
+	for (rr = stmt->begin(); rr != stmt->end(); ++rr)
+		(*rr)->accept(this);
 	curConscript = sc.getLast();
 	return true;
 }
@@ -354,6 +354,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 	}
 #endif
 	// For the final pass, also only consider the first return
+#if 0		// Not sure...
 	int n = s->getNumReturns();
 	if (final) {
 		if (n != 0) {
@@ -376,6 +377,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 			}
 		} 
 	}
+#endif
 	override = true;			// Don't do the normal accept logic
 	return true;				// Continue the recursion
 }
@@ -383,21 +385,17 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 bool UsedLocsVisitor::visit(ReturnStatement* s, bool& override) {
 	// For the final pass, only consider the first return
 	int n = s->getNumReturns();
+	RetStatement::iterator rr;
 	if (final) {
 		if (n != 0) {
-			Exp* r = NULL;
 			// Find the first non null return
-			for (int i = 0; r == NULL && i < n; i++) {
-				r = s->getReturnExp(i);			
-				r->accept(ev);
-			}
+			for (rr = s->begin(); rr != s->end(); ++rr)
+				(*rr)->accept(this);
 		}
 	} else {
 		// Otherwise, consider all returns. If of form m[x] then x is used
-		for (int i=0; i < n; i++) {
-			Exp* r = s->getReturnExp(i);
-			if (r) r->accept(ev);
-		} 
+		for (rr = s->begin(); rr != s->end(); ++rr)
+			/*if (*rr)*/ (*rr)->accept(this);
 	}
 	override = true;			// Don't do the normal accept logic
 	return true;				// Continue the recursion
@@ -527,8 +525,9 @@ void StmtSubscripter::visit(CallStatement* s, bool& recur) {
 	for (int i=0; i < n; i++)
 		implicits[i] = implicits[i]->accept(mod);
 #endif
-	// Returns are like the LHS of an assignment; don't subscript them directly (only if m[x],
-	// and then only subscript the x's)
+	// Returns are like the LHS of an assignment; don't subscript them directly (only if m[x], and then only subscript
+	// the x's)
+#if 0
 	n = s->getNumReturns();
 	for (int i=0; i < n; i++) {
 		Exp* r = s->getReturnExp(i);
@@ -537,6 +536,7 @@ void StmtSubscripter::visit(CallStatement* s, bool& recur) {
 			x = x->accept(mod);
 		}
 	}
+#endif
 	recur = false;			// Don't do the usual accept logic
 }
 

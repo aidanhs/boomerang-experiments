@@ -14,7 +14,7 @@
  * OVERVIEW:	interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.73 $
+ * $Revision: 1.73.2.1 $
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -147,9 +147,6 @@ public:
 
 	// Initialise and number all statements globally
 	void initStatements();
-
-    // Do a fast x86 specific decompile
-    void fastx86decompile();
 
 	// Do decompilation
 	void decompile();

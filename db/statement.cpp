@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.4 $
+ * $Revision: 1.148.2.5 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -71,17 +71,15 @@ Exp *Statement::getExpAtLex(unsigned int begin, unsigned int end)
 }
 
 // replace a use in this statement
-bool Statement::replaceRef(Statement *def) {
+bool Statement::replaceRef(Assign *def) {
 	Exp* lhs = def->getLeft();
 	Exp* rhs = def->getRight();
 	assert(lhs);
 	assert(rhs);
-	// "Wrap" the LHS in a RefExp
-	// This was so that it matches with the thing it is replacing.
+	// "Wrap" the LHS in a RefExp.  This was so that it matches with the thing it is replacing.
 	// Example: 42: r28 := r28{14}-4 into m[r28-24] := m[r28{42}] + ...
-	// The r28 needs to be subscripted with {42} to match the thing on
-	// the RHS that is being substituted into. (It also makes sure it
-	// never matches the other r28, which should really be r28{0}).
+	// The r28 needs to be subscripted with {42} to match the thing on the RHS that is being substituted into.
+	// (It also makes sure it never matches the other r28, which should really be r28{0}).
 	Unary* re;
 	re = new RefExp(lhs, def);
 
@@ -97,9 +95,8 @@ bool Statement::replaceRef(Statement *def) {
 
 bool Statement::mayAlias(Exp *e1, Exp *e2, int size) { 
 	if (*e1 == *e2) return true;
-	// Pass the expressions both ways. Saves checking things like
-	// m[exp] vs m[exp+K] and m[exp+K] vs m[exp] explicitly (only need to
-	// check one of these cases)
+	// Pass the expressions both ways. Saves checking things like m[exp] vs m[exp+K] and m[exp+K] vs m[exp] explicitly
+	// (only need to check one of these cases)
 	bool b =  (calcMayAlias(e1, e2, size) && calcMayAlias(e2, e1, size)); 
 	if (b && VERBOSE) {
 		LOG << "May alias: " << e1 << " and " << e2 << " size " << size << "\n";
@@ -270,6 +267,8 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 					continue;
 				// Don't propagate from statements in the exclude list
 				if (exclude.exists(def)) continue;
+				if (!def->isAssign()) continue;		// Only propagate ordinary assignments (MVE: Check!)
+#if 0
 				if (def->isPhi())
 					// Don't propagate phi statements!
 					continue;
@@ -277,14 +276,15 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 					continue;
 				if (def->isBool())
 					continue;
+#endif
 #if 1	// Sorry, I don't believe prop into branches is wrong... MVE
 		// By not propagating into branches, we get memory locations not
 		// converted to locals, for example (e.g. test/source/csp.c)
 		 
+				Assign* adef = (Assign*)def;
 				if (isBranch()) {
-					Exp* defRight = def->getRight();
-					// Propagating to a branch often doesn't give good results,
-					// unless propagating flags
+					Exp* defRight = adef->getRight();
+					// Propagating to a branch often doesn't give good results, unless propagating flags
 					// Special case for Pentium: allow prop of
 					// r12 := SETFFLAGS(...) (fflags stored via register AH)
 					if (!hasSetFlags(defRight))
@@ -295,27 +295,27 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 								;
 						// ?? Also allow any assignments to temps or assignment of anything to anything subscripted.
 						// Trent: was the latter meant to be anything NOT subscripted?
-						else if (defRight->getOper() != opSubscript && !def->getLeft()->isTemp())
+						else if (defRight->getOper() != opSubscript && !adef->getLeft()->isTemp())
 							continue;
 						else
 							if (VERBOSE) LOG << "Allowing prop. into branch (2) of " << def << "\n";
 				}
 #endif
-				if (def->getLeft()->getType() && def->getLeft()->getType()->isArray()) {
+				if (adef->getLeft()->getType() && adef->getLeft()->getType()->isArray()) {
 					// Assigning to an array, don't propagate
 					continue;
 				}
-				if (limit && ! (*def->getLeft() == *regSp)) {
+				if (limit && ! (*adef->getLeft() == *regSp)) {
 					// Try to prevent too much propagation, e.g. fromSSA, sumarray
 					LocationSet used;
-					def->addUsedLocs(used);
-					RefExp left(def->getLeft(), (Statement*)-1);
-					RefExp *right = dynamic_cast<RefExp*>(def->getRight());
-					if (used.find(&left) && !(right && *right->getSubExp1() == *left.getSubExp1()))
+					adef->addUsedLocs(used);
+					RefExp left(adef->getLeft(), (Statement*)-1);
+					RefExp *right = dynamic_cast<RefExp*>(adef->getRight());
+					if (used.exists(&left) && !(right && *right->getSubExp1() == *left.getSubExp1()))
 						// We have something like eax = eax + 1
 						continue;
 				}
-				change = doPropagateTo(memDepth, def, convert);
+				change = doPropagateTo(memDepth, adef, convert);
 			}
 		}
 	} while (change && ++changes < 20);
@@ -328,33 +328,30 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 
 // Parameter convert is set true if an indirect call is converted to direct
 // Return true if a change made
-bool Statement::doPropagateTo(int memDepth, Statement* def, bool& convert) {
-    // Check the depth of the definition (an assignment)
-    // This checks the depth for the left and right sides, and gives the max for both. Example: can't propagate
-    // tmp := m[x] to foo := tmp if memDepth == 0
-    Assign* assignDef = dynamic_cast<Assign*>(def);
-    if (assignDef) {
-        int depth = assignDef->getMemDepth();
-		// MVE: check if we want the test for memDepth == -1
-        if (depth > memDepth && memDepth != -1)
-            return false;
-    }
+bool Statement::doPropagateTo(int memDepth, Assign* def, bool& convert) {
+	// Check the depth of the definition (an assignment)
+	// This checks the depth for the left and right sides, and gives the max for both. Example: can't propagate
+	// tmp := m[x] to foo := tmp if memDepth == 0
+	int depth = def->getMemDepth();
+	// MVE: check if we want the test for memDepth == -1
+	if (depth > memDepth && memDepth != -1)
+		return false;
 
-    // Respect the -p N switch
-    if (Boomerang::get()->numToPropagate >= 0) {
-        if (Boomerang::get()->numToPropagate == 0) return false;
-            Boomerang::get()->numToPropagate--;
-    }
+	// Respect the -p N switch
+	if (Boomerang::get()->numToPropagate >= 0) {
+		if (Boomerang::get()->numToPropagate == 0) return false;
+			Boomerang::get()->numToPropagate--;
+	}
 
-    if (VERBOSE)
-        LOG << "Propagating " << def << "\n" << "       into " << this << "\n";
-    convert |= replaceRef(def);
-    // simplify is costly... done once above
-    // simplify();
-    if (VERBOSE) {
-        LOG << "     result " << this << "\n\n";
-    }
-    return true;
+	if (VERBOSE)
+		LOG << "Propagating " << def << "\n" << "	   into " << this << "\n";
+	convert |= replaceRef(def);
+	// simplify is costly... done once above
+	// simplify();
+	if (VERBOSE) {
+		LOG << "	 result " << this << "\n\n";
+	}
+	return true;
 }
 
 #if 0
@@ -1316,14 +1313,20 @@ Exp *CallStatement::getReturnExp(int i) {
 	if (i >= (int)returns.size()) return NULL;
 	return returns[i].e;
 }
+#endif
 
+// Temporarily needed for ad-hoc type analysis
 int CallStatement::findReturn(Exp *e) {
+#if 0
 	for (unsigned i = 0; i < returns.size(); i++)
 		if (returns[i].e && *returns[i].e == *e)
 			return i;
 	return -1;
-}
+#else
+	if (procDest == NULL) return -1;
+	return procDest->getSignature()->findReturn(e);
 #endif
+}
 
 #if 0		// No, this will happen from the callee now
 void CallStatement::removeReturn(Exp *e) {
@@ -2342,12 +2345,12 @@ bool CallStatement::processConstants(Prog *prog) {
 // If -Td is used, type analysis will be rerun with these changes.
 bool CallStatement::ellipsisProcessing(Prog* prog) {
 
+#if 0
 	// Hack to remove locals that really aren't used
 	if (getDestProc() && getDestProc()->isLib()) {
 		int sp = signature->getStackRegister(prog);
 		//ignoreReturn(Location::regOf(sp));
 		removeReturn(Location::regOf(sp));
-#if 0
 		unsigned int i;
 		for (i = 0; i < implicitArguments.size(); i++) {
 			// if (*getDestProc()->getSignature()->getImplicitParamExp(i) == *Location::regOf(sp)) { // }
@@ -2363,8 +2366,8 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 				break;
 			}
 		}
-#endif
 	}
+#endif
 
 	// if (getDestProc() == NULL || !getDestProc()->getSignature()->hasEllipsis())
 	if (getDestProc() == NULL || !signature->hasEllipsis())
@@ -2511,7 +2514,7 @@ void CallStatement::setSigParam(Type* ty, bool isScanf) {
  * PARAMETERS:		 None
  * RETURNS:			 <nothing>
  *============================================================================*/
-ReturnStatement::ReturnStatement() : retAddr(NO_ADDRESS) {
+ReturnStatement::ReturnStatement() : retAddr(NO_ADDRESS), nBytesPopped(0) {
 	kind = STMT_RET;
 }
 
@@ -2534,11 +2537,9 @@ Statement* ReturnStatement::clone() {
 	ReturnStatement* ret = new ReturnStatement();
 	RetStatement::iterator rr;
 	for (rr = defs.begin(); rr != defs.end(); ++rr)
-		ret->defs.insert((*rr)->clone());
+		ret->defs.insert((Assignment*)(*rr)->clone());
 	ret->retAddr = retAddr;
-	DefCollector::iterator cc;
-	for (cc = col.begin(); cc != col.end(); ++cc)
-		ret->col.insert(*cc);
+	ret->col.makeCloneOf(col);
 	// Statement members
 	ret->pbb = pbb;
 	ret->proc = proc;
@@ -2551,23 +2552,25 @@ bool ReturnStatement::accept(StmtVisitor* visitor) {
 	return visitor->visit(this);
 }
 
-void ReturnStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) 
-{
-	hll->AddReturnStatement(indLevel, returns);
+void ReturnStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
+	hll->AddReturnStatement(indLevel, *this);
 }
 
-void ReturnStatement::simplify() {
-	for (unsigned i = 0; i < returns.size(); i++)
-		returns[i] = returns[i]->simplify();
+void RetStatement::simplify() {
+	for (iterator it = defs.begin(); it != defs.end(); it++)
+		(*it)->simplify();
 }
 
-void ReturnStatement::removeReturn(int n)
-{
-	int i = n;
-	if (i != -1) {
-		for (unsigned j = i+1; j < returns.size(); j++)
-			returns[j-1] = returns[j];
-		returns.resize(returns.size()-1);
+// Remove the return (if any) related to loc. Loc may or may not be subscripted
+void RetStatement::removeReturn(Exp* loc) {
+	if (loc->isSubscript())
+		loc = ((Location*)loc)->getSubExp1();
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ++rr) {
+		if (*(*rr)->getLeft() == *loc) {
+			defs.erase(rr);
+			return;					// Assume only one definition
+		}
 	}
 }
 
@@ -2578,12 +2581,12 @@ void RetStatement::addReturn(Assignment* a) {
 
 // Convert from SSA form
 void ReturnStatement::fromSSAform(igraph& ig) {
-	int n = returns.size();
-	for (int i=0; i < n; i++) {
-		returns[i] = returns[i]->fromSSA(ig);
-	}
+	RetStatement::iterator rr;
+	for (rr = begin(); rr != end(); ++rr)
+		(*rr)->fromSSAform(ig);
 }
 
+#if 0
 void ReturnStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
 	// os << "*" << type << "* ";
@@ -2598,54 +2601,52 @@ void ReturnStatement::print(std::ostream& os /*= cout*/) {
 	os << "\t\tReaching definitions: ";
 	col.print(os);
 }
+#endif
 
-bool ReturnStatement::search(Exp* search, Exp*& result) {
+bool RetStatement::search(Exp* search, Exp*& result) {
 	result = NULL;
-	for (unsigned i = 0; i < returns.size(); i++) {
-		if (*returns[i] == *search) {
-			result = returns[i];
+	RetStatement::iterator rr;
+	for (rr = begin(); rr != end(); ++rr) {
+		if ((*rr)->search(search, result))
 			return true;
-		}
-		if (returns[i]->search(search, result)) return true;
 	}
 	return false;
 }
 
-bool ReturnStatement::searchAndReplace(Exp* search, Exp* replace) {
-	bool change = GotoStatement::searchAndReplace(search, replace);
-	for (int i = 0; i < (int)returns.size(); i++) {
-		bool ch;
-		returns[i] = returns[i]->searchReplaceAll(search, replace, ch);
-		change |= ch;
-	}
+bool RetStatement::searchAndReplace(Exp* search, Exp* replace) {
+	bool change = false;
+	RetStatement::iterator rr;
+	for (rr = begin(); rr != end(); ++rr)
+		change |= (*rr)->searchAndReplace(search, replace);
 	return change;
 }
 
-bool ReturnStatement::searchAll(Exp* search, std::list<Exp *>& result) {
+bool RetStatement::searchAll(Exp* search, std::list<Exp *>& result) {
 	bool found = false;
-	for (unsigned i = 0; i < returns.size(); i++)
-		if (returns[i]->searchAll(search, result))
+	RetStatement::iterator rr;
+	for (rr = begin(); rr != end(); ++rr) {
+		if ((*rr)->searchAll(search, result))
 			found = true;
+	}
 	return found;
 }
 
-bool ReturnStatement::usesExp(Exp *e) {
+bool RetStatement::usesExp(Exp *e) {
 	Exp *where;
-	for (unsigned i = 0; i < returns.size(); i++) {
-		if (returns[i]->search(e, where)) {
+	RetStatement::iterator rr;
+	for (rr = begin(); rr != end(); ++rr) {
+		if ((*rr)->search(e, where))
 			return true;
-		}
 	}
 	return false;
 }
 
-bool ReturnStatement::doReplaceRef(Exp* from, Exp* to) {
+bool RetStatement::doReplaceRef(Exp* from, Exp* to) {
 	bool change = false;
-	for (unsigned i = 0; i < returns.size(); i++) {
-		returns[i] = returns[i]->searchReplaceAll(from, to, change);
-		returns[i] = returns[i]->simplifyArith()->simplify();
-	}
-	return false;
+	RetStatement::iterator rr;
+	for (rr = begin(); rr != end(); ++rr)
+		change |= (*rr)->doReplaceRef(from, to);
+	return change;
 }
  
 /**********************************************************************
@@ -3014,7 +3015,7 @@ void Assign::simplify() {
 		RefExp *ref = (RefExp*)lhs->getSubExp1();
 		Statement *phist = ref->getDef();
 		PhiAssign *phi = NULL;
-		if (phist && phist->getRight())
+		if (phist /* && phist->getRight() */)		// ?
 			phi = dynamic_cast<PhiAssign*>(phist);
 		for (int i = 0; phi && i < phi->getNumDefs(); i++) 
 			if (phi->getStmtAt(i)) {
@@ -3290,14 +3291,13 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
 		// Could be propagating %flags into %CF
 		Exp* baseFrom = ((RefExp*)from)->getSubExp1();
 		if (baseFrom->isFlags()) {
-			Statement* def = ((RefExp*)from)->getDef();
+			Assign* def = (Assign*)((RefExp*)from)->getDef();
+assert(def->isAssign());
 			Exp* defRhs = def->getRight();
 			assert(defRhs->isFlagCall());
-			/* When the carry flag is used bare, and was defined in a subtract
-			   of the form lhs - rhs, then CF has the value (lhs <u rhs)
-			   lhs and rhs are the first and second parameters of the flagcall
-			   Note: the flagcall is a binary, with a Const (the name) and a
-			   list of expressions:
+			/* When the carry flag is used bare, and was defined in a subtract of the form lhs - rhs, then CF has the
+			   value (lhs <u rhs).  lhs and rhs are the first and second parameters of the flagcall
+			   Note: the flagcall is a binary, with a Const (the name) and a list of expressions:
 				 defRhs
 				 /	  \
 			Const	   opList
@@ -3683,21 +3683,25 @@ bool CallStatement::accept(StmtExpVisitor* v) {
 	for (it = implicitArguments.begin(); ret && it != implicitArguments.end(); it++)
 		ret = (*it)->accept(v->ev);
 #endif
+#if 0		// Do we want to accept changes to the returns? No! They are in terms of the callee only
 	std::vector<ReturnInfo>::iterator rr;
 	for (rr = returns.begin(); ret && rr != returns.end(); rr++)
 		if (rr->e)			// Can be NULL now to line up with other returns
 			ret = rr->e->accept(v->ev);
+#endif
 	return ret;
 }
 
 bool ReturnStatement::accept(StmtExpVisitor* v) {
 	bool override;
-	bool ret = v->visit(this, override);
-	if (override) return ret;
-	std::vector<Exp*>::iterator it;
-	for (it = returns.begin(); ret && it != returns.end(); it++)
-		ret = (*it)->accept(v->ev);
-	return ret;
+	if (!v->visit(this, override))
+		return false;
+	if (override) return true;
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ++rr)
+		if (!(*rr)->accept(v))
+			return false;
+	return true;
 }
 
 bool BoolAssign::accept(StmtExpVisitor* v) {
@@ -3782,24 +3786,28 @@ bool CallStatement::accept(StmtModifier* v) {
 	for (it = implicitArguments.begin(); recur && it != implicitArguments.end(); it++)
 		*it = (*it)->accept(v->mod);
 #else
-	// For example: needed for CallRefsFixer so that a collected definition that happens to be another call gets adjusted
+	// For example: needed for CallRefsFixer so that a collected definition that happens to be another call gets
+	// adjusted
 	Collector::iterator cc;
 	for (cc = col.begin(); cc != col.end(); cc++)
-		(*cc)->accept(v->mod);				// Always refexps, so never need to change Exp pointer (i.e. don't need *cc = )
+		(*cc)->accept(v->mod);			// Always refexps, so never need to change Exp pointer (i.e. don't need *cc = )
 #endif
+#if 0			// Don't accept modifications to my returns (context is of the callee)
 	std::vector<ReturnInfo>::iterator rr;
-	for (rr = returns.begin(); recur && rr != returns.end(); rr++)
+	for (rr = returns->begin(); recur && rr != returns->end(); rr++)
 		if (rr->e)			// Can be NULL now; just ignore
 			rr->e = rr->e->accept(v->mod);
+#endif
 	return true;
 }
 
 bool ReturnStatement::accept(StmtModifier* v) {
 	bool recur;
 	v->visit(this, recur);
-	std::vector<Exp*>::iterator it;
-	for (it = returns.begin(); recur && it != returns.end(); it++)
-		if (*it) *it = (*it)->accept(v->mod);
+	RetStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ++rr)
+		if (!(*rr)->accept(v))
+			return false;
 	return true;
 }
 
@@ -3858,6 +3866,7 @@ void PhiAssign::convertToAssign(Exp* rhs) {
 
 
 
+#if 0			// Doesn't seem to be called any more
 // This is a hack.	If we have a phi which has one of its elements referencing a statement which is defined as a 
 // function address, then we can use this information to resolve references to indirect calls more aggressively.
 // Note that this is not technically correct and will give the wrong result if the callee of an indirect call
@@ -3895,6 +3904,7 @@ bool PhiAssign::hasGlobalFuncParam()
 	}
 	return false;
 }
+#endif
 
 void PhiAssign::simplify() {
 	lhs = lhs->simplify();
@@ -3942,11 +3952,12 @@ void PhiAssign::simplifyRefs() {
 	for (uu = defVec.begin(); uu != defVec.end(); ) {
 		// Look for a phi chain: *uu is an assignment whose RHS is the same expression as our LHS
 		// It is most likely a phi statement that was converted to an Assign
-		if (uu->def && uu->def->getRight() && 
-				uu->def->getRight()->getOper() == opSubscript &&
-				*uu->def->getRight()->getSubExp1() == *lhs) {
+		if (uu->def && uu->def->isAssign() && 
+				((Assign*)uu->def)->getRight()->getOper() == opSubscript &&
+				*((Assign*)uu->def)->getRight()->getSubExp1() == *lhs) {
+			Assign*& adef = (Assign*&)uu->def;
 			// If the assignment is to this phi...
-			if (((RefExp*)uu->def->getRight())->getDef() == this) {
+			if (((RefExp*)adef->getRight())->getDef() == this) {
 				// ... then *uu can be removed
 				if (VERBOSE)
 					LOG << "removing statement " << uu->def << " from phi at " << number << "\n";
@@ -3955,11 +3966,11 @@ void PhiAssign::simplifyRefs() {
 			}
 			// Else follow the chain, to get closer to the real, utlimate definition
 			if (VERBOSE)
-				LOG << "replacing " << uu->def->getNumber() << " with ";
-			uu->def = ((RefExp*)uu->def->getRight())->getDef();
+				LOG << "replacing " << adef->getNumber() << " with ";
+			uu->def = ((RefExp*)adef->getRight())->getDef();
 			if (VERBOSE) {
 				int n = 0;
-				if (uu->def) n = uu->def->getNumber();
+				if (uu->def) n = adef->getNumber();
 				LOG << n << " in phi at " << number << " result is: " << this << "\n";
 			}
 		}
@@ -4016,9 +4027,10 @@ void CallStatement::regReplace(UserProc* proc) {
 	for (cc = col.begin(); cc != col.end(); cc++)
 		Exp::doSearch(regOfWildRef, (Exp*&)*cc, li, false);		// MVE: CHECK THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
 	proc->regReplaceList(li);
+#if 0			// Returns are in the context of the callee
 	// Note: returns are "on the left hand side", and hence are never subscripted. So wrap in a RefExp
 	std::vector<ReturnInfo>::iterator rr;
-	for (rr = returns.begin(); rr != returns.end(); rr++) {
+	for (rr = returns->begin(); rr != returns->end(); rr++) {
 		if (rr->e && *rr->e == *regOfWild) {
 			std::list<Exp**> rli;
 			Exp* tmp = new RefExp(rr->e, this);
@@ -4027,16 +4039,12 @@ void CallStatement::regReplace(UserProc* proc) {
 			rr->e = tmp;
 		}
 	}
+#endif
 }
-void ReturnStatement::regReplace(UserProc* proc) {
-	std::list<Exp**> li;
-	std::vector<Exp*>::iterator it;
-	for (it = returns.begin(); it != returns.end(); it++)
-		Exp::doSearch(regOfWildRef, *it, li, false);
-	proc->regReplaceList(li);
+void RetStatement::regReplace(UserProc* proc) {
+	for (iterator it = defs.begin(); it != defs.end(); ++it)
+		(*it)->regReplace(proc);
 }
-
-ReturnInfo::ReturnInfo() : e(NULL), type(new VoidType) { }
 
 Type* Statement::meetWithFor(Type* ty, Exp* e, bool& ch) {
 	bool thisCh = false;
@@ -4056,12 +4064,18 @@ void PhiAssign::putAt(int i, Statement* def, Exp* e) {
 }
 
 void CallStatement::setLeftFor(Exp* forExp, Exp* newExp) {
+#if 0
 	for (unsigned u = 0; u < returns.size(); u++) {
 		if (*returns[u].e == *forExp) {
 			returns[u].e = newExp;
 			return;
 		}
 	}
+#else
+	std::cerr << "! Attempt to setLeftFor this call statement! forExp is " << forExp << ", newExp is " << newExp <<
+		"\n";
+	assert(0);
+#endif
 }
 
 // Copy the given reaching definitions to the return statement, at depth d
@@ -4069,25 +4083,7 @@ void ReturnStatement::copyReachingDefs(int d) {
 	Collector::iterator it;
 	for (it = col.begin(); it != col.end(); it++) {
 		if ((*it)->getMemDepth() == d) {
-			addReturnWithCheck(*it);
-std::cerr << "HACK: ReturnStatement now " << this << "\n";
-		}
-	}
-}
-
-// Copy the given reaching definitions to the returns for this call, at depth d
-void CallStatement::copyToReturns(Collector* col, int d) {
-	Collector::iterator it;
-	for (it = col->begin(); it != col->end(); it++) {
-		if ((*it)->getMemDepth() == d) {
-			ReturnInfo* ri = new ReturnInfo;
-			ri->e = (*it)->getSubExp1();
-			Statement* def = (*it)->getDef();
-			if (def)
-				ri->type = def->getTypeFor(ri->e);
-			else
-				ri->type = new VoidType();
-			returns.push_back(*ri);
+			col.insert(*it);
 		}
 	}
 }
@@ -4105,16 +4101,16 @@ bool CallStatement::defines(Exp* loc) {
 // original definitions (something needs to define it). Also, now CallStatements delegate define() here (see above)
 bool ReturnStatement::defines(Exp* loc) {
 	iterator it;
-	for (it = returns.begin(); it != returns.end(); it++) {
+	for (it = defs.begin(); it != defs.end(); it++) {
 		if ((*it)->defines(loc)) return true;
 	}
 	return false;
 }
 
-void RetStatement::getDefinitions(LocationSet& defs) {
-	RetStatement::iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); rr++)
-		(*rr)->getDefinitions(defs);
+void RetStatement::getDefinitions(LocationSet& ls) {
+	iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ++rr)
+		(*rr)->getDefinitions(ls);
 }
 
 Type* RetStatement::getTypeFor(Exp* e) {
@@ -4123,6 +4119,7 @@ Type* RetStatement::getTypeFor(Exp* e) {
 		if (*(*rr)->getLeft() == *e)
 			return (*rr)->getType();
 	}
+	return NULL;
 }
 
 void RetStatement::setTypeFor(Exp*e, Type* ty) {
@@ -4135,3 +4132,44 @@ void RetStatement::setTypeFor(Exp*e, Type* ty) {
 	}
 	assert(0);
 }
+
+void RetStatement::print(std::ostream& os) {
+	os << "RET";
+	iterator it;
+	bool first = true;
+	for (it = defs.begin(); it != defs.end(); ++it) {
+		if (first)
+			first = false;
+		else
+			os << ", ";
+		(*it)->printCompact(os);
+	}
+}
+
+// A helper class for comparing Assignment*'s sensibly
+bool lessAssignment::operator()(const Assignment* x, const Assignment* y) const {
+	Assignment* xx = const_cast<Assignment*>(x);
+	Assignment* yy = const_cast<Assignment*>(y);
+	return (*xx->getLeft() < *yy->getLeft());		// Compare the LHS expressions
+}
+
+DefineAll::DefineAll() { }
+RetStatement::RetStatement() { }
+bool DefineAll::accept(StmtVisitor* visitor) {return true;}
+bool DefineAll::accept(StmtExpVisitor* visitor) {return true;}
+bool DefineAll::accept(StmtModifier* visitor) {return true;}
+
+Statement* DefineAll::clone() {
+	DefineAll* ret = new DefineAll;
+	ret->col.makeCloneOf(col);
+	// RetStatement members
+	std::set<Assignment*, lessAssignment>::iterator it;
+	for (it = defs.begin(); it != defs.end(); ++it)
+		ret->defs.insert((Assignment*)(*it)->clone());
+	// Statement members
+	ret->pbb = pbb;
+	ret->proc = proc;
+	ret->number = number;
+	return ret;
+}
+

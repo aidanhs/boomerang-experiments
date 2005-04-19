@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126 $
+ * $Revision: 1.126.2.1 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -951,21 +951,6 @@ void Prog::decodeExtraEntrypoint(ADDRESS a) {
 	}
 }
 
-void Prog::fastx86decompile()
-{
-	std::list<Proc*>::iterator pp;
-	for (pp = m_procs.begin(); pp != m_procs.end(); pp++) {
-		UserProc* proc = (UserProc*)(*pp);
-		if (proc->isLib()) continue;
-		proc->fastx86decompile();
-	}
-
-    generateRTL();
-
-    // Now it is OK to transform out of SSA form
-	fromSSAform();
-}
-
 void Prog::decompile() {
 	assert(m_procs.size());
 
@@ -1011,7 +996,7 @@ void Prog::decompile() {
 
 	if (!Boomerang::get()->noDecompile) {
 		if (VERBOSE)
-			LOG << "removing unused returns\n";
+			LOG << "Prog: final removing unused returns\n";
 
 		// A final pass to remove return locations not used by any caller
 		if (!Boomerang::get()->noRemoveReturns) 
@@ -1109,6 +1094,7 @@ void Prog::removeUnusedGlobals() {
 #endif
 }
 
+#if 0
 void Prog::removeUnusedReturns() {
 	// The counter
 	UserProc::ReturnCounter rc;
@@ -1153,9 +1139,8 @@ void Prog::removeUnusedReturns() {
 		callerSet.clear();
 		change = false;
 
-		// Having globally counted the returns, remove the unused ones
-		// Note: after the first pass, we have only counted those callers which
-		// call procs in calleeSet, so only consider those procs
+		// Having globally counted the returns, remove the unused ones. Note: after the first pass, we have only
+		// counted those callers which call procs in calleeSet, so only consider those procs
 		for (it = calleeSet.begin(); it != calleeSet.end(); it++) {
 			UserProc* proc = *it;
 			if (proc->isLib()) continue;
@@ -1191,6 +1176,25 @@ void Prog::removeUnusedReturns() {
 		calleeSet = newCalleeSet;
 	} while (change);
 }
+#else
+void Prog::removeUnusedReturns() {
+	// For each UserProc
+	std::list<Proc*>::iterator pp;
+	for (pp = m_procs.begin(); pp != m_procs.end(); ++pp) {
+		UserProc* proc = (UserProc*)(*pp);
+		if (proc->isLib()) continue;
+		LocationSet finalLocs;
+		// For each caller
+		std::set<CallStatement*>& callers = (*pp)->getCallers();
+		std::set<CallStatement*>::iterator cc;
+		for (cc = callers.begin(); cc != callers.end(); ++cc) {
+			// Union in the set of returns used by this caller
+			// finalLocs.makeUnion((*cc)->getReturnSet());	// HACK! NOT COMPLETED YET!
+		}
+	}
+}
+
+#endif
 
 #if 0		// For time being, this is in UserProc::generateCode()
 void Prog::removeUnusedLocals() {

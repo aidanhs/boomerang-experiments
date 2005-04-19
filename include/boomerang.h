@@ -10,7 +10,7 @@
 /** \file	boomerang.h
  * \brief	Interface for the boomerang singleton object
  *
- * $Revision: 1.61 $
+ * $Revision: 1.61.2.1 $
  * 04 Dec 2002: Trent: Created
  */
 
@@ -246,7 +246,6 @@ static Boomerang *get() {
 	bool conTypeAnalysis;
 	bool dfaTypeAnalysis;
 	bool noLimitPropagations;
-    bool fastx86;
     bool generateCallGraph;
 	bool generateSymbols;
 };

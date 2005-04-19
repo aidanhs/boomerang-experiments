@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91.2.1 $
+# $Revision: 1.91.2.2 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -225,7 +225,7 @@ db/sslparser.o: db/sslparser.cpp db/sslparser.h db/sslscanner.h include/rtl.h \
     db/table.h db/insnameelem.h include/util.h include/statement.h include/exp.h
 db/sslscanner.o: db/sslscanner.cpp db/sslscanner.h
 db/xmlprogparser.o: db/xmlprogparser.cpp include/xmlprogparser.h include/rtl.h include/cluster.h include/proc.h \
-	include/prog.h include/statement.h include/sigenum.h include/boomerang.h include/frontend.h
+	include/prog.h include/statement.h include/sigenum.h include/boomerang.h include/frontend.h include/signature.h
 c/ansi-c-parser.o: c/ansi-c-parser.cpp c/ansi-c-parser.h c/ansi-c-scanner.h
 c/ansi-c-scanner.o: c/ansi-c-scanner.cpp c/ansi-c-scanner.h
 transform/transformation-parser.o: transform/transformation-parser.cpp transform/transformation-parser.h \
@@ -234,7 +234,8 @@ transform/transformation-scanner.o: transform/transformation-scanner.cpp transfo
 db/insnameelem.o: db/insnameelem.h
 db/signature.o: include/signature.h include/frontend.h include/BinaryFile.h \
 	include/exp.h include/proc.h include/prog.h include/type.h include/statement.h
-db/statement.o: include/exp.h include/cfg.h include/statement.h include/proc.h include/prog.h include/visitor.h include/type.h
+db/statement.o: include/exp.h include/cfg.h include/statement.h include/proc.h include/prog.h include/visitor.h \
+	include/type.h include/managed.h
 db/managed.o: include/managed.h include/statement.h include/exp.h
 db/RtlTest.o: db/RtlTest.h include/exp.h include/rtl.h include/prog.h \
     include/proc.h include/statement.h include/BinaryFile.h

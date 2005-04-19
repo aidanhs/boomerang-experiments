@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.1 $
+ * $Revision: 1.172.2.2 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -1084,7 +1084,8 @@ void TypedExp::print(std::ostream& os) {
 //	RefExp	//
 //	//	//	//
 void RefExp::print(std::ostream& os) {
-	subExp1->print(os);
+	if (subExp1) subExp1->print(os);
+	else os << "<NULL>";
 	os << "{";
 	if (def == (Statement*)-1) os << "WILD";
 	else if (def) def->printNum(os);
@@ -2710,10 +2711,8 @@ Exp* RefExp::polySimplify(bool& bMod) {
 		return res;
 	}
 
-	/* This is a nasty hack.  We assume that %DF{0} is 0.
-	 * This happens when string instructions are used without
-	 * first clearing the direction flag.  By convention, the
-	 * direction flag is assumed to be clear on entry to a procedure.
+	/* This is a nasty hack.  We assume that %DF{0} is 0.  This happens when string instructions are used without first
+	 * clearing the direction flag.  By convention, the direction flag is assumed to be clear on entry to a procedure.
 	 */
 	if (subExp1->getOper() == opDF && def == NULL) {
 		res = new Const(0);
@@ -2723,7 +2722,7 @@ Exp* RefExp::polySimplify(bool& bMod) {
 
 	// another hack, this time for aliasing
 	if (subExp1->getOper() == opRegOf && ((Const*)subExp1->getSubExp1())->getInt() == 0 &&
-			def && def->getLeft() && *def->getLeft() == *Location::regOf(24)) {
+			def && def->isAssign() && *((Assign*)def)->getLeft() == *Location::regOf(24)) {
 		res = new TypedExp(new IntegerType(16), new RefExp(Location::regOf(24), def));
 		bMod = true;
 		return res;
@@ -2734,15 +2733,18 @@ Exp* RefExp::polySimplify(bool& bMod) {
 		Exp *base = new RefExp(subExp1, NULL);
 		PhiAssign::iterator uu;
 		PhiAssign *phi = (PhiAssign*)def;
-		for (uu = phi->begin(); uu != phi->end(); uu++)
-			if (uu->def && uu->def->isAssign() && *uu->def->getLeft() == *subExp1) {
+		for (uu = phi->begin(); uu != phi->end(); uu++) {
+			if (uu->def && uu->def->isAssign() && *((Assign*)uu->def)->getLeft() == *subExp1) {
 				bool allZero = true;
-				uu->def->getRight()->clone()->removeSubscripts(allZero);
+				Assign* asDef = (Assign*)uu->def;
+				Exp* asDefRight = asDef->getRight()->clone();
+				asDefRight->removeSubscripts(allZero);
 				if (allZero) {
-					base = uu->def->getRight()->clone();
+					base = asDefRight;
 					break;
 				}
 			}
+		}
 		bool allProven = true;
 		LocationSet used;
 		base->addUsedLocs(used);
@@ -3073,7 +3075,7 @@ int Location::getMemDepth() {
 	return 0;
 }
 
-// A helper file for comparing Exp*'s sensibly
+// A helper class for comparing Exp*'s sensibly
 bool lessExpStar::operator()(const Exp* x, const Exp* y) const {
 	return (*x < *y);		// Compare the actual Exps
 }
@@ -3534,8 +3536,8 @@ Type *RefExp::getType()
 {
 	if (subExp1 && subExp1->getType())
 		return subExp1->getType();
-	if (def && def->getRight() && def->getRight()->getType())
-		return def->getRight()->getType();
+	if (def && def->isAssign() && ((Assign*)def)->getRight()->getType())
+		return ((Assign*)def)->getRight()->getType();
 	if (def && def->isCall()) {
 		CallStatement *call = (CallStatement*)def;
 		int n = call->findReturn(subExp1);
@@ -3552,14 +3554,15 @@ Type *RefExp::getType()
 		PhiAssign::iterator uu;
 		for (uu = phi->begin(); uu != phi->end(); uu++) {
 			Statement *s = uu->def;
-			if (s && s->getRight() && 
-					(s->getRight()->getOper() != opSubscript || ((RefExp*)s->getRight())->getDef() == NULL)) {
-				if (s->getRight()->getType()) {
+			Assign* as = (Assign*)s;
+			if (as && as->isAssign() && 
+					(as->getRight()->getOper() != opSubscript || ((RefExp*)as->getRight())->getDef() == NULL)) {
+				if (as->getRight()->getType()) {
 #if 1
 					if (VERBOSE)
-						LOG << "returning type " << s->getRight()->getType()->getCtype() << " for " << this << "\n";
+						LOG << "returning type " << as->getRight()->getType()->getCtype() << " for " << this << "\n";
 #endif
-					return s->getRight()->getType();
+					return as->getRight()->getType();
 				} else break;
 			}
 		}
@@ -3993,7 +3996,8 @@ Memo *Terminal::makeMemo(int mId)
 
 void Terminal::readMemo(Memo *mm, bool dec)
 {
-	TerminalMemo *m = dynamic_cast<TerminalMemo*>(mm);
+	// FIXME: not completed
+	// TerminalMemo *m = dynamic_cast<TerminalMemo*>(mm);
 }
 
 class UnaryMemo : public Memo {
@@ -4009,7 +4013,8 @@ Memo *Unary::makeMemo(int mId)
 
 void Unary::readMemo(Memo *mm, bool dec)
 {
-	UnaryMemo *m = dynamic_cast<UnaryMemo*>(mm);
+	// FIXME: not completed
+	// UnaryMemo *m = dynamic_cast<UnaryMemo*>(mm);
 }
 
 class BinaryMemo : public Memo {
@@ -4025,7 +4030,8 @@ Memo *Binary::makeMemo(int mId)
 
 void Binary::readMemo(Memo *mm, bool dec)
 {
-	BinaryMemo *m = dynamic_cast<BinaryMemo*>(mm);
+	// FIXME: not completed
+	// BinaryMemo *m = dynamic_cast<BinaryMemo*>(mm);
 }
 
 class TernaryMemo : public Memo {
@@ -4041,7 +4047,8 @@ Memo *Ternary::makeMemo(int mId)
 
 void Ternary::readMemo(Memo *mm, bool dec)
 {
-	TernaryMemo *m = dynamic_cast<TernaryMemo*>(mm);
+	// FIXME: not completed
+	// TernaryMemo *m = dynamic_cast<TernaryMemo*>(mm);
 }
 
 class TypedExpMemo : public Memo {
@@ -4057,7 +4064,8 @@ Memo *TypedExp::makeMemo(int mId)
 
 void TypedExp::readMemo(Memo *mm, bool dec)
 {
-	TypedExpMemo *m = dynamic_cast<TypedExpMemo*>(mm);
+	// FIXME: not completed
+	// TypedExpMemo *m = dynamic_cast<TypedExpMemo*>(mm);
 }
 
 class FlagDefMemo : public Memo {
@@ -4073,7 +4081,8 @@ Memo *FlagDef::makeMemo(int mId)
 
 void FlagDef::readMemo(Memo *mm, bool dec)
 {
-	FlagDefMemo *m = dynamic_cast<FlagDefMemo*>(mm);
+	// FIXME: not completed
+	// FlagDefMemo *m = dynamic_cast<FlagDefMemo*>(mm);
 }
 
 class RefExpMemo : public Memo {
@@ -4089,7 +4098,8 @@ Memo *RefExp::makeMemo(int mId)
 
 void RefExp::readMemo(Memo *mm, bool dec)
 {
-	RefExpMemo *m = dynamic_cast<RefExpMemo*>(mm);
+	// FIXME: not completed
+	// RefExpMemo *m = dynamic_cast<RefExpMemo*>(mm);
 }
 
 class TypeValMemo : public Memo {
@@ -4105,7 +4115,8 @@ Memo *TypeVal::makeMemo(int mId)
 
 void TypeVal::readMemo(Memo *mm, bool dec)
 {
-	TypeValMemo *m = dynamic_cast<TypeValMemo*>(mm);
+	// FIXME: not completed
+	// TypeValMemo *m = dynamic_cast<TypeValMemo*>(mm);
 }
 
 class LocationMemo : public Memo {
@@ -4121,7 +4132,8 @@ Memo *Location::makeMemo(int mId)
 
 void Location::readMemo(Memo *mm, bool dec)
 {
-	LocationMemo *m = dynamic_cast<LocationMemo*>(mm);
+	// FIXME: not completed
+	// LocationMemo *m = dynamic_cast<LocationMemo*>(mm);
 }
 
 Location* Location::local(const char *nam, UserProc *p) {

@@ -4,7 +4,7 @@
  *				denote what the top level operator is
  *============================================================================*/
 /*
- * $Revision: 1.25 $
+ * $Revision: 1.25.6.1 $
  *
  * 05 Apr 02 - Mike: Created
  * 12 Apr 02 - Mike: INDEX -> OPER
@@ -119,12 +119,10 @@ enum OPER
 	opTemp,					// Temp register name
 	opSize,					// Size specifier
 	opCastIntStar,			// Cast to int*
-	opPostVar,				// Post-instruction variable marker (unary with
-							  // any subexpression). Can arise in some SSL files
-							  // when ticked variables are used
-	opMachFtr,				// A Unary with Const(string) representing a
-							  // machine specific feature (register, instruction							  // or whatever; the analysis better understand it
-							  // and transform it away)
+	opPostVar,				// Post-instruction variable marker (unary with any subexpression). Can arise in some SSL
+							// files when ticked variables are used
+	opMachFtr,				// A Unary with Const(string) representing a machine specific feature (register, instruction
+							// or whatever; the analysis better understand it and transform it away)
 
 	opTruncu,				// Integer truncate (unsigned)
 	opTruncs,				// Integer truncate (signed)
@@ -176,9 +174,10 @@ enum OPER
 	// This is the abstracted floating point flags terminal
 	opFflags,
 
-	// This is an abstract boolean that if true causes the following instruction
-	// to be anulled
+	// This is an abstract boolean that if true causes the following instruction to be anulled
 	opAnull,				// Anull "variable"
+	// This is a special terminal representing "all locations", which in practice means "every location whose definition
+	// reaches here".
 
 
 	// Added for type analysis

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.93.2.1 $
+ * $Revision: 1.93.2.2 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1647,18 +1647,18 @@ void BasicBlock::getLiveOut(LocationSet &liveout, LocationSet& phiLocs) {
 			PhiAssign* pa = (PhiAssign*)*it;
 			// Get the jth operand to the phi function; it has a use from BB *this
 			Statement* def = pa->getStmtAt(j);
-			RefExp* r = new RefExp((*it)->getLeft()->clone(), def);
+			RefExp* r = new RefExp(pa->getLeft()->clone(), def);
 			liveout.insert(r);
 			phiLocs.insert(r);
 			if (DEBUG_LIVENESS)
-				LOG << " ## Liveness: adding " << r << " due to ref to phi " << *it << " in BB at " << getLowAddr() << "\n";
+				LOG << " ## Liveness: adding " << r << " due to ref to phi " << *it << " in BB at " << getLowAddr() <<
+					"\n";
 		}
 	}
 }
 
-// Basically the "whichPred" function as per Briggs, Cooper, et al
-// (and presumably "Cryton, Ferante, Rosen, Wegman, and Zadek").
-// Return -1 if not found
+// Basically the "whichPred" function as per Briggs, Cooper, et al (and presumably "Cryton, Ferante, Rosen, Wegman, and
+// Zadek").  Return -1 if not found
 int BasicBlock::whichPred(PBB pred) {
 	int n = m_InEdges.size();
 	for (int i=0; i < n; i++) {

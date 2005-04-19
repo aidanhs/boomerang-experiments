@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.1 $
+/* $Revision: 1.115.2.2 $
 */
 
 #ifndef _PROC_H_
@@ -201,9 +201,9 @@ virtual Exp			*getProven(Exp *left) = 0;
 		 */
 		void		addCallers(std::set<UserProc*>& callers);
 
-virtual void		removeReturn(Exp *e);
 		void		removeParameter(Exp *e);
-virtual void		addReturn(Exp *e);
+virtual	void		removeReturn(Exp *e);
+//virtual void		addReturn(Exp *e);
 		void		sortParameters();
 
 virtual void		printCallGraphXML(std::ostream &os, int depth, bool recurse = true);
@@ -435,9 +435,6 @@ virtual				~UserProc();
 		// simplify the statements in this proc
 		void		simplify() { cfg->simplify(); }
 
-		// do a fast x86 decompile
-		void    	fastx86decompile();
-
 		// decompile this proc
 		std::set<UserProc*>* decompile();
 		void		propagateAtDepth(DataFlow& df, int depth);
@@ -461,7 +458,7 @@ virtual				~UserProc();
 		void		fixCallRefs();
 		void		addNewParameters();
 		void		addParameter(Exp *e);
-		void		addNewReturns(int depth);
+//		void		addNewReturns(int depth);
 		// Trim parameters. If depth not given or == -1, perform at all depths
 		void		trimParameters(int depth = -1);
 		void		processFloatConstants();
@@ -528,8 +525,8 @@ typedef	std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
 		// get all the statements
 		void		getStatements(StatementList &stmts);
 
-virtual void		removeReturn(Exp *e);
-virtual void		addReturn(Exp *e);
+virtual	void		removeReturn(Exp *e);
+//virtual void		addReturn(Exp *e);
 
 		// remove a statement
 		void		removeStatement(Statement *stmt);
@@ -684,8 +681,8 @@ virtual void		printCallGraphXML(std::ostream &os, int depth,
 		void		castConst(int num, Type* ty);
  
 private:
-		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case STMT_RET.
-		// If no return statement, this will be NULL
+		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case
+		// STMT_RET.
 		ReturnStatement* theReturnStatement;
 public:
 		ADDRESS		getTheReturnAddr() {
