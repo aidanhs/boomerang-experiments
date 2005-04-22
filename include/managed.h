@@ -10,6 +10,10 @@
 /*===============================================================================================
  * FILE:	   managed.h
  * OVERVIEW:   Definition of "managed" classes such as StatementSet, which feature makeUnion etc
+ * CLASSES:		StatementSet
+ *				StatementList
+ *				StatementVec
+ *				LocationSet
  *==============================================================================================*/
 
 /*
@@ -119,6 +123,8 @@ typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
 						{ return svec == o.svec;}
 		bool		operator<(const StatementVec& o) const		// Compare if less
 						{ return svec < o.svec;}
+		void		insert(Statement* s) {svec.push_back(s);}
+		void		erase(iterator it) {svec.erase(it);}
 };	// class StatementVec
 
 // For liveness, we need sets of locations (registers or memory)

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.51.2.1 $
+ * $Revision: 1.51.2.2 $
  * 21 Oct 98 - Mike: converted from frontsparc.cc
  * 21 May 02 - Mike: Mods for boomerang
  * 27 Nov 02 - Mike: Fixed a bug in the floating point fixup code, which was screwing up registers in flag calls
@@ -471,14 +471,15 @@ void PentiumFrontEnd::emitSet(std::list<RTL*>* BB_rtls, std::list<RTL*>::iterato
 	BB_rtls->insert(rit, pRtl);
 }
 
+#if 0
 static Binary cfOrZf(opOr, new Terminal(opCF), new Terminal(opZF));
 static Unary notZf(opNot, new Terminal(opZF));
 static Unary notCf(opNot, new Terminal(opCF));
 static Binary notCfAndNotZf(opAnd,
 		new Unary(opNot, new Terminal(opCF)),
 		new Unary(opNot, new Terminal(opZF)));
-void PentiumFrontEnd::State25(Exp* lhs, Exp* rhs, std::list<RTL*>* BB_rtls,
-  std::list<RTL*>::iterator& rit, ADDRESS uAddr) {
+void PentiumFrontEnd::State25(Exp* lhs, Exp* rhs, std::list<RTL*>* BB_rtls, std::list<RTL*>::iterator& rit,
+		ADDRESS uAddr) {
 	// Assume this is a set instruction
 	Exp* exp;
 	exp = rhs->getSubExp1();
@@ -519,6 +520,7 @@ void PentiumFrontEnd::State25(Exp* lhs, Exp* rhs, std::list<RTL*>* BB_rtls,
 		return;
 	}
 }
+#endif
 
 /*==============================================================================
  * FUNCTION:		helperFunc
@@ -598,19 +600,8 @@ extern "C" {
  * PARAMETERS:	  Same as the FrontEnd constructor
  * RETURNS:		  <N/A>
  *============================================================================*/
-PentiumFrontEnd::PentiumFrontEnd(BinaryFile *pBF)
-  : FrontEnd(pBF), idPF(-1)
-{
-	decoder = new PentiumDecoder();
-/*	for (std::map<int, Register, std::less<int> >::iterator it = prog->RTLDict.DetRegMap.begin(); 
-			it != prog->RTLDict.DetRegMap.end(); it++) {
-		int i = (*it).first;
-		Register &r = (*it).second;
-		if (!strcmp(r.g_name(), "%esp"))
-			prog->symbols[std::string(r.g_name())] = new TypedExp(Type(DATA_ADDRESS), Location:;regOf(i));
-		else
-			prog->symbols[std::string(r.g_name())] = new TypedExp(r.g_type(), Location::regOf(i));
-	} */
+PentiumFrontEnd::PentiumFrontEnd(BinaryFile *pBF, Prog* prog) : FrontEnd(pBF, prog), idPF(-1) {
+	decoder = new PentiumDecoder(prog);
 }
 
 // destructor

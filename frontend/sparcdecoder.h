@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /* 
- * $Revision: 1.6 $
+ * $Revision: 1.6.6.1 $
  * 06 Jun 02 - Trent: Created.
  * 04 Dec 02 - Mike: Added dis_RegLhs() and dis_RegRhs()
  */
@@ -29,9 +29,9 @@ struct DecodeResult;
 class SparcDecoder : public NJMCDecoder
 {
 public:
-	/* Default constructor
+	/* Constructor
 	 */
-	SparcDecoder();
+	SparcDecoder(Prog* prog);
 
 
 	/*

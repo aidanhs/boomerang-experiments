@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.5 $
+ * $Revision: 1.23.2.6 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -127,7 +127,7 @@ bool StmtConscriptSetter::visit(CaseStatement* stmt) {
 
 bool StmtConscriptSetter::visit(ReturnStatement* stmt) {
 	SetConscripts sc(curConscript, bClear);
-	RetStatement::iterator rr;
+	ReturnStatement::iterator rr;
 	for (rr = stmt->begin(); rr != stmt->end(); ++rr)
 		(*rr)->accept(this);
 	curConscript = sc.getLast();
@@ -354,7 +354,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 	}
 #endif
 	// For the final pass, also only consider the first return
-#if 0		// Not sure...
+#if 0
 	int n = s->getNumReturns();
 	if (final) {
 		if (n != 0) {
@@ -385,7 +385,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 bool UsedLocsVisitor::visit(ReturnStatement* s, bool& override) {
 	// For the final pass, only consider the first return
 	int n = s->getNumReturns();
-	RetStatement::iterator rr;
+	ReturnStatement::iterator rr;
 	if (final) {
 		if (n != 0) {
 			// Find the first non null return

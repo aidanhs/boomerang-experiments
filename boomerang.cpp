@@ -6,7 +6,7 @@
  * OVERVIEW:   Command line processing for the Boomerang decompiler
  *============================================================================*/
 /*
- * $Revision: 1.115.2.1 $
+ * $Revision: 1.115.2.2 $
  * 28 Jan 05 - G. Krol: Separated -h output into sections and neatened
 */
 
@@ -852,12 +852,13 @@ void Boomerang::objcDecode(std::map<std::string, ObjcModule> &modules, Prog *pro
 Prog *Boomerang::loadAndDecode(const char *fname, const char *pname)
 {
 	std::cerr << "loading...\n";
-	FrontEnd *fe = FrontEnd::Load(fname);
+	Prog *prog = new Prog();
+	FrontEnd *fe = FrontEnd::Load(fname, prog);
 	if (fe == NULL) {
 		std::cerr << "failed.\n";
 		return NULL;
 	}
-	Prog *prog = new Prog(fe->getBinaryFile(), fe);
+	prog->setFrontEnd(fe);
 
 	// Add symbols from -s switch(es)
 	for (std::map<ADDRESS, std::string>::iterator it = symbols.begin();

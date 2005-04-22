@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.1 $
+ * $Revision: 1.126.2.2 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -74,13 +74,9 @@ Prog::Prog() :
 	// Default constructor
 }
 
-Prog::Prog(BinaryFile *pBF, FrontEnd *pFE) :
-	  pBF(pBF),
-	  pFE(pFE),
-	  globalMap(NULL),
-	  m_iNumberedProc(1),
-	  nextIsEntry(false),
-	  entryProc(NULL) {
+void Prog::setFrontEnd(FrontEnd *pFE) {
+	pBF = pFE->getBinaryFile();
+	this->pFE = pFE;
 	if (pBF && pBF->getFilename()) {
 		m_name = pBF->getFilename();
 		m_rootCluster = new Cluster(getNameNoPath().c_str());
@@ -96,8 +92,7 @@ Prog::Prog(const char* name) :
 	  m_rootCluster(new Cluster(getNameNoPath().c_str())),
 	  nextIsEntry(false),
 	  entryProc(NULL) {
-	// Constructor taking a name. Technically, the allocation of the
-	// space for the name could fail, but this is unlikely
+	// Constructor taking a name. Technically, the allocation of the space for the name could fail, but this is unlikely
 	  m_path = m_name;
 }
 
@@ -181,8 +176,8 @@ void Prog::generateDotFile() {
 		UserProc *p = (UserProc*)pProc;
 		if (!p->isDecoded()) continue;
 		// Subgraph for the proc name
-		of << "\nsubgraph cluster_" << p->getName() << " {\n" <<
-		  "	   color=gray;\n	label=" << p->getName() << ";\n";
+		of << "\nsubgraph cluster_" << p->getName() << " {\n" << "	   color=gray;\n	label=" << p->getName() <<
+			";\n";
 		// Generate dotty CFG for this proc
 		p->getCFG()->generateDotFile(of);
 	}
@@ -354,8 +349,7 @@ bool Prog::clusterUsed(Cluster *c)
 
 void Prog::generateCode(std::ostream &os) {
 	HLLCode *code = Boomerang::get()->getHLLCode();
-	for (std::set<Global*>::iterator it1 = globals.begin();
-		 it1 != globals.end(); it1++) {
+	for (std::set<Global*>::iterator it1 = globals.begin(); it1 != globals.end(); it1++) {
 		// Check for an initial value
 		Exp *e = NULL;
 		e = (*it1)->getInitialValue(this);
@@ -379,8 +373,7 @@ void Prog::generateCode(std::ostream &os) {
 
 // Print this program, mainly for debugging
 void Prog::print(std::ostream &out) {
-	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-	  it++) {
+	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
 		Proc *pProc = *it;
 		if (pProc->isLib()) continue;
 		UserProc *p = (UserProc*)pProc;
@@ -480,16 +473,15 @@ void Prog::remProc(UserProc* uProc) {
 	// Delete the cfg etc.
 	uProc->deleteCFG();
 
-	// Replace the entry in the procedure map with -1 as a warning not to
-	// decode that address ever again
+	// Replace the entry in the procedure map with -1 as a warning not to decode that address ever again
 	m_procLabels[uProc->getNativeAddress()] = (Proc*)-1;
 
-	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-	  it++)
+	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
 		if (*it == uProc) {
 			m_procs.erase(it);
 			break;
 		}
+	}
 
 	// Delete the UserProc object as well
 	delete uProc;
@@ -570,7 +562,7 @@ Signature* Prog::getLibSignature(const char *nam) {
 void Prog::rereadLibSignatures()
 {
 	pFE->readLibraryCatalog();
-	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++)
+	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
 		if ((*it)->isLib()) {
 			(*it)->setSignature(getLibSignature((*it)->getName()));
 			std::set<CallStatement*> &callers = (*it)->getCallers();
@@ -578,6 +570,7 @@ void Prog::rereadLibSignatures()
 				(*it1)->setSigArguments();
 			Boomerang::get()->alert_update_signature(*it);
 		}
+	}
 }
 
 platform Prog::getFrontEndId() {
@@ -741,8 +734,7 @@ void Prog::setGlobalType(const char* nam, Type* ty) {
 // if knownString, it is already known to be a char*
 char *Prog::getStringConstant(ADDRESS uaddr, bool knownString /* = false */) {
 	SectionInfo* si = pBF->GetSectionInfoByAddr(uaddr);
-	// Too many compilers put constants, including string constants, into
-	// read/write sections
+	// Too many compilers put constants, including string constants, into read/write sections
 	//if (si && si->bReadOnly)
 	if (si && !si->bBss) {
 		// At this stage, only support ascii, null terminated, non unicode strings.
@@ -900,8 +892,8 @@ UserProc* Prog::getNextUserProc(std::list<Proc*>::iterator& it) {
 
 /*==============================================================================
  * FUNCTION:	getCodeInfo
- * OVERVIEW:	Lookup the given native address in the code section, returning
- *				  a host pointer corresponding to the same address
+ * OVERVIEW:	Lookup the given native address in the code section, returning a host pointer corresponding to the same
+ *				 address
  * PARAMETERS:	uNative: Native address of the candidate string or constant
  *				last: will be set to one past end of the code section (host)
  *				delta: will be set to the difference between the host and native addresses
@@ -922,8 +914,7 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 		SectionInfo* pSect = pBF->GetSectionInfo(i);
 		if ((!pSect->bCode) && (!pSect->bReadOnly))
 			continue;
-		if ((uAddr < pSect->uNativeAddr) ||
-		  (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
+		if ((uAddr < pSect->uNativeAddr) || (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
 			continue;			// Try the next section
 		delta = pSect->uHostAddr - pSect->uNativeAddr;
 		last = (const char*) (pSect->uHostAddr + pSect->uSectionSize);
@@ -1358,10 +1349,11 @@ void Prog::printCallGraphXML() {
 	Proc *entry = getEntryProc();
 	if (!entry->isLib())
 		entry->printCallGraphXML(f, 2);
-	for (it = m_procs.begin(); it != m_procs.end(); it++)
+	for (it = m_procs.begin(); it != m_procs.end(); it++) {
 		if (!(*it)->isVisited() && !(*it)->isLib()) {
 			(*it)->printCallGraphXML(f, 2);
 		}
+	}
 	f << "	 </callgraph>\n";
 	f << "</prog>\n";
 	f.close();

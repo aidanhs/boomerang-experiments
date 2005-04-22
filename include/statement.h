@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.5 $
+ * $Revision: 1.76.2.6 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -34,9 +34,9 @@
 /* Class hierarchy:   Statement*			(* = abstract)
                     __/   |   \________
                    /      |            \
-       GotoStatement  Assignment*      RetStatement*
- BranchStatement_/     /  | | \          \__ReturnStatement
- CaseStatement__/  Assign | | BoolAssign  \_DefineAll
+       GotoStatement  Assignment*      ReturnStatement
+ BranchStatement_/     /  | | \
+ CaseStatement__/  Assign | | BoolAssign
  CallStatement_/  PhiAssign ImplicitAssign
 */
 
@@ -72,7 +72,7 @@ class HLLCode;
 class Assign;
 class RTL;
 class XMLProgParser;
-class RetStatement;
+class ReturnStatement;
 
 // The map of interferences. It maps locations such as argc{55} to a local, e.g. local17
 typedef std::map<Exp*, Exp*, lessExpStar> igraph;
@@ -323,7 +323,6 @@ virtual	void		setTypeFor(Exp* e, Type* ty) {assert(0);}
 //virtual	Type*	getType() {return NULL;}			// Assignment, ReturnStatement and
 //virtual	void	setType(Type* t) {assert(0);}		// CallStatement override
 
-protected:
 		// Returns true if an indirect call is converted to direct:
 virtual bool		doReplaceRef(Exp* from, Exp* to) = 0;
 		bool		doPropagateTo(int memDepth, Assign* def, bool& convert);
@@ -951,8 +950,7 @@ virtual	void		regReplace(UserProc* proc);
 };		// class CaseStatement
 
 /*==============================================================================
- * CallStatement: represents a high level call. Information about parameters and
- * the like are stored here.
+ * CallStatement: represents a high level call. Information about parameters and the like are stored here.
  *============================================================================*/
 class CallStatement: public GotoStatement {
 		bool		returnAfterCall;// True if call is effectively followed by a return.
@@ -960,25 +958,32 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call
 		std::vector<Exp*> arguments;
 
-		// The set of locations that are defined by this call, and their types, are now store in a RetStatement.
-		// Where a callee is known, it will be an ordinary ReturnStatement. Otherwise, it will be a DefineAll.
-		// NOTE: At present, the callee's returns are taken as the returns for this call. However, it should be
-		// intersected with the location being live at this call, i.e. in the UseCollector
-		RetStatement* returns;
-
 		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
+		// For an unanalysed indirect call, this will be NULL
 		Proc*		procDest;
 
 		// The signature for this call. NOTE: this used to be stored in the Proc, but this does not make sense when
 		// the proc happens to have varargs
 		Signature*	signature;
 
-		// A DefCollector object to collect the reaching definitions
-		DefCollector col;
+		// A UseCollector object to collect the live variables at this call. Used as part of the calculation of
+		// returns
+		UseCollector useCol;
+
+		// A DefCollector object to collect the reaching definitions; used for fixCallRefs/localiseExp etc; also
+		// the basis for arguments if this is an unanlysed indirect call
+		DefCollector defCol;
+
+		// Pointer to the callee ReturnStatement. If this is an indirect call, this will be a special ReturnStatement
+		// with ImplicitAssigns
+		ReturnStatement* calleeReturn;
 
 public:
 					CallStatement();
 virtual				~CallStatement();
+
+typedef	std::vector<Exp*> RetLocs;
+typedef std::vector<Exp*>::iterator RetIterator;
 
 		// Make a deep copy, and make the copy a derived object if needed.
 virtual Statement*	clone();
@@ -994,14 +999,14 @@ virtual bool		accept(StmtModifier* visitor);
 		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
 		void		setSigArguments();			// Set arguments based on signature
 		std::vector<Exp*>& getArguments();		// Return call's arguments
-		unsigned	getNumReturns();
 		//Exp		*getReturnExp(int i);
 		int			findReturn(Exp *e);				// Still needed temporarily for ad hoc type analysis
 		void		removeReturn(Exp *e);
 		//void		ignoreReturn(Exp *e);
 		//void		ignoreReturn(int n);
 		//void		addReturn(Exp *e, Type* ty = NULL);
-		RetStatement* getReturns() {return returns;}
+		RetLocs*	calcReturns();
+		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
@@ -1090,7 +1095,8 @@ virtual void		fromSSAform(igraph& ig);
 
 virtual	Type*		getTypeFor(Exp* e);					// Get the type defined by this Statement for this location
 virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, defined in this statement
-		DefCollector*	getCollector() {return &col;}	// Return pointer to the collector object
+		DefCollector*	getDefCollector() {return &defCol;}	// Return pointer to the def collector object
+		UseCollector*	getUseCollector() {return &useCol;}	// Return pointer to the use collector object
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
 		// parameters if needed, and return true if any signature parameters added
 		bool		ellipsisProcessing(Prog* prog);
@@ -1111,22 +1117,32 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
 
 
 
-/*===================================================================================================================
- * RetStatement: Abstract class representing either an ordinary return (class ReturnStatement), or a DefineAll, which
- * is a special statement representing the return of a callee that can't be found through analysis
- *=================================================================================================================*/
-class RetStatement : public Statement {
+/*===========================================================
+ * ReturnStatement: represents an ordinary high level return.
+ *==========================================================*/
+class ReturnStatement : public Statement {
 protected:
-		// A set of assignments of locations to expressions (or if a DefineAll, implicit assignments to everything)
-		std::set<Assignment*, lessAssignment> defs;
+		// A vector of assignments of locations to expressions. A vector to facilitate ordering (?)
+		StatementVec defs;
+
+		// Native address of the (only) return instruction. Needed for branching to this only return statement
+		ADDRESS		retAddr;
+
+		// A DefCollector object to collect the reaching definitions
+		DefCollector col;
+
+		// number of bytes that this return pops
+		unsigned	nBytesPopped;
 
 public:
-					RetStatement();
-virtual				~RetStatement() {}
+public:
+					ReturnStatement();
+virtual				~ReturnStatement();
 
-typedef	std::set<Assignment*, lessAssignment>::iterator iterator;
+typedef	StatementVec::iterator iterator;
 		iterator	begin() {return defs.begin();}
 		iterator	end() {return defs.end();}
+		StatementVec& getReturns() {return defs;}
 		unsigned	getNumReturns() { return defs.size(); }
 
 virtual void		print(std::ostream& os = std::cout);
@@ -1157,36 +1173,14 @@ virtual void		getDefinitions(LocationSet &defs);
 		// simplify all the uses/defs in this Statement
 virtual void		simplify();
 
-virtual bool	isDefinition() { return true; }
+virtual bool		isDefinition() { return true; }
 
 		// Ad hoc dataflow analysis
 virtual bool		processConstants(Prog*) {return false;}
 		// Replace registers with locals
 virtual	void		regReplace(UserProc* proc);
-
-		// From SSA form
-virtual void		fromSSAform(igraph& igm) {};
-
-};
-
-
-/*===========================================================
- * ReturnStatement: represents an ordinary high level return.
- *==========================================================*/
-class ReturnStatement: public RetStatement {
-
-		// Native address of the (only) return instruction. Needed for branching to this only return statement
-		ADDRESS		retAddr;
-
-		// A DefCollector object to collect the reaching definitions
-		DefCollector col;
-
-		// number of bytes that this return pops
-		unsigned	nBytesPopped;
-
-public:
-					ReturnStatement();
-virtual				~ReturnStatement();
+		// Get a subscripted version of e from the collector
+		Exp*		subscriptWithDef(Exp* e);
 
 		// Make a deep copy, and make the copy a derived object if needed.
 virtual Statement* clone();
@@ -1196,22 +1190,7 @@ virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
 
-		// print
-//		void		print(std::ostream& os);		// Standard print with statement number
-
-		// general search
-//virtual bool		search(Exp*, Exp*&);
-
-		// Replace all instances of "search" with "replace".
-//virtual bool		searchAndReplace(Exp* search, Exp* replace);
-	
-		// Searches for all instances of a given subexpression within this
-		// expression and adds them to a given list in reverse nesting order.	 
-//virtual bool		searchAll(Exp* search, std::list<Exp*> &result);
-
-//virtual bool		usesExp(Exp *e);						// True if this statement uses the given expression
 virtual bool		defines(Exp* loc);						// True if this Statement defines loc
-//virtual bool		doReplaceRef(Exp* from, Exp* to);
 
 		// The following two are currently unused, but something will need this information soon
 		int			getNumBytesPopped() { return nBytesPopped; }
@@ -1239,25 +1218,6 @@ virtual void		fromSSAform(igraph& igm);
 
 	friend class XMLProgParser;
 };	// class ReturnStatement
-
-/*============================================================================================
- Class DefineAll: represents the return statement of a callee that can't be found by analysis.
-=============================================================================================*/
-class DefineAll : public RetStatement {
-		UseCollector col;							// Collector of live variables using this definition
-public:
-					DefineAll();
-
-virtual	Statement*	clone();
-
-		// Accept a visitor to this Statement
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
-
-		// code generation (not needed; only used inside CallStatements)
-virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {}
-};
 
 
 #endif // __STATEMENT_H__

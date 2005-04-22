@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17.2.2 $
+ * $Revision: 1.17.2.3 $
  *
  * June 2004 - Trent: created
  */
@@ -2154,15 +2154,14 @@ Prog *XMLProgParser::parse(const char *filename)
   for (phase = 0; phase < 2; phase++) {
 	  parseFile(filename);
 	  if (stack.front()->prog) {
-	  prog = stack.front()->prog;
-	  parseChildren(prog->getRootCluster());
+		  prog = stack.front()->prog;
+		  parseChildren(prog->getRootCluster());
 	  }
   }
   if (prog == NULL)
 	  return NULL;
-  FrontEnd *pFE = FrontEnd::Load(prog->getPath());
+  FrontEnd *pFE = FrontEnd::Load(prog->getPath(), prog);
   prog->setFrontEnd(pFE);
-  prog->setBinaryFile(pFE->getBinaryFile());
   return prog;
 }
 
@@ -2798,7 +2797,7 @@ void XMLProgParser::persistToXML(std::ostream &out, Statement *stmt)
 		out << " retAddr=\"" << (int)r->retAddr << "\"";
 		out << ">\n";
 
-		RetStatement::iterator rr;
+		ReturnStatement::iterator rr;
 		for (rr = r->defs.begin(); rr != r->defs.end(); ++rr) {
 			out << "<returnexp>\n";
 			persistToXML(out, *rr);

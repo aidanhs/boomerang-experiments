@@ -18,7 +18,7 @@ class CallStatement;
 class PPCFrontEnd : public FrontEnd
 {
 public:
-  PPCFrontEnd(BinaryFile *pBF);
+				PPCFrontEnd(BinaryFile *pBF, Prog* prog);
 	/**
 	 * Virtual destructor.
 	 */

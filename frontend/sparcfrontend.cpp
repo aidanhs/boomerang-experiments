@@ -1562,14 +1562,11 @@ extern "C" {
 /*==============================================================================
  * FUNCTION:	  SparcFrontEnd::SparcFrontEnd
  * OVERVIEW:	  SparcFrontEnd constructor
- * NOTE:		  Seems to be necessary to put this here; forces the vtable entries to point to this dynamic linked
- *					library
  * PARAMETERS:	  Same as the FrontEnd constructor
  * RETURNS:		  <N/A>
  *============================================================================*/
-SparcFrontEnd::SparcFrontEnd(BinaryFile *pBF)
-  : FrontEnd(pBF) {
-	decoder = new SparcDecoder();
+SparcFrontEnd::SparcFrontEnd(BinaryFile *pBF, Prog* prog) : FrontEnd(pBF, prog) {
+	decoder = new SparcDecoder(prog);
 	nop_inst.numBytes = 0;			// So won't disturb coverage
 	nop_inst.type = NOP;
 	nop_inst.valid = true;

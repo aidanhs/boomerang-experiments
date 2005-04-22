@@ -14,7 +14,7 @@
  * OVERVIEW:   This file contains the machine independent
  *			   decoding functionality.
  *
- * $Revision: 1.19.2.1 $
+ * $Revision: 1.19.2.2 $
  *============================================================================*/ 
 /*
  * 27 Apr 02 - Mike: Mods for boomerang
@@ -47,18 +47,17 @@
 /*==============================================================================
  * FUNCTION:	   NJMCDecoder::NJMCDecoder
  * OVERVIEW:	   
- * PARAMETERS:	   None
+ * PARAMETERS:	   prog: Pointer to the Prog object
  * RETURNS:		   N/A
  *============================================================================*/
-NJMCDecoder::NJMCDecoder()
+NJMCDecoder::NJMCDecoder(Prog* prog) : prog(prog)
 {}
 
 /*==============================================================================
  * FUNCTION:	   NJMCDecoder::instantiate
- * OVERVIEW:	   Given an instruction name and a variable list of expressions
- *				   representing the actual operands of the instruction, use the
- *				   RTL template dictionary to return the instantiated RTL
- *				   representing the semantics of the instruction.
+ * OVERVIEW:	   Given an instruction name and a variable list of expressions representing the actual operands of
+ *					the instruction, use the RTL template dictionary to return the instantiated RTL representing the
+ *					semantics of the instruction.
  * PARAMETERS:	   pc: native PC
  *				   name - instruction name
  *				   ... - Semantic String ptrs representing actual operands
@@ -81,8 +80,7 @@ std::list<Statement*>* NJMCDecoder::instantiate(ADDRESS pc, const char* name, ..
 	if (DEBUG_DECODER) {
 		// Display a disassembly of this instruction if requested
 		std::cout << std::hex << pc << std::dec << ": " << name << " ";
-		for (std::vector<Exp*>::iterator itd = actuals.begin();
-		  itd != actuals.end(); itd++) {
+		for (std::vector<Exp*>::iterator itd = actuals.begin(); itd != actuals.end(); itd++) {
 			if ((*itd)->isIntConst()) {
 				int val = ((Const*)(*itd))->getInt();
 				if (val > 100 || val < -100)
@@ -97,16 +95,14 @@ std::list<Statement*>* NJMCDecoder::instantiate(ADDRESS pc, const char* name, ..
 		std::cout << std::endl;
 	}
 
-	std::list<Statement*>* instance = RTLDict.instantiateRTL(opcode, pc,
-	  actuals);
+	std::list<Statement*>* instance = RTLDict.instantiateRTL(opcode, pc, actuals);
 
 	return instance;
 }
 
 /*==============================================================================
  * FUNCTION:	   NJMCDecoder::instantiateNamedParam
- * OVERVIEW:	   Similarly to the above, given a parameter name
- *					and a list of Exp*'s representing sub-parameters,
+ * OVERVIEW:	   Similarly to the above, given a parameter name and a list of Exp*'s representing sub-parameters,
  *					return a fully substituted Exp for the whole expression
  * NOTE:		   Caller must delete result
  * PARAMETERS:	   name - parameter name
@@ -121,8 +117,7 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...) {
 	assert(RTLDict.DetParamMap.find(name) != RTLDict.DetParamMap.end());
 	ParamEntry &ent = RTLDict.DetParamMap[name];
 	if (ent.kind != PARAM_ASGN && ent.kind != PARAM_LAMBDA ) {
-		std::cerr << "Attempt to instantiate expressionless parameter '" << name
-		  << "'\n";
+		std::cerr << "Attempt to instantiate expressionless parameter '" << name << "'\n";
 		return 0;
 	}
 	// Start with the RHS
@@ -131,10 +126,8 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...) {
 
 	va_list args;
 	va_start(args,name);
-	for( std::list<std::string>::iterator it = ent.params.begin();
-	  it != ent.params.end(); it++ ) {
-		Exp* formal = new Location(opParam, new Const((char*)it->c_str()),
-		  NULL);
+	for( std::list<std::string>::iterator it = ent.params.begin(); it != ent.params.end(); it++ ) {
+		Exp* formal = new Location(opParam, new Const((char*)it->c_str()), NULL);
 		Exp* actual = va_arg(args, Exp*);
 		bool change;
 		result = result->searchReplaceAll(formal, actual, change);
@@ -145,10 +138,9 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...) {
 
 /*==============================================================================
  * FUNCTION:	   NJMCDecoder::substituteCallArgs
- * OVERVIEW:	   In the event that it's necessary to synthesize the call of
- *				   a named parameter generated with instantiateNamedParam(),
- *				   this substituteCallArgs() will substitute the arguments that
- *				   follow into the expression.
+ * OVERVIEW:	   In the event that it's necessary to synthesize the call of a named parameter generated with
+ *					instantiateNamedParam(), this substituteCallArgs() will substitute the arguments that follow into
+ *					the expression.
  * NOTE:		   Should only be used after instantiateNamedParam(name, ..);
  * NOTE:		   exp (the pointer) could be changed
  * PARAMETERS:	   name - parameter name
@@ -170,10 +162,8 @@ void NJMCDecoder::substituteCallArgs(char *name, Exp*& exp, ...)
 	
 	va_list args;
 	va_start(args, exp);
-	for (std::list<std::string>::iterator it = ent.funcParams.begin();
-		 it != ent.funcParams.end(); it++) {
-		Exp* formal = new Location(opParam, new Const((char*)it->c_str()),
-		  NULL);
+	for (std::list<std::string>::iterator it = ent.funcParams.begin(); it != ent.funcParams.end(); it++) {
+		Exp* formal = new Location(opParam, new Const((char*)it->c_str()), NULL);
 		Exp* actual = va_arg(args, Exp*);
 		bool change;
 		exp = exp->searchReplaceAll(formal, actual, change);

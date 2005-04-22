@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.1 $
+ * $Revision: 1.98.2.2 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -1645,3 +1645,20 @@ bool Signature::isOpCompatStackLocal(OPER op) {
 	return false;
 }
 
+// Needs much work...
+CallStatement::RetLocs* Signature::calcReturns(CallStatement* call) {
+	// Want the intersection of the LHSs of the callee's returns (if available), and the UseCollector
+	Proc* dest = call->getDestProc();
+	if (dest == NULL) {
+
+	} else {
+		if (dest->isLib())
+			;
+		else {
+			ReturnStatement* rs = ((UserProc*)dest)->getTheReturnStatement();
+			//if (rs)
+		//		return rs->getReturns().makeIsect(useCol);
+		}
+	}
+	return NULL;
+}

@@ -23,6 +23,7 @@
 #include <iostream>
 #include <vector>
 #include <assert.h>
+#include <statement.h>		// For CallStatement::RetLocs
 
 class BasicBlock;
 typedef BasicBlock *PBB;
@@ -33,12 +34,13 @@ class Type;
 class Signature;
 class Assign;
 class LocationSet;
-class RetStatement;
+class CallStatement;
+//class CallStatement::RetLocs;
 class ReturnStatement;
 
 class HLLCode {
 protected:
-		UserProc *m_proc;
+		UserProc *m_proc;		// Pointer to the enclosing UserProc
 
 public:
 		// constructors
@@ -101,7 +103,7 @@ virtual void	RemoveUnusedLabels(int maxOrd) = 0;
 		// sequential statements
 virtual void	AddAssignmentStatement(int indLevel, Assign *s) = 0;
 virtual void	AddCallStatement(int indLevel, Proc *proc, const char *name, std::vector<Exp*> &args,
-					RetStatement* rets) = 0;
+					CallStatement::RetLocs* rets) = 0;
 virtual void	AddIndCallStatement(int indLevel, Exp *exp, std::vector<Exp*> &args) = 0;
 virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs) = 0;
 

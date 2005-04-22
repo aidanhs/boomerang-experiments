@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.2 $
+ * $Revision: 1.15.2.3 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -93,7 +93,7 @@ bool StatementSet::remove(Statement* s) {
 	return false;
 }
 
-// Find s in this Statement set. Return true if found
+// Search for s in this Statement set. Return true if found
 bool StatementSet::exists(Statement* s) {
 	std::set<Statement*>::iterator it = sset.find(s);
 	return (it != sset.end());

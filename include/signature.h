@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.1 $
+ * $Revision: 1.53.2.2 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -266,6 +266,9 @@ virtual callconv	getConvention() { return CONV_NONE; }
 		const char	*getPreferedName() { return preferedName.c_str(); }
 		unsigned int getNumPreferedParams() { return preferedParams.size(); }
 		int			getPreferedParam(int n) { return preferedParams[n]; }
+
+		// Only the signature knows how to order parameters and returns
+virtual	CallStatement::RetLocs* calcReturns(CallStatement* call);
 
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);

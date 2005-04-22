@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.6 $
+ * $Revision: 1.238.2.7 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -580,10 +580,12 @@ void UserProc::generateCode(HLLCode *hll) {
 //		  while (nameStackLocations())
 //			  replaceExpressionsWithSymbols();
 
-//		if (!DFA_TYPE_ANALYSIS) {
+#if 0		// In back end now...
 			while (nameRegisters())
 				replaceExpressionsWithSymbols();
-//		}
+#else
+			nameRegisters();
+#endif
 	}
 	removeUnusedLocals();
 
@@ -633,6 +635,7 @@ char* UserProc::prints() {
 
 void UserProc::printToLog() {
 	signature->printToLog();
+	symbolMapToLog();
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++) {
 		LOG << (*it).second->getCtype() << " " << (*it).first.c_str() << " ";
 		Exp *e = getLocalExp((*it).first.c_str());
@@ -1025,7 +1028,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		// done to this function so far is invalid. So redo everything. Very expensive!!
 		LOG << "=== About to restart decompilation of " << getName() <<
 			" because indirect jumps or calls have been removed\n\n";
-		assignProcsToCalls();
+		//assignProcsToCalls();		// Surely this should be done at decode time!
 		return decompile();	 // Restart decompiling this proc
 	}
 
@@ -1045,7 +1048,7 @@ std::set<UserProc*>* UserProc::decompile() {
 
 		printXML();
 		if (VERBOSE && !Boomerang::get()->noRemoveNull) {
-			LOG << "===== After removing null and unused statements depth " << depth << " =====\n";
+			LOG << "===== After removing unused and null statements depth " << depth << " =====\n";
 			printToLog();
 			LOG << "===== End after removing unused statements =====\n\n";
 		}
@@ -1097,9 +1100,8 @@ std::set<UserProc*>* UserProc::decompile() {
 
 //	if (DFA_TYPE_ANALYSIS)
 		// This has to be done fairly late, e.g. after trimming returns. This seems to be something to do with
-		// call statements not defining local variables properly. When -Td is not in force, it is for some reason
-		// delayed until code generation.
-//		replaceRegistersWithLocations();
+		// call statements not defining local variables properly. It is now delayed until code generation.
+//		replaceRegistersWithLocals();
 
 	printXML();
 
@@ -1358,9 +1360,9 @@ void UserProc::trimReturns() {
 		}
 #else	// Assume that sp doesn't need special processing, so just remove any locals
 		if (theReturnStatement) {
-			RetStatement::iterator rr;
+			ReturnStatement::iterator rr;
 			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
-				Exp* loc = (*rr)->getLeft();
+				Exp* loc = ((Assignment*)*rr)->getLeft();
 				if (signature->isStackLocal(prog, loc)) {
 					if (VERBOSE)
 						LOG << "Removing local " << loc << " from theReturnStatement\n";
@@ -1391,9 +1393,9 @@ void UserProc::updateReturnTypes()
 {
 	if (theReturnStatement == NULL)
 		return;
-	RetStatement::iterator rr;
+	ReturnStatement::iterator rr;
 	for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
-		Exp *e = (*rr)->getLeft();
+		Exp *e = ((Assignment*)*rr)->getLeft();
 		Type *ty = e->getType();
 		if (ty && !ty->isVoid()) {
 			// UGH! Remove when ad hoc TA is removed!
@@ -2094,6 +2096,7 @@ void UserProc::replaceExpressionsWithGlobals() {
 }
 
 void UserProc::replaceExpressionsWithSymbols() {
+#if 0			// Done in the back ends now
 	StatementList stmts;
 	getStatements(stmts);
 
@@ -2110,6 +2113,7 @@ void UserProc::replaceExpressionsWithSymbols() {
 			}
 		}
 	}
+#endif
 }
 
 void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
@@ -2459,9 +2463,9 @@ bool UserProc::nameStackLocations() {
 	return found;
 }
 
-// Deprecated. Eventually replace with replaceRegistersWithLocations()
+// Deprecated. Eventually replace with replaceRegistersWithLocals()
 bool UserProc::nameRegisters() {
-	static Exp *match = Location::regOf(new Terminal(opWild));
+	static Exp *regOfWild = Location::regOf(new Terminal(opWild));
 	bool found = false;
 
 	StatementList stmts;
@@ -2470,27 +2474,33 @@ bool UserProc::nameRegisters() {
 	StatementList::iterator it;
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
-		Exp *memref; 
-		if (s->search(match, memref)) {
-			if (symbolMap.find(memref) == symbolMap.end()) {
-				if (VERBOSE)
-					LOG << "register found: " << memref << "\n";
-				Type *ty = memref->getType();
-				if (ty == NULL)
-					ty = new IntegerType();
-				symbolMap[memref->clone()] = newLocal(ty);
-			}
-			assert(symbolMap.find(memref) != symbolMap.end());
-			std::string name = ((Const*)symbolMap[memref]->getSubExp1())->getStr();
-			if (memref->getType() != NULL)
-				locals[name] = memref->getType();
-			found = true;
-#if 0
-			locals[name] = s->updateType(memref, locals[name]);
+		Exp *reg; 
+		std::list<Exp*> li;
+		std::list<Exp*>::iterator ll;
+		s->searchAll(regOfWild, li);
+		for (ll = li.begin(); ll != li.end(); ++ll) {
+			reg = *ll;
+			if (symbolMap.find(reg) != symbolMap.end())
+				continue;
 			if (VERBOSE)
-				LOG << "updating type of named register " << name.c_str() << " to " 
-					<< locals[name]->getCtype() << "\n";
-#endif
+				LOG << "register found: " << reg << "\n";
+			Type *ty = reg->getType();
+			if (ty == NULL)
+				ty = new IntegerType();
+			symbolMap[reg->clone()] = newLocal(ty);
+			assert(symbolMap.find(reg) != symbolMap.end());
+			std::string name = ((Const*)symbolMap[reg]->getSubExp1())->getStr();
+			if (reg->getType() != NULL)
+				locals[name] = reg->getType();
+			else {
+				//locals[name] = s->updateType(reg, locals[name]);
+				// For now; should only affect ad hoc type analysis:
+				locals[name] = new IntegerType();
+				if (VERBOSE)
+					LOG << "updating type of named register " << name.c_str() << " to " << locals[name]->getCtype() <<
+						"\n";
+			}
+			found = true;
 		}
 	}
 
@@ -2517,11 +2527,12 @@ void UserProc::regReplaceList(std::list<Exp**>& li) {
 	}
 }
 
-void UserProc::replaceRegistersWithLocations() {
+void UserProc::replaceRegistersWithLocals() {
 	StatementList stmts;
 	getStatements(stmts);
 	StatementList::iterator it;
 	for (it = stmts.begin(); it != stmts.end(); it++)
+		// Bounces back most times to UserProc::regReplaceList (above)
 		(*it)->regReplace(this);
 }
 
@@ -2699,10 +2710,13 @@ void UserProc::countRefs(RefCounter& refCounts) {
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			if (((Exp*)*rr)->isSubscript()) {
 				Statement *ref = ((RefExp*)*rr)->getDef();
-				refCounts[ref]++;
-				if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
-					LOG << "counted ref to " << *rr << "\n";
-				
+				if (ref && ref->getNumber()) {
+if (ref->getNumber() == 2)
+ std::cerr << "HACK!\n";
+					refCounts[ref]++;
+					if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
+						LOG << "counted ref to " << *rr << "\n";
+				}
 			}
 		}
 	}
@@ -2724,11 +2738,11 @@ void UserProc::removeUnusedLocals() {
 			Exp* r = *rr;
 			if (r->isSubscript())
 				r = ((RefExp*)r)->getSubExp1();
-			if (r->isLocal()) {
-				Const* c = (Const*)((Unary*)r)->getSubExp1();
-				std::string name(c->getStr());
+			char* sym = lookup(r);				// Look up raw expressions in the symbolMap
+			if (sym) {
+				std::string name(sym);
 				usedLocals.insert(name);
-				if (VERBOSE) LOG << "Counted local " << name.c_str() << " in " << s << "\n";
+				if (VERBOSE) LOG << "Counted local " << sym << " in " << s << "\n";
 			}
 		}
 	}
@@ -2802,17 +2816,18 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 			}
 			if (asLeft->getOper() == opMemOf &&
 					(!as->isAssign() || !(*new RefExp(asLeft, NULL) == *((Assign*)s)->getRight()))) {
-				// ? Is the above right? Looking for m[x] := m[x]{-} ???
-				// assignments to memof anything must always be kept
+				// Looking for m[x] := anything but m[x]{-}
+				// Assignments to memof anything must always be kept. If it is an unused local, it will be removed later
 				ll++;
 				continue;
 			}
-			// if (asLeft->getOper() == opParam) {
-				// we actually want to remove this if no-one is using it
-				// otherwise we'll create an interference that we can't handle
-				//ll++;
-				//continue;
-			// }
+#if 0		// We actually want to remove this if no-one is using it, otherwise we'll create an interference that we
+			// can't handle
+			if (asLeft->getOper() == opParam) {
+				ll++;
+				continue;
+			}
+#endif
 			if (asLeft->getOper() == opMemberAccess || asLeft->getOper() == opArraySubscript) {
 				// can't say with these
 				ll++;
@@ -3040,11 +3055,11 @@ bool UserProc::prove(Exp *query)
 
 	if (query->getSubExp1()->getOper() != opSubscript) {
 		bool gotdef = false;
-		// replace expression from return set with expression in return 
+		// replace expression from return set with expression in the collector of the return 
 		if (theReturnStatement) {
-			RetStatement::iterator rr;
+			ReturnStatement::iterator rr;
 			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
-				Exp *e = (*rr)->getLeft();
+				Exp *e = ((Assignment*)*rr)->getLeft();
 				if (*e == *query->getSubExp1()) {
 					query->refSubExp1() = ((Assign*)*rr)->getRight();
 					gotdef = true;
@@ -3722,4 +3737,20 @@ void UserProc::addImplicitAssigns() {
 	StmtImplicitConverter sm(&ic, cfg);
 	for (it = stmts.begin(); it != stmts.end(); it++)
 		(*it)->accept(&sm);
+}
+
+char* UserProc::lookup(Exp* e) {
+	std::map<Exp*,Exp*,lessExpStar>::iterator it;
+	it = symbolMap.find(e);
+	if (it == symbolMap.end())
+		return NULL;
+	Exp* sym = it->second;
+	assert(sym->isLocal());
+	return ((Const*)((Location*)sym)->getSubExp1())->getStr();
+}
+
+void UserProc::symbolMapToLog() {
+	std::map<Exp*,Exp*,lessExpStar>::iterator it;
+	for (it = symbolMap.begin(); it != symbolMap.end(); it++)
+		LOG << "  " << it->first << " maps to " << it->second << "\n";
 }

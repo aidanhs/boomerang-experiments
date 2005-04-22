@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91.2.2 $
+# $Revision: 1.91.2.3 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -211,7 +211,7 @@ testAll.o: testAll.cpp
 db/exp.o: include/exp.h include/operator.h include/types.h include/statement.h \
     include/cfg.h include/rtl.h include/proc.h include/prog.h db/operstrings.h include/visitor.h include/type.h
 db/prog.o: include/prog.h include/exp.h include/cfg.h include/proc.h include/rtl.h include/BinaryFile.h \
-	include/frontend.h include/signature.h c/ansi-c-parser.h include/type.h
+	include/frontend.h include/signature.h c/ansi-c-parser.h include/type.h include/managed.h
 db/proc.o: include/proc.h include/hllcode.h include/statement.h include/exp.h include/cfg.h include/rtl.h \
 	include/prog.h include/signature.h include/constraint.h include/type.h
 db/cfg.o: include/cfg.h include/statement.h include/exp.h
@@ -285,7 +285,7 @@ codegen/chllcode.o: include/hllcode.h codegen/chllcode.h include/statement.h \
 codegen/syntax.o: include/hllcode.h include/statement.h \
     include/cfg.h include/exp.h include/proc.h
 
-type/constraint.o: include/constraint.h include/exp.h include/type.h
+type/constraint.o: include/constraint.h include/exp.h include/type.h include/managed.h
 type/type.o: include/type.h
 type/dfa.o: include/type.h
 type/TypeTest.o: type/TypeTest.h include/util.h include/type.h \

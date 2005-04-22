@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.3 $
+ * $Revision: 1.30.2.4 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -92,14 +92,24 @@ void UserProc::dfaTypeAnalysis() {
 			// If s is a call, also display its return types
 			if (s->isCall()) {
 				CallStatement* call = (CallStatement*)s;
-				RetStatement* returns = call->getReturns();
-				RetStatement::iterator rr;
-				if (returns->getNumReturns()) {
-					LOG << "       Returns: ";
-					for (rr = returns->begin(); rr != returns->end(); ++rr)
-						LOG << (*rr)->getType()->getCtype() << " " << (*rr)->getLeft() << "  ";
-					LOG << "\n";
+				ReturnStatement* rs = call->getCalleeReturn();
+				if (rs == NULL) continue;
+				UseCollector* uc = call->getUseCollector();
+				ReturnStatement::iterator rr;
+				bool first = true;
+				for (rr = rs->begin(); rr != rs->end(); ++rr) {
+					// Intersect the callee's returns with the live locations at the call, i.e. make sure that they
+					// exist in *uc
+					Exp* lhs = ((Assignment*)*rr)->getLeft();
+					if (!uc->exists(lhs))
+						continue;				// Intersection fails
+					if (first)
+						LOG << "       Returns: ";
+					else
+						LOG << ", ";
+					LOG << ((Assignment*)*rr)->getType()->getCtype() << " " << ((Assignment*)*rr)->getLeft();
 				}
+				LOG << "\n";
 			}
 		}
 		LOG << "\n *** End results for Data flow based Type Analysis for " << getName() << " ***\n\n";
@@ -1037,7 +1047,7 @@ void StmtDfaLocalConverter::visit(BranchStatement* s, bool& recur) {
 	recur = false;
 }
 void StmtDfaLocalConverter::visit(ReturnStatement* s, bool& recur) {
-	RetStatement::iterator rr;
+	ReturnStatement::iterator rr;
 	for (rr = s->begin(); rr != s->end(); ++rr)
 		(*rr)->accept(this);
 	recur = false;

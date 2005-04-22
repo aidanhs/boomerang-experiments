@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.5 $
+ * $Revision: 1.39.2.6 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -157,8 +157,9 @@ public:
 		 * begin() and end() so we can iterate through the locations
 		 */
 		typedef LocationSet::iterator iterator;
-		iterator begin() {return locs.begin();}
-		iterator end()	 {return locs.end();}
+		iterator	begin() {return locs.begin();}
+		iterator	end()	 {return locs.end();}
+		bool		exists(Exp* e) {return locs.exists(e);}
 };
 
 /**

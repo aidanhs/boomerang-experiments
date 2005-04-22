@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.89.2.1 $
+ * $Revision: 1.89.2.2 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness rather than machine type)
@@ -61,27 +61,28 @@
  * PARAMETERS:	  prog: program being decoded
  * RETURNS:		  <N/a>
  *============================================================================*/
-FrontEnd::FrontEnd(BinaryFile *pBF) : pBF(pBF)
+FrontEnd::FrontEnd(BinaryFile *pBF, Prog* prog) : pBF(pBF), prog(prog)
 {}
 
-FrontEnd* FrontEnd::instantiate(BinaryFile *pBF) {
+// Static function to instantiate an appropriate concrete front end
+FrontEnd* FrontEnd::instantiate(BinaryFile *pBF, Prog* prog) {
 	switch(pBF->GetMachine()) {
-	case MACHINE_PENTIUM:
-		return new PentiumFrontEnd(pBF);
-	case MACHINE_SPARC:
-		return new SparcFrontEnd(pBF);
-	case MACHINE_PPC:
-		return new PPCFrontEnd(pBF);
-	default:
-		LOG << "Machine architecture not supported\n";
+		case MACHINE_PENTIUM:
+			return new PentiumFrontEnd(pBF, prog);
+		case MACHINE_SPARC:
+			return new SparcFrontEnd(pBF, prog);
+		case MACHINE_PPC:
+			return new PPCFrontEnd(pBF, prog);
+		default:
+			LOG << "Machine architecture not supported\n";
 	}
 	return NULL;
 }
 
-FrontEnd* FrontEnd::Load(const char *fname) {
+FrontEnd* FrontEnd::Load(const char *fname, Prog* prog) {
 	BinaryFile *pBF = BinaryFileFactory::Load(fname);
 	if (pBF == NULL) return NULL;
-	return instantiate(pBF);
+	return instantiate(pBF, prog);
 }
 
 // destructor
@@ -100,13 +101,13 @@ bool FrontEnd::isWin32() {
 	return pBF->GetFormat() == LOADFMT_PE;
 }
 
-FrontEnd *FrontEnd::createById(std::string &str, BinaryFile *pBF) {
+FrontEnd *FrontEnd::createById(std::string &str, BinaryFile *pBF, Prog* prog) {
 	if (str == "pentium")
-		return new PentiumFrontEnd(pBF);
+		return new PentiumFrontEnd(pBF, prog);
 	if (str == "sparc")
-		return new SparcFrontEnd(pBF);
+		return new SparcFrontEnd(pBF, prog);
 	if (str == "ppc")
-		return new PPCFrontEnd(pBF);
+		return new PPCFrontEnd(pBF, prog);
 	return NULL;
 }
 
@@ -485,7 +486,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 				GotoStatement* stmt_jump = static_cast<GotoStatement*>(s);
 
                 if (s->getKind() == STMT_GOTO && stmt_jump->getFixedDest() != NO_ADDRESS &&
-                    pBF->IsDynamicLinkedProc(stmt_jump->getFixedDest())) {
+                    	pBF->IsDynamicLinkedProc(stmt_jump->getFixedDest())) {
                     s = *ss = new CallStatement();
                     CallStatement *call = static_cast<CallStatement*>(s);
                     call->setDest(stmt_jump->getFixedDest());
@@ -784,14 +785,12 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 			if (uAddr > lastAddr)
 				lastAddr = uAddr;
 
-			// If sequentially decoding, check if the next address happens to
-			// be the start of an existing BB. If so, finish off the current BB
-			// (if any RTLs) as a fallthrough, and	no need to decode again
-			// (unless it's an incomplete BB, then we do decode it).
-			// In fact, mustn't decode twice, because it will muck up the
-			// coverage, but also will cause subtle problems like add a call
-			// to the list of calls to be processed, then delete the call RTL
-			// (e.g. Pentium 134.perl benchmark)
+			// If sequentially decoding, check if the next address happens to be the start of an existing BB. If so,
+			// finish off the current BB (if any RTLs) as a fallthrough, and no need to decode again (unless it's an
+			// incomplete BB, then we do decode it).
+			// In fact, mustn't decode twice, because it will muck up the coverage, but also will cause subtle problems
+			// like add a call to the list of calls to be processed, then delete the call RTL (e.g. Pentium 134.perl
+			// benchmark)
 			if (sequentialDecode && pCfg->existsBB(uAddr)) {
 				// Create the fallthrough BB, if there are any RTLs at all
 				if (BB_rtls) {
@@ -939,10 +938,11 @@ RTL* decodeRtl(ADDRESS address, int delta, NJMCDecoder* decoder) {
 }
 
 
+#if 0
 /*==============================================================================
  * FUNCTION:	getInstanceFor
- * OVERVIEW:	Guess the machine required to decode this binary file;
- *				  load the library and return an instance of FrontEnd
+ * OVERVIEW:	Guess the machine required to decode this binary file; load the library and return an instance of
+ *					FrontEnd
  * NOTE:		No longer used... replaced by similar code in class BinaryFileFactory
  * PARAMETERS:	sName: name of the binary file
  *				dlHandle: ref to a void* needed for closeInstance
@@ -959,6 +959,9 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle, BinaryFi
 	char buf[64];
 	std::string libName, machName;
 	dlHandle = 0;			// Only used with DYNAMIC code
+#ifndef DYNAMIC
+	Prog* prog = decoder->getProg();
+#endif
 
 	f = fopen (sName, "ro");
 	if( f == NULL ) {
@@ -975,7 +978,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle, BinaryFi
 			machName = "sparc"; 
 #ifndef DYNAMIC
 			{
-				SparcFrontEnd *fe = new SparcFrontEnd(pBF);
+				SparcFrontEnd *fe = new SparcFrontEnd(pBF, prog);
 				decoder = fe->getDecoder();
 				return fe;
 			}
@@ -985,7 +988,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle, BinaryFi
 			machName = "pentium"; 
 #ifndef DYNAMIC
 			{
-				PentiumFrontEnd *fe = new PentiumFrontEnd(pBF);
+				PentiumFrontEnd *fe = new PentiumFrontEnd(pBF, prog);
 				decoder = fe->getDecoder();
 				return fe;
 			}
@@ -995,7 +998,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle, BinaryFi
 			machName = "ppc"; 
 #ifndef DYNAMIC
 			{
-				PPCFrontEnd *fe = new PPCFrontEnd(pBF);
+				PPCFrontEnd *fe = new PPCFrontEnd(pBF, prog);
 				decoder = fe->getDecoder();
 				return fe;
 			}
@@ -1009,7 +1012,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle, BinaryFi
 		// This test could be strengthened a bit!
 		machName = "pentium";
 #ifndef DYNAMIC
-		PentiumFrontEnd *fe = new PentiumFrontEnd(pBF);
+		PentiumFrontEnd *fe = new PentiumFrontEnd(pBF, prog);
 		decoder = fe->getDecoder();
 		return fe;
 #endif
@@ -1063,16 +1066,16 @@ void FrontEnd::closeInstance(void* dlHandle) {
 	if (dlHandle) dlclose(dlHandle);
 #endif
 }
+#endif
+
 
 /*==============================================================================
  * FUNCTION:	FrontEnd::getProg
  * OVERVIEW:	Get a Prog object (mainly for testing and not decoding)
- * NOTE:		Caller to destroy
  * PARAMETERS:	None
  * RETURNS:		Pointer to a Prog object (with pFE and pBF filled in)
  *============================================================================*/
 Prog* FrontEnd::getProg() {
-	Prog *prog = new Prog(pBF, this);
 	return prog;
 }
 

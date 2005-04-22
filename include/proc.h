@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.2 $
+/* $Revision: 1.115.2.3 $
 */
 
 #ifndef _PROC_H_
@@ -311,9 +311,9 @@ class UserProc : public Proc {
 		bool		analysed;
 
 		/*
-		 * Indicate that the aggregate location pointer "hidden" parameter is used, and is thus explicit in this translation.
-		 * Needed only by architectures like Sparc where a special parent stack location is used to pass the address of
-		 * aggregates. Set with the setParams() member function
+		 * Indicate that the aggregate location pointer "hidden" parameter is used, and is thus explicit in this
+		 * translation.  Needed only by architectures like Sparc where a special parent stack location is used to pass
+		 * the address of aggregates. Set with the setParams() member function.
 		 */
 		bool		aggregateUsed;
 
@@ -325,15 +325,13 @@ class UserProc : public Proc {
 		int			nextLocal;		// Number of the next local. Can't use locals.size() because some get deleted
 
 		/*
-		 * A map between machine dependent locations and their corresponding
-		 * symbolic, machine independent representations.
-		 * Example: m[r28{0} - 8] -> local5
+		 * A map between machine dependent locations and their corresponding symbolic, machine independent
+		 * representations.  Example: m[r28{0} - 8] -> local5
 		 */
 		std::map<Exp*,Exp*,lessExpStar> symbolMap;
 
 		/*
-		 * Set of callees (Procedures that this procedure calls). Used for
-		 * call graph, among other things
+		 * Set of callees (Procedures that this procedure calls). Used for call graph, among other things
 		 */
 		std::list<Proc*> calleeList;
 	 
@@ -354,9 +352,10 @@ class UserProc : public Proc {
 
 		/*
 		 * Set of locations defined in this proc. Some or all or none of these may be return locations (will be if used
-		 * before definition after the call)
-		 * Note: there is a different set in each call, because the locations may be different from the caller's perspective
-		 * (e.g. stack locations)
+		 * before definition after the call).
+		 * Note: there is a different set in each call, because the locations may be different from the caller's
+		 * perspective (e.g. stack locations)
+		 * FIXME: This is likely redundant now
 		 */
 		LocationSet	definesSet;
 
@@ -387,10 +386,15 @@ virtual				~UserProc();
 		Cfg*		getCFG();
 
 		/*
-		 * Deletes the whole CFG and all the RTLs, RTs, and Exp*s associated with it. Also nulls the internal cfg pointer
-		 * (to prevent strange errors)
+		 * Deletes the whole CFG and all the RTLs, RTs, and Exp*s associated with it. Also nulls the internal cfg
+		 * pointer (to prevent strange errors)
 		 */
 		void		deleteCFG();
+
+		/*
+		 * Lookup the expression in the symbol map. Return NULL or a C string with the symbol.
+		 */
+		char*		lookup(Exp* e);
 
 		/*
 		 * Returns an abstract syntax tree for the procedure in the internal representation. This function actually
@@ -431,6 +435,7 @@ virtual				~UserProc();
 		void		print(std::ostream &out);
 		char		*prints();
 		void		printToLog();
+		void		symbolMapToLog();			// Print just the symbol map
 
 		// simplify the statements in this proc
 		void		simplify() { cfg->simplify(); }
@@ -443,7 +448,7 @@ virtual				~UserProc();
 		Statement	*getStmtAtLex(unsigned int begin, unsigned int end);
 
 		// All the decompile stuff except propagation, DFA repair, and null/unused statement removal
-		void    complete(); 
+		void    	complete(); 
 
 		// Initialise the statements, e.g. proc, bb pointers
 		void		initStatements();
@@ -498,8 +503,8 @@ typedef std::map<Statement*, int> RefCounter;
 		// Returns true if any signature types so added
 		bool		ellipsisProcessing();
 		// Convert registers to locations (does not need multiple passes, or to call replaceExpressionsWithSymbols)
-		void		replaceRegistersWithLocations();
-		// This is a helper function for the above
+		void		replaceRegistersWithLocals();
+		// This is a helper function for the above:
 		void		regReplaceList(std::list<Exp**>& li);
 
 		// For the final pass of removing returns that are never used

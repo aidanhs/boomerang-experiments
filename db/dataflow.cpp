@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.5 $
+ * $Revision: 1.43.2.6 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -322,7 +322,7 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 		if (S->isCall() || S->isReturn()) {
 			DefCollector* col;
 			if (S->isCall())
-				col = ((CallStatement*)S)->getCollector();
+				col = ((CallStatement*)S)->getDefCollector();
 			else
 				col = ((ReturnStatement*)S)->getCollector();
 			col->updateLocs(Stack);

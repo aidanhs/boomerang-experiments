@@ -19,7 +19,7 @@
  *				Also has some prototypes and structs for switch.cc
  *============================================================================*/
 
-/* $Revision: 1.29 $
+/* $Revision: 1.29.2.1 $
  *
  * 17 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  */
@@ -102,50 +102,47 @@ typedef bool (*PHELPER)(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
 class FrontEnd {
 protected:
-//	  const int NOP_SIZE;		  // Size of a no-op instruction (in bytes)
-//	  const int NOP_INST;		  // No-op pattern
-	// decoder
-	NJMCDecoder *decoder;
-	// The binary file
-	BinaryFile *pBF;
-	// Public map from function name (string) to signature.
-	std::map<std::string, Signature*> librarySignatures;
-	std::map<ADDRESS, std::string> refHints;
-	// The queue of addresses still to be processed
-	TargetQueue	targetQueue;
+//	  const int NOP_SIZE;			// Size of a no-op instruction (in bytes)
+//	  const int NOP_INST;			// No-op pattern
+		NJMCDecoder	*decoder;		// The decoder
+		BinaryFile	*pBF;			// The binary file
+		Prog*		prog;			// The Prog object
+		// Public map from function name (string) to signature.
+		std::map<std::string, Signature*> librarySignatures;
+		std::map<ADDRESS, std::string> refHints;
+		// The queue of addresses still to be processed
+		TargetQueue	targetQueue;
 public:
-	/*
-	 * Constructor. Takes some parameters to save passing these around a lot
-	 */
-	FrontEnd(BinaryFile *pBF);
-	// Create from a binary file
-	static FrontEnd* instantiate(BinaryFile *pBF);
-	// Load a binary
-	static FrontEnd* Load(const char *fname);
+		/*
+		 * Constructor. Takes some parameters to save passing these around a lot
+		 */
+					FrontEnd(BinaryFile *pBF, Prog* prog);
+		// Create from a binary file
+static FrontEnd*	instantiate(BinaryFile *pBF, Prog* prog);
+		// Load a binary
+static FrontEnd*	Load(const char *fname, Prog* prog);
 
-	// Add a symbol to the loader
-	void AddSymbol(ADDRESS addr, const char *nam) { pBF->AddSymbol(addr, nam); }
+		// Add a symbol to the loader
+		void		AddSymbol(ADDRESS addr, const char *nam) { pBF->AddSymbol(addr, nam); }
 
-	// Add a "hint" that an instruction at the given address references
-	// a named global
-	void addRefHint(ADDRESS addr, const char *nam)
-	{ refHints[addr] = nam; }
+		// Add a "hint" that an instruction at the given address references a named global
+		void		addRefHint(ADDRESS addr, const char *nam) { refHints[addr] = nam; }
 
-	/**
-	 * Destructor. Virtual to mute a warning
-	 */
-	virtual ~FrontEnd();
+		/**
+		 * Destructor. Virtual to mute a warning
+		 */
+virtual				~FrontEnd();
 
-	// returns a symbolic name for a register index
-	const char *getRegName(int idx);
+		// returns a symbolic name for a register index
+		const char	*getRegName(int idx);
 
-	// returns an enum identifer for this frontend's platform
-	virtual platform getFrontEndId() = 0;
+		// returns an enum identifer for this frontend's platform
+virtual platform	getFrontEndId() = 0;
 
-	// returns a frontend given a string
-	static FrontEnd *createById(std::string &str, BinaryFile *pBF);
+		// returns a frontend given a string (unused?)
+static FrontEnd		*createById(std::string &str, BinaryFile *pBFi, Prog* prog);
 
-	bool	isWin32();					// Is this a win32 frontend?
+		bool		isWin32();					// Is this a win32 frontend?
 
 		BinaryFile 	*getBinaryFile() { return pBF; }
 
@@ -251,24 +248,25 @@ static	void		closeInstance(void* dlHandle);
  * platform name such as sparc or pentium.
  *============================================================================*/
 
-/*
- * Intialise the procedure decoder and analyser.
- */
-void initFront();
+		/*
+		 * Intialise the procedure decoder and analyser.
+		 */
+		void		initFront();
 
-/*
- * Decode one RTL
- */
-RTL* decodeRtl(ADDRESS address, int delta, NJMCDecoder* decoder);
+		/*
+		 * Decode one RTL
+		 */
+		RTL*		decodeRtl(ADDRESS address, int delta, NJMCDecoder* decoder);
 
-/*
- * This decodes a given procedure. It performs the analysis to recover switch statements, call
- * parameters and return types etc.
- * If keep is false, discard the decoded procedure (only need this to find code other than main that is reachable
- * from _start, for coverage and speculative decoding)
- * If spec is true, then we are speculatively decoding (i.e. if there is an illegal instruction, we just bail out)
- */
-bool decodeProc(ADDRESS uAddr, FrontEnd& fe, bool keep = true, bool spec = false);
+		/*
+		 * This decodes a given procedure. It performs the analysis to recover switch statements, call
+		 * parameters and return types etc.
+		 * If keep is false, discard the decoded procedure (only need this to find code other than main that is
+		 * reachable from _start, for coverage and speculative decoding)
+		 * If spec is true, then we are speculatively decoding (i.e. if there is an illegal instruction, we just bail
+		 * out)
+		 */
+		bool		decodeProc(ADDRESS uAddr, FrontEnd& fe, bool keep = true, bool spec = false);
 
 
 #endif		// #ifndef __FRONTEND_H__
