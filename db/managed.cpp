@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.3 $
+ * $Revision: 1.15.2.4 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -511,4 +511,15 @@ void StatementVec::printNums(std::ostream& os) {
 }
 
 
-
+// Special intersection method
+Returns* StatementList::makeIsect(LocationSet& ls) {
+	Returns* ret = new Returns;
+	for (iterator it = slist.begin(); it != slist.end(); ++it) {
+		Assignment* as = (Assignment*)*it;
+		if (ls.exists(as->getLeft())) {
+			Return r(as->getType(), as->getLeft());
+			ret->append(r);			// Struct copy
+		}
+	}
+	return ret;
+}

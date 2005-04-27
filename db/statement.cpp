@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.6 $
+ * $Revision: 1.148.2.7 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -579,6 +579,10 @@ void GotoStatement::setIsComputed(bool b) {
  *============================================================================*/
 bool GotoStatement::isComputed() {
 	return m_isComputed;
+}
+
+Return* Return::clone() {
+	return new Return(type->clone(), exp->clone());
 }
 
 /*==============================================================================
@@ -1311,16 +1315,19 @@ Exp *CallStatement::getReturnExp(int i) {
 #endif
 
 // Temporarily needed for ad-hoc type analysis
-int CallStatement::findReturn(Exp *e) {
-#if 0
-	for (unsigned i = 0; i < returns.size(); i++)
-		if (returns[i].e && *returns[i].e == *e)
-			return i;
-	return -1;
-#else
-	if (procDest == NULL) return -1;
-	return procDest->getSignature()->findReturn(e);
-#endif
+ReturnsPos& CallStatement::findReturn(Exp *e) {
+	ReturnsPos* ret = new ReturnsPos;
+	Returns* returns = calcReturns();
+	for (Returns::iterator rr = returns.begin(); rr != returns.end(); ++rr) {
+		if (it->exp && *it->exp == *e) {
+			ret->first = true;
+			ret->second = rr;
+			return *ret;
+		}
+	}
+	ret->first = false;
+	ret->second = returns.end();
+	return *ret;
 }
 
 #if 0		// No, this will happen from the callee now
@@ -1458,13 +1465,14 @@ Type *CallStatement::getArgumentType(int i) {
 /*==============================================================================
  * FUNCTION:	  CallStatement::setArguments
  * OVERVIEW:	  Set the arguments of this call.
- * PARAMETERS:	  arguments - the list of locations that reach this call
+ * PARAMETERS:	  arguments - the list of locations to set the arguments to (for testing)
  * RETURNS:		  <nothing>
  *============================================================================*/
-void CallStatement::setArguments(std::vector<Exp*>& arguments) {
-	this->arguments = arguments;
-	std::vector<Exp*>::iterator ll;
-	for (ll = arguments.begin(); ll != arguments.end(); ll++) {
+void CallStatement::setArguments(StatementList& args) {
+	arguments.clear();
+	arguments.append(args);
+	StatementList::iterator ll;
+	for (ll = arguments.begin(); ll != arguments.end(); ++ll) {
 		Location *l = dynamic_cast<Location*>(*ll);
 		if (l) {
 			l->setProc(proc);
@@ -1543,8 +1551,8 @@ bool CallStatement::search(Exp* search, Exp*& result) {
 	result = NULL;
 	unsigned int i;
 #if 0			// I think we don't want to search returns ever
-	RetLocs* returns = calcReturns();
-	RetIterator rr;
+	Returns* returns = calcReturns();
+	Returns::iterator rr;
 	for (rr = returns->begin(); rr != returns->end(); ++rr)
 		;
 #endif
@@ -1615,17 +1623,17 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
  
 	// Return(s), if any
-	RetLocs* returns = calcReturns();
+	Returns* returns = calcReturns();
 	if (returns->size()) {
 		os << "{";
-		RetIterator rr;
+		Returns::iterator rr;
 		bool first = true;
 		for (rr = returns->begin(); rr != returns->end(); ++rr) {
 			if (first)
 				first = false;
 			else
 				os << ", ";
-			os << " " << *rr;
+			os << rr->type << " " << rr->exp;
 		}
 		os << "} := ";
 	}
@@ -1730,6 +1738,8 @@ void CallStatement::setDestProc(Proc* dest) {
 	assert(dest);
 	assert(procDest == NULL);
 	procDest = dest;
+	if (!dest->isLib())
+		calleeReturn = ((UserProc*)dest)->getTheReturnStatement();
 }
 
 void CallStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
@@ -1800,10 +1810,10 @@ bool CallStatement::usesExp(Exp *e) {
 		}
 	}
 #endif
-	RetIterator rr;
-	RetLocs* returns = calcReturns();
+	Returns::iterator rr;
+	Returns* returns = calcReturns();
 	for (rr = returns->begin(); rr != returns->end(); rr++) {
-		if ((*rr)->isMemOf() && ((Location*)*rr)->getSubExp1()->search(e, where))
+		if ((rr->exp)->isMemOf() && ((Location*)rr->exp)->getSubExp1()->search(e, where))
 			return true;
 	}
 	// if (procDest == NULL)
@@ -1820,11 +1830,11 @@ bool CallStatement::isDefinition() {
 }
 
 void CallStatement::getDefinitions(LocationSet &defs) {
-	RetIterator rr;
-	RetLocs* returns = calcReturns();
+	Returns::iterator rr;
+	Returns* returns = calcReturns();
 	if (returns)
 		for (rr = returns->begin(); rr != returns->end(); ++rr)
-			defs.insert(*rr);
+			defs.insert(rr->exp);
 }
 
 bool CallStatement::convertToDirect() {
@@ -2535,7 +2545,7 @@ Statement* ReturnStatement::clone() {
 	ReturnStatement* ret = new ReturnStatement();
 	iterator rr;
 	for (rr = defs.begin(); rr != defs.end(); ++rr)
-		ret->defs.insert((Assignment*)(*rr)->clone());
+		ret->defs.append((Assignment*)(*rr)->clone());
 	ret->retAddr = retAddr;
 	ret->col.makeCloneOf(col);
 	// Statement members
@@ -4150,12 +4160,49 @@ bool lessAssignment::operator()(const Assignment* x, const Assignment* y) const 
 }
 #endif
 
-CallStatement::RetLocs* CallStatement::calcReturns() {
+Returns* CallStatement::calcReturns() {
 	if (procDest) {
 		// The signature knows how to order the returns
 		return procDest->getSignature()->calcReturns(this);
 	}
 	// Else just delegate to the enclosing proc's signature
 	return proc->getSignature()->calcReturns(this);
+}
+
+bool Return::operator==(Return& other) {
+	if (!(*type == *other.type)) return false;
+	if (!(*exp == *other.exp)) return false;
+	return true;
+}
+	
+class ReturnMemo : public Memo {
+public:
+	ReturnMemo(int m) : Memo(m) { }
+
+	Type *type;
+	Exp *exp;
+};
+
+Memo *Return::makeMemo(int mId)
+{
+	ReturnMemo *m = new ReturnMemo(mId);
+
+	m->type = type;
+	m->exp = exp;
+
+	type->takeMemo(mId);
+	exp->takeMemo(mId);
+
+	return m;
+}
+
+void Return::readMemo(Memo *mm, bool dec)
+{
+	ReturnMemo *m = dynamic_cast<ReturnMemo*>(mm);
+	type = m->type;
+	exp = m->exp;
+
+	type->restoreMemo(m->mId, dec);
+	exp->restoreMemo(m->mId, dec);
 }
 

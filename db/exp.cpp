@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.2 $
+ * $Revision: 1.172.2.3 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -3540,8 +3540,8 @@ Type *RefExp::getType()
 		return ((Assign*)def)->getRight()->getType();
 	if (def && def->isCall()) {
 		CallStatement *call = (CallStatement*)def;
-		int n = call->findReturn(subExp1);
-		if (n != -1 && call->getDestProc()) {
+		Returns::iterator rr = call->findReturn(subExp1);
+		if (call->existsReturn(sinExp1) && call->getDestProc()) {
 			return call->getDestProc()->getSignature()->getReturnType(n);
 		}
 	}

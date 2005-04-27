@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.6 $
+ * $Revision: 1.76.2.7 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -26,6 +26,7 @@
  *						define what is defined. It is now possible for all parameters of a phi to have different exps
  * 15 Mar 05 - Mike: Removed implicit arguments; replaced with DefCollector
  * 11 Apr 05 - Mike: Added RetStatement, DefineAll
+ * 26 Apr 05 - Mike: Moved class Return here from signature.h
  */
 
 #ifndef _STATEMENT_H_
@@ -47,7 +48,8 @@
 #include <ostream>
 #include <iostream>		// For std::cerr
 #include <assert.h>
-//#include "exp.h"		// No! This is the bottom of the #include hierarchy
+//#include "exp.h"		// No! This is (almost) the bottom of the #include hierarchy
+#include "memo.h"
 #include "exphelp.h"	// For lessExpStar, lessAssignment etc
 #include "types.h"
 #include "managed.h"
@@ -116,6 +118,35 @@ enum BRANCH_TYPE {
 	BRANCH_JNOF,			// Jump if no overflow
 	BRANCH_JPAR				// Jump if parity even (Intel only)
 };
+
+class Return : public Memoisable {
+public:
+		Type		*type;
+		Exp			*exp;
+
+					Return(Type *type, Exp *exp) : type(type), exp(exp) { }
+					~Return() { }
+		bool		operator==(Return& other);
+		Return*		clone();
+
+		Type 		*getType() { return type; }
+		void		setType(Type *ty) { type = ty; }
+		Exp			*getExp() { return exp; }
+		Exp*&		getRefExp() {return exp;}
+		void		setExp(Exp* e) { exp = e; }
+
+virtual Memo		*makeMemo(int mId);
+virtual void		readMemo(Memo *m, bool dec);
+
+					Return() : type(NULL), exp(NULL) { }
+		friend class XMLProgParser;
+};		// class Return
+
+// A list is used, where a set would be ideal, the the ordering function is signature dependent!
+// At least inserts are constant time.
+typedef std::list<Return> Returns;
+typedef std::pair<bool, Returns::iterator> ReturnsPos;
+
 
 //	//	//	//	//	//	//	//	//	//	//	//	//	//
 //
@@ -955,8 +986,8 @@ virtual	void		regReplace(UserProc* proc);
 class CallStatement: public GotoStatement {
 		bool		returnAfterCall;// True if call is effectively followed by a return.
 	
-		// The list of arguments passed by this call
-		std::vector<Exp*> arguments;
+		// The list of arguments passed by this call, actually a list of Assignments
+		StatementList arguments;
 
 		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
 		// For an unanalysed indirect call, this will be NULL
@@ -974,16 +1005,14 @@ class CallStatement: public GotoStatement {
 		// the basis for arguments if this is an unanlysed indirect call
 		DefCollector defCol;
 
-		// Pointer to the callee ReturnStatement. If this is an indirect call, this will be a special ReturnStatement
-		// with ImplicitAssigns
+		// Pointer to the callee ReturnStatement. If the callee is unanlysed, this will be a special ReturnStatement
+		// with ImplicitAssigns. Callee could be unanalysed because of an unanalysed indirect call, or a "recursion
+		// break".
 		ReturnStatement* calleeReturn;
 
 public:
 					CallStatement();
 virtual				~CallStatement();
-
-typedef	std::vector<Exp*> RetLocs;
-typedef std::vector<Exp*>::iterator RetIterator;
 
 		// Make a deep copy, and make the copy a derived object if needed.
 virtual Statement*	clone();
@@ -993,19 +1022,20 @@ virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
 
-		void		setArguments(std::vector<Exp*>& arguments);
+		void		setArguments(StatementList& args);
 		// Set implicit arguments: so far, for testing only:
 		//void		setImpArguments(std::vector<Exp*>& arguments);
 		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
 		void		setSigArguments();			// Set arguments based on signature
-		std::vector<Exp*>& getArguments();		// Return call's arguments
+		StatementList& getArguments();			// Return call's arguments
 		//Exp		*getReturnExp(int i);
-		int			findReturn(Exp *e);				// Still needed temporarily for ad hoc type analysis
+		//int		findReturn(Exp *e);			// Still needed temporarily for ad hoc type analysis
+		ReturnsPos&	findReturn(Exp *e);			// Still needed temporarily for ad hoc type analysis
 		void		removeReturn(Exp *e);
 		//void		ignoreReturn(Exp *e);
 		//void		ignoreReturn(int n);
 		//void		addReturn(Exp *e, Type* ty = NULL);
-		RetLocs*	calcReturns();
+		Returns*	calcReturns();
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
@@ -1122,8 +1152,9 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
  *==========================================================*/
 class ReturnStatement : public Statement {
 protected:
-		// A vector of assignments of locations to expressions. A vector to facilitate ordering (?)
-		StatementVec defs;
+		// A list of assignments of locations to expressions. A list is used to facilitate ordering. (A set would
+		// be ideal, but the ordering depends at runtime on the signature)
+		StatementList defs;
 
 		// Native address of the (only) return instruction. Needed for branching to this only return statement
 		ADDRESS		retAddr;
@@ -1139,10 +1170,10 @@ public:
 					ReturnStatement();
 virtual				~ReturnStatement();
 
-typedef	StatementVec::iterator iterator;
+typedef	StatementList::iterator iterator;
 		iterator	begin() {return defs.begin();}
 		iterator	end() {return defs.end();}
-		StatementVec& getReturns() {return defs;}
+		StatementList& getReturns() {return defs;}
 		unsigned	getNumReturns() { return defs.size(); }
 
 virtual void		print(std::ostream& os = std::cout);

@@ -80,14 +80,15 @@ typedef std::list<Statement*>::iterator iterator;
 typedef std::list<Statement*>::reverse_iterator reverse_iterator;
 virtual			~StatementList() {}
 		int		size() {return slist.size();}		 // Number of elements
-		//Statement* getFirst(StmtListIter& it);   // Get the first Statement
-		//Statement* getNext (StmtListIter& it);   // Get next
-		//Statement* getLast (StmtListRevIter& it);// Get the last Statement
-		//Statement* getPrev (StmtListRevIter& it);// Get previous
 		iterator	begin()  {return slist.begin();}
 		iterator	end()	  {return slist.end();}
 		reverse_iterator rbegin() {return slist.rbegin();}
 		reverse_iterator rend()	  {return slist.rend();}
+
+		// A special intersection operator; intersects this StatementSet (assumed to be a list of Assignment*s) with
+		// the given LocationSet and returns a new heap allocated Returns object (list of Return objects).
+		// Used for calculating returns for a CallStatement
+		Returns*	makeIsect(LocationSet& ls);
 		
 		void		append(Statement* s) {slist.push_back(s);} // Insert at end
 		void		append(StatementList& sl);			// Append whole StatementList
@@ -123,7 +124,7 @@ typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
 						{ return svec == o.svec;}
 		bool		operator<(const StatementVec& o) const		// Compare if less
 						{ return svec < o.svec;}
-		void		insert(Statement* s) {svec.push_back(s);}
+		void		append(Statement* s) {svec.push_back(s);}
 		void		erase(iterator it) {svec.erase(it);}
 };	// class StatementVec
 

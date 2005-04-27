@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.2 $
+ * $Revision: 1.53.2.3 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -16,8 +16,9 @@
 
 #include "exp.h"
 #include "type.h"
-#include "sigenum.h"   // For enums platform and cc
+#include "sigenum.h"		// For enums platform and cc
 #include "memo.h"
+#include "statement.h"		// For class Return
 
 class Statement;
 class BinaryFile;
@@ -74,37 +75,12 @@ protected:
 };
 #endif
 
-class Return : public Memoisable {
-private:
-		Type		*type;
-		Exp			*exp;
-
-public:
-					Return(Type *type, Exp *exp) : type(type), exp(exp) { }
-					~Return() { delete type; delete exp; }
-		bool		operator==(Return& other);
-		Return*		clone();
-
-		Type 		*getType() { return type; }
-		void		setType(Type *ty) { type = ty; }
-		Exp			*getExp() { return exp; }
-		Exp*&		getRefExp() {return exp;}
-		void		setExp(Exp* e) { exp = e; }
-
-virtual Memo		*makeMemo(int mId);
-virtual void		readMemo(Memo *m, bool dec);
-
-protected:
-					Return() : type(NULL), exp(NULL) { }
-		friend class XMLProgParser;
-};		// class Return
-
 class Signature : public Memoisable {
 protected:
 		std::string	name;		// name of procedure
 		std::vector<Parameter*> params;
 		// std::vector<ImplicitParameter*> implicitParams;
-		std::vector<Return*> returns;
+		Returns		returns;
 		Type		*rettype;
 		bool		ellipsis;
 		Type		*preferedReturn;
@@ -113,7 +89,7 @@ protected:
 		bool		unknown;
 		bool		bFullSig;			// True if have a full signature from a signature file etc
 
-		void		updateParams(UserProc *p, Statement *stmt, bool checkreach = true);
+//		void		updateParams(UserProc *p, Statement *stmt, bool checkreach = true);
 		bool		usesNewParam(UserProc *p, Statement *stmt, bool checkreach, int &n);
 
 		//void		addImplicitParametersFor(Parameter *p);
@@ -138,16 +114,17 @@ virtual	Signature	*clone();
 		// get the return location
 virtual void		addReturn(Type *type, Exp *e = NULL);
 virtual void		addReturn(Exp *e);
-virtual void		addReturn(Return *ret) { returns.push_back(ret); }
+virtual void		addReturn(Return *ret) { returns.push_back(*ret); }
 virtual void		removeReturn(Exp *e);
 virtual int			getNumReturns();
 virtual Exp			*getReturnExp(int n);
 		void		setReturnExp(int n, Exp* e);
 virtual Type		*getReturnType(int n);
 virtual void		setReturnType(int n, Type *ty);
-virtual int			findReturn(Exp *e);
-		void		fixReturnsWithParameters();
+		Returns::iterator findReturn(Exp *e);
+//		void		fixReturnsWithParameters();			// Needs description
 		void		setRetType(Type *t) { rettype = t; }
+		Returns&	getReturns() {return returns;}
 
 		// get/set the name
 virtual const char	*getName();
@@ -185,15 +162,15 @@ virtual bool		hasEllipsis() { return ellipsis; }
 
 #if 0
 	// add a new implicit parameter
-virtual void addImplicitParameter(Exp *e);
-virtual void removeImplicitParameter(int i);
+virtual void		addImplicitParameter(Exp *e);
+virtual void		removeImplicitParameter(int i);
 
 	// accessors for implicit params
-virtual int getNumImplicitParams();
-virtual const char *getImplicitParamName(int n);
-virtual Exp *getImplicitParamExp(int n);
-virtual Type *getImplicitParamType(int n);
-virtual int findImplicitParam(Exp *e);
+virtual int			getNumImplicitParams();
+virtual const char	*getImplicitParamName(int n);
+virtual Exp			*getImplicitParamExp(int n);
+virtual Type		*getImplicitParamType(int n);
+virtual int			findImplicitParam(Exp *e);
 #endif
 
 		// analysis determines parameters / return type
@@ -267,8 +244,11 @@ virtual callconv	getConvention() { return CONV_NONE; }
 		unsigned int getNumPreferedParams() { return preferedParams.size(); }
 		int			getPreferedParam(int n) { return preferedParams[n]; }
 
-		// Only the signature knows how to order parameters and returns
-virtual	CallStatement::RetLocs* calcReturns(CallStatement* call);
+		// A compare function for Returns. Used for sorting returns in calcReturn()
+virtual	bool		returnCompare(const Return& a, const Return& b);
+
+		// Only the signature knows how to order and filter parameters and returns
+virtual	Returns*	calcReturns(CallStatement* call);
 
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);
@@ -278,7 +258,7 @@ protected:
 					Signature() : name(""), rettype(NULL), ellipsis(false), preferedReturn(NULL), preferedName("") { }
 		void		appendParameter(Parameter *p) { params.push_back(p); }
 		//void		appendImplicitParameter(ImplicitParameter *p) { implicitParams.push_back(p); }
-		void appendReturn(Return *r) { returns.push_back(r); }
+		void		appendReturn(Return *r) { returns.push_back(*r); }
 };	// class Signature
 
 class CustomSignature : public Signature {

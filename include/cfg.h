@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.1 $
+ * $Revision: 1.69.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -501,8 +501,7 @@ protected:
 		bool		inLoop(PBB header, PBB latch);
 
 		bool		isIn(std::list<PBB> &set, PBB bb) {
-						for (std::list<PBB>::iterator it = set.begin();
-							 it != set.end(); it++)
+						for (std::list<PBB>::iterator it = set.begin(); it != set.end(); it++)
 							if (*it == bb) return true;
 						return false;
 					}

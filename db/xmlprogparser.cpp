@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17.2.3 $
+ * $Revision: 1.17.2.4 $
  *
  * June 2004 - Trent: created
  */
@@ -2426,13 +2426,13 @@ void XMLProgParser::persistToXML(std::ostream &out, Signature *sig)
 		out << "</implicitparam>\n";
 	}
 #endif
-	for (unsigned i = 0; i < sig->returns.size(); i++) {
+	for (Returns::iterator rr = sig->returns.begin(); rr != sig->returns.end(); ++rr) {
 		out << "<return>\n";
 		out << "<type>\n";
-		persistToXML(out, sig->returns[i]->getType());
+		persistToXML(out, rr->getType());
 		out << "</type>\n";
 		out << "<exp>\n";
-		persistToXML(out, sig->returns[i]->getExp());
+		persistToXML(out, rr->getExp());
 		out << "</exp>\n";
 		out << "</return>\n";
 	}

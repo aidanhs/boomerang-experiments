@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91.2.3 $
+# $Revision: 1.91.2.4 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -235,7 +235,7 @@ db/insnameelem.o: db/insnameelem.h
 db/signature.o: include/signature.h include/frontend.h include/BinaryFile.h \
 	include/exp.h include/proc.h include/prog.h include/type.h include/statement.h
 db/statement.o: include/exp.h include/cfg.h include/statement.h include/proc.h include/prog.h include/visitor.h \
-	include/type.h include/managed.h
+	include/type.h include/managed.h include/signature.h
 db/managed.o: include/managed.h include/statement.h include/exp.h
 db/RtlTest.o: db/RtlTest.h include/exp.h include/rtl.h include/prog.h \
     include/proc.h include/statement.h include/BinaryFile.h

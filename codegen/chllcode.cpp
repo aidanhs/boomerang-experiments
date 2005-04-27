@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.2 $
+ * $Revision: 1.90.2.3 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1015,12 +1015,12 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn) {
 }
 
 void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, std::vector<Exp*> &args,
-		CallStatement::RetLocs* rets) {
+		Returns* rets) {
 	std::ostringstream s;
 	indent(s, indLevel);
 	if (rets->size() >= 1) {
 		// FIXME: Needs changing if more than one real return location (return a struct)
-		appendExp(s, *rets->begin(), PREC_ASSIGN);
+		appendExp(s, (*rets->begin()).exp, PREC_ASSIGN);
 		s << " = ";
 	}
 	s << name << "(";
@@ -1041,7 +1041,7 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, std:
 	}
 	s << ");";
 	if (rets->size() > 1) {
-		CallStatement::RetIterator rr;
+		Returns::iterator rr;
 		bool first = true;
 		s << " // OUT: ";
 		for (rr = rets->begin(); rr != rets->end(); rr++) {
@@ -1049,7 +1049,7 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, std:
 				first = false;
 			else
 				s << ", ";
-			appendExp(s, *rr, PREC_COMMA);
+			appendExp(s, rr->exp, PREC_COMMA);
 		}
 	}
 			
