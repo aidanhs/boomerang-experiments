@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91.2.4 $
+# $Revision: 1.91.2.5 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -287,7 +287,8 @@ codegen/syntax.o: include/hllcode.h include/statement.h \
 
 type/constraint.o: include/constraint.h include/exp.h include/type.h include/managed.h
 type/type.o: include/type.h
-type/dfa.o: include/type.h
+type/dfa.o: include/type.h include/boomerang.h include/signature.h include/exp.h include/prog.h include/util.h \
+	include/visitor.h
 type/TypeTest.o: type/TypeTest.h include/util.h include/type.h \
     include/constraint.h include/BinaryFile.h
 

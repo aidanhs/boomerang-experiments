@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17.2.4 $
+ * $Revision: 1.17.2.5 $
  *
  * June 2004 - Trent: created
  */
@@ -828,10 +828,10 @@ void XMLProgParser::addToContext_return(Context *c, int e)
 	}
 	switch(e) {
 	case e_type:
-		c->ret->setType(stack.front()->type);
+		c->ret->type = stack.front()->type;
 		break;
 	case e_exp:
-		c->ret->setExp(stack.front()->exp);
+		c->ret->exp = stack.front()->exp;
 		break;
 	default:
 		if (e == e_unknown)
@@ -1306,7 +1306,7 @@ void XMLProgParser::addToContext_callstmt(Context *c, int e)
 		break;
 #endif
 	case e_argument:
-		call->appendArgument(stack.front()->exp);
+		call->appendArgument((Assignment*)stack.front()->stmt);
 		break;
 	case e_returnexp:
 		// Assume that the corresponding return type will appear next
@@ -1373,7 +1373,7 @@ void XMLProgParser::addToContext_returnstmt(Context *c, int e)
 	}
 	switch(e) {
 	case e_returnexp:
-		ret->defs.insert((Assignment*)stack.front()->stmt);
+		ret->defs.append((Assignment*)stack.front()->stmt);
 		break;
 	default:
 		if (e == e_unknown)
@@ -2429,10 +2429,10 @@ void XMLProgParser::persistToXML(std::ostream &out, Signature *sig)
 	for (Returns::iterator rr = sig->returns.begin(); rr != sig->returns.end(); ++rr) {
 		out << "<return>\n";
 		out << "<type>\n";
-		persistToXML(out, rr->getType());
+		persistToXML(out, (*rr)->type);
 		out << "</type>\n";
 		out << "<exp>\n";
-		persistToXML(out, rr->getExp());
+		persistToXML(out, (*rr)->exp);
 		out << "</exp>\n";
 		out << "</return>\n";
 	}
@@ -2827,9 +2827,10 @@ void XMLProgParser::persistToXML(std::ostream &out, Statement *stmt)
 			out << "</dest>\n";
 		}
 	
-		for (unsigned i = 0; i < c->arguments.size(); i++) {
+		StatementList::iterator ss;
+		for (ss = c->arguments.begin(); ss != c->arguments.end(); ++ss) {
 			out << "<argument>\n";
-			persistToXML(out, c->arguments[i]);
+			persistToXML(out, *ss);
 			out << "</argument>\n";
 		}
 
@@ -2841,16 +2842,11 @@ void XMLProgParser::persistToXML(std::ostream &out, Statement *stmt)
 		}
 #endif
 
-#if 0
-		for (unsigned i = 0; i < c->returns.size(); i++) {
-			out << "<returnexp>\n";
-			persistToXML(out, c->returns[i].e);
-			out << "</returnexp>\n";
-			out << "<returntype>\n";
-			persistToXML(out, c->returns[i].type);
-			out << "</returntype>\n";
+		for (ss = c->returns.begin(); ss != c->returns.end(); ++ss) {
+			out << "<return>\n";
+			persistToXML(out, *ss);
+			out << "</return>\n";
 		}
-#endif
 
 		out << "</callstmt>\n";
 		return;

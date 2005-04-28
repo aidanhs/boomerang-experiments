@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.4 $
+ * $Revision: 1.30.2.5 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -1063,18 +1063,18 @@ void StmtDfaLocalConverter::visit(CallStatement* s, bool& recur) {
 		((DfaLocalConverter*)mod)->setType(ft);
 		s->setDest(pDest->accept(mod));
 	}
-	std::vector<Exp*>::iterator it;
-	std::vector<Exp*>& arguments = s->getArguments();
+	StatementList::iterator it;
+	StatementList& arguments = s->getArguments();
 	// Should we get argument types from the signature, or ascend from the argument expression?
 	// Ideally, it should come to the same thing, but consider if the argument is sp-K... sp essentially
 	// always becomes void*, and so the type is lost
-	unsigned n = arguments.size();
-	for (unsigned u=0; u < n; u++) {
+	unsigned u = 0;
+	for (it = arguments.begin(); it != arguments.end(); ++it, ++u) {
 		if (sig)
 			((DfaLocalConverter*)mod)->setType(sig->getParamType(u));
 		else
-			((DfaLocalConverter*)mod)->setType(arguments[u]->ascendType());
-		arguments[u] = arguments[u]->accept(mod);
+			((DfaLocalConverter*)mod)->setType(((Assignment*)*it)->getLeft()->ascendType());
+		(*it)->accept(this);
 	}
 #if 0
 	std::vector<Exp*>& implicitArguments = s->getImplicitArguments();

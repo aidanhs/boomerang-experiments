@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.6 $
+ * $Revision: 1.23.2.7 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -94,10 +94,10 @@ bool StmtConscriptSetter::visit(ImplicitAssign* stmt) {
 
 bool StmtConscriptSetter::visit(CallStatement* stmt) {
 	SetConscripts sc(curConscript, bClear);
-	std::vector<Exp*>& args = stmt->getArguments();
-	int i, n = args.size();
-	for (i=0; i < n; i++)
-		args[i]->accept(&sc);
+	StatementList& args = stmt->getArguments();
+	StatementList::iterator ss;
+	for (ss = args.begin(); ss != args.end(); ++ss)
+		(*ss)->accept(this);
 #if 0
 	std::vector<Exp*>& impargs = stmt->getImplicitArguments();
 	n = impargs.size();
@@ -341,10 +341,10 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 	Exp* pDest = s->getDest();
 	if (pDest)
 		pDest->accept(ev);
-	std::vector<Exp*>::iterator it;
-	std::vector<Exp*>& arguments = s->getArguments();
+	StatementList::iterator it;
+	StatementList& arguments = s->getArguments();
 	for (it = arguments.begin(); it != arguments.end(); it++)
-		(*it)->accept(ev);
+		(*it)->accept(this);
 #if 0
 	if (!final) {
 		// Ignore the implicit arguments when final
@@ -514,10 +514,10 @@ void StmtSubscripter::visit(CallStatement* s, bool& recur) {
 	if (pDest)
 		s->setDest(pDest->accept(mod));
 	// Subscript the ordinary arguments
-	std::vector<Exp*>& arguments = s->getArguments();
-	int n = arguments.size();
-	for (int i=0; i < n; i++)
-		arguments[i] = arguments[i]->accept(mod);
+	StatementList& arguments = s->getArguments();
+	StatementList::iterator ss;
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		(*ss)->accept(this);
 #if 0
 	// Subscript the implicit arguments
 	std::vector<Exp*>& implicits = s->getImplicitArguments();

@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.3 $
+/* $Revision: 1.115.2.4 $
 */
 
 #ifndef _PROC_H_
@@ -204,7 +204,7 @@ virtual Exp			*getProven(Exp *left) = 0;
 		void		removeParameter(Exp *e);
 virtual	void		removeReturn(Exp *e);
 //virtual void		addReturn(Exp *e);
-		void		sortParameters();
+//		void		sortParameters();
 
 virtual void		printCallGraphXML(std::ostream &os, int depth, bool recurse = true);
 		void		printDetailsXML();

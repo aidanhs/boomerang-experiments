@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.3 $
+ * $Revision: 1.53.2.4 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -75,6 +75,26 @@ protected:
 };
 #endif
 
+class Return : public Memoisable {
+public:
+		Type		*type;
+		Exp			*exp;
+
+					Return(Type *type, Exp *exp) : type(type), exp(exp) { }
+					~Return() { }
+		bool		operator==(Return& other);
+		Return*		clone();
+
+virtual Memo		*makeMemo(int mId);
+virtual void		readMemo(Memo *m, bool dec);
+
+					Return() : type(NULL), exp(NULL) { }
+		friend class XMLProgParser;
+};		// class Return
+
+typedef std::vector<Return*> Returns;
+
+
 class Signature : public Memoisable {
 protected:
 		std::string	name;		// name of procedure
@@ -114,14 +134,14 @@ virtual	Signature	*clone();
 		// get the return location
 virtual void		addReturn(Type *type, Exp *e = NULL);
 virtual void		addReturn(Exp *e);
-virtual void		addReturn(Return *ret) { returns.push_back(*ret); }
+virtual void		addReturn(Return *ret) { returns.push_back(ret); }
 virtual void		removeReturn(Exp *e);
-virtual int			getNumReturns();
-virtual Exp			*getReturnExp(int n);
-		void		setReturnExp(int n, Exp* e);
-virtual Type		*getReturnType(int n);
+virtual unsigned	getNumReturns() {return returns.size();}
+virtual Exp			*getReturnExp(int n) {return returns[n]->exp;}
+		void		setReturnExp(int n, Exp* e) {returns[n]->exp = e;}
+virtual Type		*getReturnType(int n) {return returns[n]->type;}
 virtual void		setReturnType(int n, Type *ty);
-		Returns::iterator findReturn(Exp *e);
+		int			findReturn(Exp *e);
 //		void		fixReturnsWithParameters();			// Needs description
 		void		setRetType(Type *t) { rettype = t; }
 		Returns&	getReturns() {return returns;}
@@ -143,7 +163,7 @@ virtual void		removeParameter(int i);
 virtual void		setNumParams(int n);
 
 		// accessors for parameters
-virtual int			getNumParams();
+virtual unsigned	getNumParams() {return params.size();}
 virtual const char	*getParamName(int n);
 virtual Exp			*getParamExp(int n);
 virtual Type		*getParamType(int n);
@@ -244,11 +264,10 @@ virtual callconv	getConvention() { return CONV_NONE; }
 		unsigned int getNumPreferedParams() { return preferedParams.size(); }
 		int			getPreferedParam(int n) { return preferedParams[n]; }
 
-		// A compare function for Returns. Used for sorting returns in calcReturn()
-virtual	bool		returnCompare(const Return& a, const Return& b);
+		// A compare function for arguments and returns. Used for sorting returns in calcReturn() etc
+virtual	bool		argumentCompare(Assignment& a, Assignment& b);
+virtual	bool		returnCompare(Assign& a, Assign& b);
 
-		// Only the signature knows how to order and filter parameters and returns
-virtual	Returns*	calcReturns(CallStatement* call);
 
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);
@@ -258,7 +277,7 @@ protected:
 					Signature() : name(""), rettype(NULL), ellipsis(false), preferedReturn(NULL), preferedName("") { }
 		void		appendParameter(Parameter *p) { params.push_back(p); }
 		//void		appendImplicitParameter(ImplicitParameter *p) { implicitParams.push_back(p); }
-		void		appendReturn(Return *r) { returns.push_back(*r); }
+		void		appendReturn(Return *r) { returns.push_back(r); }
 };	// class Signature
 
 class CustomSignature : public Signature {

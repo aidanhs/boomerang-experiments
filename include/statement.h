@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.7 $
+ * $Revision: 1.76.2.8 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -54,6 +54,7 @@
 #include "types.h"
 #include "managed.h"
 #include "dataflow.h"	// For embedded objects DefCollector and UseCollector
+#include "left.h"
 
 class BasicBlock;
 typedef BasicBlock *PBB;
@@ -118,34 +119,6 @@ enum BRANCH_TYPE {
 	BRANCH_JNOF,			// Jump if no overflow
 	BRANCH_JPAR				// Jump if parity even (Intel only)
 };
-
-class Return : public Memoisable {
-public:
-		Type		*type;
-		Exp			*exp;
-
-					Return(Type *type, Exp *exp) : type(type), exp(exp) { }
-					~Return() { }
-		bool		operator==(Return& other);
-		Return*		clone();
-
-		Type 		*getType() { return type; }
-		void		setType(Type *ty) { type = ty; }
-		Exp			*getExp() { return exp; }
-		Exp*&		getRefExp() {return exp;}
-		void		setExp(Exp* e) { exp = e; }
-
-virtual Memo		*makeMemo(int mId);
-virtual void		readMemo(Memo *m, bool dec);
-
-					Return() : type(NULL), exp(NULL) { }
-		friend class XMLProgParser;
-};		// class Return
-
-// A list is used, where a set would be ideal, the the ordering function is signature dependent!
-// At least inserts are constant time.
-typedef std::list<Return> Returns;
-typedef std::pair<bool, Returns::iterator> ReturnsPos;
 
 
 //	//	//	//	//	//	//	//	//	//	//	//	//	//
@@ -242,15 +215,9 @@ virtual bool		isBranch() { return kind == STMT_BRANCH; }
 		// Classes with no definitions (e.g. GotoStatement and children) don't override this
 virtual void		getDefinitions(LocationSet &def) {}
 
-		// returns an expression that would be used to reference the value
-		// defined by this statement (if this statement is propogatable)
-//virtual Exp*		getLeft() = 0;
 		// set the left for forExp to newExp
 virtual	void		setLeftFor(Exp* forExp, Exp* newExp) {assert(0);}
 virtual bool		defines(Exp* loc) {return false;}				// True if this Statement defines loc
-
-	// returns an expression that would be used to replace this statement in a use
-//virtual Exp*		getRight() = 0;
 
 	// returns true if this statement uses the given expression
 virtual bool		usesExp(Exp *e) = 0;
@@ -480,6 +447,7 @@ virtual Statement*	clone();
 
 	// get how to replace this statement in a use
 virtual Exp*		getRight() { return rhs; }
+		Exp*&		getRightRef() { return rhs; }
 
 		// set the rhs to something new
 		void		setRight(Exp* e) { rhs = e; }
@@ -813,9 +781,7 @@ virtual void		simplify();
 
 		// Statement virtual functions
 virtual bool		isDefinition() { return false;}
-virtual Exp*		getLeft() {return NULL;}
-virtual Exp*		getRight() {return NULL;}
-virtual bool		usesExp(Exp*) {return false;}
+virtual bool		usesExp(Exp*);
 virtual bool		processConstants(Prog*) {return false;}
 virtual void		fromSSAform(igraph&) {}
 virtual bool		doReplaceRef(Exp*, Exp*) {return false;}
@@ -891,11 +857,6 @@ virtual void		propagateToAll() { assert(false); }
 
 virtual bool		isDefinition() { return false; }
 
-		// get how to access this value
-virtual Exp*		getLeft() { return NULL; }
-
-		// get how to replace this statement in a use
-virtual Exp*		getRight() { return pCond; }
 
 		// simplify all the uses/defs in this Statememt
 virtual void		simplify();
@@ -989,6 +950,9 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call, actually a list of Assignments
 		StatementList arguments;
 
+		// The list of returns for this call, also a list of Assignments
+		StatementList returns;
+
 		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
 		// For an unanalysed indirect call, this will be NULL
 		Proc*		procDest;
@@ -1027,15 +991,15 @@ virtual bool		accept(StmtModifier* visitor);
 		//void		setImpArguments(std::vector<Exp*>& arguments);
 		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
 		void		setSigArguments();			// Set arguments based on signature
-		StatementList& getArguments();			// Return call's arguments
+		StatementList& getArguments() {return arguments;}	// Return call's arguments
+		void		updateArguments();			// Update the arguments based on a callee change
 		//Exp		*getReturnExp(int i);
-		//int		findReturn(Exp *e);			// Still needed temporarily for ad hoc type analysis
-		ReturnsPos&	findReturn(Exp *e);			// Still needed temporarily for ad hoc type analysis
+		int			findReturn(Exp *e);			// Still needed temporarily for ad hoc type analysis
 		void		removeReturn(Exp *e);
 		//void		ignoreReturn(Exp *e);
 		//void		ignoreReturn(int n);
 		//void		addReturn(Exp *e, Type* ty = NULL);
-		Returns*	calcReturns();
+		void		updateReturns();			// Update the returns based on a callee change
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
@@ -1102,11 +1066,10 @@ virtual bool		propagateToAll() { assert(false); return false;}
 virtual bool		isDefinition();
 virtual void		getDefinitions(LocationSet &defs);
 
-//virtual Exp*		getLeft() {return getReturnExp(0);}		// Deprecated now: could be multiple returns
 virtual bool		defines(Exp* loc);						// True if this Statement defines loc
 virtual void		setLeftFor(Exp* forExp, Exp* newExp);
 		// get how to replace this statement in a use
-virtual Exp*		getRight() { return NULL; }
+//virtual Exp*		getRight() { return NULL; }
 
 		// inline any constants in the statement
 virtual bool		processConstants(Prog *prog);
@@ -1140,7 +1103,7 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
 
 		void		updateArgumentWithType(int n);
 		void		updateReturnWithType(int n);
-		void		appendArgument(Exp *e) { arguments.push_back(e); }
+		void		appendArgument(Assignment* as) {arguments.append(as);}
 	friend class XMLProgParser;
 };		// class CallStatement
 
@@ -1175,6 +1138,7 @@ typedef	StatementList::iterator iterator;
 		iterator	end() {return defs.end();}
 		StatementList& getReturns() {return defs;}
 		unsigned	getNumReturns() { return defs.size(); }
+		void		updateReturns();
 
 virtual void		print(std::ostream& os = std::cout);
 

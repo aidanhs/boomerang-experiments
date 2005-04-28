@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.7 $
+ * $Revision: 1.238.2.8 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -191,7 +191,7 @@ void Proc::printDetailsXML() {
 		return;
 	std::ofstream out((Boomerang::get()->getOutputPath() + getName() + "-details.xml").c_str());
 	out << "<proc name=\"" << getName() << "\">\n";
-	int i;
+	unsigned i;
 	for (i = 0; i < signature->getNumParams(); i++)
 		out << "   <param name=\"" << signature->getParamName(i) << "\" " << "exp=\"" << signature->getParamExp(i)
 			<< "\" " << "type=\"" << signature->getParamType(i)->getCtype() << "\"\n";
@@ -1096,7 +1096,7 @@ std::set<UserProc*>* UserProc::decompile() {
 	}
 
 	processConstants();
-	sortParameters();
+	//sortParameters();
 
 //	if (DFA_TYPE_ANALYSIS)
 		// This has to be done fairly late, e.g. after trimming returns. This seems to be something to do with
@@ -1306,8 +1306,8 @@ void UserProc::trimReturns() {
 		stdret = prove(new Binary(opEquals, new Terminal(opPC), Location::memOf(Location::regOf(sp))));
 
 		// prove preservation for each parameter
-		for (int i = 0; i < signature->getNumReturns(); i++) {
-			Exp *p = signature->getReturnExp(i);
+		for (unsigned u = 0; u < signature->getNumReturns(); u++) {
+			Exp *p = signature->getReturnExp(u);
 			Exp *e = new Binary(opEquals, p->clone(), p->clone());
 			if (DEBUG_PROOF)
 				LOG << "attempting to prove " << p << " is preserved by " << getName() << "\n";
@@ -1802,16 +1802,18 @@ void UserProc::addReturn(Exp *e)
 }
 #endif
 
-// Add the parameter to the signature and all known callers
+// Add the parameter to the signature. Used to say "and all known callers"; this will be handled by the recursion
+// manager now
 void UserProc::addParameter(Exp *e) {
 	// In case it's already an implicit argument:
 	removeParameter(e);
 
-	for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++)
-		(*it)->addArgument(e, this);
+	// for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++)
+	//	(*it)->addArgument(e, this);
 	signature->addParameter(e);
 }
 
+#if 0			// No, we are careful to sort parameters and returns now
 void Proc::sortParameters() {
 	// yes, this is a bubble sort
 	for (int i = 0; i < signature->getNumParams() - 1; i++) {
@@ -1850,6 +1852,7 @@ void Proc::sortParameters() {
 		}
 	}
 }
+#endif
 
 void UserProc::processFloatConstants()
 {
@@ -2163,7 +2166,7 @@ void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 	// replace expressions in regular statements with parameters
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
-		for (int i = 0; i < signature->getNumParams(); i++) {
+		for (unsigned i = 0; i < signature->getNumParams(); i++) {
 			if (depth < 0 || signature->getParamExp(i)->getMemDepth() == depth) {
 				Exp *r = signature->getParamExp(i)->clone();
 				r = r->expSubscriptAllNull();
@@ -2711,8 +2714,6 @@ void UserProc::countRefs(RefCounter& refCounts) {
 			if (((Exp*)*rr)->isSubscript()) {
 				Statement *ref = ((RefExp*)*rr)->getDef();
 				if (ref && ref->getNumber()) {
-if (ref->getNumber() == 2)
- std::cerr << "HACK!\n";
 					refCounts[ref]++;
 					if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
 						LOG << "counted ref to " << *rr << "\n";
@@ -2857,7 +2858,7 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				if (DEBUG_UNUSED_STMT)
 					LOG << "Removing unused statement " << s->getNumber() << " " << s << "\n";
 				removeStatement(s);
-				ll = stmts.remove(ll);	// So we don't try to re-remove it
+				ll = stmts.erase(ll);	// So we don't try to re-remove it
 				change = true;
 				continue;				// Don't call getNext this time
 			}
@@ -3363,7 +3364,7 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
 bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
 	std::set<Exp*, lessExpStar> removes;	// Else iterators confused
 	std::set<Exp*, lessExpStar>& useSet = rc[this];
-	for (int i = 0; i < signature->getNumReturns(); i++) {
+	for (unsigned i = 0; i < signature->getNumReturns(); i++) {
 		Exp *ret = signature->getReturnExp(i);
 		if (useSet.find(ret) == useSet.end()) {
 			removes.insert(ret);

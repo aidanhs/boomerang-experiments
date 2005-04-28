@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.6 $
+ * $Revision: 1.39.2.7 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -159,7 +159,8 @@ public:
 		typedef LocationSet::iterator iterator;
 		iterator	begin() {return locs.begin();}
 		iterator	end()	 {return locs.end();}
-		bool		exists(Exp* e) {return locs.exists(e);}
+		bool		exists(Exp* e) {return locs.exists(e);}			// Note: probably want the NS version...
+		bool		existsNS(Exp* e) {return locs.existsNS(e);}
 };
 
 /**

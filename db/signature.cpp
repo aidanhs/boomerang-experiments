@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.3 $
+ * $Revision: 1.98.2.4 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -71,57 +71,55 @@ namespace CallingConvention {
 	class Win32Signature : public Signature {
 	// Win32Signature is for non-thiscall signatures: all parameters pushed
 	public:
-		Win32Signature(const char *nam);
-		Win32Signature(Signature &old);
-		virtual ~Win32Signature() { }
-		virtual Signature *clone();
-		virtual bool operator==(Signature& other);
-		static bool qualified(UserProc *p, Signature &candidate);
+							Win32Signature(const char *nam);
+							Win32Signature(Signature &old);
+		virtual				~Win32Signature() { }
+		virtual Signature	*clone();
+		virtual bool		operator==(Signature& other);
+		static	bool		qualified(UserProc *p, Signature &candidate);
 
-		virtual void addReturn(Type *type, Exp *e = NULL);
-		virtual void addParameter(Type *type, const char *nam = NULL, Exp *e = NULL);
-		virtual Exp *getArgumentExp(int n);
+		virtual void		addReturn(Type *type, Exp *e = NULL);
+		virtual void		addParameter(Type *type, const char *nam = NULL, Exp *e = NULL);
+		virtual Exp			*getArgumentExp(int n);
 
-		virtual Signature *promote(UserProc *p);
-		virtual Exp *getStackWildcard();
-		virtual int	 getStackRegister() {return 28; }
-		virtual Exp *getProven(Exp *left);
+		virtual Signature 	*promote(UserProc *p);
+		virtual Exp			*getStackWildcard();
+		virtual int	 		getStackRegister() {return 28; }
+		virtual Exp			*getProven(Exp *left);
 
-		virtual bool isPromoted() {
-			return true; }
-	virtual platform getPlatform() { return PLAT_PENTIUM; }
-	virtual callconv getConvention() { return CONV_PASCAL; }
+		virtual bool		isPromoted() {
+								return true; }
+		virtual platform	getPlatform() { return PLAT_PENTIUM; }
+		virtual callconv	getConvention() { return CONV_PASCAL; }
 	};	// class Win32Signature
 
 	class Win32TcSignature : public Win32Signature {
-	// Win32TcSignature is for "thiscall" signatures, i.e. those that have
-	// register ecx as the first parameter
-	// Only needs to override a few member functions; the rest can inherit
-	// from Win32Signature
+	// Win32TcSignature is for "thiscall" signatures, i.e. those that have register ecx as the first parameter
+	// Only needs to override a few member functions; the rest can inherit from Win32Signature
 	public:
-		Win32TcSignature(const char *nam);
-		Win32TcSignature(Signature &old);
-		virtual Exp *getArgumentExp(int n);
-		virtual Exp *getProven(Exp* left);
-		virtual Signature *clone();
-	virtual platform getPlatform() { return PLAT_PENTIUM; }
-	virtual callconv getConvention() { return CONV_THISCALL; }
+							Win32TcSignature(const char *nam);
+							Win32TcSignature(Signature &old);
+		virtual Exp			*getArgumentExp(int n);
+		virtual Exp			*getProven(Exp* left);
+		virtual Signature	*clone();
+		virtual platform	getPlatform() { return PLAT_PENTIUM; }
+		virtual callconv	getConvention() { return CONV_THISCALL; }
 	};	// Class Win32TcSignature
 
 
 	namespace StdC {
 		class PentiumSignature : public Signature {
 		public:
-			PentiumSignature(const char *nam);
-			PentiumSignature(Signature &old);
-			virtual ~PentiumSignature() { }
-			virtual Signature *clone(); 
-			virtual bool operator==(Signature& other);
-			static bool qualified(UserProc *p, Signature &candidate);
+								PentiumSignature(const char *nam);
+								PentiumSignature(Signature &old);
+			virtual				~PentiumSignature() { }
+			virtual Signature	*clone(); 
+			virtual bool		operator==(Signature& other);
+			static	bool		qualified(UserProc *p, Signature &candidate);
 
-			virtual void addReturn(Type *type, Exp *e = NULL);
-			virtual void addParameter(Type *type, const char *nam = NULL, Exp *e = NULL);
-			virtual Exp *getArgumentExp(int n);
+			virtual void		addReturn(Type *type, Exp *e = NULL);
+			virtual void		addParameter(Type *type, const char *nam = NULL, Exp *e = NULL);
+			virtual Exp			*getArgumentExp(int n);
 
 			virtual Signature	*promote(UserProc *p);
 			virtual Exp			*getStackWildcard();
@@ -130,55 +128,55 @@ namespace CallingConvention {
 			virtual bool		isPromoted() { return true; }
 			virtual platform	getPlatform() { return PLAT_PENTIUM; }
 			virtual callconv	getConvention() { return CONV_C; }
-			virtual bool		returnCompare(const Return& a, const Return& b);
+			virtual bool		returnCompare(Assign& a, Assign& b);
 		};	// class PentiumSignature
 
 		class SparcSignature : public Signature {
 		public:
-			SparcSignature(const char *nam);
-			SparcSignature(Signature &old);
-			virtual ~SparcSignature() { }
-			virtual Signature *clone();
-			virtual bool operator==(Signature& other);
-			static bool qualified(UserProc *p, Signature &candidate);
+								SparcSignature(const char *nam);
+								SparcSignature(Signature &old);
+			virtual				~SparcSignature() { }
+			virtual Signature	*clone();
+			virtual bool		operator==(Signature& other);
+			static	bool		qualified(UserProc *p, Signature &candidate);
 
-			virtual void addReturn(Type *type, Exp *e = NULL);
-			virtual void addParameter(Type *type, const char *nam = NULL, Exp *e = NULL);
-			virtual Exp *getArgumentExp(int n);
+			virtual void		addReturn(Type *type, Exp *e = NULL);
+			virtual void		addParameter(Type *type, const char *nam = NULL, Exp *e = NULL);
+			virtual Exp			*getArgumentExp(int n);
 
-			virtual Signature *promote(UserProc *p);
-			virtual Exp *getStackWildcard();
-			virtual int	 getStackRegister() {return 14; }
-			virtual Exp *getProven(Exp *left);
+			virtual Signature	*promote(UserProc *p);
+			virtual Exp			*getStackWildcard();
+			virtual int			getStackRegister() {return 14; }
+			virtual Exp			*getProven(Exp *left);
 			// Stack offsets can be negative (inherited) or positive:
-			virtual bool	isLocalOffsetPositive() {return true;}
-			virtual bool	isPromoted() { return true; }
-			virtual platform getPlatform() { return PLAT_SPARC; }
-			virtual callconv getConvention() { return CONV_C; }
-			virtual bool		returnCompare(const Return& a, const Return& b);
+			virtual bool		isLocalOffsetPositive() {return true;}
+			virtual bool		isPromoted() { return true; }
+			virtual platform	getPlatform() { return PLAT_SPARC; }
+			virtual callconv	getConvention() { return CONV_C; }
+			virtual bool		returnCompare(Assign& a, Assign& b);
 		};	// class SparcSignature
 
 		class SparcLibSignature : public SparcSignature {
 		public:
-			SparcLibSignature(const char *nam) : SparcSignature(nam) {}
-			SparcLibSignature(Signature &old) : SparcSignature(old) {}
-			virtual Signature *clone();
-			virtual Exp* getProven(Exp* left);
+								SparcLibSignature(const char *nam) : SparcSignature(nam) {}
+								SparcLibSignature(Signature &old) : SparcSignature(old) {}
+			virtual Signature	*clone();
+			virtual Exp*		getProven(Exp* left);
 		};	// class SparcLibSignature
 
 		class PPCSignature : public Signature {
 		public:
-			PPCSignature(const char *name);
-			virtual ~PPCSignature() { }
-			Signature *clone();
-			virtual void addReturn(Type *type, Exp *e = NULL);
-			Exp *getArgumentExp(int n);
-			void addParameter(Type *type, const char *nam /*= NULL*/, Exp *e /*= NULL*/);
-			virtual Exp *getStackWildcard();
-			virtual int	 getStackRegister() {return 1; }
-            virtual Exp *getProven(Exp *left);
-            virtual bool isLocalOffsetPositive() {return true;}
-            //virtual	bool isAddrOfStackLocal(Prog* prog, Exp* e);
+								PPCSignature(const char *name);
+			virtual				~PPCSignature() { }
+			virtual	Signature	*clone();
+			virtual void		addReturn(Type *type, Exp *e = NULL);
+			virtual	Exp			*getArgumentExp(int n);
+			virtual	void		addParameter(Type *type, const char *nam /*= NULL*/, Exp *e /*= NULL*/);
+			virtual Exp			*getStackWildcard();
+			virtual int			getStackRegister() {return 1; }
+            virtual Exp			*getProven(Exp *left);
+            virtual bool		isLocalOffsetPositive() {return true;}
+            //virtual	bool	isAddrOfStackLocal(Prog* prog, Exp* e);
 		};
 	};	// namespace StdC
 };	// namespace CallingConvention
@@ -217,13 +215,11 @@ static void cloneVec(std::vector<ImplicitParameter*>& from, std::vector<Implicit
 }
 #endif
 
-static void cloneList(Returns& from, Returns& to) {
-	to.clear();
-	Returns::iterator it, tt = to.end();
-	for (it = from.begin(); it != from.end(); ++it) {
-		tt->exp = it->exp->clone();
-		tt->type = it->type->clone();
-	}
+static void cloneVec(Returns& from, Returns& to) {
+	unsigned n = from.size();
+	to.resize(n);
+	for (unsigned i=0; i < n; i++)
+		to[i] = from[i]->clone();
 }
 
 Parameter* Parameter::clone() {
@@ -243,7 +239,7 @@ Signature *CallingConvention::Win32Signature::clone()
 	Win32Signature *n = new Win32Signature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -258,7 +254,7 @@ Signature *CallingConvention::Win32TcSignature::clone()
 	Win32TcSignature *n = new Win32TcSignature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -423,7 +419,7 @@ Signature *CallingConvention::StdC::PentiumSignature::clone()
 	PentiumSignature *n = new PentiumSignature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -559,7 +555,7 @@ Signature *CallingConvention::StdC::PPCSignature::clone() {
 	PPCSignature *n = new PPCSignature(name.c_str());
 	cloneVec(params, n->params);
 	// n->implicitParams = implicitParams;
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -649,7 +645,7 @@ Signature *CallingConvention::StdC::SparcSignature::clone() {
 	SparcSignature *n = new SparcSignature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -664,7 +660,7 @@ Signature *CallingConvention::StdC::SparcLibSignature::clone() {
 	SparcLibSignature *n = new SparcLibSignature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -807,7 +803,7 @@ Signature *Signature::clone()
 	Signature *n = new Signature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->preferedName = preferedName;
@@ -823,7 +819,7 @@ Signature *CustomSignature::clone()
 	CustomSignature *n = new CustomSignature(name.c_str());
 	cloneVec(params, n->params);
 	// cloneVec(implicitParams, n->implicitParams);
-	cloneList(returns, n->returns);
+	cloneVec(returns, n->returns);
 	n->ellipsis = ellipsis;
 	n->rettype = rettype->clone();
 	n->sp = sp;
@@ -947,10 +943,6 @@ void Signature::setNumParams(int n) {
 	}
 }
 
-int Signature::getNumParams() {
-	return params.size();
-}
-
 const char *Signature::getParamName(int n) {
 	assert(n < (int)params.size());
 	return params[n]->getName();
@@ -994,7 +986,7 @@ void Signature::setParamExp(int n, Exp *e)
 
 // Return the index for the given expression, or -1 if not found
 int Signature::findParam(Exp *e) {
-	for (int i = 0; i < getNumParams(); i++)
+	for (unsigned i = 0; i < getNumParams(); i++)
 		if (*getParamExp(i) == *e)
 			return i;
 	return -1;
@@ -1002,7 +994,7 @@ int Signature::findParam(Exp *e) {
 
 void Signature::renameParam(const char *oldName, const char *newName)
 {
-	for (int i = 0; i < getNumParams(); i++)
+	for (unsigned i = 0; i < getNumParams(); i++)
 		if (!strcmp(params[i]->getName(), oldName)) {
 			params[i]->setName(newName);
 			break;
@@ -1010,7 +1002,7 @@ void Signature::renameParam(const char *oldName, const char *newName)
 }
 
 int Signature::findParam(const char *nam) {
-	for (int i = 0; i < getNumParams(); i++)
+	for (unsigned i = 0; i < getNumParams(); i++)
 		if (!strcmp(getParamName(i), nam))
 			return i;
 	return -1;
@@ -1047,12 +1039,11 @@ int Signature::findImplicitParam(Exp *e) {
 }
 #endif
 
-Returns::iterator Signature::findReturn(Exp *e) {
-	Returns::iterator it;
-	for (it = returns.begin(); it != returns.end(); ++it)
-		if (*it->exp == *e)
-			return it;
-	return returns.end();
+int Signature::findReturn(Exp *e) {
+	for (unsigned i = 0; i < getNumReturns(); i++)
+		if (*returns[i]->exp == *e)
+			return (int)i;
+	return -1;
 }
 
 void Signature::addReturn(Type *type, Exp *exp) {
@@ -1066,41 +1057,17 @@ void Signature::addReturn(Exp *exp) {
 
 void Signature::removeReturn(Exp *e)
 {
-	Returns::iterator it = findReturn(e);
-	if (it != returns.end())
-		returns.erase(it);
+	int i = findReturn(e);
+	if (i != -1) {
+		for (unsigned j = i+1; j < returns.size(); j++)
+			returns[j-1] = returns[j];
+		returns.resize(returns.size()-1);
+	}
 }
 
-int Signature::getNumReturns() {
-	return returns.size();
-}
-
-// Deprecated
-Exp *Signature::getReturnExp(int n) {
-	Returns::iterator it = returns.begin();
-	advance(it, n);
-	return it->exp;
-}
-
-// Deprecated
-void Signature::setReturnExp(int n, Exp* e) {
-	Returns::iterator it = returns.begin();
-	advance(it, n);
-	it->exp = e;
-}
-
-// Deprecated
-Type *Signature::getReturnType(int n) {
-	Returns::iterator it = returns.begin();
-	advance(it, n);
-	return it->type;
-}
-
-// Deprecated
 void Signature::setReturnType(int n, Type *ty) {
-	Returns::iterator it = returns.begin();
-	advance(it, n);
-	it->type = ty;
+	if (n < (int)returns.size())
+		returns[n]->type = ty;
 }
 
 #if 0
@@ -1174,7 +1141,7 @@ Signature *Signature::instantiate(platform plat, callconv cc, const char *nam) {
 void Signature::print(std::ostream &out)
 {
 	if (returns.size() >= 1)
-		out << (*returns.begin()).type->getCtype() << " ";
+		out << (*returns.begin())->type->getCtype() << " ";
 	else
 		out << "void ";
 	out << name << "(";
@@ -1197,11 +1164,11 @@ void Signature::print(std::ostream &out)
 	Returns::iterator it;
 	bool first = true;
 	for (it = returns.begin(); it != returns.end(); ++it) {
-		out << it->exp;
 		if (first)
 			first = false;
 		else
 			out << ", ";
+		out << (*it)->exp;
 	}
 	out << " }" << std::endl;
 }
@@ -1257,7 +1224,7 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach, int 
 				n = i;
 			}
 		}
-	return n > (getNumParams() - 1);
+	return n > ((int)getNumParams() - 1);
 }
 
 #if 0
@@ -1517,7 +1484,7 @@ Memo *Signature::makeMemo(int mId)
 	// for (std::vector<ImplicitParameter*>::iterator it = implicitParams.begin(); it != implicitParams.end(); it++)
 	//	(*it)->takeMemo(mId);
 	for (Returns::iterator it = returns.begin(); it != returns.end(); it++)
-		it->takeMemo(mId);
+		(*it)->takeMemo(mId);
 	if (rettype)
 		rettype->takeMemo(mId);
 	if (preferedReturn)
@@ -1544,7 +1511,7 @@ void Signature::readMemo(Memo *mm, bool dec)
 	// for (std::vector<ImplicitParameter*>::iterator it = implicitParams.begin(); it != implicitParams.end(); it++)
 	//	(*it)->restoreMemo(m->mId, dec);
 	for (Returns::iterator it = returns.begin(); it != returns.end(); it++)
-		(*it).restoreMemo(m->mId, dec);
+		(*it)->restoreMemo(m->mId, dec);
 	if (rettype)
 		rettype->restoreMemo(m->mId, dec);
 	if (preferedReturn)
@@ -1628,44 +1595,94 @@ bool Signature::isOpCompatStackLocal(OPER op) {
 	return false;
 }
 
-// Needs much work...
-Returns* Signature::calcReturns(CallStatement* call) {
-	// Want the intersection of the LHSs of the callee's returns (if available), and the UseCollector
-	if (calleeReturn == NULL)
-		return new Returns;			// Should never happen?
-	return NULL;
+bool Signature::returnCompare(Assign& a, Assign& b) {
+	return *a.getLeft() < *b.getLeft();			// Default: sort by expression only, no explicit ordering
 }
 
-bool Signature::returnCompare(const Return& a, const Return& b) {
-	return *a.exp < *b.exp;			// Default: sort by expression only, no explicit ordering
+bool Signature::argumentCompare(Assignment& a, Assignment& b) {
+	return *a.getLeft() < *b.getLeft();			// Default: sort by expression only, no explicit ordering
 }
 
-bool CallingConvention::StdC::PentiumSignature::returnCompare(const Return& a, const Return& b) {
+bool CallingConvention::StdC::PentiumSignature::returnCompare(Assign& a, Assign& b) {
+	Exp* la = a.getLeft();
+	Exp* lb = b.getLeft();
 	// Eax is the preferred return location
-	if (a.exp->isRegN(24)) return true;		// r24 is less than anything
-	if (b.exp->isRegN(30)) return false;	// Nothing is less than r24
+	if (la->isRegN(24)) return true;		// r24 is less than anything
+	if (lb->isRegN(24)) return false;		// Nothing is less than r24
 
 	// Next best is r30 (floating point %st)
-	if (a.exp->isRegN(30)) return true;		// r30 is less than anything that's left
-	if (b.exp->isRegN(30)) return false;	// Nothing left is less than r30
+	if (la->isRegN(30)) return true;		// r30 is less than anything that's left
+	if (lb->isRegN(30)) return false;		// Nothing left is less than r30
 
 	// Else don't care about the order
-	return *a.exp < *b.exp;
+	return *la < *lb;
 }
 
-bool CallingConvention::StdC::SparcSignature::returnCompare(const Return& a, const Return& b) {
+static Unary spPlus64(opMemOf,
+	new Binary(opPlus,
+		Location::regOf(14),
+		new Const(64)));
+bool CallingConvention::StdC::SparcSignature::returnCompare(Assign& a, Assign& b) {
+	Exp* la = a.getLeft();
+	Exp* lb = b.getLeft();
 	// %o0 (r8) is the preferred return location
-	if (a.exp->isRegN(8)) return true;		// r24 is less than anything
-	if (b.exp->isRegN(8)) return false;		// Nothing is less than r24
+	if (la->isRegN(8)) return true;			// r24 is less than anything
+	if (lb->isRegN(8)) return false;		// Nothing is less than r24
 
 	// Next best is %f0 (r32)
-	if (a.exp->isRegN(32)) return true;		// r32 is less than anything that's left
-	if (b.exp->isRegN(32)) return false;	// Nothing left is less than r32
+	if (la->isRegN(32)) return true;		// r32 is less than anything that's left
+	if (lb->isRegN(32)) return false;		// Nothing left is less than r32
 
 	// Next best is %f0-1 (r64)
-	if (a.exp->isRegN(64)) return true;		// r64 is less than anything that's left
-	if (b.exp->isRegN(64)) return false;	// Nothing left is less than r64
+	if (la->isRegN(64)) return true;		// r64 is less than anything that's left
+	if (lb->isRegN(64)) return false;		// Nothing left is less than r64
+
+	// Next best is m[esp{-}+64]
+	if (*la == spPlus64) return true;		// m[esp{-}+64] is less than anything that's left
+	if (*lb == spPlus64) return false;		// Nothing left is less than m[esp{-}+64]
 
 	// Else don't care about the order
-	return *a.exp < *b.exp;
+	return *la < *lb;
+}
+
+// Class Return methods
+Return* Return::clone() {
+	return new Return(type->clone(), exp->clone());
+}
+
+bool Return::operator==(Return& other) {
+	if (!(*type == *other.type)) return false;
+	if (!(*exp == *other.exp)) return false;
+	return true;
+}
+	
+class ReturnMemo : public Memo {
+public:
+	ReturnMemo(int m) : Memo(m) { }
+
+	Type *type;
+	Exp *exp;
+};
+
+Memo *Return::makeMemo(int mId)
+{
+	ReturnMemo *m = new ReturnMemo(mId);
+
+	m->type = type;
+	m->exp = exp;
+
+	type->takeMemo(mId);
+	exp->takeMemo(mId);
+
+	return m;
+}
+
+void Return::readMemo(Memo *mm, bool dec)
+{
+	ReturnMemo *m = dynamic_cast<ReturnMemo*>(mm);
+	type = m->type;
+	exp = m->exp;
+
+	type->restoreMemo(m->mId, dec);
+	exp->restoreMemo(m->mId, dec);
 }

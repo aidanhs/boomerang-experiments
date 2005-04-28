@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.7 $
+ * $Revision: 1.148.2.8 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -505,6 +505,7 @@ void GotoStatement::adjustFixedDest(int delta) {
 }
 
 bool GotoStatement::search(Exp* search, Exp*& result) {
+	result = NULL;
 	if (pDest)
 		return pDest->search(search, result);
 	return false;
@@ -579,10 +580,6 @@ void GotoStatement::setIsComputed(bool b) {
  *============================================================================*/
 bool GotoStatement::isComputed() {
 	return m_isComputed;
-}
-
-Return* Return::clone() {
-	return new Return(type->clone(), exp->clone());
 }
 
 /*==============================================================================
@@ -1296,17 +1293,6 @@ CallStatement::CallStatement(): returnAfterCall(false), calleeReturn(NULL) {
 CallStatement::~CallStatement() {
 }
 
-/*==============================================================================
- * FUNCTION:	  CallStatement::getArguments
- * OVERVIEW:	  Return a copy of the locations that have been determined
- *				  as the actual arguments for this call.
- * PARAMETERS:	  <none>
- * RETURNS:		  A reference to the list of arguments
- *============================================================================*/
-std::vector<Exp*>& CallStatement::getArguments() {
-	return arguments;
-}
-
 #if 0
 Exp *CallStatement::getReturnExp(int i) {
 	if (i >= (int)returns.size()) return NULL;
@@ -1315,19 +1301,15 @@ Exp *CallStatement::getReturnExp(int i) {
 #endif
 
 // Temporarily needed for ad-hoc type analysis
-ReturnsPos& CallStatement::findReturn(Exp *e) {
-	ReturnsPos* ret = new ReturnsPos;
-	Returns* returns = calcReturns();
-	for (Returns::iterator rr = returns.begin(); rr != returns.end(); ++rr) {
-		if (it->exp && *it->exp == *e) {
-			ret->first = true;
-			ret->second = rr;
-			return *ret;
-		}
+int CallStatement::findReturn(Exp *e) {
+	StatementList::iterator rr;
+	int i = 0;
+	for (rr = returns.begin(); rr != returns.end(); ++rr, ++i) {
+		Exp* ret = ((Assignment*)*rr)->getLeft();
+		if (*ret == *e)
+			return i;
 	}
-	ret->first = false;
-	ret->second = returns.end();
-	return *ret;
+	return -1;
 }
 
 #if 0		// No, this will happen from the callee now
@@ -1437,6 +1419,7 @@ Exp* CallStatement::findDefFor(Exp *e) {
 #endif
 }
 
+#if 0
 void CallStatement::addArgument(Exp *e, UserProc* proc) {
 	// Process the argument. For example, given m[esp+4], it might be needed to localise as m[esp{17}+4], then get
 	// substituted to m[esp{-}-16], then localised again to m[esp{-}-16]{16}, then substituted again into r24{14}
@@ -1455,6 +1438,7 @@ void CallStatement::addArgument(Exp *e, UserProc* proc) {
 	if (l)
 		l->setProc(proc);
 }
+#endif
 
 Type *CallStatement::getArgumentType(int i) {
 	assert(i < (int)arguments.size());
@@ -1498,21 +1482,25 @@ assert(0);		// FIXME: Check MVE HACK!
 		signature = procDest->getSignature()->clone();
 	
 	int n = signature->getNumParams();
-	arguments.resize(n, NULL);
 	int i;
+	arguments.clear();
 	for (i = 0; i < n; i++) {
 		Exp *e = signature->getArgumentExp(i);
 		assert(e);
-		arguments[i] = e->clone();
 		Location *l = dynamic_cast<Location*>(e);
 		if (l) {
-			l->setProc(proc);
+			l->setProc(proc);		// Needed?
 		}
+		Assign* as = new Assign(new VoidType, e->clone(), e->clone());
+		arguments.append(as);
 	}
 	if (signature->hasEllipsis()) {
 		// Just guess 4 parameters for now
-		for (int i = 0; i < 4; i++)
-			arguments.push_back(signature->getArgumentExp(arguments.size())->clone());
+		for (int i = 0; i < 4; i++) {
+			Exp* e = signature->getArgumentExp(arguments.size())->clone();
+			Assign* as = new Assign(new VoidType, e->clone(), e->clone());
+			arguments.append(as);
+		}
 	}
 	if (procDest)
 		procDest->addCaller(this);
@@ -1548,20 +1536,16 @@ Exp* CallStatement::getReturnLoc() {
 #endif
 
 bool CallStatement::search(Exp* search, Exp*& result) {
-	result = NULL;
-	unsigned int i;
-#if 0			// I think we don't want to search returns ever
-	Returns* returns = calcReturns();
-	Returns::iterator rr;
-	for (rr = returns->begin(); rr != returns->end(); ++rr)
-		;
-#endif
-	for (i = 0; i < arguments.size(); i++) {
-		if (*arguments[i] == *search) {
-			result = arguments[i];
+	bool found = GotoStatement::search(search, result);
+	if (found) return true;
+	StatementList::iterator ss;
+	for (ss = returns.begin(); ss != returns.end(); ++ss) {
+		if ((*ss)->search(search, result))
 			return true;
-		}
-		if (arguments[i]->search(search, result)) return true;
+	}
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss) {
+		if ((*ss)->search(search, result))
+			return true;
 	}
 #if 0
 	for (i = 0; i < implicitArguments.size(); i++) {
@@ -1584,15 +1568,12 @@ bool CallStatement::search(Exp* search, Exp*& result) {
  *============================================================================*/
 bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
 	bool change = GotoStatement::searchAndReplace(search, replace);
-	unsigned int i;
-	// change |= returns->searchAndReplace(search, replace);
-	for (i = 0; i < arguments.size(); i++) {
-		bool ch;
-		arguments[i] = arguments[i]->searchReplaceAll(search, replace, ch);
-		if (ch) 
-			updateArgumentWithType(i);
-		change |= ch;
-	}
+	StatementList::iterator ss;
+	// FIXME: MVE: Check if we ever want to change the LHS of arguments or returns...
+	for (ss = returns.begin(); ss != returns.end(); ++ss)
+		change |= (*ss)->search(search, replace);
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		change |= (*ss)->search(search, replace);
 	return change;
 }
 
@@ -1604,12 +1585,16 @@ bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
  * RETURNS:			true if there were any matches
  *============================================================================*/
 bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
-	bool found = false;
-	unsigned int i;
-	for (i = 0; i < arguments.size(); i++)
-		if (arguments[i]->searchAll(search, result))
+	bool found = GotoStatement::searchAll(search, result);
+	StatementList::iterator ss;
+	for (ss = returns.begin(); ss != returns.end(); ++ss) {
+		if ((*ss)->searchAll(search, result))
 			found = true;
-	// found |= returns->searchAll(search, result);
+	}
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss) {
+		if ((*ss)->searchAll(search, result))
+			found = true;
+	}
 	return found;
 }
 
@@ -1623,19 +1608,19 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
  
 	// Return(s), if any
-	Returns* returns = calcReturns();
-	if (returns->size()) {
-		os << "{";
-		Returns::iterator rr;
+	if (returns.size()) {
+		if (returns.size() > 1) os << "{";
+		StatementList::iterator rr;
 		bool first = true;
-		for (rr = returns->begin(); rr != returns->end(); ++rr) {
+		for (rr = returns.begin(); rr != returns.end(); ++rr) {
 			if (first)
 				first = false;
 			else
 				os << ", ";
-			os << rr->type << " " << rr->exp;
+			os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
 		}
-		os << "} := ";
+		if (returns.size() > 1) os << "}";
+		os << " := ";
 	}
 
 	os << "CALL ";
@@ -1652,11 +1637,14 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 
 	// Print the actual arguments of the call
 	os << "(";
-	unsigned int i;
-	for (i = 0; i < arguments.size(); i++) {
-		if (i != 0)
+	bool first = true;
+	StatementList::iterator aa;
+	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
+		if (first)
+			first = false;
+		else
 			os << ", ";
-		os << arguments[i];
+		((Assignment*)*aa)->printCompact(os);
 	}
 #if 0
 	os << " implicit: ";
@@ -1672,14 +1660,15 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	// Collected reaching definitions
 	os << "\n              Reaching definitions: ";
 	defCol.print(os);
+	os << "\n              Live variables: ";
+	useCol.print(os);
 #endif
 }
 
 /*==============================================================================
  * FUNCTION:		 CallStatement::setReturnAfterCall
- * OVERVIEW:		 Sets a bit that says that this call is effectively followed
- *						by a return. This happens e.g. on Sparc when there is a
- *						restore in the delay slot of the call
+ * OVERVIEW:		 Sets a bit that says that this call is effectively followed by a return. This happens e.g. on
+ *						Sparc when there is a restore in the delay slot of the call
  * PARAMETERS:		 b: true if this is to be set; false to clear the bit
  * RETURNS:			 <nothing>
  *============================================================================*/
@@ -1689,9 +1678,8 @@ void CallStatement::setReturnAfterCall(bool b) {
 
 /*==============================================================================
  * FUNCTION:		 CallStatement::isReturnAfterCall
- * OVERVIEW:		 Tests a bit that says that this call is effectively
- *						followed by a return. This happens e.g. on Sparc when
- *						there is a restore in the delay slot of the call
+ * OVERVIEW:		 Tests a bit that says that this call is effectively followed by a return. This happens e.g. on
+ *						Sparc when there is a restore in the delay slot of the call
  * PARAMETERS:		 none
  * RETURNS:			 True if this call is effectively followed by a return
  *============================================================================*/
@@ -1709,10 +1697,11 @@ Statement* CallStatement::clone() {
 	CallStatement* ret = new CallStatement();
 	ret->pDest = pDest->clone();
 	ret->m_isComputed = m_isComputed;
-	int n = arguments.size();
-	int i;
-	for (i=0; i < n; i++)
-		ret->arguments.push_back(arguments[i]->clone());
+	StatementList::iterator ss;
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		ret->arguments.append((*ss)->clone());
+	for (ss = returns.begin(); ss != returns.end(); ++ss)
+		ret->returns.append((*ss)->clone());
 #if 0
 	n = implicitArguments.size();
 	for (i=0; i < n; i++)
@@ -1757,20 +1746,26 @@ void CallStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
 #endif
 	assert(p);
 	if (p->isLib() && *p->getSignature()->getPreferedName()) {
+		// How did this ever work? Surely you need the actual, substituted-into arguments!
+#if 0
 		std::vector<Exp*> args;
 		for (unsigned int i = 0; i < p->getSignature()->getNumPreferedParams(); i++)
 			args.push_back(arguments[p->getSignature()->getPreferedParam(i)]);
-		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), args, calcReturns());
+		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), args, getReturns());
+#else
+		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), arguments, returns);
+#endif
 	} else
-		hll->AddCallStatement(indLevel, p, p->getName(), arguments, calcReturns());
+		hll->AddCallStatement(indLevel, p, p->getName(), arguments, returns);
 }
 
 void CallStatement::simplify() {
 	GotoStatement::simplify();
-	unsigned int i;
-	for (i = 0; i < arguments.size(); i++) {
-		arguments[i] = arguments[i]->simplifyArith()->simplify();
-	}
+	StatementList::iterator ss;
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		(*ss)->simplify();
+	for (ss = returns.begin(); ss != returns.end(); ++ss)
+		(*ss)->simplify();
 #if 0
 	for (i = 0; i < implicitArguments.size(); i++) {
 		implicitArguments[i] = implicitArguments[i]->simplifyArith()->simplify();
@@ -1779,30 +1774,18 @@ void CallStatement::simplify() {
 
 }
 
-#if 0
-void CallStatement::decompile() {
-	if (procDest) { 
-		UserProc *p = dynamic_cast<UserProc*>(procDest);
-		if (p != NULL)
-			p->decompile();
-
-		// FIXME: Likely there is a much better place to do this
-		// init return location
-		setIgnoreReturnLoc(false);
-	} else {
-		// TODO: indirect call
-	}
+bool GotoStatement::usesExp(Exp* e) {
+	Exp* where;
+	return (pDest->search(e, where));
 }
-#endif
 
 bool CallStatement::usesExp(Exp *e) {
-	Exp *where;
-	unsigned int i;
-	for (i = 0; i < arguments.size(); i++) {
-		if (arguments[i]->search(e, where)) {
-			return true;
-		}
-	}
+	if (GotoStatement::usesExp(e)) return true;
+	StatementList::iterator ss;
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		if ((*ss)->usesExp(e)) return true;
+	for (ss = returns.begin(); ss != returns.end(); ++ss)
+		if ((*ss)->usesExp(e)) return true;
 #if 0
 	for (i = 0; i < implicitArguments.size(); i++) {
 		if (implicitArguments[i]->search(e, where)) {
@@ -1810,16 +1793,6 @@ bool CallStatement::usesExp(Exp *e) {
 		}
 	}
 #endif
-	Returns::iterator rr;
-	Returns* returns = calcReturns();
-	for (rr = returns->begin(); rr != returns->end(); rr++) {
-		if ((rr->exp)->isMemOf() && ((Location*)rr->exp)->getSubExp1()->search(e, where))
-			return true;
-	}
-	// if (procDest == NULL)
-		// No destination (e.g. indirect call)
-		// For now, just return true (overstating uses is safe)
-		// return true;
 	return false;
 }
 
@@ -1830,11 +1803,11 @@ bool CallStatement::isDefinition() {
 }
 
 void CallStatement::getDefinitions(LocationSet &defs) {
-	Returns::iterator rr;
-	Returns* returns = calcReturns();
-	if (returns)
-		for (rr = returns->begin(); rr != returns->end(); ++rr)
-			defs.insert(rr->exp);
+	StatementList::iterator ss;
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		(*ss)->getDefinitions(defs);
+	for (ss = returns.begin(); ss != returns.end(); ++ss)
+		(*ss)->getDefinitions(defs);
 }
 
 bool CallStatement::convertToDirect() {
@@ -1962,12 +1935,13 @@ bool CallStatement::convertToDirect() {
 		arguments = newargs;
 		assert((int)arguments.size() == sig->getNumParams());
 #else
-		arguments.resize(sig->getNumParams(), NULL);
-		int i;
-		for (i = 0; i < sig->getNumParams(); i++) {
-			arguments[i] = sig->getParamExp(i);
+		arguments.clear();
+		for (unsigned i = 0; i < sig->getNumParams(); i++) {
+			Exp* a = sig->getParamExp(i);
+			Assign* as = new Assign(new VoidType(), a->clone(), a->clone());
+			arguments.append(as);
 		}
-std::cerr << "Step 3a: arguments now: "; for (i = 0; i < sig->getNumParams(); i++) std::cerr << arguments[i] << ", "; std::cerr << "\n";
+std::cerr << "Step 3a: arguments now: "; StatementList::iterator xx; for (xx = arguments.begin(); xx != arguments.end(); ++xx) {((Assignment*)*xx)->printCompact(std::cerr); std::cerr << ", ";} std::cerr << "\n";
 #endif
 		// implicitArguments = newimpargs;
 		// assert((int)implicitArguments.size() == sig->getNumImplicitParams());
@@ -1995,7 +1969,9 @@ void CallStatement::updateArgumentWithType(int n)
 	if (procDest) {
 		Type *ty = procDest->getSignature()->getParamType(n);
 		if (ty) {
-			Exp *e = arguments[n];
+			StatementList::iterator aa = arguments.begin();
+			advance(aa, n);
+			Exp *e = ((Assign*)*aa)->getRight();
 			if (e->isSubscript())
 				e = e->getSubExp1();
 			if (e->isLocation())
@@ -2022,8 +1998,7 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 	}
 	unsigned int i;
 
-	// Do we ever want to substitute into returns? (Even m[xxx]?) For now, no...
-#if 0
+#if 0		// Don't want to substitute into returns... they have no RHS anyway
 	for (i = 0; i < returns.size(); i++) {
 		if (returns[i].e && returns[i].e->getOper() == opMemOf) {
 			Exp *e = findDefFor(returns[i].e->getSubExp1());
@@ -2041,12 +2016,14 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 	}
 #endif
 
-	for (i = 0; i < arguments.size(); i++) {
-		arguments[i] = arguments[i]->searchReplaceAll(from, to, change);
+	StatementList::iterator ss;
+	for (ss = arguments.begin(), i=0; ss != arguments.end(); ++ss, ++i) {
+		Exp*& a = ((Assign*)*ss)->getRightRef();
+		a = a->searchReplaceAll(from, to, change);
 		if (change) {
-			arguments[i] = arguments[i]->simplifyArith()->simplify();
+			a = a->simplifyArith()->simplify();
 			if (1 & VERBOSE)
-				LOG << "doReplaceRef: updated argument[" << i << "] with " << arguments[i] << "\n";
+				LOG << "call doReplaceRef: updated argument " << i << " with " << a << "\n";
 			updateArgumentWithType(i);
 		}
 	}
@@ -2072,13 +2049,18 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 Exp* CallStatement::getArgumentExp(int i)
 {
 	assert(i < (int)arguments.size());
-	return arguments[i];
+	StatementList::iterator aa = arguments.begin();
+	advance(aa, i);
+	return ((Assign*)*aa)->getRight();
 }
 
 void CallStatement::setArgumentExp(int i, Exp *e)
 {
 	assert(i < (int)arguments.size());
-	arguments[i] = e->clone();
+	StatementList::iterator aa = arguments.begin();
+	advance(aa, i);
+	Exp*& a = ((Assign*)*aa)->getRightRef();
+	a = e->clone();
 	updateArgumentWithType(i);
 }
 
@@ -2089,28 +2071,31 @@ int CallStatement::getNumArguments()
 
 void CallStatement::setNumArguments(int n) {
 	int oldSize = arguments.size();
-	arguments.resize(n, NULL);
+	arguments.clear();
 	// printf, scanf start with just 2 arguments
 	for (int i = oldSize; i < n; i++) {
-		arguments[i] = procDest->getSignature()->getArgumentExp(i)->clone();
+		Exp* a = procDest->getSignature()->getArgumentExp(i);
+		Assign* as = new Assign(new VoidType(), a->clone(), a->clone());
+		arguments.append(as);
 	}
 }
 
 void CallStatement::removeArgument(int i)
 {
-	for (unsigned j = i+1; j < arguments.size(); j++)
-		arguments[j-1] = arguments[j];
-	arguments.resize(arguments.size()-1);
+	StatementList::iterator aa = arguments.begin();
+	advance(aa, i);
+	arguments.erase(aa);
 }
 
 // Convert from SSA form
 void CallStatement::fromSSAform(igraph& ig) {
 	if (pDest)
 		pDest = pDest->fromSSA(ig);
-	int n = arguments.size();
-	int i;
-	for (i=0; i < n; i++)
-		arguments[i] = arguments[i]->fromSSA(ig);
+	StatementList::iterator ss;
+	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
+		(*ss)->fromSSAform(ig);
+	for (ss = returns.begin(); ss != returns.end(); ++ss)
+		(*ss)->fromSSAform(ig);
 	// Don't think we'll need this anyway:
 	// defCol.fromSSAform(ig);
 }
@@ -2321,16 +2306,17 @@ Type *Statement::getTypeFor(Exp *e, Prog *prog)
 }
 
 bool CallStatement::processConstants(Prog *prog) {
-	for (unsigned i = 0; i < arguments.size(); i++) {
-		Type *t = getArgumentType(i);
-		Exp *e = arguments[i];
+	StatementList::iterator aa;
+	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
+		Type *t = ((Assign*)*aa)->getType();
+		Exp *e = ((Assign*)*aa)->getRight();
 	
         // check for a[m[constant]{?}], treat it like a constant
         if (e->isAddrOf() && e->getSubExp1()->isSubscript() && e->getSubExp1()->getSubExp1()->isMemOf() && 
-            e->getSubExp1()->getSubExp1()->getSubExp1()->isIntConst())
+            	e->getSubExp1()->getSubExp1()->getSubExp1()->isIntConst())
             e = e->getSubExp1()->getSubExp1()->getSubExp1();
 
-		arguments[i] = processConstant(e, t, prog, proc);
+		((Assign*)*aa)->setRight(processConstant(e, t, prog, proc));
 #if 0
 		if (e->getOper() == opIntConst && arguments[i]->getOper() == opStrConst) {
 			for (std::vector<Exp*>::iterator it = implicitArguments.begin(); it != implicitArguments.end(); it++) {
@@ -2508,8 +2494,11 @@ void CallStatement::setSigParam(Type* ty, bool isScanf) {
 	Exp* paramExp = signature->getParamExp(signature->getNumParams()-1);
 	if (VERBOSE)
 		LOG << "  ellipsisProcessing: adding parameter " << paramExp << " of type " << ty->getCtype() << "\n";
-	if (arguments.size() < (unsigned)signature->getNumParams())
-		arguments.push_back(paramExp->clone());			// In case it was previously an indirect call
+	if (arguments.size() < (unsigned)signature->getNumParams()) {
+		//arguments.push_back(paramExp->clone());			// In case it was previously an indirect call
+		Assign* as = new Assign(ty, paramExp->clone(), paramExp->clone());
+		arguments.append(as);
+	}
 }
 
 /**********************************
@@ -2583,7 +2572,7 @@ void ReturnStatement::removeReturn(Exp* loc) {
 }
 
 void ReturnStatement::addReturn(Assignment* a) {
-	defs.insert(a);
+	defs.append(a);
 }
 
 
@@ -3410,19 +3399,12 @@ void CallStatement::genConstraints(LocationSet& cons) {
 	Proc* dest = getDestProc();
 	if (dest == NULL) return;
 	Signature* destSig = dest->getSignature();
-	// Generate a constraint for the type of each actual argument to be equal
-	// to the type of each formal parameter (hopefully, these are already
-	// calculated correctly; if not, we need repeat till no change)
-	int nPar = destSig->getNumParams();
-	int min = 0;
-#if 0
-	if (dest->isLib())
-		// Note: formals for a library signature start with the stack pointer
-		min = 1;
-#endif
-	int a=0;		// Argument index
-	for (int p=min; p < nPar; p++) {
-		Exp* arg = arguments[a++];
+	// Generate a constraint for the type of each actual argument to be equal to the type of each formal parameter
+	// (hopefully, these are already calculated correctly; if not, we need repeat till no change)
+	StatementList::iterator aa;
+	int p = 0;
+	for (aa = arguments.begin(); aa != arguments.end(); ++aa, ++p) {
+		Exp* arg = ((Assign*)*aa)->getRight();
 		// Handle a[m[x]]
 		if (arg->isAddrOf()) {
 			Exp* sub = arg->getSubExp1();
@@ -3431,8 +3413,7 @@ void CallStatement::genConstraints(LocationSet& cons) {
 			if (sub->isMemOf())
 				arg = ((Location*)sub)->getSubExp1();
 		}
-		if (arg->isRegOf() || arg->isMemOf() || arg->isSubscript() ||
-			  arg->isLocal() || arg->isGlobal()) {
+		if (arg->isRegOf() || arg->isMemOf() || arg->isSubscript() || arg->isLocal() || arg->isGlobal()) {
 			Exp* con = new Binary(opEquals,
 				new Unary(opTypeOf, arg->clone()),
 				new TypeVal(destSig->getParamType(p)->clone()));
@@ -3446,8 +3427,8 @@ void CallStatement::genConstraints(LocationSet& cons) {
 		// Note: might have to chase back via a phi statement to get a sample
 		// string
 		char* str;
-		if ((name == "printf" || name == "scanf") &&
-		  (str = arguments[0]->getAnyStrConst()) != NULL) {
+		Exp* arg0 = ((Assign*)*arguments.begin())->getRight();
+		if ((name == "printf" || name == "scanf") && (str = arg0->getAnyStrConst()) != NULL) {
 			// actually have to parse it
 			int n = 1;		// Number of %s plus 1 = number of args
 			char* p = str;
@@ -3470,8 +3451,7 @@ void CallStatement::genConstraints(LocationSet& cons) {
 						case 'i':
 						case 'd': {
 							int size = 32;
-							// Note: the following only works for 32 bit code
-							// or where sizeof(long) == sizeof(int)
+							// Note: the following only works for 32 bit code or where sizeof(long) == sizeof(int)
 							if (longness == 2) size = 64;
 							t = new IntegerType(size, sign);
 							break;
@@ -3505,7 +3485,10 @@ void CallStatement::genConstraints(LocationSet& cons) {
 						t = new PointerType(t);
 					// Generate a constraint for the parameter
 					TypeVal* tv = new TypeVal(t);
-					Exp* con = arguments[n]->genConstraints(tv);
+					StatementList::iterator aa = arguments.begin();
+					advance(aa, n);
+					Exp* argn = ((Assign*)*aa)->getRight();
+					Exp* con = argn->genConstraints(tv);
 					cons.insert(con);
 				}
 				n++;
@@ -3516,8 +3499,7 @@ void CallStatement::genConstraints(LocationSet& cons) {
 
 #if 0	// Get rid of this: MVE
 void Exp::genConditionConstraints(LocationSet& cons) {
-	// cond should be of the form a relop b, where relop is opEquals, opLess
-	// etc
+	// cond should be of the form a relop b, where relop is opEquals, opLess etc
 	assert(getArity() == 2);
 	Exp* a = ((Binary*)this)->getSubExp1();
 	Exp* b = ((Binary*)this)->getSubExp2();
@@ -3544,8 +3526,7 @@ void Exp::genConditionConstraints(LocationSet& cons) {
 
 void BranchStatement::genConstraints(LocationSet& cons) {
 	if (pCond == NULL && VERBOSE) {
-		LOG << "Warning: BranchStatment " << number <<
-			" has no condition expression!\n";
+		LOG << "Warning: BranchStatment " << number << " has no condition expression!\n";
 		return;
 	}
 	Type* opsType;
@@ -3567,9 +3548,8 @@ void BranchStatement::genConstraints(LocationSet& cons) {
 	assert(pCond->getArity() == 2);
 	Exp* a = ((Binary*)pCond)->getSubExp1();
 	Exp* b = ((Binary*)pCond)->getSubExp2();
-	// Generate constraints for a and b separately (if any)
-	// Often only need a size, since we get basic type and signedness from
-	// the branch condition (e.g. jump if unsigned less)
+	// Generate constraints for a and b separately (if any).  Often only need a size, since we get basic type and
+	// signedness from the branch condition (e.g. jump if unsigned less)
 	Exp* Ta; Exp* Tb;
 	if (a->isSizeCast()) {
 		opsType->setSize(((Const*)((Binary*)a)->getSubExp1())->getInt());
@@ -3619,9 +3599,8 @@ bool Assign::accept(StmtExpVisitor* v) {
 	bool override;
 	bool ret = v->visit(this, override);
 	if (override)
-		// The visitor has overridden this functionality
-		// This is needed for example in UsedLocFinder, where the lhs of an
-		// assignment is not used (but it it's m[blah], then blah is used)
+		// The visitor has overridden this functionality.  This is needed for example in UsedLocFinder, where the lhs of
+		// an assignment is not used (but it it's m[blah], then blah is used)
 		return ret;
 	if (ret && lhs) ret = lhs->accept(v->ev);
 	if (ret && rhs) ret = rhs->accept(v->ev);
@@ -3658,8 +3637,7 @@ bool BranchStatement::accept(StmtExpVisitor* v) {
 	bool override;
 	bool ret = v->visit(this, override);
 	if (override) return ret;
-	// Destination will always be a const for X86, so the below will never
-	// be used in practice
+	// Destination will always be a const for X86, so the below will never be used in practice
 	if (ret && pDest)
 		ret = pDest->accept(v->ev);
 	if (ret && pCond)
@@ -3684,14 +3662,14 @@ bool CallStatement::accept(StmtExpVisitor* v) {
 	if (override) return ret;
 	if (ret && pDest)
 		ret = pDest->accept(v->ev);
-	std::vector<Exp*>::iterator it;
+	StatementList::iterator it;
 	for (it = arguments.begin(); ret && it != arguments.end(); it++)
-		ret = (*it)->accept(v->ev);
+		ret = (*it)->accept(v);
 #if 0
 	for (it = implicitArguments.begin(); ret && it != implicitArguments.end(); it++)
 		ret = (*it)->accept(v->ev);
 #endif
-#if 0		// Do we want to accept changes to the returns? No! They are in terms of the callee only
+#if 0		// Do we want to accept changes to the returns? Not sure now...
 	std::vector<ReturnInfo>::iterator rr;
 	for (rr = returns.begin(); ret && rr != returns.end(); rr++)
 		if (rr->e)			// Can be NULL now to line up with other returns
@@ -3787,9 +3765,9 @@ bool CallStatement::accept(StmtModifier* v) {
 	v->visit(this, recur);
 	if (pDest && recur)
 		pDest = pDest->accept(v->mod);
-	std::vector<Exp*>::iterator it;
+	StatementList::iterator it;
 	for (it = arguments.begin(); recur && it != arguments.end(); it++)
-		*it = (*it)->accept(v->mod);
+		(*it)->accept(v);
 #if 0
 	for (it = implicitArguments.begin(); recur && it != implicitArguments.end(); it++)
 		*it = (*it)->accept(v->mod);
@@ -4024,9 +4002,9 @@ void CaseStatement::regReplace(UserProc* proc) {
 void CallStatement::regReplace(UserProc* proc) {
 	std::list<Exp**> li;
 	Exp::doSearch(regOfWildRef, pDest, li, false);
-	std::vector<Exp*>::iterator it;
+	StatementList::iterator it;
 	for (it = arguments.begin(); it != arguments.end(); it++)
-		Exp::doSearch(regOfWildRef, *it, li, false);
+		(*it)->regReplace(proc);
 #if 0
 	for (it = implicitArguments.begin(); it != implicitArguments.end(); it++)
 		Exp::doSearch(regOfWildRef, *it, li, false);
@@ -4090,6 +4068,7 @@ void ReturnStatement::copyReachingDefs(int d) {
 			col.insert(*it);
 		}
 	}
+	updateReturns();
 }
 
 bool Assignment::defines(Exp* loc) {
@@ -4097,6 +4076,12 @@ bool Assignment::defines(Exp* loc) {
 }
 
 bool CallStatement::defines(Exp* loc) {
+	// Arguments also assign their locations now (a little unsure about this)
+	StatementList::iterator aa;
+	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
+		if (*((Assignment*)*aa)->getLeft() == *loc)
+			return true;
+	}
 	if (calleeReturn == NULL) return false;		// Should never happen?
 	return calleeReturn->defines(loc);			// Delegate to the ReturnStatement object
 }
@@ -4106,7 +4091,8 @@ bool CallStatement::defines(Exp* loc) {
 bool ReturnStatement::defines(Exp* loc) {
 	iterator it;
 	for (it = defs.begin(); it != defs.end(); it++) {
-		if ((*it)->defines(loc)) return true;
+		if ((*it)->defines(loc))
+			return true;
 	}
 	return false;
 }
@@ -4143,9 +4129,10 @@ void ReturnStatement::print(std::ostream& os) {
 	iterator it;
 	bool first = true;
 	for (it = defs.begin(); it != defs.end(); ++it) {
-		if (first)
+		if (first) {
 			first = false;
-		else
+			os << " ";
+		} else
 			os << ", ";
 		((Assignment*)*it)->printCompact(os);
 	}
@@ -4160,49 +4147,115 @@ bool lessAssignment::operator()(const Assignment* x, const Assignment* y) const 
 }
 #endif
 
-Returns* CallStatement::calcReturns() {
-	if (procDest) {
-		// The signature knows how to order the returns
-		return procDest->getSignature()->calcReturns(this);
+// Filter out locations not possible as return locations. Return true to keep
+bool returnFilter(Exp* e, Signature* sig, Proc* proc) {
+	switch (e->getOper()) {
+		case opPC:	return false;
+		case opTemp: return false;
+		case opRegOf: {
+			int sp;
+			if (sig == NULL)
+				sp = 999;
+			else
+				sp = sig->getStackRegister(proc->getProg());
+			int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
+			return r != sp;
+		}
+		case opMemOf: {
+			Exp* addr = ((Location*)e)->getSubExp1();
+			if (addr->isIntConst())
+				return false;			// Global memory location
+			OPER op = addr->getOper();
+			if (op == opPlus || op == opMinus) {
+				// Check for local variable: m[sp +- K]
+				int sp;
+				if (sig == NULL)
+					sp = 999;
+				else
+					sp = sig->getStackRegister(proc->getProg());
+				Exp* s1 = ((Binary*)addr)->getSubExp1();
+				if (!s1->isRegN(sp)) return true;
+				Exp* s2 = ((Binary*)addr)->getSubExp2();
+				if (!s2->isIntConst()) return true;
+				// This will filter out sparc struct returns, at m[sp+64] (in the *parent's* stack)
+				if (op == opPlus && ((Const*)s2)->getInt() == 64 && sig->getPlatform() == PLAT_SPARC)
+					return true;
+				return false;			// Don't allow local variables
+			}
+			return true;				// Might be some weird memory expression that is not a local
+		}
+		default:
+			return true;
 	}
-	// Else just delegate to the enclosing proc's signature
-	return proc->getSignature()->calcReturns(this);
-}
-
-bool Return::operator==(Return& other) {
-	if (!(*type == *other.type)) return false;
-	if (!(*exp == *other.exp)) return false;
 	return true;
 }
-	
-class ReturnMemo : public Memo {
-public:
-	ReturnMemo(int m) : Memo(m) { }
 
-	Type *type;
-	Exp *exp;
-};
+// Update the returns, in case the signature and hence ordering and filtering has changed, or the locations in the
+// collector have changed
+void ReturnStatement::updateReturns() {
+	Signature* sig = proc->getSignature();
+	StatementList oldDefs(defs);					// Copy the old definitions
+	defs.clear();
+	// For each location in the collector, make sure that there is an assignment in the old definitions
+	// Ick... O(N*M) (N existing definitions, M collected locations)
+	LocationSet::iterator ll;
+	StatementList::iterator it;
+	for (ll = col.begin(); ll != col.end(); ++ll) {
+		bool found = false;
+		Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
+		if (!returnFilter(loc, sig, proc))
+			continue;									// Filtered out
+		for (it = oldDefs.begin(); it != oldDefs.end(); it++) {
+			Exp* lhs = ((Assign*)*it)->getLeft();
+			if (*lhs == *loc) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			Assign* as = new Assign(new VoidType, loc->clone(), (*ll)->clone());
+			oldDefs.append(as);
+		}
+	}
 
-Memo *Return::makeMemo(int mId)
-{
-	ReturnMemo *m = new ReturnMemo(mId);
-
-	m->type = type;
-	m->exp = exp;
-
-	type->takeMemo(mId);
-	exp->takeMemo(mId);
-
-	return m;
+	// Mostly the old definitions will be in the correct order, and inserting will be fastest near the start of the
+	// new list. So read the old definitions in reverse order
+	for (it = oldDefs.end(); it != oldDefs.begin(); ) {
+		--it;										// Becuase we are using a forwards iterator backwards
+		// Make sure the LHS is still in the collector
+		Assign* as = (Assign*)*it;
+		Exp* lhs = as->getLeft();
+		if (!col.existsNS(lhs))
+			continue;						// Not in collector: delete it (don't copy it)
+		if (!returnFilter(lhs, sig, proc))
+			continue;						// Filtered out: delete it
+		// Check if it is a preserved location, e.g. r29 := r29{-}
+		Exp* rhs = as->getRight();
+		if (rhs->isSubscript() && ((RefExp*)rhs)->isImplicitDef() && *((RefExp*)rhs)->getSubExp1() == *lhs)
+			continue;						// Filter out the preserveds
+			
+		// Insert it, in order, into the existing set of definitions
+		StatementList::iterator nn;
+		bool inserted = false;
+		for (nn = defs.begin(); nn != defs.end(); ++nn) {
+			if (sig->returnCompare(*as, *(Assign*)*nn)) {	// If the new assignment is less than the current one
+				nn = defs.insert(nn, as);					// then insert before this position
+				inserted = true;
+				break;
+			}
+		}
+		if (!inserted)
+			defs.insert(defs.end(), as);	// In case larger than all existing elements
+	}
 }
 
-void Return::readMemo(Memo *mm, bool dec)
-{
-	ReturnMemo *m = dynamic_cast<ReturnMemo*>(mm);
-	type = m->type;
-	exp = m->exp;
-
-	type->restoreMemo(m->mId, dec);
-	exp->restoreMemo(m->mId, dec);
+void CallStatement::updateReturns() {
+	Signature* sig;
+	if (procDest)
+		// The signature knows how to order the returns
+		sig = procDest->getSignature();
+	else
+		// Else just use the enclosing proc's signature
+		sig = proc->getSignature();
 }
 

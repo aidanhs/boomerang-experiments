@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2002, Mike Van Emmerik and Trent Waddington
+ * Copyright (C) 2002-2005 Mike Van Emmerik and Trent Waddington
  */
 /*==============================================================================
  * FILE:	   exp.cpp
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.3 $
+ * $Revision: 1.172.2.4 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -597,8 +597,7 @@ bool TypeVal::operator< (const Exp& o) const {
 
 /*==============================================================================
  * FUNCTION:		Const::operator*=() etc
- * OVERVIEW:		Virtual function to compare myself for equality with
- *					another Exp, *ignoring subscripts*
+ * OVERVIEW:		Virtual function to compare myself for equality with another Exp, *ignoring subscripts*
  * PARAMETERS:		Ref to other Exp
  * RETURNS:			True if equal
  *============================================================================*/
@@ -3540,8 +3539,8 @@ Type *RefExp::getType()
 		return ((Assign*)def)->getRight()->getType();
 	if (def && def->isCall()) {
 		CallStatement *call = (CallStatement*)def;
-		Returns::iterator rr = call->findReturn(subExp1);
-		if (call->existsReturn(sinExp1) && call->getDestProc()) {
+		int n = call->findReturn(subExp1);
+		if (n != -1 && call->getDestProc()) {
 			return call->getDestProc()->getSignature()->getReturnType(n);
 		}
 	}

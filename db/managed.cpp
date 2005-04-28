@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.4 $
+ * $Revision: 1.15.2.5 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -306,6 +306,20 @@ bool LocationSet::exists(Exp* e) {
 	return sset.find(e) != sset.end();
 }
 
+// This set is assumed to be of subscripted locations (e.g. a Collector), and we want to know if the unsubscripted
+// location e is in the set
+bool LocationSet::existsNS(Exp* e) {
+	// Note: can't do this efficiently with a wildcard, since you can't order wildcards sensibly (I think)
+	// RefExp r(e, (Statement*)-1);
+	// return sset.find(&r) != sset.end();
+	iterator it;
+	for (it = sset.begin(); it != sset.end(); ++it) {
+		if (**it *= *e)				// Ignore subscripts
+			return true;
+	}
+	return false;
+}
+
 // Find a location with a different def, but same expression. For example, pass r28{10},
 // return true if r28{20} in the set. If return true, dr points to the first different ref
 bool LocationSet::findDifferentRef(RefExp* e, Exp *&dr) {
@@ -511,15 +525,19 @@ void StatementVec::printNums(std::ostream& os) {
 }
 
 
-// Special intersection method
-Returns* StatementList::makeIsect(LocationSet& ls) {
-	Returns* ret = new Returns;
-	for (iterator it = slist.begin(); it != slist.end(); ++it) {
+// Special intersection method: this := a intersect b
+void StatementList::makeIsect(StatementList& a, LocationSet& b) {
+	slist.clear();
+	for (iterator it = a.slist.begin(); it != a.slist.end(); ++it) {
 		Assignment* as = (Assignment*)*it;
-		if (ls.exists(as->getLeft())) {
-			Return r(as->getType(), as->getLeft());
-			ret->append(r);			// Struct copy
-		}
+		if (b.exists(as->getLeft()))
+			slist.push_back(as);
 	}
-	return ret;
 }
+
+void StatementList::makeCloneOf(StatementList& o) {
+	slist.clear();
+	for (iterator it = o.slist.begin(); it != o.slist.end(); it++)
+		slist.push_back((*it)->clone());
+}
+
