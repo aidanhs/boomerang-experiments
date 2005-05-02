@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.5 $
+ * $Revision: 1.15.2.6 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -100,9 +100,9 @@ bool StatementSet::exists(Statement* s) {
 }
 
 // Find a definition for loc in this Statement set. Return true if found
-bool StatementSet::defines(Exp* loc) {
+bool StatementSet::definesLoc(Exp* loc) {
 	for (iterator it = sset.begin(); it != sset.end(); it++) {
-		if ((*it)->defines(loc))
+		if ((*it)->definesLoc(loc))
 			return true;
 	}
 	return false;
@@ -541,3 +541,13 @@ void StatementList::makeCloneOf(StatementList& o) {
 		slist.push_back((*it)->clone());
 }
 
+#if 0
+// Return true if loc appears on the left of any statements in this list
+// Note: statements in this list are assumed to be assignments
+bool StatementList::existsOnLeft(Exp* loc) {
+	for (iterator it = slist.begin(); it != slist.end(); it++)
+		if (*((Assignment*)*it)->getLeft() == *loc)
+			return true;
+	return false;
+}
+#endif

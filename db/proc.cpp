@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.8 $
+ * $Revision: 1.238.2.9 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -134,7 +134,7 @@ void UserProc::renameParam(const char *oldName, const char *newName)
 {
 	oldName = strdup(oldName);
 	Proc::renameParam(oldName, newName);
-	cfg->searchAndReplace(Location::param(strdup(oldName), this), Location::param(strdup(newName), this));
+	//cfg->searchAndReplace(Location::param(strdup(oldName), this), Location::param(strdup(newName), this));
 }
 
 void UserProc::setParamType(const char* nam, Type* ty) {
@@ -143,13 +143,13 @@ void UserProc::setParamType(const char* nam, Type* ty) {
 
 void UserProc::renameLocal(const char *oldName, const char *newName) {
 	Type *t = locals[oldName];
-	Exp *e = getLocalExp(oldName);
+	Exp *e = expFromSymbol(oldName);
 	locals.erase(oldName);
-	Exp *l = symbolMap[e];
+	//Exp *l = symbolMap[e];
 	Exp *n = Location::local(strdup(newName), this);
 	symbolMap[e] = n;
 	locals[strdup(newName)] = t;
-	cfg->searchAndReplace(l, n);
+	//cfg->searchAndReplace(l, n);
 }
 
 bool UserProc::searchAll(Exp* search, std::list<Exp*> &result)
@@ -597,12 +597,12 @@ void UserProc::generateCode(HLLCode *hll) {
 
 	hll->AddProcStart(signature);
 	
-	// Local variables
+	// Local variables; print everything in the symbolMap
 	std::map<std::string, Type*>::iterator last = locals.end();
 	if (locals.size()) last--;
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++) {
 		Type* locType = it->second;
-		if (locType->isVoid())
+		if (locType == NULL || locType->isVoid())
 			locType = new IntegerType();
 		hll->AddLocal(it->first.c_str(), locType, it == last);
 	}
@@ -637,9 +637,9 @@ void UserProc::printToLog() {
 	signature->printToLog();
 	symbolMapToLog();
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++) {
-		LOG << (*it).second->getCtype() << " " << (*it).first.c_str() << " ";
-		Exp *e = getLocalExp((*it).first.c_str());
-		// Beware: for some locals, getLocalExp() returns NULL
+		LOG << it->second->getCtype() << " " << it->first.c_str() << " ";
+		Exp *e = expFromSymbol((*it).first.c_str());
+		// Beware: for some locals, getSymbolExp() returns NULL (? No longer?)
 		if (e)
 			LOG << e << "\n";
 		else
@@ -883,7 +883,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		if (VERBOSE)
 			LOG << "renaming block variables at depth " << depth << "\n";
 		// Rename variables
-		df.renameBlockVars(cfg, 0, depth);
+		df.renameBlockVars(this, 0, depth);
 
 		// Seed the return statement with reaching definitions
 		if (theReturnStatement)
@@ -908,7 +908,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			fixCallRefs();
 			if (processConstants()) {
 				for (int i = 0; i <= maxDepth; i++) {
-					df.renameBlockVars(cfg, 0, i, true); // Needed if there was an indirect call to an ellipsis function
+					df.renameBlockVars(this, 0, i, true); // Needed if there was an indirect call to an ellipsis function
 					propagateStatements(i, -1);
 				}
 			}
@@ -934,10 +934,10 @@ std::set<UserProc*>* UserProc::decompile() {
 						LOG << "parameter propagating at depth " << depth_tmp << " to depth " << td << "\n";
 					propagateStatements(depth_tmp, td);
 					for (int i = 0; i <= depth_tmp; i++)
-						df.renameBlockVars(cfg, 0, i, true);
+						df.renameBlockVars(this, 0, i, true);
 				}
 			}
-			df.renameBlockVars(cfg, 0, depth, true);
+			df.renameBlockVars(this, 0, depth, true);
 			printXML();
 			if (VERBOSE) {
 				LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth
@@ -951,7 +951,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		// replacing expressions with Parameters as we go
 		if (!Boomerang::get()->noParameterNames) {
 			replaceExpressionsWithParameters(df, depth);
-			df.renameBlockVars(cfg, 0, depth, true);
+			df.renameBlockVars(this, 0, depth, true);
 		}
 
 		// recognising locals early prevents them from becoming returns
@@ -959,7 +959,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		// replaceExpressionsWithLocals(depth == maxDepth);
 		if (!Boomerang::get()->noChangeSignatures) {
 			// addNewReturns(depth);
-			df.renameBlockVars(cfg, 0, depth, true);
+			df.renameBlockVars(this, 0, depth, true);
 			printXML();
 			if (VERBOSE) {
 				LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth <<
@@ -994,7 +994,7 @@ std::set<UserProc*>* UserProc::decompile() {
 				if (convert)
 					break;			// Just calling renameBlockVars now can cause problems
 				for (int i = 0; i <= depth; i++)
-					df.renameBlockVars(cfg, 0, i, true);
+					df.renameBlockVars(this, 0, i, true);
 			}
 			// If you have an indirect to direct call conversion, some propagations that were blocked by
 			// the indirect call might now succeed, and may be needed to prevent alias problems
@@ -1004,7 +1004,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			if (convert) {
 				depth = 0;		// Start again from depth 0
 				// FIXME: is this needed?
-				df.renameBlockVars(cfg, 0, 0, true);	 // Initial dataflow level 0
+				df.renameBlockVars(this, 0, 0, true);	 // Initial dataflow level 0
 				LOG << "\nAfter initial rename:\n";
 				printToLog();
 				LOG << "\nDone after initial rename:\n\n";
@@ -1082,7 +1082,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		for (int i = maxDepth; i >= 0; i--) {
 			replaceExpressionsWithParameters(df, i);
 			replaceExpressionsWithLocals(true);
-			//cfg->renameBlockVars(cfg, 0, i, true);		// MVE: is this really needed?
+			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
 		trimReturns();
 		fixCallRefs();
@@ -1114,14 +1114,14 @@ void UserProc::updateBlockVars(DataFlow& df)
 {
 	int depth = findMaxDepth() + 1;
 	for (int i = 0; i <= depth; i++)
-		df.renameBlockVars(cfg, 0, i, true);
+		df.renameBlockVars(this, 0, i, true);
 }
 
 void UserProc::propagateAtDepth(DataFlow& df, int depth)
 {
 	propagateStatements(depth, -1);
 	for (int i = 0; i <= depth; i++)
-		df.renameBlockVars(cfg, 0, i, true);
+		df.renameBlockVars(this, 0, i, true);
 }
 
 int UserProc::findMaxDepth() {
@@ -2160,7 +2160,7 @@ void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 	if (found) {
 		// Must redo all the subscripting!
 		for (int d=0; d <= depth; d++)
-			df.renameBlockVars(cfg, 0, d /* Memory depth */, true);
+			df.renameBlockVars(this, 0, d /* Memory depth */, true);
 	}
 
 	// replace expressions in regular statements with parameters
@@ -2188,7 +2188,8 @@ void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 	}
 }
 
-Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
+// Return an expression that is equivilent to e in terms of symbols. Creates new symbols as needed.
+Exp *UserProc::getSymbolExp(Exp *le, Type *ty, bool lastPass) {
 	// Expression r[sp] (build just once per call)
 	Exp* regSP = Location::regOf(signature->getStackRegister(prog));
 	// The implicit definition for r[sp], if any
@@ -2205,7 +2206,7 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 			// now test all the locals to see if this expression is an alias to one of them (for example,
 			// a member of a compound typed local)
 			// NOTE: Not efficient!
-			for (std::map<Exp*, Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
+			for (SymbolMapType::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
 				Exp *base = (*it).first;
 				assert(base);
 				Exp *local = (*it).second;
@@ -2225,11 +2226,12 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 						if (VERBOSE)
 							LOG << "found alias to " << name.c_str() << ": " << le << "\n";
 						int n = base_n - le_n;
-						return Location::memOf(
-							new Binary(opPlus, 
-								new Unary(opAddrOf, 
-									local->clone()),
-								new Const(n)), this);
+						return new TypedExp(ty,
+							Location::memOf(
+								new Binary(opPlus, 
+									new Unary(opAddrOf, 
+										local->clone()),
+									new Const(n)), this));
 #if 0
 						if (ty->resolvesToCompound()) {
 							CompoundType *compound = ty->asCompound();
@@ -2248,11 +2250,11 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 			ty = new IntegerType();
 
 		if (ty) {
-			// the default of just assigning an int type is bad..  if the locals is not an int then assigning it this type 
-			// early results in aliases to this local not being recognised 
+			// the default of just assigning an int type is bad..  if the locals is not an int then assigning it this
+			// type early results in aliases to this local not being recognised 
 			e = newLocal(ty->clone());
 			symbolMap[le->clone()] = e;
-			e->clone();				// ? Suppsed to be e = e->clone()?
+			//e->clone();				// ? Suppsed to be e = e->clone()?
 		}
 	} else {
 		e = symbolMap[le]->clone();
@@ -2263,7 +2265,7 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 			assert(ty);
 			if (nty && !(*ty == *nty) && nty->getSize() >= ty->getSize()) {
 				if (VERBOSE)
-					LOG << "getLocalExp: updating type of " << name.c_str() << " to " << nty->getCtype() << "\n";
+					LOG << "getSymbolExp: updating type of " << name.c_str() << " to " << nty->getCtype() << "\n";
 				ty = nty;
 				locals[name] = ty;
 			}
@@ -2273,7 +2275,7 @@ Exp *UserProc::getLocalExp(Exp *le, Type *ty, bool lastPass) {
 					LOG << "found reference to first member of compound " << name.c_str() << ": " << le << "\n";
 				char* nam = (char*)compound->getName(0);
 				if (nam == NULL) nam = "??";
-				return new Binary(opMemberAccess, e, new Const(nam));
+				return new TypedExp(ty, new Binary(opMemberAccess, e, new Const(nam)));
 			}
 		}
 	}
@@ -2322,7 +2324,7 @@ void UserProc::replaceExpressionsWithLocals(bool lastPass) {
 								a->setLength(((Const*)call->getArgumentExp(i+1)) ->getInt());
 						}
 					}
-					e = getLocalExp(Location::memOf(e->clone(), this), pty);
+					e = getSymbolExp(Location::memOf(e->clone(), this), pty);
 					if (e) {
 						Exp *ne = new Unary(opAddrOf, e);
 						if (VERBOSE)
@@ -2420,7 +2422,7 @@ void UserProc::searchRegularLocals(OPER minusOrPlus, bool lastPass, int sp, Stat
 			Type *ty = result->getType();
 			if (s->isAssign() && ((Assign*)s)->getLeft() == result)
 				ty = ((Assign*)s)->getType();
-			Exp *e = getLocalExp(result, ty, lastPass);
+			Exp *e = getSymbolExp(result, ty, lastPass);
 			if (e) {
 				Exp* search = result->clone();
 				if (VERBOSE)
@@ -2451,7 +2453,8 @@ bool UserProc::nameStackLocations() {
 				symbolMap[memref->clone()] = newLocal(new IntegerType());
 			}
 			assert(symbolMap.find(memref) != symbolMap.end());
-			std::string name = ((Const*)symbolMap[memref]->getSubExp1())->getStr();
+			Location* locl = (Location*)symbolMap[memref]->getSubExp1();
+			std::string name = ((Const*)locl)->getStr();
 			if (memref->getType() != NULL)
 				locals[name] = memref->getType();
 #if 0		// No: type analysis instead of guessing types
@@ -2492,7 +2495,8 @@ bool UserProc::nameRegisters() {
 				ty = new IntegerType();
 			symbolMap[reg->clone()] = newLocal(ty);
 			assert(symbolMap.find(reg) != symbolMap.end());
-			std::string name = ((Const*)symbolMap[reg]->getSubExp1())->getStr();
+			Location* locl = (Location*)symbolMap[reg]->getSubExp1();
+			std::string name = ((Const*)locl)->getStr();
 			if (reg->getType() != NULL)
 				locals[name] = reg->getType();
 			else {
@@ -2517,16 +2521,16 @@ void UserProc::regReplaceList(std::list<Exp**>& li) {
 		Exp* reg = ((RefExp*)**it)->getSubExp1();
 		Statement* def = ((RefExp*)**it)->getDef();
 		Type *ty = def->getTypeFor(reg);
-		// MVE: Might make sense to use some other map for this, and get rid of data member symbolMap
 		if (symbolMap.find(reg) == symbolMap.end()) {
 			symbolMap[reg] = newLocal(ty);
-			std::string name = ((Const*)symbolMap[reg]->getSubExp1())->getStr();
+			Location* locl = (Location*)symbolMap[reg]->getSubExp1();
+			std::string name = ((Const*)locl)->getStr();
 			locals[name] = ty;
 			if (VERBOSE)
 				LOG << "replacing all " << reg << " with " << name << ", type " << ty->getCtype() << "\n";
 		}
 		// Now replace it in the IR
-		**it = symbolMap[reg];
+		//**it = symbolMap[reg];
 	}
 }
 
@@ -2642,7 +2646,6 @@ Exp* UserProc::newLocal(Type* ty) {
 	}
 	if (VERBOSE)
 		LOG << "assigning type " << ty->getCtype() << " to new " << name.c_str() << "\n";
-	// Note: this type of local (not representing memory) does not automatically appear in symbolMap
 	return Location::local(strdup(name.c_str()), this);
 }
 
@@ -2660,17 +2663,20 @@ void UserProc::setLocalType(const char *nam, Type *ty)
 		LOG << "setLocalType: updating type of " << nam << " to " << ty->getCtype() << "\n";
 }
 
-void UserProc::setLocalExp(const char *nam, Exp *e)
+void UserProc::setExpSymbol(const char *nam, Exp *e, Type* ty)
 {
-	Exp *le = Location::local(strdup(nam), this);
-	symbolMap[e] = le;
+	// NOTE: does not update symbols[]
+	TypedExp *te = new TypedExp(ty, Location::local(strdup(nam), this));
+	symbolMap[e] = te;
 }
 
-Exp *UserProc::getLocalExp(const char *nam)
+Exp *UserProc::expFromSymbol(const char *nam)
 {
-	for (std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++)
-		if ((*it).second->getOper() == opLocal && !strcmp(((Const*)(*it).second->getSubExp1())->getStr(), nam))
-			return (*it).first;
+	for (SymbolMapType::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
+		Exp* e = it->second;
+		if (e->isLocal() && !strcmp(((Const*)((Location*)e)->getSubExp1())->getStr(), nam))
+			return it->first;
+	}
 	return NULL;
 }
 
@@ -2683,10 +2689,11 @@ const char* UserProc::getLocalName(int n) {
 }
 
 char* UserProc::getSymbolName(Exp* e) {
-	std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.find(e);
+	SymbolMapType::iterator it = symbolMap.find(e);
 	if (it == symbolMap.end()) return NULL;
-	if (!it->second->isLocal()) return NULL;
-	return ((Const*)((Location*)it->second)->getSubExp1())->getStr();
+	Exp* loc = it->second;
+	if (!loc->isLocal()) return NULL;
+	return ((Const*)((Location*)loc)->getSubExp1())->getStr();
 }
 
 
@@ -2908,7 +2915,7 @@ void UserProc::fromSSAform() {
 				// Record an "interference" so it will get a new variable
 				RefExp* ref = new RefExp(base, s);
 				//ig[ref] = newLocal(ty);
-				ig[ref] = getLocalExp(ref, ty);
+				ig[ref] = getSymbolExp(ref, ty);
 			}
 		}
 	}
@@ -2974,7 +2981,7 @@ void UserProc::fromSSAform() {
 			// WRONG! There can be other uses of those definitions. Even if these are changed, what if we have to
 			// change definition to two or more new variables? So really need copies, unless something clever is done.
 			// Exp* tempLoc = newLocal(pa->getType());
-			Exp* tempLoc = getLocalExp(new RefExp(pa->getLeft(), pa), pa->getType());
+			Exp* tempLoc = getSymbolExp(new RefExp(pa->getLeft(), pa), pa->getType());
 			if (DEBUG_LIVENESS)
 				LOG << "Phi statement " << s << " requires local, using " << tempLoc << "\n";
 			// For each definition ref'd in the phi
@@ -3339,7 +3346,7 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
 			Exp* loc = *ll;
 			if (loc->isLocal()) {
 				// We want the raw expression here
-				loc = getLocalExp(((Const*)((Location*)loc)->getSubExp1())->getStr());
+				loc = getSymbolExp(((Const*)((Location*)loc)->getSubExp1())->getStr());
 				if (loc == NULL) continue;		// Needed?
 			}
 			if (loc->isSubscript()) {
@@ -3636,13 +3643,11 @@ public:
 	bool analysed;
 	bool aggregateUsed;
 	std::map<std::string, Type*> locals;		// r
-	std::map<Exp*,Exp*,lessExpStar> symbolMap;	// r
+	UserProc::SymbolMapType symbolMap;			// r
 	std::list<Proc*> calleeList;
 	bool decompileSeen;
 	bool decompiled;
 	bool isRecursive;
-	LocationSet definesSet;
-	LocationSet returnsSet;
 };
 
 Memo *UserProc::makeMemo(int mId)
@@ -3668,8 +3673,6 @@ Memo *UserProc::makeMemo(int mId)
 	m->decompileSeen = decompileSeen;
 	m->decompiled = decompiled;
 	m->isRecursive = isRecursive;
-	m->definesSet = definesSet;
-	m->returnsSet = returnsSet;
 
 	signature->takeMemo(mId);
 	for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++)
@@ -3678,7 +3681,7 @@ Memo *UserProc::makeMemo(int mId)
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++)
 		(*it).second->takeMemo(mId);
 
-	for (std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
+	for (SymbolMapType::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
 		(*it).first->takeMemo(mId);
 		(*it).second->takeMemo(mId);
 	}
@@ -3709,8 +3712,6 @@ void UserProc::readMemo(Memo *mm, bool dec)
 	decompileSeen = m->decompileSeen;
 	decompiled = m->decompiled;
 	isRecursive = m->isRecursive;
-	definesSet = m->definesSet;
-	returnsSet = m->returnsSet;
 
 	signature->restoreMemo(m->mId, dec);
 	for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++)
@@ -3719,7 +3720,7 @@ void UserProc::readMemo(Memo *mm, bool dec)
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++)
 		(*it).second->restoreMemo(m->mId, dec);
 
-	for (std::map<Exp*,Exp*,lessExpStar>::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
+	for (SymbolMapType::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
 		(*it).first->restoreMemo(m->mId, dec);
 		(*it).second->restoreMemo(m->mId, dec);
 	}
@@ -3741,7 +3742,7 @@ void UserProc::addImplicitAssigns() {
 }
 
 char* UserProc::lookup(Exp* e) {
-	std::map<Exp*,Exp*,lessExpStar>::iterator it;
+	SymbolMapType::iterator it;
 	it = symbolMap.find(e);
 	if (it == symbolMap.end())
 		return NULL;
@@ -3751,7 +3752,7 @@ char* UserProc::lookup(Exp* e) {
 }
 
 void UserProc::symbolMapToLog() {
-	std::map<Exp*,Exp*,lessExpStar>::iterator it;
+	SymbolMapType::iterator it;
 	for (it = symbolMap.begin(); it != symbolMap.end(); it++)
 		LOG << "  " << it->first << " maps to " << it->second << "\n";
 }

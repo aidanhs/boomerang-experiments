@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.4 $
+ * $Revision: 1.90.2.5 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1016,12 +1016,12 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn) {
 	lines.push_back(strdup(s.str().c_str()));
 }
 
-void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList &args, StatementList& rets) {
+void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList &args, StatementList& defs) {
 	std::ostringstream s;
 	indent(s, indLevel);
-	if (rets.size() >= 1) {
+	if (defs.size() >= 1) {
 		// FIXME: Needs changing if more than one real return location (return a struct)
-		Exp* firstRet = ((Assignment*)*rets.begin())->getLeft();
+		Exp* firstRet = ((Assignment*)*defs.begin())->getLeft();
 		appendExp(s, firstRet, PREC_ASSIGN);
 		s << " = ";
 	}
@@ -1047,10 +1047,10 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, Stat
 			appendExp(s, arg, PREC_COMMA);
 	}
 	s << ");";
-	if (rets.size() > 1) {
+	if (defs.size() > 1) {
 		bool first = true;
 		s << " /* OUT: ";
-		for (ss = rets.begin(); ss != rets.end(); ++ss) {
+		for (ss = defs.begin(); ss != defs.end(); ++ss) {
 			if (first)
 				first = false;
 			else
@@ -1065,7 +1065,7 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, Stat
 
 // Ugh - almost the same as the above, but it needs to take an expression, // not a Proc*
 void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp, StatementList &args) {
-//	FIXME: Needs to take a ReturnStatement*, since we can infer some possible return locations
+//	FIXME: Needs to take another argument, since we can infer some defines...
 	std::ostringstream s;
 	indent(s, indLevel);
 	s << "(*";
@@ -1131,6 +1131,7 @@ void CHLLCode::AddProcDec(Signature *signature, bool open) {
 		Type *ty = signature->getParamType(i); 
 		if (ty->isPointer() && ((PointerType*)ty)->getPointsTo()->isArray()) {
 			// C does this by default when you pass an array
+			// FIXME: what the hell is this?
 			ty = ((PointerType*)ty)->getPointsTo();
 			Exp *foo = new Const("foo123412341234");
 			m_proc->searchAndReplace(Location::memOf(Location::param(signature->getParamName(i)), NULL), foo);
@@ -1158,9 +1159,9 @@ void CHLLCode::AddLocal(const char *name, Type *type, bool last) {
 	std::ostringstream s;
 	indent(s, 1);
 	appendTypeIdent(s, type, name);
-	Exp *e = m_proc->getLocalExp(name);
+	Exp *e = m_proc->expFromSymbol(name);
 	if (e) {
-	  //if (e->getOper() == opSubscript && ((RefExp*)e)->getRef() == NULL &&
+		// ? Should never see subscripts in the back end!
 		if (e->getOper() == opSubscript && ((RefExp*)e)->isImplicitDef() &&
 			(e->getSubExp1()->getOper() == opParam ||
 			 e->getSubExp1()->getOper() == opGlobal)) {

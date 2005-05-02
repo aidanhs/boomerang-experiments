@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.4 $
+/* $Revision: 1.115.2.5 $
 */
 
 #ifndef _PROC_H_
@@ -32,6 +32,7 @@
 #include "cfg.h"				// For cfg->simplify()
 #include "hllcode.h"
 #include "memo.h"
+#include "dataflow.h"			// For class UseCollector
 
 class Prog;
 class UserProc;
@@ -292,6 +293,13 @@ protected:
 
 };		// class LibProc
 
+enum ProcStatus {
+	PROC_UNDECODED,		// Has not even been decoded
+	PROC_TRAVERSED,		// Has been traversed on the way down in the recursion manager
+	PROC_PRIMARY,		// Has had primary processing only (some callees were childless)
+	PROC_ANALYSED		// Has been completely analysed
+	// , PROC_RETURNS	// Has had returns intersected with all caller's defines
+};
 /*==============================================================================
  * UserProc class.
  *============================================================================*/
@@ -305,10 +313,10 @@ class UserProc : public Proc {
 		/*
 		 * True if this procedure has been decoded.
 		 */
-		bool		decoded;
+		bool		decoded;		// Deprecated; use ProcStatus
 		
 		// true if the procedure has been analysed.
-		bool		analysed;
+		bool		analysed;		// Deprecated; use ProcStatus
 
 		/*
 		 * Indicate that the aggregate location pointer "hidden" parameter is used, and is thus explicit in this
@@ -318,7 +326,11 @@ class UserProc : public Proc {
 		bool		aggregateUsed;
 
 		/*
-		 * This map records the allocation of local variables and their types.
+		 * This map records the names and types for local variables. It should be a subset of the symbolMap, which also
+		 * stores parameters.
+		 * It is a convenient place to store the types of locals after
+		 * conversion from SSA form, since it is then difficult to access the definitions of locations.
+		 * This map could be combined with symbolMap below, but beware of parameters.
 		 */
 		std::map<std::string, Type*> locals;
 
@@ -328,7 +340,10 @@ class UserProc : public Proc {
 		 * A map between machine dependent locations and their corresponding symbolic, machine independent
 		 * representations.  Example: m[r28{0} - 8] -> local5
 		 */
-		std::map<Exp*,Exp*,lessExpStar> symbolMap;
+public:
+		typedef std::map<Exp*,Exp*,lessExpStar> SymbolMapType;
+private:
+		SymbolMapType symbolMap;
 
 		/*
 		 * Set of callees (Procedures that this procedure calls). Used for call graph, among other things
@@ -351,19 +366,9 @@ class UserProc : public Proc {
 		bool		isRecursive;
 
 		/*
-		 * Set of locations defined in this proc. Some or all or none of these may be return locations (will be if used
-		 * before definition after the call).
-		 * Note: there is a different set in each call, because the locations may be different from the caller's
-		 * perspective (e.g. stack locations)
-		 * FIXME: This is likely redundant now
+		 * A collector for potential parameters (locations used before being defined)
 		 */
-		LocationSet	definesSet;
-
-		/*
-		 * Set of locations returned by this proc (see above). As calls are found with use-before-def of locations in
-		 * definesSet, they are transferred to this set.
-		 */
-		LocationSet	returnsSet;
+		UseCollector col;
 
 public:
 
@@ -544,15 +549,6 @@ virtual	void		removeReturn(Exp *e);
 
 		bool		searchAll(Exp* search, std::list<Exp*> &result);
 
-#if 0
-		// get the set of locations "defined" in this procedure
-		void		getDefinitions(LocationSet &defs) {defs = definesSet;}
-
-		// get the set of locations "returned" by this procedure
-		void		getReturnSet(LocationSet &ret) {ret = returnsSet;}
-
-#endif
-
 		void		getDefinitions(LocationSet &defs);
 		void		addImplicitAssigns();
 
@@ -579,10 +575,9 @@ private:
 
 public:
 		/* 
-		 * Return an expression that is equivilent to e in terms of local variables.
-		 * Creates new locals as needed.
+		 * Return an expression that is equivilent to e in terms of local variables.  Creates new locals as needed.
 		 */
-		Exp			*getLocalExp(Exp *le, Type *ty = NULL, bool lastPass = false);
+		Exp			*getSymbolExp(Exp *le, Type *ty = NULL, bool lastPass = false);
 
 
 		/*
@@ -605,9 +600,9 @@ public:
 		Type		*getLocalType(const char *nam);
 		void		setLocalType(const char *nam, Type *ty);
 
-		// return a local's exp
-		Exp			*getLocalExp(const char *nam);
-		void		setLocalExp(const char *nam, Exp *e);
+		// return a symbol's exp (note: the original exp, like r24, not local1)
+		Exp			*expFromSymbol(const char *nam);
+		void		setExpSymbol(const char *nam, Exp *e, Type* ty);
 
 		int			getNumLocals() { return (int)locals.size(); }
 		const char	*getLocalName(int n);
@@ -684,6 +679,10 @@ virtual void		printCallGraphXML(std::ostream &os, int depth,
 
 		// Cast the constant whose conscript is num to be type ty
 		void		castConst(int num, Type* ty);
+
+		// Add a location to the UseCollector; this means this location is used before defined, and hence is probably a
+		// parameter
+		void		useBeforeDef(Exp* loc) {col.insert(loc);}
  
 private:
 		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case
@@ -702,6 +701,5 @@ protected:
 		UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), nextLocal(0), decompileSeen(false),
 			decompiled(false), isRecursive(false) { }
 		void		setCFG(Cfg *c) { cfg = c; }
-		void		addDef(Exp *e) { definesSet.insert(e); }
 };		// class UserProc
 #endif

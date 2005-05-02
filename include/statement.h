@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.8 $
+ * $Revision: 1.76.2.9 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -217,7 +217,7 @@ virtual void		getDefinitions(LocationSet &def) {}
 
 		// set the left for forExp to newExp
 virtual	void		setLeftFor(Exp* forExp, Exp* newExp) {assert(0);}
-virtual bool		defines(Exp* loc) {return false;}				// True if this Statement defines loc
+virtual bool		definesLoc(Exp* loc) {return false;}			// True if this Statement defines loc
 
 	// returns true if this statement uses the given expression
 virtual bool		usesExp(Exp *e) = 0;
@@ -380,7 +380,7 @@ virtual bool		usesExp(Exp *e);	   // PhiAssign and ImplicitAssign don't override
 
 virtual bool		isDefinition() { return true; }
 virtual void		getDefinitions(LocationSet &defs);
-virtual bool		defines(Exp* loc);						// True if this Statement defines loc
+virtual bool		definesLoc(Exp* loc);					// True if this Statement defines loc
 		
 		// get how to access this lvalue
 virtual Exp*		getLeft() { return lhs; }		// Note: now only defined for Assignments, not all Statements
@@ -950,8 +950,8 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call, actually a list of Assignments
 		StatementList arguments;
 
-		// The list of returns for this call, also a list of Assignments
-		StatementList returns;
+		// The list of defines for this call, also a list of Assignments (used to be called returns)
+		StatementList defines;
 
 		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
 		// For an unanalysed indirect call, this will be NULL
@@ -962,7 +962,7 @@ class CallStatement: public GotoStatement {
 		Signature*	signature;
 
 		// A UseCollector object to collect the live variables at this call. Used as part of the calculation of
-		// returns
+		// defines
 		UseCollector useCol;
 
 		// A DefCollector object to collect the reaching definitions; used for fixCallRefs/localiseExp etc; also
@@ -989,17 +989,17 @@ virtual bool		accept(StmtModifier* visitor);
 		void		setArguments(StatementList& args);
 		// Set implicit arguments: so far, for testing only:
 		//void		setImpArguments(std::vector<Exp*>& arguments);
-		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
+//		void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
 		void		setSigArguments();			// Set arguments based on signature
 		StatementList& getArguments() {return arguments;}	// Return call's arguments
 		void		updateArguments();			// Update the arguments based on a callee change
-		//Exp		*getReturnExp(int i);
-		int			findReturn(Exp *e);			// Still needed temporarily for ad hoc type analysis
-		void		removeReturn(Exp *e);
+		//Exp		*getDefineExp(int i);
+		int			findDefine(Exp *e);			// Still needed temporarily for ad hoc type analysis
+		void		removeDefine(Exp *e);
 		//void		ignoreReturn(Exp *e);
 		//void		ignoreReturn(int n);
 		//void		addReturn(Exp *e, Type* ty = NULL);
-		void		updateReturns();			// Update the returns based on a callee change
+		void		updateDefines();			// Update the defines based on a callee change
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
@@ -1066,7 +1066,7 @@ virtual bool		propagateToAll() { assert(false); return false;}
 virtual bool		isDefinition();
 virtual void		getDefinitions(LocationSet &defs);
 
-virtual bool		defines(Exp* loc);						// True if this Statement defines loc
+virtual bool		definesLoc(Exp* loc);					// True if this Statement defines loc
 virtual void		setLeftFor(Exp* forExp, Exp* newExp);
 		// get how to replace this statement in a use
 //virtual Exp*		getRight() { return NULL; }
@@ -1077,7 +1077,7 @@ virtual bool		processConstants(Prog *prog);
 		// simplify all the uses/defs in this Statement
 virtual void		simplify();
 
-		void		setIgnoreReturnLoc(bool b);
+//		void		setIgnoreReturnLoc(bool b);
 
 		void		decompile();
 
@@ -1088,8 +1088,9 @@ virtual void		fromSSAform(igraph& ig);
 
 virtual	Type*		getTypeFor(Exp* e);					// Get the type defined by this Statement for this location
 virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, defined in this statement
-		DefCollector*	getDefCollector() {return &defCol;}	// Return pointer to the def collector object
-		UseCollector*	getUseCollector() {return &useCol;}	// Return pointer to the use collector object
+		DefCollector*	getDefCollector() {return &defCol;}			// Return pointer to the def collector object
+		UseCollector*	getUseCollector() {return &useCol;}			// Return pointer to the use collector object
+		void		useBeforeDefine(Exp* x) {useCol.insert(x);}		// Add x to the UseCollector for this call
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
 		// parameters if needed, and return true if any signature parameters added
 		bool		ellipsisProcessing(Prog* prog);
@@ -1102,7 +1103,7 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
 		bool		convertToDirect();
 
 		void		updateArgumentWithType(int n);
-		void		updateReturnWithType(int n);
+		void		updateDefineWithType(int n);
 		void		appendArgument(Assignment* as) {arguments.append(as);}
 	friend class XMLProgParser;
 };		// class CallStatement
@@ -1185,7 +1186,7 @@ virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
 
-virtual bool		defines(Exp* loc);						// True if this Statement defines loc
+virtual bool		definesLoc(Exp* loc);					// True if this Statement defines loc
 
 		// The following two are currently unused, but something will need this information soon
 		int			getNumBytesPopped() { return nBytesPopped; }

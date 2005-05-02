@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.6 $
+ * $Revision: 1.43.2.7 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -270,7 +270,7 @@ void DataFlow::placePhiFunctions(int memDepth, UserProc* proc) {
 }
 
 // Subscript dataflow variables
-void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /* = false */ ) {
+void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStack /* = false */ ) {
 	// Need to clear the Stack of old, renamed locations like m[esp-4] (these will be deleted, and will cause compare
 	// failures in the Stack, so it can't be correctly ordered and hence balanced etc, and will lead to segfaults)
 	if (clearStack) Stack.clear();
@@ -305,9 +305,14 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 					// to an implicit definition at the start of type analysis, but not until all the m[...]
 					// have stopped changing their expressions (complicates implicit assignments considerably).
 					def = NULL;
+					proc->useBeforeDef(x);
 				}
-				else
+				else {
 					def = Stack[x].top();
+					if (def->isCall())
+						// Calls have UseCollectors for locations that are used before definition at the call
+						((CallStatement*)def)->useBeforeDefine(x);
+				}
 				// Replace the use of x with x{def} in S
 				if (S->isPhi()) {
 					Exp* phiLeft = ((PhiAssign*)S)->getLeft();
@@ -344,10 +349,8 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 			}
 			// MVE: do we need this awful hack?
 			if (a->getOper() == opLocal) {
-				a = S->getProc()->getLocalExp(((Const*)a->getSubExp1())->getStr());
-				// Note: used to assert(a) here. However, with switch statements and in other cases, a local may be
-				// created which does not represent memory at all (created with UserProc::newLocal()), and so there
-				// is no entry in symbolMap, and so a becomes NULL. This is not an error.
+				a = S->getProc()->expFromSymbol(((Const*)a->getSubExp1())->getStr());
+				assert(a);
 				// Stack already has a definition for a (as just the bare local)
 				if (a && a->getMemDepth() == memDepth)
 					Stack[a->clone()].push(S);
@@ -386,10 +389,10 @@ void DataFlow::renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack /*
 	}
 	// For each child X of n
 	// Note: linear search!
-	unsigned numBB = cfg->getNumBBs();
+	unsigned numBB = proc->getCFG()->getNumBBs();
 	for (unsigned X=0; X < numBB; X++) {
 		if (idom[X] == n)
-			renameBlockVars(cfg, X, memDepth);
+			renameBlockVars(proc, X, memDepth);
 	}
 	// For each statement S in block n
 	for (S = bb->getFirstStmt(rit, sit); S; S = bb->getNextStmt(rit, sit)) {

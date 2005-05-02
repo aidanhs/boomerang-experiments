@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.7 $
+ * $Revision: 1.39.2.8 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -91,7 +91,7 @@ public:
 		void		Link(int p, int n);
 		void		computeDF(int n);
 		void		placePhiFunctions(int memDepth, UserProc* proc);
-		void		renameBlockVars(Cfg* cfg, int n, int memDepth, bool clearStack = false);
+		void		renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStack = false);
 		bool		doesDominate(int n, int w);
 
 		// For testing:

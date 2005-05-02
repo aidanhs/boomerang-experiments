@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.4 $
+ * $Revision: 1.172.2.5 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -855,7 +855,6 @@ void Terminal::print(std::ostream& os) {
 		case opAnull:	os << "%anul"; break;
 		case opFpush:	os << "FPUSH"; break;
 		case opFpop:	os << "FPOP";  break;
-		// case opPhi:		os << "phi"; break;
 		case opWildMemOf:os<< "m[WILD]"; break;
 		case opWildRegOf:os<< "r[WILD]"; break;
 		case opWildAddrOf:os<< "a[WILD]"; break;
@@ -864,6 +863,7 @@ void Terminal::print(std::ostream& os) {
 		case opNil:		break;
 		case opTrue:	os << "true"; break;
 		case opFalse:	os << "false"; break;
+		case opDefineAll: os << "all"; break;
 		default:
 			LOG << "Terminal::print invalid operator " << operStrings[op] << "\n";
 			assert(0);
@@ -3539,7 +3539,7 @@ Type *RefExp::getType()
 		return ((Assign*)def)->getRight()->getType();
 	if (def && def->isCall()) {
 		CallStatement *call = (CallStatement*)def;
-		int n = call->findReturn(subExp1);
+		int n = call->findDefine(subExp1);
 		if (n != -1 && call->getDestProc()) {
 			return call->getDestProc()->getSignature()->getReturnType(n);
 		}

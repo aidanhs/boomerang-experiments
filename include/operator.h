@@ -4,7 +4,7 @@
  *				denote what the top level operator is
  *============================================================================*/
 /*
- * $Revision: 1.25.6.1 $
+ * $Revision: 1.25.6.2 $
  *
  * 05 Apr 02 - Mike: Created
  * 12 Apr 02 - Mike: INDEX -> OPER
@@ -100,12 +100,13 @@ enum OPER
 	opTern,					// Ternary (i.e. ? : )
 	opAt,					// Bit extraction (expr@first:last in that order)
 
-	opMemOf,				// Represents m[]
 	opRegOf,				// Represents r[]
+	opMemOf,				// Represents m[]
 	opAddrOf,				// Represents a[]
 	opWildMemOf,			// m[wild],
 	opWildRegOf,			// r[wild],
 	opWildAddrOf,			// a[wild],
+	opDefineAll,			// A wild definition
 	opVar,					// Represents l[] (recovered locations)
 	opPhi,					// Represents phi(a1, a2, a3) .. ie SSA form merging
 	opSubscript,			// Represents subscript(e, n) .. ie SSA renaming

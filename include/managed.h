@@ -62,7 +62,7 @@ virtual				~StatementSet() {}
 		bool		removeIfDefines(Exp* given);			// Remove if given exp is defined
 		bool		removeIfDefines(StatementSet& given);	// Remove if any given is def'd
 		bool		exists(Statement* s);					// Search; returns false if !found
-		bool		defines(Exp* loc);						// Search; returns true if any
+		bool		definesLoc(Exp* loc);					// Search; returns true if any
 															// statement defines loc
 		void		clear() {sset.clear();}					// Clear the set
 		bool		operator==(const StatementSet& o) const	// Compare if equal
@@ -104,6 +104,7 @@ virtual				~StatementList() {}
 		char*		prints();							// Print to string (for debugging)
 		void		clear() { slist.clear(); }
 		void		makeCloneOf(StatementList& o);		// Make this a clone of o
+		bool		existsOnLeft(Exp* loc);				// True if loc exists on the LHS of any Assignment in this list
 };		// class StatementList
 
 class StatementVec {

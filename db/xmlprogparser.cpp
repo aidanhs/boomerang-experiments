@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17.2.5 $
+ * $Revision: 1.17.2.6 $
  *
  * June 2004 - Trent: created
  */
@@ -29,7 +29,7 @@ extern "C" {
 
 
 typedef enum { e_prog, e_procs, e_global, e_cluster, e_libproc, e_userproc, e_local, e_symbol, e_secondexp,
-		   e_proven, e_callee, e_caller, e_defines,
+		   e_proven, e_callee, e_caller,
 			   e_signature, e_param, e_implicitparam, e_return, e_rettype, e_prefreturn, e_prefparam,
 		   e_cfg, e_bb, e_inedge, e_outedge, e_livein, e_order, e_revorder,
 		   e_rtl, e_stmt, e_assign, e_assignment, e_phiassign, e_lhs, e_rhs, 
@@ -506,9 +506,6 @@ void XMLProgParser::addToContext_userproc(Context *c, int e)
 	case e_caller:
 		break;
 	case e_callee:
-		break;
-	case e_defines:
-		userproc->addDef(stack.front()->exp);
 		break;
 	case e_cfg:
 		userproc->setCFG(stack.front()->cfg);
@@ -2842,10 +2839,10 @@ void XMLProgParser::persistToXML(std::ostream &out, Statement *stmt)
 		}
 #endif
 
-		for (ss = c->returns.begin(); ss != c->returns.end(); ++ss) {
-			out << "<return>\n";
+		for (ss = c->defines.begin(); ss != c->defines.end(); ++ss) {
+			out << "<defines>\n";
 			persistToXML(out, *ss);
-			out << "</return>\n";
+			out << "</defines>\n";
 		}
 
 		out << "</callstmt>\n";

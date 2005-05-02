@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91.2.5 $
+# $Revision: 1.91.2.6 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -250,6 +250,7 @@ db/DfaTest.o: db/DfaTest.h include/type.h
 db/table.o: include/types.h db/table.h include/statement.h include/exp.h include/statement.h
 db/sslinst.o: include/statement.h include/exp.h include/rtl.h include/cfg.h include/proc.h include/prog.h \
 	include/register.h include/type.h
+db/dataflow.o: include/dataflow.h include/cfg.h include/proc.h include/exp.h
 
 transform/transformer.o: include/transformer.h transform/generic.h transform/rdi.h transform/transformation-parser.h
 transform/generic.o: include/transformer.h transform/generic.h
@@ -288,7 +289,7 @@ codegen/syntax.o: include/hllcode.h include/statement.h \
 type/constraint.o: include/constraint.h include/exp.h include/type.h include/managed.h
 type/type.o: include/type.h
 type/dfa.o: include/type.h include/boomerang.h include/signature.h include/exp.h include/prog.h include/util.h \
-	include/visitor.h
+	include/visitor.h include/proc.h
 type/TypeTest.o: type/TypeTest.h include/util.h include/type.h \
     include/constraint.h include/BinaryFile.h
 

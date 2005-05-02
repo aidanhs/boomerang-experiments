@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.5 $
+ * $Revision: 1.30.2.6 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -1109,7 +1109,7 @@ Exp* DfaLocalConverter::preVisit(Location* e, bool& recur) {
 		if (sig->isStackLocal(proc->getProg(), e)) {
 			recur = false;
 			change = true;			// We've made a change
-			Exp* ret = proc->getLocalExp(e, parentType, true);
+			Exp* ret = proc->getSymbolExp(e, parentType, true);
 			// ret is now *usually* a local so postVisit won't expect parentType changed
 			// Note: at least one of Trent's hacks can cause m[a[...]] to be returned
 			if (ret->isMemOf())
@@ -1139,7 +1139,7 @@ Exp* DfaLocalConverter::preVisit(Binary* e, bool& recur) {
 		// We have something like sp-K; wrap it in a m[] to get the correct exp for the existing local (if any)
 		Exp* memOf_e = Location::memOf(e);
 		return new Unary(opAddrOf,
-			proc->getLocalExp(memOf_e, parentType->asPointer()->getPointsTo(), true));
+			proc->getSymbolExp(memOf_e, parentType->asPointer()->getPointsTo(), true));
 	}
 	recur = true;
 	return e;

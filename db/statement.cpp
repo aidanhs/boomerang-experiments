@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.8 $
+ * $Revision: 1.148.2.9 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1295,16 +1295,16 @@ CallStatement::~CallStatement() {
 
 #if 0
 Exp *CallStatement::getReturnExp(int i) {
-	if (i >= (int)returns.size()) return NULL;
+	if (i >= (int)defines.size()) return NULL;
 	return returns[i].e;
 }
 #endif
 
 // Temporarily needed for ad-hoc type analysis
-int CallStatement::findReturn(Exp *e) {
+int CallStatement::findDefine(Exp *e) {
 	StatementList::iterator rr;
 	int i = 0;
-	for (rr = returns.begin(); rr != returns.end(); ++rr, ++i) {
+	for (rr = defines.begin(); rr != defines.end(); ++rr, ++i) {
 		Exp* ret = ((Assignment*)*rr)->getLeft();
 		if (*ret == *e)
 			return i;
@@ -1528,7 +1528,7 @@ assert(0);		// FIXME: Check MVE HACK!
  * RETURNS:		  ptr to the location that will be used to hold the return value
  *============================================================================*/
 Exp* CallStatement::getReturnLoc() {
-	if (returns.size() == 1)
+	if (defines.size() == 1)
 		return returns[0];
 	return NULL;
 }
@@ -1539,7 +1539,7 @@ bool CallStatement::search(Exp* search, Exp*& result) {
 	bool found = GotoStatement::search(search, result);
 	if (found) return true;
 	StatementList::iterator ss;
-	for (ss = returns.begin(); ss != returns.end(); ++ss) {
+	for (ss = defines.begin(); ss != defines.end(); ++ss) {
 		if ((*ss)->search(search, result))
 			return true;
 	}
@@ -1569,8 +1569,8 @@ bool CallStatement::search(Exp* search, Exp*& result) {
 bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
 	bool change = GotoStatement::searchAndReplace(search, replace);
 	StatementList::iterator ss;
-	// FIXME: MVE: Check if we ever want to change the LHS of arguments or returns...
-	for (ss = returns.begin(); ss != returns.end(); ++ss)
+	// FIXME: MVE: Check if we ever want to change the LHS of arguments or defines...
+	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		change |= (*ss)->search(search, replace);
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
 		change |= (*ss)->search(search, replace);
@@ -1587,7 +1587,7 @@ bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
 bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
 	bool found = GotoStatement::searchAll(search, result);
 	StatementList::iterator ss;
-	for (ss = returns.begin(); ss != returns.end(); ++ss) {
+	for (ss = defines.begin(); ss != defines.end(); ++ss) {
 		if ((*ss)->searchAll(search, result))
 			found = true;
 	}
@@ -1608,18 +1608,18 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
  
 	// Return(s), if any
-	if (returns.size()) {
-		if (returns.size() > 1) os << "{";
+	if (defines.size()) {
+		if (defines.size() > 1) os << "{";
 		StatementList::iterator rr;
 		bool first = true;
-		for (rr = returns.begin(); rr != returns.end(); ++rr) {
+		for (rr = defines.begin(); rr != defines.end(); ++rr) {
 			if (first)
 				first = false;
 			else
 				os << ", ";
 			os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
 		}
-		if (returns.size() > 1) os << "}";
+		if (defines.size() > 1) os << "}";
 		os << " := ";
 	}
 
@@ -1700,8 +1700,8 @@ Statement* CallStatement::clone() {
 	StatementList::iterator ss;
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
 		ret->arguments.append((*ss)->clone());
-	for (ss = returns.begin(); ss != returns.end(); ++ss)
-		ret->returns.append((*ss)->clone());
+	for (ss = defines.begin(); ss != defines.end(); ++ss)
+		ret->defines.append((*ss)->clone());
 #if 0
 	n = implicitArguments.size();
 	for (i=0; i < n; i++)
@@ -1753,10 +1753,10 @@ void CallStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
 			args.push_back(arguments[p->getSignature()->getPreferedParam(i)]);
 		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), args, getReturns());
 #else
-		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), arguments, returns);
+		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), arguments, defines);
 #endif
 	} else
-		hll->AddCallStatement(indLevel, p, p->getName(), arguments, returns);
+		hll->AddCallStatement(indLevel, p, p->getName(), arguments, defines);
 }
 
 void CallStatement::simplify() {
@@ -1764,7 +1764,7 @@ void CallStatement::simplify() {
 	StatementList::iterator ss;
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
 		(*ss)->simplify();
-	for (ss = returns.begin(); ss != returns.end(); ++ss)
+	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		(*ss)->simplify();
 #if 0
 	for (i = 0; i < implicitArguments.size(); i++) {
@@ -1784,7 +1784,7 @@ bool CallStatement::usesExp(Exp *e) {
 	StatementList::iterator ss;
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
 		if ((*ss)->usesExp(e)) return true;
-	for (ss = returns.begin(); ss != returns.end(); ++ss)
+	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		if ((*ss)->usesExp(e)) return true;
 #if 0
 	for (i = 0; i < implicitArguments.size(); i++) {
@@ -1803,10 +1803,9 @@ bool CallStatement::isDefinition() {
 }
 
 void CallStatement::getDefinitions(LocationSet &defs) {
+	// FIXME: may need to update defines first...
 	StatementList::iterator ss;
-	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
-		(*ss)->getDefinitions(defs);
-	for (ss = returns.begin(); ss != returns.end(); ++ss)
+	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		(*ss)->getDefinitions(defs);
 }
 
@@ -1998,8 +1997,8 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 	}
 	unsigned int i;
 
-#if 0		// Don't want to substitute into returns... they have no RHS anyway
-	for (i = 0; i < returns.size(); i++) {
+#if 0		// Don't want to substitute into defines... they have no RHS anyway
+	for (i = 0; i < defines.size(); i++) {
 		if (returns[i].e && returns[i].e->getOper() == opMemOf) {
 			Exp *e = findDefFor(returns[i].e->getSubExp1());
 			if (e)
@@ -2094,7 +2093,7 @@ void CallStatement::fromSSAform(igraph& ig) {
 	StatementList::iterator ss;
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
 		(*ss)->fromSSAform(ig);
-	for (ss = returns.begin(); ss != returns.end(); ++ss)
+	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		(*ss)->fromSSAform(ig);
 	// Don't think we'll need this anyway:
 	// defCol.fromSSAform(ig);
@@ -2589,8 +2588,8 @@ void ReturnStatement::print(std::ostream& os /*= cout*/) {
 	// os << "*" << type << "* ";
 	os << "RET ";
 	std::set<Assignment*, lessExpStar>::iterator it;
-	for (it = returns.begin(); it != returns.end(); it++) {
-		if (it+1 != returns.end())
+	for (it = defines.begin(); it != defines.end(); it++) {
+		if (it+1 != defines.end())
 			os << ", ";
 		(*it)->printCompact(os);
 	}
@@ -3671,7 +3670,7 @@ bool CallStatement::accept(StmtExpVisitor* v) {
 #endif
 #if 0		// Do we want to accept changes to the returns? Not sure now...
 	std::vector<ReturnInfo>::iterator rr;
-	for (rr = returns.begin(); ret && rr != returns.end(); rr++)
+	for (rr = defines.begin(); ret && rr != defines.end(); rr++)
 		if (rr->e)			// Can be NULL now to line up with other returns
 			ret = rr->e->accept(v->ev);
 #endif
@@ -4047,7 +4046,7 @@ void PhiAssign::putAt(int i, Statement* def, Exp* e) {
 
 void CallStatement::setLeftFor(Exp* forExp, Exp* newExp) {
 #if 0
-	for (unsigned u = 0; u < returns.size(); u++) {
+	for (unsigned u = 0; u < defines.size(); u++) {
 		if (*returns[u].e == *forExp) {
 			returns[u].e = newExp;
 			return;
@@ -4071,27 +4070,26 @@ void ReturnStatement::copyReachingDefs(int d) {
 	updateReturns();
 }
 
-bool Assignment::defines(Exp* loc) {
+bool Assignment::definesLoc(Exp* loc) {
 	return (*lhs == *loc);
 }
 
-bool CallStatement::defines(Exp* loc) {
-	// Arguments also assign their locations now (a little unsure about this)
-	StatementList::iterator aa;
-	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
-		if (*((Assignment*)*aa)->getLeft() == *loc)
+bool CallStatement::definesLoc(Exp* loc) {
+	StatementList::iterator dd;
+	for (dd = defines.begin(); dd != defines.end(); ++dd) {
+		Exp* lhs = ((Assign*)*dd)->getLeft();
+		if (*lhs == *loc)
 			return true;
 	}
-	if (calleeReturn == NULL) return false;		// Should never happen?
-	return calleeReturn->defines(loc);			// Delegate to the ReturnStatement object
+	return false;
 }
 
-// Does a ReturnStatement define anything? I say yes, so we can propagate into the ReturnStatement, and delete the
-// original definitions (something needs to define it). Also, now CallStatements delegate define() here (see above)
-bool ReturnStatement::defines(Exp* loc) {
+// Does a ReturnStatement define anything? Yes, so we can propagate into the ReturnStatement, and delete the
+// original definitions (something needs to define it).
+bool ReturnStatement::definesLoc(Exp* loc) {
 	iterator it;
 	for (it = defs.begin(); it != defs.end(); it++) {
-		if ((*it)->defines(loc))
+		if ((*it)->definesLoc(loc))
 			return true;
 	}
 	return false;
@@ -4196,7 +4194,8 @@ void ReturnStatement::updateReturns() {
 	Signature* sig = proc->getSignature();
 	StatementList oldDefs(defs);					// Copy the old definitions
 	defs.clear();
-	// For each location in the collector, make sure that there is an assignment in the old definitions
+	// For each location in the collector, make sure that there is an assignment in the old definitions, which will
+	// be filtered and sorted to become the new definitions
 	// Ick... O(N*M) (N existing definitions, M collected locations)
 	LocationSet::iterator ll;
 	StatementList::iterator it;
@@ -4213,7 +4212,7 @@ void ReturnStatement::updateReturns() {
 			}
 		}
 		if (!found) {
-			Assign* as = new Assign(new VoidType, loc->clone(), (*ll)->clone());
+			Assign* as = new Assign(loc->clone(), (*ll)->clone());
 			oldDefs.append(as);
 		}
 	}
@@ -4234,7 +4233,7 @@ void ReturnStatement::updateReturns() {
 		if (rhs->isSubscript() && ((RefExp*)rhs)->isImplicitDef() && *((RefExp*)rhs)->getSubExp1() == *lhs)
 			continue;						// Filter out the preserveds
 			
-		// Insert it, in order, into the existing set of definitions
+		// Insert as, in order, into the existing set of definitions
 		StatementList::iterator nn;
 		bool inserted = false;
 		for (nn = defs.begin(); nn != defs.end(); ++nn) {
@@ -4249,7 +4248,7 @@ void ReturnStatement::updateReturns() {
 	}
 }
 
-void CallStatement::updateReturns() {
+void CallStatement::updateDefines() {
 	Signature* sig;
 	if (procDest)
 		// The signature knows how to order the returns
@@ -4257,5 +4256,62 @@ void CallStatement::updateReturns() {
 	else
 		// Else just use the enclosing proc's signature
 		sig = proc->getSignature();
+
+	// Move the definitions to a temporary list
+	StatementList oldDefines(defines);					// Copy the old defines
+	defines.clear();
+
+	// Ensure that everything in the UseCollector has an entry in oldDefines
+	LocationSet::iterator ll;
+	StatementList::iterator it;
+	for (ll = useCol.begin(); ll != useCol.end(); ++ll) {
+		bool found = false;
+		Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
+		if (!returnFilter(loc, sig, proc))
+			continue;									// Filtered out
+		for (it = oldDefines.begin(); it != oldDefines.end(); it++) {
+			Exp* lhs = ((Assignment*)*it)->getLeft();
+			if (*lhs == *loc) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			ImplicitAssign* as = new ImplicitAssign(loc->clone());
+			oldDefines.append(as);
+		}
+	}
+
+	for (it = oldDefines.end(); it != oldDefines.begin(); ) {
+		--it;										// Becuase we are using a forwards iterator backwards
+		// Make sure the LHS is still in the collector
+		Assign* as = (Assign*)*it;
+		Exp* lhs = as->getLeft();
+		if (!useCol.existsNS(lhs))
+			continue;						// Not in collector: delete it (don't copy it)
+		if (calleeReturn && !calleeReturn->definesLoc(lhs))
+			continue;						// Intersection with callee returns failed
+		if (!returnFilter(lhs, sig, proc))
+			continue;						// Filtered out: delete it
+
+		// Insert as, in order, into the existing set of definitions
+		StatementList::iterator nn;
+		bool inserted = false;
+		for (nn = defines.begin(); nn != defines.end(); ++nn) {
+			if (sig->returnCompare(*as, *(Assign*)*nn)) {	// If the new assignment is less than the current one
+				nn = defines.insert(nn, as);				// then insert before this position
+				inserted = true;
+				break;
+			}
+		}
+		if (!inserted)
+			defines.insert(defines.end(), as);	// In case larger than all existing elements
+	}
 }
 
+void CallStatement::updateArguments() {
+
+	if (calleeReturn == NULL) {
+	}
+
+}

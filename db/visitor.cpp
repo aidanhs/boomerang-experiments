@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.7 $
+ * $Revision: 1.23.2.8 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -178,7 +178,7 @@ Exp* CallRefsFixer::postVisit(RefExp* r) {
 			return e;
 		} else {
 			Exp* subExp1 = r->getSubExp1();
-			if (call->findReturn(subExp1) == -1) {
+			if (call->findDefine(subExp1) == -1) {
 				if (VERBOSE && !subExp1->isPC()) {
 					LOG << "nothing proven about " << subExp1 << " and yet it is referenced by stmt " <<
 						enclosingStmt->getNumber() << ", and not in returns of " << "\n" << "	" << call << "\n";
