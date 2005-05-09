@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.7 $
+ * $Revision: 1.43.2.8 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -305,7 +305,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					// to an implicit definition at the start of type analysis, but not until all the m[...]
 					// have stopped changing their expressions (complicates implicit assignments considerably).
 					def = NULL;
-					proc->useBeforeDef(x);
+					proc->useBeforeDefine(x);
 				}
 				else {
 					def = Stack[x].top();
@@ -323,7 +323,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 		}
 
 		// MVE: Check for Call and Return Statements; these have Collector objects that need to be updated
-		// Do before the below, so CallStatements have not yet processed their returns
+		// Do before the below, so CallStatements have not yet processed their defines
 		if (S->isCall() || S->isReturn()) {
 			DefCollector* col;
 			if (S->isCall())
@@ -420,7 +420,7 @@ void DefCollector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar
 }
 
 // Find the definition for e that reaches this Collector. If none reaches here, return NULL
-RefExp* DefCollector::findDef(Exp* e) {
+RefExp* DefCollector::findDefFor(Exp* e) {
 	RefExp re(e, (Statement*)-1);		// Wrap in a definition with a wild definition
 	LocationSet::iterator it = locs.find(&re);
 	if (it == locs.end())

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.9 $
+ * $Revision: 1.238.2.10 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -597,7 +597,7 @@ void UserProc::generateCode(HLLCode *hll) {
 
 	hll->AddProcStart(signature);
 	
-	// Local variables; print everything in the symbolMap
+	// Local variables; print everything in the locals map
 	std::map<std::string, Type*>::iterator last = locals.end();
 	if (locals.size()) last--;
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++) {
@@ -1032,6 +1032,24 @@ std::set<UserProc*>* UserProc::decompile() {
 		return decompile();	 // Restart decompiling this proc
 	}
 
+	// Used to be later...
+	if (!Boomerang::get()->noParameterNames) {
+		for (int i = maxDepth; i >= 0; i--) {
+			replaceExpressionsWithParameters(df, i);
+			replaceExpressionsWithLocals(true);
+			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
+		}
+		trimReturns();
+		fixCallRefs();
+		trimParameters();
+		if (VERBOSE) {
+			LOG << "=== After replacing expressions, trimming params and returns ===\n";
+			printToLog();
+			LOG << "=== End after replacing expressions, trimming params and returns ===\n";
+			LOG << "===== End after replacing params =====\n\n";
+		}
+	}
+
 	// Only remove unused statements after decompiling as much as possible of the proc
 	for (depth = 0; depth <= maxDepth; depth++) {
 		// Remove unused statements
@@ -1078,6 +1096,7 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	}
 
+#if 0		// Want this earlier, before remove unused statements, so assignments to locals can work
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
 			replaceExpressionsWithParameters(df, i);
@@ -1094,6 +1113,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			LOG << "===== End after replacing params =====\n\n";
 		}
 	}
+#endif
 
 	processConstants();
 	//sortParameters();
@@ -1286,7 +1306,7 @@ void UserProc::trimReturns() {
 	int sp = signature->getStackRegister(prog);
 
 	for (int n = 0; n < 2; n++) {
-		// may need to do multiple times due to dependencies
+		// may need to do multiple times due to dependencies FIXME: efficiency!
 
 		// Special case for 32-bit stack-based machines (e.g. Pentium).
 		// RISC machines generally preserve the stack pointer (so no special case required)
@@ -2157,11 +2177,13 @@ void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 			}
 		}
 	}
+#if 1
 	if (found) {
 		// Must redo all the subscripting!
 		for (int d=0; d <= depth; d++)
 			df.renameBlockVars(this, 0, d /* Memory depth */, true);
 	}
+#endif
 
 	// replace expressions in regular statements with parameters
 	for (it = stmts.begin(); it != stmts.end(); it++) {
@@ -2806,8 +2828,7 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 			}
 #endif
 			if (!s->isAssignment()) {
-				// Never delete a statement other than an assignment
-				// (e.g. nothing "uses" a Jcond)
+				// Never delete a statement other than an assignment (e.g. nothing "uses" a Jcond)
 				ll++;
 				continue;
 			}
@@ -2823,9 +2844,10 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				continue;
 			}
 			if (asLeft->getOper() == opMemOf &&
+					symbolMap.find(asLeft) == symbolMap.end() &&		// Real locals are OK
 					(!as->isAssign() || !(*new RefExp(asLeft, NULL) == *((Assign*)s)->getRight()))) {
 				// Looking for m[x] := anything but m[x]{-}
-				// Assignments to memof anything must always be kept. If it is an unused local, it will be removed later
+				// Assignments to memof anything-but-local must always be kept.
 				ll++;
 				continue;
 			}
@@ -2931,7 +2953,9 @@ void UserProc::fromSSAform() {
 	}
 
 	// First rename the variables (including phi's, but don't remove).  The below could be replaced by
-	// replaceExpressionsWithSymbols() now, except that then references don't get removed
+	//  replaceExpressionsWithSymbols() now, except that then references don't get removed.
+	// NOTE: it is not possible to postpone renaming these locals till the back end, since the same base location
+	// may require different names at different locations, e.g. r28{-} is local0, r28{16} is local1
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
 		s->fromSSAform(ig);
@@ -2962,9 +2986,8 @@ void UserProc::fromSSAform() {
 				if (DEBUG_LIVENESS || DEBUG_UNUSED_STMT)
 					LOG << "Removing phi: left and all refs same or 0: " << s << "\n";
 				// Just removing the refs will work, or removing the whole phi
-				// NOTE: Removing the phi here may cause other statments to be
-				// not used. Soon I want to remove the phi's earlier, so this
-				// code can be removed. - MVE
+				// NOTE: Removing the phi here may cause other statments to be not used. Soon I want to remove the
+				// phi's earlier, so this code can be removed. - MVE
 				removeStatement(s);
 			} else
 				// Need to replace the phi by an expression,
@@ -3065,18 +3088,14 @@ bool UserProc::prove(Exp *query)
 		bool gotdef = false;
 		// replace expression from return set with expression in the collector of the return 
 		if (theReturnStatement) {
-			ReturnStatement::iterator rr;
-			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
-				Exp *e = ((Assignment*)*rr)->getLeft();
-				if (*e == *query->getSubExp1()) {
-					query->refSubExp1() = ((Assign*)*rr)->getRight();
-					gotdef = true;
-					break;
-				}
+			RefExp* ref = theReturnStatement->findDefFor(query->getSubExp1());
+			if (ref) {
+				query->refSubExp1() = ref;
+				gotdef = true;
 			}
 		}
 		if (!gotdef && DEBUG_PROOF) {
-			LOG << "not in return set: " << query->getSubExp1() << "\n" << "prove returns false\n";
+			LOG << "not in return collector: " << query->getSubExp1() << "\n" << "prove returns false\n";
 			inProve = false;
 			return false;
 		}

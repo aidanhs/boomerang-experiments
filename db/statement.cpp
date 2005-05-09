@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.9 $
+ * $Revision: 1.148.2.10 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1382,7 +1382,7 @@ Exp* CallStatement::localiseExp(Exp* e, int depth /* = -1 */) {
 // Was called findArgument(), and used implicit arguments and signature parameters
 // Note: must only operator on unsubscripted locations, otherwise it is invalid
 Exp* CallStatement::findDefFor(Exp *e) {
-	return defCol.findDef(e);
+	return defCol.findDefFor(e);
 #if 0
 	int n = -1;
 	if (!m_isComputed && procDest) {			// ? What if we find a destination for a computed call?
@@ -2021,9 +2021,15 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 		a = a->searchReplaceAll(from, to, change);
 		if (change) {
 			a = a->simplifyArith()->simplify();
-			if (1 & VERBOSE)
+			if (VERBOSE)
 				LOG << "call doReplaceRef: updated argument " << i << " with " << a << "\n";
 			updateArgumentWithType(i);
+		}
+		// Also substitute into m[...] on the LHS, but don't change the LHS itself.
+		Exp* al = ((Assign*)*ss)->getLeft();
+		if (al->isMemOf()) {
+			al->searchReplaceAll(from, to, change);
+			if (change) al->simplifyArith()->simplify();
 		}
 	}
 #if 0
@@ -2070,8 +2076,10 @@ int CallStatement::getNumArguments()
 
 void CallStatement::setNumArguments(int n) {
 	int oldSize = arguments.size();
-	arguments.clear();
-	// printf, scanf start with just 2 arguments
+	StatementList::iterator aa = arguments.begin();
+	advance(aa, n);
+	arguments.erase(aa, arguments.end());
+	// MVE: check if these need extra propagation
 	for (int i = oldSize; i < n; i++) {
 		Exp* a = procDest->getSignature()->getArgumentExp(i);
 		Assign* as = new Assign(new VoidType(), a->clone(), a->clone());
@@ -2304,10 +2312,12 @@ Type *Statement::getTypeFor(Exp *e, Prog *prog)
 	return ty;
 }
 
+// For ad-hoc TA only...
 bool CallStatement::processConstants(Prog *prog) {
 	StatementList::iterator aa;
-	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
-		Type *t = ((Assign*)*aa)->getType();
+	int i=0;
+	for (aa = arguments.begin(); aa != arguments.end(); ++aa, ++i) {
+		Type *t = getArgumentType(i);
 		Exp *e = ((Assign*)*aa)->getRight();
 	
         // check for a[m[constant]{?}], treat it like a constant
@@ -4134,6 +4144,11 @@ void ReturnStatement::print(std::ostream& os) {
 			os << ", ";
 		((Assignment*)*it)->printCompact(os);
 	}
+#if 1
+	// Collected reaching definitions
+	os << "\n              Reaching definitions: ";
+	col.print(os);
+#endif
 }
 
 #if 0

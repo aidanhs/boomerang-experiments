@@ -99,6 +99,7 @@ virtual				~StatementList() {}
 		// This one is needed where you remove in the middle of a loop
 		// Use like this: it = mystatementlist.erase(it);
 		iterator	erase(iterator it) {return slist.erase(it);}
+		iterator	erase(iterator first, iterator last) {return slist.erase(first, last);}
 		iterator	insert(iterator it, Statement* s) {return slist.insert(it, s);}
 		bool		exists(Statement* s);				// Search; returns false if not found
 		char*		prints();							// Print to string (for debugging)

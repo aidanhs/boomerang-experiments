@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.2 $
+ * $Revision: 1.126.2.3 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -1180,7 +1180,7 @@ void Prog::removeUnusedReturns() {
 		std::set<CallStatement*>::iterator cc;
 		for (cc = callers.begin(); cc != callers.end(); ++cc) {
 			// Union in the set of returns used by this caller
-			// finalLocs.makeUnion((*cc)->getReturnSet());	// HACK! NOT COMPLETED YET!
+			// finalLocs.makeUnion((*cc)->getReturnSet());	// FIXME! NOT COMPLETED YET!
 		}
 	}
 }

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.9 $
+ * $Revision: 1.76.2.10 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1206,6 +1206,9 @@ virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
 		// Copy reaching definitions (only depth d) to the set of locations being returned
 		void		copyReachingDefs(int d);
+
+		// Find definition for e (in the collector)
+		RefExp*		findDefFor(Exp* e) {return col.findDefFor(e);}
 
 virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.6 $
+ * $Revision: 1.30.2.7 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -573,7 +573,6 @@ void CallStatement::dfaTypeAnalysis(bool& ch, UserProc* proc) {
 // Ex1 := Ex1 meet Ex0
 // Ex2 := Ex1 meet Ex0
 // ...
-// MVE: Actually, I now believe that I need Ex0 := Ex0 join (Ex1 join Ex2 join ...)
 // The others are correct.
 void PhiAssign::dfaTypeAnalysis(bool& ch, UserProc* proc) {
 	iterator it;

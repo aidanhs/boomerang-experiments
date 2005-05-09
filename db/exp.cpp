@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.5 $
+ * $Revision: 1.172.2.6 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -3000,7 +3000,6 @@ Exp *Exp::removeSubscripts(bool& allZero)
 //
 
 Exp* RefExp::fromSSA(igraph& ig) {
-	// FIXME: Need to check if the argument is a memof, and if so deal with that specially (e.g. global)
 	// Check to see if it is in the map
 	igraph::iterator it = ig.find(this);
 	if (it == ig.end()) {
@@ -3012,8 +3011,7 @@ Exp* RefExp::fromSSA(igraph& ig) {
 	}
 	else {
 		if (subExp1->isPC())
-			// pc is just a nuisance at this stage. Make it explicit for
-			// debugging (i.e. to find out why it is still here)
+			// pc is just a nuisance at this stage. Make it explicit for debugging (i.e. find out why it is still here)
 			return Location::local("pc", NULL);
 		// It is in the map. Replace with the assigned local
 		return it->second->clone();
@@ -3041,7 +3039,7 @@ Exp* Ternary::fromSSA(igraph& ig) {
 Exp* Exp::fromSSAleft(igraph& ig, Statement* d) {
 	RefExp* r = new RefExp(this, d);	   // "Wrap" in a ref
 	return r->fromSSA(ig);
-	// Note: r will be ;//deleted in fromSSA! Do not ;//delete here!
+	// Note: r will be deleted in fromSSA! Do not delete here!
 }
 
 // Return the memory nesting depth

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.8 $
+ * $Revision: 1.39.2.9 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -160,7 +160,7 @@ public:
 		iterator	begin() {return locs.begin();}
 		iterator	end()	 {return locs.end();}
 		bool		exists(Exp* e) {return locs.exists(e);}			// Note: probably want the NS version...
-		bool		existsNS(Exp* e) {return locs.existsNS(e);}
+		bool		existsNS(Exp* e) {return locs.existsNS(e);}		// No Subscripts version
 };
 
 /**
@@ -186,7 +186,7 @@ public:
 		/**
 		 * Find the definition for a location. If not found, return NULL
 		 */
-		RefExp*		findDef(Exp* e);
+		RefExp*		findDefFor(Exp* e);
 };
 
 /**

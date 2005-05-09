@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.5 $
+/* $Revision: 1.115.2.6 $
 */
 
 #ifndef _PROC_H_
@@ -682,7 +682,7 @@ virtual void		printCallGraphXML(std::ostream &os, int depth,
 
 		// Add a location to the UseCollector; this means this location is used before defined, and hence is probably a
 		// parameter
-		void		useBeforeDef(Exp* loc) {col.insert(loc);}
+		void		useBeforeDefine(Exp* loc) {col.insert(loc);}
  
 private:
 		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case
