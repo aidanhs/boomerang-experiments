@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.10 $
+ * $Revision: 1.148.2.11 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -4329,4 +4329,16 @@ void CallStatement::updateArguments() {
 	if (calleeReturn == NULL) {
 	}
 
+}
+
+// Intersect with the given location set
+void ReturnStatement::intersectWithLive(LocationSet& sset) {
+	iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ) {
+		Assign* a = (Assign*)*rr;
+		if (!sset.exists(a->getLeft()))
+			rr = defs.erase(rr);
+		else
+			rr++;
+	}
 }

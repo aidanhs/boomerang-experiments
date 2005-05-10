@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.3 $
+ * $Revision: 1.126.2.4 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -986,12 +986,12 @@ void Prog::decompile() {
 	}
 
 	if (!Boomerang::get()->noDecompile) {
-		if (VERBOSE)
-			LOG << "Prog: final removing unused returns\n";
-
-		// A final pass to remove return locations not used by any caller
-		if (!Boomerang::get()->noRemoveReturns) 
+		if (!Boomerang::get()->noRemoveReturns) {
+			// A final pass to remove returns not used by any caller
+			if (VERBOSE)
+				LOG << "Prog: final removing unused returns\n";
 			removeUnusedReturns();
+		}
 
 		// print XML after removing returns
 		for (pp = m_procs.begin(); pp != m_procs.end(); pp++) {
@@ -1104,8 +1104,8 @@ void Prog::removeUnusedReturns() {
 	bool change;
 	do {
 		rc.clear();
-		// Iterate through the workset, looking for uses of returns from calls in these procs
-		// (initially, all procs; later, callers of procs whose returns set has been reduced
+		// Iterate through the workset, looking for uses of returns from calls in these procs (initially, all procs;
+		// later, callers of procs whose returns set has been reduced
 		// FIXME: the ordering is not consistent; it is affecting whether output is correct or not!!
 		// (so worksets not working)
 		std::set<UserProc*>::iterator it;
@@ -1174,18 +1174,28 @@ void Prog::removeUnusedReturns() {
 	for (pp = m_procs.begin(); pp != m_procs.end(); ++pp) {
 		UserProc* proc = (UserProc*)(*pp);
 		if (proc->isLib()) continue;
-		LocationSet finalLocs;
-		// For each caller
-		std::set<CallStatement*>& callers = (*pp)->getCallers();
-		std::set<CallStatement*>::iterator cc;
-		for (cc = callers.begin(); cc != callers.end(); ++cc) {
-			// Union in the set of returns used by this caller
-			// finalLocs.makeUnion((*cc)->getReturnSet());	// FIXME! NOT COMPLETED YET!
+		ReturnStatement* theReturn = proc->getTheReturnStatement();
+		if (theReturn == NULL)
+			continue;
+		LocationSet unionOfCallerLiveLocs;
+		if (strcmp(proc->getName(), "main") == 0)
+			// Just insert one return for main. Note: at present, the first parameter is still the stack pointer
+			unionOfCallerLiveLocs.insert(proc->getSignature()->getReturnExp(1));
+		else {
+			// For each caller
+			std::set<CallStatement*>& callers = (*pp)->getCallers();
+			std::set<CallStatement*>::iterator cc;
+			for (cc = callers.begin(); cc != callers.end(); ++cc) {
+				// Union in the set of locations live at this call
+				UseCollector* useCol = (*cc)->getUseCollector();
+				unionOfCallerLiveLocs.makeUnion(useCol->getLocSet());
+			}
 		}
+		theReturn->intersectWithLive(unionOfCallerLiveLocs);
 	}
 }
-
 #endif
+
 
 #if 0		// For time being, this is in UserProc::generateCode()
 void Prog::removeUnusedLocals() {

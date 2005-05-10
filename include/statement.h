@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.10 $
+ * $Revision: 1.76.2.11 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1209,6 +1209,9 @@ virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
 		// Find definition for e (in the collector)
 		RefExp*		findDefFor(Exp* e) {return col.findDefFor(e);}
+
+		// Intersect with a LocationSet; used for final global trim of returns
+		void		intersectWithLive(LocationSet& sset);
 
 virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 

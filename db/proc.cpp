@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.10 $
+ * $Revision: 1.238.2.11 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -639,7 +639,7 @@ void UserProc::printToLog() {
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++) {
 		LOG << it->second->getCtype() << " " << it->first.c_str() << " ";
 		Exp *e = expFromSymbol((*it).first.c_str());
-		// Beware: for some locals, getSymbolExp() returns NULL (? No longer?)
+		// Beware: for some locals, expFromSymbol() returns NULL (? No longer?)
 		if (e)
 			LOG << e << "\n";
 		else
@@ -2177,13 +2177,11 @@ void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 			}
 		}
 	}
-#if 1
 	if (found) {
-		// Must redo all the subscripting!
+		// Must redo all the subscripting, just for the a[m[...]] thing!
 		for (int d=0; d <= depth; d++)
 			df.renameBlockVars(this, 0, d /* Memory depth */, true);
 	}
-#endif
 
 	// replace expressions in regular statements with parameters
 	for (it = stmts.begin(); it != stmts.end(); it++) {
@@ -2196,14 +2194,19 @@ void UserProc::replaceExpressionsWithParameters(DataFlow& df, int depth) {
 				assert(r->isSubscript());	// There should always be one
 				// if (r->getOper() == opSubscript)
 				r = r->getSubExp1();
-				Exp* replace = Location::param( strdup((char*)signature->getParamName(i)), this);
+				Location* replace = Location::param( strdup((char*)signature->getParamName(i)), this);
 				Exp *n;
 				if (s->search(r, n)) {
 					if (VERBOSE)
 						LOG << "replacing " << r << " with " << replace << " in " << s << "\n";
+#if 0
 					s->searchAndReplace(r, replace);
 					if (VERBOSE)
 						LOG << "after: " << s << "\n";
+#else
+					symbolMap[r] = replace;			// Add to symbol map
+					// Note: don't add to locals, since otherwise the back end will declare it twice
+#endif
 				}
 			}
 		}
@@ -2229,12 +2232,15 @@ Exp *UserProc::getSymbolExp(Exp *le, Type *ty, bool lastPass) {
 			// a member of a compound typed local)
 			// NOTE: Not efficient!
 			for (SymbolMapType::iterator it = symbolMap.begin(); it != symbolMap.end(); it++) {
-				Exp *base = (*it).first;
+				Exp *base = it->first;
 				assert(base);
-				Exp *local = (*it).second;
-				assert(local->getOper() == opLocal && local->getSubExp1()->getOper() == opStrConst);
+				Location *local = (Location*)it->second;
+				assert((local->isLocal() || local->isParam()) && local->getSubExp1()->getOper() == opStrConst);
 				std::string name = ((Const*)local->getSubExp1())->getStr();
-				Type *ty = locals[name];
+				std::map<std::string, Type*>::iterator ff = locals.find(name);
+				if (ff == locals.end())
+					continue;			// This symbol is not a local (e.g. a parameter); ignore
+				Type *ty = ff->second;
 				assert(ty);
 				int size = ty->getSize() / 8;	 // getSize() returns bits!
 				if (base->getOper() == opMemOf && signature->isOpCompatStackLocal(base->getSubExp1()->getOper()) &&
@@ -2766,7 +2772,9 @@ void UserProc::removeUnusedLocals() {
 		LocationSet::iterator rr;
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			Exp* r = *rr;
-			if (r->isSubscript())
+			if (symbolMap.find(r) != symbolMap.end())
+				continue;						// Ignore e.g. sp in m[sp - K]
+			if (r->isSubscript())				// Presumably never seen now
 				r = ((RefExp*)r)->getSubExp1();
 			char* sym = lookup(r);				// Look up raw expressions in the symbolMap
 			if (sym) {
@@ -3766,7 +3774,7 @@ char* UserProc::lookup(Exp* e) {
 	if (it == symbolMap.end())
 		return NULL;
 	Exp* sym = it->second;
-	assert(sym->isLocal());
+	assert(sym->isLocal() || sym->isParam());
 	return ((Const*)((Location*)sym)->getSubExp1())->getStr();
 }
 

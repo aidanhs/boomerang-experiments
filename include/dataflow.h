@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.9 $
+ * $Revision: 1.39.2.10 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -161,6 +161,7 @@ public:
 		iterator	end()	 {return locs.end();}
 		bool		exists(Exp* e) {return locs.exists(e);}			// Note: probably want the NS version...
 		bool		existsNS(Exp* e) {return locs.existsNS(e);}		// No Subscripts version
+		LocationSet& getLocSet() {return locs;}
 };
 
 /**
