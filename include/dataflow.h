@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.10 $
+ * $Revision: 1.39.2.11 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -159,8 +159,9 @@ public:
 		typedef LocationSet::iterator iterator;
 		iterator	begin() {return locs.begin();}
 		iterator	end()	 {return locs.end();}
-		bool		exists(Exp* e) {return locs.exists(e);}			// Note: probably want the NS version...
-		bool		existsNS(Exp* e) {return locs.existsNS(e);}		// No Subscripts version
+		bool		exists(Exp* e)	{return locs.exists(e);}			// Note: probably want the NS version...
+		bool		existsNS(Exp* e){return locs.findNS(e) != NULL;}	// No Subscripts version
+		Exp*		findNS(Exp* e)	{return locs.findNS(e);}			// Find the expression (no subscripts)
 		LocationSet& getLocSet() {return locs;}
 };
 
@@ -188,6 +189,11 @@ public:
 		 * Find the definition for a location. If not found, return NULL
 		 */
 		RefExp*		findDefFor(Exp* e);
+
+		/**
+		 * Search and replace all occurrences
+		 */
+		void		searchReplaceAll(Exp* from, Exp* to, bool& change);
 };
 
 /**

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.8 $
+ * $Revision: 1.43.2.9 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -453,3 +453,9 @@ void Collector::makeCloneOf(Collector& other) {
 		locs.insert((*it)->clone());
 }
 
+void DefCollector::searchReplaceAll(Exp* from, Exp* to, bool& change) {
+	LocationSet::iterator it;
+	change = false;
+	for (it=locs.begin(); it != locs.end(); ++it)
+		(*it)->searchReplaceAll(from, to, change);
+}

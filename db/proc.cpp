@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.11 $
+ * $Revision: 1.238.2.12 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -815,6 +815,12 @@ std::set<UserProc*>* UserProc::decompile() {
 	// Initialise statements
 	initStatements();
 
+	/*	*	*	*	*	*	*	*	*	*	*	*
+	 *											*
+	 *	R e c u r s e   t o   c h i l d r e n	*
+	 *											*
+	 *	*	*	*	*	*	*	*	*	*	*	*/
+
 	std::set<UserProc*>* cycleSet = new std::set<UserProc*>;
 	if (!Boomerang::get()->noDecodeChildren) {
 		// Recurse to children first, to perform a depth first search
@@ -833,6 +839,7 @@ std::set<UserProc*>* UserProc::decompile() {
 				else {
 					// Recurse to this child (in the call graph)
 					std::set<UserProc*>* childSet = destProc->decompile();
+					call->setCalleeReturn(destProc->getTheReturnStatement());
 					// Union this child's set into cycleSet
 					if (childSet)
 						cycleSet->insert(childSet->begin(), childSet->end());
@@ -847,6 +854,13 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	Boomerang::get()->alert_start_decompile(this);
 	if (VERBOSE) LOG << "decompiling: " << getName() << "\n";
+
+	/*	*	*	*	*	*	*	*	*	*	*	*
+	 *											*
+	 *		D e c o m p i l e   p r o p e r		*
+	 *											*
+	 *	*	*	*	*	*	*	*	*	*	*	*/
+
 
 	// Compute dominance frontier
 	DataFlow df;
@@ -863,7 +877,11 @@ std::set<UserProc*>* UserProc::decompile() {
 		return cycleSet;
 	}
 
-	// For each memory depth
+	// Update the defines in the calls
+	updateCallDefines();
+
+	// For each memory depth (1). First path is just to do the initial propagation (especially for the stack pointer),
+	// place phi functions, number statements, initial propagation
 	int maxDepth = findMaxDepth() + 1;
 	if (Boomerang::get()->maxMemDepth < maxDepth)
 		maxDepth = Boomerang::get()->maxMemDepth;
@@ -881,7 +899,30 @@ std::set<UserProc*>* UserProc::decompile() {
 		numberPhiStatements(stmtNumber);
 
 		if (VERBOSE)
-			LOG << "renaming block variables at depth " << depth << "\n";
+			LOG << "renaming block variables (1) at depth " << depth << "\n";
+		// Rename variables
+		df.renameBlockVars(this, 0, depth);
+
+		propagateStatements(depth, -1);
+	}
+
+	if (VERBOSE) {		// was if debugPrintSSA
+		LOG << "=== Debug Initial Print SSA with propagations for " << getName() << " ===\n";
+		printToLog();
+		LOG << "=== End Initial Debug Print SSA for " << getName() << " ===\n\n";
+	}
+
+	trimReturns();		// Also does proofs, sets signatures to PentiumSignature etc
+						// FIXME: Are there any returns to trim then? Needs a rename
+	
+	// Update the arguments for calls
+	updateArguments();
+
+	// For each memory depth (2)
+	for (depth = 0; depth <= maxDepth; depth++) {
+		// Redo the renaming process to take into account the arguments
+		if (VERBOSE)
+			LOG << "renaming block variables (2) at depth " << depth << "\n";
 		// Rename variables
 		df.renameBlockVars(this, 0, depth);
 
@@ -901,14 +942,12 @@ std::set<UserProc*>* UserProc::decompile() {
 		
 		Boomerang::get()->alert_decompile_SSADepth(this, depth);
 
-		if (depth == 0) {
-			trimReturns();		// ? Needed for recursion...
-		}
 		if (depth == maxDepth) {
 			fixCallRefs();
 			if (processConstants()) {
 				for (int i = 0; i <= maxDepth; i++) {
-					df.renameBlockVars(this, 0, i, true); // Needed if there was an indirect call to an ellipsis function
+					df.renameBlockVars(this, 0, i, true);	// Needed if there was an indirect call to an ellipsis
+															// function
 					propagateStatements(i, -1);
 				}
 			}
@@ -2018,6 +2057,8 @@ void UserProc::replaceExpressionsWithGlobals() {
 			if (((Exp*)*rr)->isSubscript()) {
 				Statement *ref = ((RefExp*)*rr)->getDef();
 				Exp *r1 = (*rr)->getSubExp1();
+				if (symbolMap.find(r1) != symbolMap.end())
+					continue;					// Ignore locals, etc
 				// look for m[exp + K]{0}, replace it with m[exp * 1 + K]{0} in the hope that it will get picked 
 				// up as a global array.
 				if (ref == NULL && r1->getOper() == opMemOf && r1->getSubExp1()->getOper() == opPlus &&
@@ -2940,7 +2981,7 @@ void UserProc::fromSSAform() {
 			if (ff == firstTypes.end()) {
 				// There is no first type yet. Record it.
 				firstTypes[base] = ty;
-			} else if (!ty->isCompatibleWith(ff->second)) {
+			} else if (ff->second && !ty->isCompatibleWith(ff->second)) {
 				// There already is a type for base, and it is different to the type for this definition.
 				// Record an "interference" so it will get a new variable
 				RefExp* ref = new RefExp(base, s);
@@ -3782,4 +3823,32 @@ void UserProc::symbolMapToLog() {
 	SymbolMapType::iterator it;
 	for (it = symbolMap.begin(); it != symbolMap.end(); it++)
 		LOG << "  " << it->first << " maps to " << it->second << "\n";
+}
+
+void UserProc::dumpSymbolMap() {
+	SymbolMapType::iterator it;
+	for (it = symbolMap.begin(); it != symbolMap.end(); it++)
+		std::cerr << "  " << it->first << " maps to " << it->second << "\n";
+}
+
+void UserProc::updateArguments() {
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		CallStatement* call = dynamic_cast<CallStatement*>(*it);
+		if (call == NULL) continue;
+		call->updateArguments();
+	}
+}
+
+void UserProc::updateCallDefines() {
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		CallStatement* call = dynamic_cast<CallStatement*>(*it);
+		if (call == NULL) continue;
+		call->updateDefines();
+	}
 }

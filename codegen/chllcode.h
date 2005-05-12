@@ -150,8 +150,9 @@ virtual void	RemoveUnusedLabels(int maxOrd);
 
 		// sequential statements
 virtual void	AddAssignmentStatement(int indLevel, Assign *asgn);
-virtual void	AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList& args, StatementList& rets);
-virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList &args);
+virtual void	AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList& args,
+					StatementList* results);
+virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList &args, StatementList* results);
 virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs);
 
 		// proc related

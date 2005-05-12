@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.6 $
+ * $Revision: 1.172.2.7 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -1647,8 +1647,8 @@ Exp* Ternary::simplifyArith() {
 }
 
 Exp* Binary::simplifyArith() {
-	subExp1 = subExp1->simplifyArith();
-	subExp2 = subExp2->simplifyArith();
+	subExp1 = subExp1->simplifyArith();		// FIXME: does this make sense?
+	subExp2 = subExp2->simplifyArith();		// FIXME: ditto
 	if ((op != opPlus) && (op != opMinus))
 		return this;
 
@@ -3537,10 +3537,7 @@ Type *RefExp::getType()
 		return ((Assign*)def)->getRight()->getType();
 	if (def && def->isCall()) {
 		CallStatement *call = (CallStatement*)def;
-		int n = call->findDefine(subExp1);
-		if (n != -1 && call->getDestProc()) {
-			return call->getDestProc()->getSignature()->getReturnType(n);
-		}
+		return call->getTypeFor(subExp1);
 	}
 	if (def && def->isPhi()) {
 		PhiAssign *phi = (PhiAssign*)def;

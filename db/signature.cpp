@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.4 $
+ * $Revision: 1.98.2.5 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -129,6 +129,7 @@ namespace CallingConvention {
 			virtual platform	getPlatform() { return PLAT_PENTIUM; }
 			virtual callconv	getConvention() { return CONV_C; }
 			virtual bool		returnCompare(Assign& a, Assign& b);
+			virtual bool		argumentCompare(Assign& a, Assign& b);
 		};	// class PentiumSignature
 
 		class SparcSignature : public Signature {
@@ -154,6 +155,7 @@ namespace CallingConvention {
 			virtual platform	getPlatform() { return PLAT_SPARC; }
 			virtual callconv	getConvention() { return CONV_C; }
 			virtual bool		returnCompare(Assign& a, Assign& b);
+			virtual bool		argumentCompare(Assign& a, Assign& b);
 		};	// class SparcSignature
 
 		class SparcLibSignature : public SparcSignature {
@@ -292,6 +294,8 @@ bool CallingConvention::Win32Signature::qualified(UserProc *p, Signature &candid
 		if (gotcorrectret2 && VERBOSE)
 			LOG << "got r[28] = r[28] + 4\n";
 	}
+	if (VERBOSE)
+		LOG << "qualified: " << (gotcorrectret1 && gotcorrectret2) << "\n";
 	return gotcorrectret1 && gotcorrectret2;
 }
 
@@ -446,6 +450,8 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p, Signature
 		LOG << "consider promotion to stdc pentium signature for " << p->getName() << "\n";
 
 #if 1
+	if (VERBOSE)
+		LOG << "qualified: always true\n";
 	return true;		// For now, always pass
 #else
 	bool gotcorrectret1 = false;
@@ -481,6 +487,8 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p, Signature
 			}
 		}
 	}
+	if (VERBOSE)
+		LOG << "promotion: " << gotcorrectret1 && gotcorrectret2 << "\n";
 	return gotcorrectret1 && gotcorrectret2;
 #endif
 }
@@ -1173,6 +1181,10 @@ void Signature::print(std::ostream &out)
 	out << " }" << std::endl;
 }
 
+void Signature::prints() {
+	print(std::cerr);
+}
+
 void Signature::printToLog()
 {
 	std::ostringstream os;
@@ -1643,6 +1655,89 @@ bool CallingConvention::StdC::SparcSignature::returnCompare(Assign& a, Assign& b
 
 	// Else don't care about the order
 	return *la < *lb;
+}
+
+bool CallingConvention::StdC::PentiumSignature::argumentCompare(Assign& a, Assign& b) {
+	Exp* la = a.getLeft();
+	Exp* lb = b.getLeft();
+	int ma = 0, mb = 0;
+	if (la->isMemOf()) {
+		Exp* sub = ((Location*)la)->getSubExp1();
+		if (sub->getOper() == opMinus) {
+			Exp* op1 = ((Binary*)sub)->getSubExp1();
+			if (op1->isRegN(28)) {
+				Exp* op2 = ((Binary*)sub)->getSubExp2();
+				if (op2->isIntConst())
+					ma = ((Const*)op2)->getInt();
+			}
+		}
+	}
+
+	if (ma && mb)
+		return ma > mb;						// Note: greater means sp minus more, which is less!
+	if (ma && !mb)
+		return true;						// m[sp-K] is less than anything else
+	if (mb && !ma)
+		return false;						// Nothing else is less than m[sp-K]
+
+	// Else don't care about the order
+	return *la < *lb;
+}
+
+bool CallingConvention::StdC::SparcSignature::argumentCompare(Assign& a, Assign& b) {
+	Exp* la = a.getLeft();
+	Exp* lb = b.getLeft();
+	// %o0-$o5 (r8-r13) are the preferred argument locations
+	int ra, rb;
+	if (la->isRegOf()) {
+		int r = ((Const*)((Location*)la)->getSubExp1())->getInt();
+		if (r >= 8 && r <= 13)
+			ra = r;
+	} else
+		ra = 0;
+	if (lb->isRegOf()) {
+		int r = ((Const*)((Location*)lb)->getSubExp1())->getInt();
+		if (r >= 8 && r <= 13)
+			rb = r;
+	} else
+		rb = 0;
+	if (ra && rb)
+		return ra < rb;						// Both r8-r13: compare within this set
+	if (ra && rb == 0)
+		return true;						// r8-r13 less than anything else
+	if (rb && ra == 0)
+		return false;						// Nothing else is less than r8-r13
+	int ma = 999, mb = 999;
+	if (la->isMemOf()) {
+		Exp* sub = ((Location*)la)->getSubExp1();
+		if (sub->getOper() == opPlus) {
+			Exp* op1 = ((Binary*)sub)->getSubExp1();
+			if (op1->isRegN(30)) {
+				Exp* op2 = ((Binary*)sub)->getSubExp2();
+				if (op2->isIntConst())
+					ma = ((Const*)op2)->getInt();
+			}
+		}
+	}
+	if (lb->isMemOf()) {
+		Exp* sub = ((Location*)lb)->getSubExp1();
+		if (sub->getOper() == opPlus) {
+			Exp* op1 = ((Binary*)sub)->getSubExp1();
+			if (op1->isRegN(30)) {
+				Exp* op2 = ((Binary*)sub)->getSubExp2();
+				if (op2->isIntConst())
+					mb = ((Const*)op2)->getInt();
+			}
+		}
+	}
+	if (ma != 999 && mb != 999)
+		return ma < mb;						// Both m[sp + K]: order by memory offset
+	if (ma != 999 && mb == 999)
+		return true;						// m[sp+K] less than anything left
+	if (mb != 888 && ma == 999)
+		return false;						// nothing left is less than m[sp+K]
+				
+	return *la < *lb;						// Else order arbitrarily
 }
 
 // Class Return methods

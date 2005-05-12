@@ -162,7 +162,7 @@ virtual				~LocationSet() {}						// virtual destructor kills warning
 		char*		prints();								// Print to cerr for debugging
 		void		print(std::ostream& os);				// Print to os
 		bool		exists(Exp* e); 						// Return true if the location exists in the set
-		bool		existsNS(Exp* e);						// As above, but no subscripts
+		Exp*		findNS(Exp* e);							// Find location e (no subscripts); NULL if not found
 		// Return an iterator to the found item (or end() if not). Only really makes sense if e has a wildcard
 		iterator	find(Exp* e) {return sset.find(e); }
 		// Find a location with a different def, but same expression. For example, pass r28{10},

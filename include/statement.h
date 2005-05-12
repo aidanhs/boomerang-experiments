@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.11 $
+ * $Revision: 1.76.2.12 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -951,6 +951,7 @@ class CallStatement: public GotoStatement {
 		StatementList arguments;
 
 		// The list of defines for this call, also a list of Assignments (used to be called returns)
+		// Note that not necessarily all of the defines end up being declared as results
 		StatementList defines;
 
 		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
@@ -962,7 +963,7 @@ class CallStatement: public GotoStatement {
 		Signature*	signature;
 
 		// A UseCollector object to collect the live variables at this call. Used as part of the calculation of
-		// defines
+		// results
 		UseCollector useCol;
 
 		// A DefCollector object to collect the reaching definitions; used for fixCallRefs/localiseExp etc; also
@@ -1000,7 +1001,9 @@ virtual bool		accept(StmtModifier* visitor);
 		//void		ignoreReturn(int n);
 		//void		addReturn(Exp *e, Type* ty = NULL);
 		void		updateDefines();			// Update the defines based on a callee change
+		StatementList* calcResults();			// Calculate defines(this) isect live(this)
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
+		void		setCalleeReturn(ReturnStatement* ret) {calleeReturn = ret;}
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
@@ -1091,12 +1094,13 @@ virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, 
 		DefCollector*	getDefCollector() {return &defCol;}			// Return pointer to the def collector object
 		UseCollector*	getUseCollector() {return &useCol;}			// Return pointer to the use collector object
 		void		useBeforeDefine(Exp* x) {useCol.insert(x);}		// Add x to the UseCollector for this call
+		Exp*		fromCalleeContext(Exp* e);			// Convert e from callee to caller (this) context
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
 		// parameters if needed, and return true if any signature parameters added
 		bool		ellipsisProcessing(Prog* prog);
 private:
 		// Private helper function for the above
-		void		setSigParam(Type* ty, bool isScanf);
+		void		addSigParam(Type* ty, bool isScanf);
 
 protected:
 virtual bool		doReplaceRef(Exp* from, Exp* to);

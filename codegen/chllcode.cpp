@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.5 $
+ * $Revision: 1.90.2.6 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1016,12 +1016,13 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn) {
 	lines.push_back(strdup(s.str().c_str()));
 }
 
-void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList &args, StatementList& defs) {
+void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList &args, StatementList* results)
+{
 	std::ostringstream s;
 	indent(s, indLevel);
-	if (defs.size() >= 1) {
-		// FIXME: Needs changing if more than one real return location (return a struct)
-		Exp* firstRet = ((Assignment*)*defs.begin())->getLeft();
+	if (results->size() >= 1) {
+		// FIXME: Needs changing if more than one real result (return a struct)
+		Exp* firstRet = ((Assignment*)*results->begin())->getLeft();
 		appendExp(s, firstRet, PREC_ASSIGN);
 		s << " = ";
 	}
@@ -1047,10 +1048,10 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, Stat
 			appendExp(s, arg, PREC_COMMA);
 	}
 	s << ");";
-	if (defs.size() > 1) {
+	if (results->size() > 1) {
 		bool first = true;
 		s << " /* OUT: ";
-		for (ss = defs.begin(); ss != defs.end(); ++ss) {
+		for (ss = results->begin(); ss != results->end(); ++ss) {
 			if (first)
 				first = false;
 			else
@@ -1064,8 +1065,8 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, Stat
 }
 
 // Ugh - almost the same as the above, but it needs to take an expression, // not a Proc*
-void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp, StatementList &args) {
-//	FIXME: Needs to take another argument, since we can infer some defines...
+void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp, StatementList &args, StatementList* results) {
+//	FIXME: Need to use 'results', since we can infer some defines...
 	std::ostringstream s;
 	indent(s, indLevel);
 	s << "(*";
@@ -1228,3 +1229,14 @@ void CHLLCode::AddLineComment(char* cmt) {
 	lines.push_back(strdup(s.str().c_str()));
 }
 
+// Calculate results(this) = defines(this) isect live(this)
+StatementList* CallStatement::calcResults() {
+	StatementList* ret = new StatementList;
+	StatementList::iterator dd;
+	for (dd = defines.begin(); dd != defines.end(); ++dd) {
+		Exp* lhs = ((Assign*)*dd)->getLeft();
+		if (useCol.exists(lhs))
+			ret->append(*dd);
+	}
+	return ret;
+}

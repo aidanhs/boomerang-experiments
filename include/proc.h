@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.6 $
+/* $Revision: 1.115.2.7 $
 */
 
 #ifndef _PROC_H_
@@ -441,6 +441,7 @@ virtual				~UserProc();
 		char		*prints();
 		void		printToLog();
 		void		symbolMapToLog();			// Print just the symbol map
+		void		dumpSymbolMap();			// For debugging
 
 		// simplify the statements in this proc
 		void		simplify() { cfg->simplify(); }
@@ -469,6 +470,8 @@ virtual				~UserProc();
 		void		addNewParameters();
 		void		addParameter(Exp *e);
 //		void		addNewReturns(int depth);
+		void		updateArguments();			// Update the arguments in calls
+		void		updateCallDefines();		// Update the defines in calls
 		// Trim parameters. If depth not given or == -1, perform at all depths
 		void		trimParameters(int depth = -1);
 		void		processFloatConstants();

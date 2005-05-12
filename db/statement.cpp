@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.11 $
+ * $Revision: 1.148.2.12 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1473,14 +1473,15 @@ void CallStatement::setArguments(StatementList& args) {
  *============================================================================*/
 void CallStatement::setSigArguments() {
 	if (signature) return;				// Already done
-	if (procDest == NULL) {
-assert(0);		// FIXME: Check MVE HACK!
-		// if (proc == NULL) return; 		// do it later (?)
+	if (procDest == NULL)
+		// FIXME: Need to check this
 		return;
-	} else 
-		// Clone here because each call to procDest could have a different signature, modified by ellipsisProcessing
-		signature = procDest->getSignature()->clone();
-	
+	// Clone here because each call to procDest could have a different signature, modified by ellipsisProcessing
+	signature = procDest->getSignature()->clone();
+	procDest->addCaller(this);
+
+	if (!procDest->isLib())
+		return;				// Using dataflow analysis now
 	int n = signature->getNumParams();
 	int i;
 	arguments.clear();
@@ -1491,9 +1492,10 @@ assert(0);		// FIXME: Check MVE HACK!
 		if (l) {
 			l->setProc(proc);		// Needed?
 		}
-		Assign* as = new Assign(new VoidType, e->clone(), e->clone());
+		Assign* as = new Assign(signature->getParamType(i), e->clone(), e->clone());
 		arguments.append(as);
 	}
+#if 0
 	if (signature->hasEllipsis()) {
 		// Just guess 4 parameters for now
 		for (int i = 0; i < 4; i++) {
@@ -1502,8 +1504,7 @@ assert(0);		// FIXME: Check MVE HACK!
 			arguments.append(as);
 		}
 	}
-	if (procDest)
-		procDest->addCaller(this);
+#endif
 
 #if 0
 	n = signature->getNumImplicitParams();
@@ -1727,8 +1728,6 @@ void CallStatement::setDestProc(Proc* dest) {
 	assert(dest);
 	assert(procDest == NULL);
 	procDest = dest;
-	if (!dest->isLib())
-		calleeReturn = ((UserProc*)dest)->getTheReturnStatement();
 }
 
 void CallStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
@@ -1736,9 +1735,10 @@ void CallStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
 	Proc *p = getDestProc();
 
 	if (p == NULL && isComputed()) {
-		hll->AddIndCallStatement(indLevel, pDest, arguments);
+		hll->AddIndCallStatement(indLevel, pDest, arguments, calcResults());
 		return;
 	}
+	StatementList* results = calcResults();
 
 #if 0
 	LOG << "call: " << this;
@@ -1753,10 +1753,10 @@ void CallStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
 			args.push_back(arguments[p->getSignature()->getPreferedParam(i)]);
 		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), args, getReturns());
 #else
-		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), arguments, defines);
+		hll->AddCallStatement(indLevel, p,	p->getSignature()->getPreferedName(), arguments, results);
 #endif
 	} else
-		hll->AddCallStatement(indLevel, p, p->getName(), arguments, defines);
+		hll->AddCallStatement(indLevel, p, p->getName(), arguments, results);
 }
 
 void CallStatement::simplify() {
@@ -2048,6 +2048,11 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 		}
 	}
 #endif
+
+	// I believed I wanted to propagate into the DefCollector... but then you don't recognise e.g. the stack pointer
+	// Best to leave the collector as r28{36}, and just go to the RHS of statement 36 for the definition in terms of
+	// r28{-}
+	// defCol.searchReplaceAll(from, to, change);
 	return convertIndirect;
 }
 
@@ -2436,7 +2441,7 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 					// Example: printf("Val: %*.*f\n", width, precision, val);
 					n++;		// There is an extra parameter for the width or precision
 					// This extra parameter is of type integer, never int* (so pass false as last argument)
-					setSigParam(new IntegerType(), false);
+					addSigParam(new IntegerType(), false);
 					continue;
 				case '-': case '+': case '#': case ' ':
 					// Flag. Ignore
@@ -2470,20 +2475,20 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 			n++;
 		switch (ch) {
 			case 'd': case 'i':							// Signed integer
-				setSigParam(new IntegerType(veryLong ? 64 : 32), isScanf);
+				addSigParam(new IntegerType(veryLong ? 64 : 32), isScanf);
 				break;
 			case 'u': case 'x': case 'X': case 'o':		// Unsigned integer
-				setSigParam(new IntegerType(32, -1), isScanf);
+				addSigParam(new IntegerType(32, -1), isScanf);
 				break;
 			case 'f': case 'g': case 'G': case 'e': case 'E':	// Various floating point formats
-				setSigParam(new FloatType(veryLong ? 128 : 64), isScanf);	// Note: may not be 64 bits
+				addSigParam(new FloatType(veryLong ? 128 : 64), isScanf);	// Note: may not be 64 bits
 																						// for some archs
 				break;
 			case 's':									// String
-				setSigParam(new PointerType(new CharType), isScanf);
+				addSigParam(new PointerType(new CharType), isScanf);
 				break;
 			case 'c':									// Char
-				setSigParam(new CharType, isScanf);
+				addSigParam(new CharType, isScanf);
 				break;
 			case '%':
 				break;			// Ignore %% (emits 1 percent char)
@@ -2497,15 +2502,15 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 }
 
 // Helper function for the above
-void CallStatement::setSigParam(Type* ty, bool isScanf) {
+void CallStatement::addSigParam(Type* ty, bool isScanf) {
 	if (isScanf) ty = new PointerType(ty);
 	signature->addParameter(ty);
 	Exp* paramExp = signature->getParamExp(signature->getNumParams()-1);
 	if (VERBOSE)
 		LOG << "  ellipsisProcessing: adding parameter " << paramExp << " of type " << ty->getCtype() << "\n";
 	if (arguments.size() < (unsigned)signature->getNumParams()) {
-		//arguments.push_back(paramExp->clone());			// In case it was previously an indirect call
-		Assign* as = new Assign(ty, paramExp->clone(), paramExp->clone());
+		Exp* arg = fromCalleeContext(paramExp);
+		Assign* as = new Assign(ty, arg->clone(), arg->clone());
 		arguments.append(as);
 	}
 }
@@ -4069,17 +4074,6 @@ void CallStatement::setLeftFor(Exp* forExp, Exp* newExp) {
 #endif
 }
 
-// Copy the given reaching definitions to the return statement, at depth d
-void ReturnStatement::copyReachingDefs(int d) {
-	Collector::iterator it;
-	for (it = col.begin(); it != col.end(); it++) {
-		if ((*it)->getMemDepth() == d) {
-			col.insert(*it);
-		}
-	}
-	updateReturns();
-}
-
 bool Assignment::definesLoc(Exp* loc) {
 	return (*lhs == *loc);
 }
@@ -4203,6 +4197,32 @@ bool returnFilter(Exp* e, Signature* sig, Proc* proc) {
 	return true;
 }
 
+// Filter out locations not possible as parameter locations. Return true to keep
+bool argumentFilter(Exp* e, Signature* sig, Proc* proc) {
+	switch (e->getOper()) {
+		case opPC:	return false;
+		case opTemp: return false;
+		case opRegOf: {
+			int sp;
+			if (sig == NULL)
+				sp = 999;
+			else
+				sp = sig->getStackRegister(proc->getProg());
+			int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
+			return r != sp;
+		}
+		case opMemOf: {
+			Exp* addr = ((Location*)e)->getSubExp1();
+			if (addr->isIntConst())
+				return false;			// Global memory location
+			return true;				// Might be some weird memory expression that is not a local
+		}
+		default:
+			return true;
+	}
+	return true;
+}
+
 // Update the returns, in case the signature and hence ordering and filtering has changed, or the locations in the
 // collector have changed
 void ReturnStatement::updateReturns() {
@@ -4263,6 +4283,7 @@ void ReturnStatement::updateReturns() {
 	}
 }
 
+// Set the defines to the set of locations defined by the callee, or if no callee, to all variables live at this call
 void CallStatement::updateDefines() {
 	Signature* sig;
 	if (procDest)
@@ -4274,38 +4295,47 @@ void CallStatement::updateDefines() {
 
 	// Move the definitions to a temporary list
 	StatementList oldDefines(defines);					// Copy the old defines
+	StatementList::iterator it;
 	defines.clear();
 
-	// Ensure that everything in the UseCollector has an entry in oldDefines
-	LocationSet::iterator ll;
-	StatementList::iterator it;
-	for (ll = useCol.begin(); ll != useCol.end(); ++ll) {
-		bool found = false;
-		Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
-		if (!returnFilter(loc, sig, proc))
-			continue;									// Filtered out
-		for (it = oldDefines.begin(); it != oldDefines.end(); it++) {
-			Exp* lhs = ((Assignment*)*it)->getLeft();
-			if (*lhs == *loc) {
-				found = true;
-				break;
+	if (calleeReturn) {
+		ReturnStatement::iterator rr;
+		for (rr = calleeReturn->begin(); rr != calleeReturn->end(); ++rr) {
+			Assign* as = (Assign*)*rr;
+			Exp* loc = as->getLeft();
+			if (!returnFilter(loc, sig, proc))
+				continue;
+			if (!oldDefines.existsOnLeft(loc)) {
+				ImplicitAssign* as = new ImplicitAssign(loc->clone());
+				oldDefines.append(as);
 			}
 		}
-		if (!found) {
-			ImplicitAssign* as = new ImplicitAssign(loc->clone());
-			oldDefines.append(as);
+	} else {
+		// Ensure that everything in the UseCollector has an entry in oldDefines
+		LocationSet::iterator ll;
+		for (ll = useCol.begin(); ll != useCol.end(); ++ll) {
+			Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
+			if (!returnFilter(loc, sig, proc))
+				continue;									// Filtered out
+			if (!oldDefines.existsOnLeft(loc)) {
+				ImplicitAssign* as = new ImplicitAssign(loc->clone());
+				oldDefines.append(as);
+			}
 		}
 	}
 
 	for (it = oldDefines.end(); it != oldDefines.begin(); ) {
 		--it;										// Becuase we are using a forwards iterator backwards
-		// Make sure the LHS is still in the collector
+		// Make sure the LHS is still in the return or collector
 		Assign* as = (Assign*)*it;
 		Exp* lhs = as->getLeft();
-		if (!useCol.existsNS(lhs))
-			continue;						// Not in collector: delete it (don't copy it)
-		if (calleeReturn && !calleeReturn->definesLoc(lhs))
-			continue;						// Intersection with callee returns failed
+		if (calleeReturn) {
+			if (!calleeReturn->definesLoc(lhs))
+				continue;						// Not in callee returns
+		} else {
+			if (!useCol.existsNS(lhs))
+				continue;						// Not in collector: delete it (don't copy it)
+		}
 		if (!returnFilter(lhs, sig, proc))
 			continue;						// Filtered out: delete it
 
@@ -4326,9 +4356,86 @@ void CallStatement::updateDefines() {
 
 void CallStatement::updateArguments() {
 
-	if (calleeReturn == NULL) {
+	StatementList oldArguments(arguments);
+	arguments.clear();
+	Signature *destSig, *sig = proc->getSignature();
+	int n;						// Number of parameters in the destination signature
+	// Ensure everything in the callee's parameters (or the use collector if no callee) exists in oldArguments
+	if (procDest) {
+		destSig = procDest->getSignature();
+		n = destSig->getNumParams();
+	}
+	if (procDest) {
+		for (int i=0; i < n; i++) {
+			Exp* loc = destSig->getParamExp(i);
+			if (!argumentFilter(loc, sig, proc))
+				continue;
+			Exp* callContextLoc = fromCalleeContext(loc)->simplifyArith()->simplify();
+			if (!oldArguments.existsOnLeft(callContextLoc)) {
+				Assign* as = new Assign(destSig->getParamType(i), callContextLoc->clone(), callContextLoc->clone());
+				oldArguments.append(as);
+			}
+		}
+	} else {
+		// Just use the locations in the use collector
+		UseCollector::iterator cc;
+		for (cc = useCol.begin(); cc != useCol.end(); ++cc) {
+			Exp* loc = *cc;
+			if (!argumentFilter(loc, sig, proc))
+				continue;
+			if (!oldArguments.existsOnLeft(loc)) {
+				Assign* as = new Assign((*cc)->clone(), (*cc)->clone());
+				oldArguments.append(as);
+			}
+		}
 	}
 
+	StatementList::iterator it;
+	for (it = oldArguments.end(); it != oldArguments.begin(); ) {
+		--it;										// Becuase we are using a forwards iterator backwards
+		// Make sure the LHS is still in the callee parameters or in the use collector
+		Assign* as = (Assign*)*it;
+		Exp* lhs = as->getLeft();
+		if (procDest) {
+			if (!destSig->hasEllipsis()) {
+				bool found = false;
+				for (int i=0; i < n; i++)
+					if (*destSig->getParamExp(i) == *lhs)
+						found = true;
+				if (!found)
+					continue;					// Not in callee parameters: delete it (don't copy it)
+			}
+		} else {
+			if (!useCol.existsNS(lhs))
+				continue;					// Not in collector: delete it (don't copy it)
+		}
+		if (!argumentFilter(lhs, sig, proc))
+			continue;						// Filtered out: delete it
+
+		// Insert as, in order, into the existing set of definitions
+		StatementList::iterator nn;
+		bool inserted = false;
+		for (nn = arguments.begin(); nn != arguments.end(); ++nn) {
+			if (sig->argumentCompare(*as, *(Assign*)*nn)) {		// If the new assignment is less than the current one
+				nn = arguments.insert(nn, as);					// then insert before this position
+				inserted = true;
+				break;
+			}
+		}
+		if (!inserted)
+			arguments.insert(arguments.end(), as);				// In case larger than all existing elements
+	}
+}
+
+// Copy the given reaching definitions to the return statement, at depth d
+void ReturnStatement::copyReachingDefs(int d) {
+	Collector::iterator it;
+	for (it = col.begin(); it != col.end(); it++) {
+		if ((*it)->getMemDepth() == d) {
+			col.insert(*it);
+		}
+	}
+	updateReturns();
 }
 
 // Intersect with the given location set
@@ -4342,3 +4449,18 @@ void ReturnStatement::intersectWithLive(LocationSet& sset) {
 			rr++;
 	}
 }
+
+// Convert an expression like m[sp+4] in the callee context to m[sp{-} - 32] (in the context of the call)
+Exp* CallStatement::fromCalleeContext(Exp* e) {
+	Exp* sp = Location::regOf(signature->getStackRegister());
+	Exp* refSp = defCol.findNS(sp);
+	if (refSp == NULL)
+		return e;				// No stack pointer definition reaches here, so no change needed
+	Statement* def = ((RefExp*)refSp)->getDef();
+	if (!def->isAssign())
+		return e;				// ? Definition for sp is not an assignment
+	Exp* rhs = ((Assign*)def)->getRight();	// RHS of assign should be in terms of sp{-}
+	bool change;
+	return e->searchReplaceAll(sp, rhs, change);
+}
+

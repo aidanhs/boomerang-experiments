@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.4 $
+ * $Revision: 1.53.2.5 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -196,24 +196,21 @@ virtual int			findImplicitParam(Exp *e);
 		// analysis determines parameters / return type
 		//virtual void analyse(UserProc *p);
 
-		// Data flow based type analysis. Meet the parameters with their current types
-		// Returns true if a change
+		// Data flow based type analysis. Meet the parameters with their current types.  Returns true if a change
 		bool		dfaTypeAnalysis(Cfg* cfg);
 
 		// any signature can be promoted to a higher level signature, if available
 virtual Signature *promote(UserProc *p);
 	void print(std::ostream &out);
+	void prints();			// For debugging
 	void printToLog();
 
-	// Special for Mike: find the location that conventionally holds
-	// the first outgoing (actual) parameter
+	// Special for Mike: find the location that conventionally holds the first outgoing (actual) parameter
 	// MVE: Use the below now
 	Exp* getFirstArgLoc(Prog* prog);
 
-	// This is like getParamLoc, except that it works before Signature::analyse
-	// is called.
-	// It is used only to order parameters correctly, for the common case
-	// where the proc will end up using a standard calling convention
+	// This is like getParamLoc, except that it works before Signature::analyse is called.  It is used only to order
+	// parameters correctly, for the common case where the proc will end up using a standard calling convention
 	Exp* getEarlyParamExp(int n, Prog* prog);
 
 		// Get a wildcard to find stack locations
@@ -223,8 +220,8 @@ virtual int			getStackRegister(			) {
 						return 28; };
 		int			getStackRegister(Prog* prog);
 		// Does expression e represent a local stack-based variable?
-		// Result can be ABI specific, e.g. sparc has locals in the parent's stack frame,
-		// at POSITIVE offsets from the stack pointer register
+		// Result can be ABI specific, e.g. sparc has locals in the parent's stack frame, at POSITIVE offsets from the
+		// stack pointer register
 		// Also, I believe that the PA/RISC stack grows away from 0
 		bool		isStackLocal(Prog* prog, Exp *e);
 		// Similar to the above, but checks for address of a local (i.e. sp{0} -/+ K)

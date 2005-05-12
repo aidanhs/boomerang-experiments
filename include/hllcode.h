@@ -103,8 +103,8 @@ virtual void	RemoveUnusedLabels(int maxOrd) = 0;
 		// sequential statements
 virtual void	AddAssignmentStatement(int indLevel, Assign *s) = 0;
 virtual void	AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList &args,
-					StatementList& defs) = 0;
-virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList& args) = 0;
+					StatementList* results) = 0;
+virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList& args, StatementList* results) = 0;
 virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs) = 0;
 
 		// procedure related
