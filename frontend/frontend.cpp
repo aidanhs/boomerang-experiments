@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.89.2.3 $
+ * $Revision: 1.89.2.4 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness rather than machine type)
@@ -420,8 +420,6 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 
 			// Decode the inst at uAddr.
 			inst = decodeInstruction(uAddr);
-if (uAddr == 0x804846c)
- std::cerr << "HACK!\n";
 
 			// If invalid and we are speculating, just exit
 			if (spec && !inst.valid)

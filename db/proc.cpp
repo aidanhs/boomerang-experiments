@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.12 $
+ * $Revision: 1.238.2.13 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -2356,7 +2356,7 @@ void UserProc::replaceExpressionsWithLocals(bool lastPass) {
 	getStatements(stmts);
 
 	if (VERBOSE) {
-		LOG << "replacing expressions with locals";
+		LOG << "replacing expressions with locals for " << getName();
 		if (lastPass)
 			LOG << " last pass";
 		LOG << "\n";
@@ -2715,6 +2715,11 @@ Exp* UserProc::newLocal(Type* ty) {
 	}
 	if (VERBOSE)
 		LOG << "assigning type " << ty->getCtype() << " to new " << name.c_str() << "\n";
+std::cerr << "Locals now ";
+std::map<std::string, Type*>::iterator ll;
+for (ll=locals.begin(); ll != locals.end(); ++ll)
+  std::cerr << ll->first.c_str() << "->" << ll->second << ", ";
+std::cerr << "\n";	// HACK!
 	return Location::local(strdup(name.c_str()), this);
 }
 
@@ -3089,6 +3094,16 @@ void UserProc::fromSSAform() {
 		}
 	}
 
+	// Now remove subscripts from the symbol map
+	SymbolMapType::iterator ss;
+	SymbolMapType temp(symbolMap);		// Have to copy to a new map, since the ordering is changed by stripping subs!
+	symbolMap.clear();
+	for (ss = temp.begin(); ss != temp.end(); ++ss) {
+		bool allZero;
+		Exp* from = ss->first->removeSubscripts(allZero);
+		assert(allZero);
+		symbolMap[from] = ss->second;
+	}
 }
 
 void UserProc::insertArguments(StatementSet& rs) {

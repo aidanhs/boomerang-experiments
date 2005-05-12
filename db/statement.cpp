@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.12 $
+ * $Revision: 1.148.2.13 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -3082,7 +3082,6 @@ void Assign::simplify() {
 		llhs->setType(ty);
 		if (VERBOSE)
 			LOG << "setting type of " << llhs << " to " << ty->getCtype() << "\n";
-
 	}
 
 	if (lhs->getType() && lhs->getType()->isFloat() && rhs->getOper() == opIntConst) {

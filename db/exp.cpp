@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.7 $
+ * $Revision: 1.172.2.8 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -2983,7 +2983,7 @@ Exp *Exp::removeSubscripts(bool& allZero)
 	for (xx = locs.begin(); xx != locs.end(); xx++) {
 		if ((*xx)->getOper() == opSubscript) {
 			RefExp *r1 = (RefExp*)*xx;
-			if (r1->getDef() != NULL) {
+			if (!(r1->getDef() == NULL || r1->getDef()->getNumber() == 0)) {
 				allZero = false;
 			}
 			bool change; 
