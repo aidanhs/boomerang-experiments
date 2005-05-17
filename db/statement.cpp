@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.13 $
+ * $Revision: 1.148.2.14 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -170,6 +170,12 @@ char* Statement::prints() {
 	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
 	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
+}
+
+// This version prints much better in gdb
+void Statement::dump() {
+	print(std::cerr);
+	std::cerr << "\n";
 }
 
 
@@ -3182,10 +3188,12 @@ void Assignment::getDefinitions(LocationSet &defs) {
 	if (lhs->isFlags()) {
 		defs.insert(new Terminal(opCF));
 	}
+#if 0		// No! Use -O instead
 	Location *loc = dynamic_cast<Location*>(lhs);
 	if (loc)
 		// This is to call a hack to define ax when eax defined, etc
 		loc->getDefinitions(defs);
+#endif
 }
 
 bool Assign::search(Exp* search, Exp*& result) {
@@ -3305,23 +3313,26 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
 assert(def->isAssign());
 			Exp* defRhs = def->getRight();
 			assert(defRhs->isFlagCall());
-			/* When the carry flag is used bare, and was defined in a subtract of the form lhs - rhs, then CF has the
-			   value (lhs <u rhs).  lhs and rhs are the first and second parameters of the flagcall
-			   Note: the flagcall is a binary, with a Const (the name) and a list of expressions:
-				 defRhs
-				 /	  \
-			Const	   opList
-			"SUBFLAGS"	/	\
-					   P1	opList
-							 /	 \
-							P2	opList
+			char* str = ((Const*)((Binary*)defRhs)->getSubExp1())->getStr();
+			if (strncmp("SUBFLAGS", str, 8) == 0) {
+				/* When the carry flag is used bare, and was defined in a subtract of the form lhs - rhs, then CF has
+				   the value (lhs <u rhs).  lhs and rhs are the first and second parameters of the flagcall.
+				   Note: the flagcall is a binary, with a Const (the name) and a list of expressions:
+					 defRhs
+					 /	  \
+				Const	   opList
+				"SUBFLAGS"	/	\
+						   P1	opList
 								 /	 \
-								P3	 opNil
-			*/
-			Exp* e = new Binary(opLessUns,
-				((Binary*)defRhs)->getSubExp2()->getSubExp1(),
-				((Binary*)defRhs)->getSubExp2()->getSubExp2()->getSubExp1());
-			rhs = rhs->searchReplaceAll(new RefExp(new Terminal(opCF), def), e, changeright);
+								P2	opList
+									 /	 \
+									P3	 opNil
+				*/
+				Exp* e = new Binary(opLessUns,
+					((Binary*)defRhs)->getSubExp2()->getSubExp1(),
+					((Binary*)defRhs)->getSubExp2()->getSubExp2()->getSubExp1());
+				rhs = rhs->searchReplaceAll(new RefExp(new Terminal(opCF), def), e, changeright);
+			}
 		}
 	}
 	if (!changeright && !changeleft) {
@@ -4153,75 +4164,6 @@ bool lessAssignment::operator()(const Assignment* x, const Assignment* y) const 
 }
 #endif
 
-// Filter out locations not possible as return locations. Return true to keep
-bool returnFilter(Exp* e, Signature* sig, Proc* proc) {
-	switch (e->getOper()) {
-		case opPC:	return false;
-		case opTemp: return false;
-		case opRegOf: {
-			int sp;
-			if (sig == NULL)
-				sp = 999;
-			else
-				sp = sig->getStackRegister(proc->getProg());
-			int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
-			return r != sp;
-		}
-		case opMemOf: {
-			Exp* addr = ((Location*)e)->getSubExp1();
-			if (addr->isIntConst())
-				return false;			// Global memory location
-			OPER op = addr->getOper();
-			if (op == opPlus || op == opMinus) {
-				// Check for local variable: m[sp +- K]
-				int sp;
-				if (sig == NULL)
-					sp = 999;
-				else
-					sp = sig->getStackRegister(proc->getProg());
-				Exp* s1 = ((Binary*)addr)->getSubExp1();
-				if (!s1->isRegN(sp)) return true;
-				Exp* s2 = ((Binary*)addr)->getSubExp2();
-				if (!s2->isIntConst()) return true;
-				// This will filter out sparc struct returns, at m[sp+64] (in the *parent's* stack)
-				if (op == opPlus && ((Const*)s2)->getInt() == 64 && sig->getPlatform() == PLAT_SPARC)
-					return true;
-				return false;			// Don't allow local variables
-			}
-			return true;				// Might be some weird memory expression that is not a local
-		}
-		default:
-			return true;
-	}
-	return true;
-}
-
-// Filter out locations not possible as parameter locations. Return true to keep
-bool argumentFilter(Exp* e, Signature* sig, Proc* proc) {
-	switch (e->getOper()) {
-		case opPC:	return false;
-		case opTemp: return false;
-		case opRegOf: {
-			int sp;
-			if (sig == NULL)
-				sp = 999;
-			else
-				sp = sig->getStackRegister(proc->getProg());
-			int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
-			return r != sp;
-		}
-		case opMemOf: {
-			Exp* addr = ((Location*)e)->getSubExp1();
-			if (addr->isIntConst())
-				return false;			// Global memory location
-			return true;				// Might be some weird memory expression that is not a local
-		}
-		default:
-			return true;
-	}
-	return true;
-}
-
 // Update the returns, in case the signature and hence ordering and filtering has changed, or the locations in the
 // collector have changed
 void ReturnStatement::updateReturns() {
@@ -4236,7 +4178,7 @@ void ReturnStatement::updateReturns() {
 	for (ll = col.begin(); ll != col.end(); ++ll) {
 		bool found = false;
 		Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
-		if (!returnFilter(loc, sig, proc))
+		if (proc->filterReturns(loc))
 			continue;									// Filtered out
 		for (it = oldDefs.begin(); it != oldDefs.end(); it++) {
 			Exp* lhs = ((Assign*)*it)->getLeft();
@@ -4260,12 +4202,14 @@ void ReturnStatement::updateReturns() {
 		Exp* lhs = as->getLeft();
 		if (!col.existsNS(lhs))
 			continue;						// Not in collector: delete it (don't copy it)
-		if (!returnFilter(lhs, sig, proc))
+		if (proc->filterReturns(lhs))
 			continue;						// Filtered out: delete it
+#if 0
 		// Check if it is a preserved location, e.g. r29 := r29{-}
 		Exp* rhs = as->getRight();
 		if (rhs->isSubscript() && ((RefExp*)rhs)->isImplicitDef() && *((RefExp*)rhs)->getSubExp1() == *lhs)
 			continue;						// Filter out the preserveds
+#endif
 			
 		// Insert as, in order, into the existing set of definitions
 		StatementList::iterator nn;
@@ -4302,7 +4246,7 @@ void CallStatement::updateDefines() {
 		for (rr = calleeReturn->begin(); rr != calleeReturn->end(); ++rr) {
 			Assign* as = (Assign*)*rr;
 			Exp* loc = as->getLeft();
-			if (!returnFilter(loc, sig, proc))
+			if (proc->filterReturns(loc))
 				continue;
 			if (!oldDefines.existsOnLeft(loc)) {
 				ImplicitAssign* as = new ImplicitAssign(loc->clone());
@@ -4314,7 +4258,7 @@ void CallStatement::updateDefines() {
 		LocationSet::iterator ll;
 		for (ll = useCol.begin(); ll != useCol.end(); ++ll) {
 			Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
-			if (!returnFilter(loc, sig, proc))
+			if (proc->filterReturns(loc))
 				continue;									// Filtered out
 			if (!oldDefines.existsOnLeft(loc)) {
 				ImplicitAssign* as = new ImplicitAssign(loc->clone());
@@ -4335,7 +4279,7 @@ void CallStatement::updateDefines() {
 			if (!useCol.existsNS(lhs))
 				continue;						// Not in collector: delete it (don't copy it)
 		}
-		if (!returnFilter(lhs, sig, proc))
+		if (proc->filterReturns(lhs))
 			continue;						// Filtered out: delete it
 
 		// Insert as, in order, into the existing set of definitions
@@ -4367,7 +4311,7 @@ void CallStatement::updateArguments() {
 	if (procDest) {
 		for (int i=0; i < n; i++) {
 			Exp* loc = destSig->getParamExp(i);
-			if (!argumentFilter(loc, sig, proc))
+			if (proc->filterParams(loc))
 				continue;
 			Exp* callContextLoc = fromCalleeContext(loc)->simplifyArith()->simplify();
 			if (!oldArguments.existsOnLeft(callContextLoc)) {
@@ -4380,7 +4324,7 @@ void CallStatement::updateArguments() {
 		UseCollector::iterator cc;
 		for (cc = useCol.begin(); cc != useCol.end(); ++cc) {
 			Exp* loc = *cc;
-			if (!argumentFilter(loc, sig, proc))
+			if (proc->filterParams(loc))
 				continue;
 			if (!oldArguments.existsOnLeft(loc)) {
 				Assign* as = new Assign((*cc)->clone(), (*cc)->clone());
@@ -4408,7 +4352,7 @@ void CallStatement::updateArguments() {
 			if (!useCol.existsNS(lhs))
 				continue;					// Not in collector: delete it (don't copy it)
 		}
-		if (!argumentFilter(lhs, sig, proc))
+		if (proc->filterParams(lhs))
 			continue;						// Filtered out: delete it
 
 		// Insert as, in order, into the existing set of definitions
@@ -4463,3 +4407,16 @@ Exp* CallStatement::fromCalleeContext(Exp* e) {
 	return e->searchReplaceAll(sp, rhs, change);
 }
 
+// Calculate results(this) = defines(this) isect live(this)
+// Note: could use a LocationList for this, but then there is nowhere to store the types (for DFA based TA)
+// So the RHS is just ignored
+StatementList* CallStatement::calcResults() {
+	StatementList* ret = new StatementList;
+	StatementList::iterator dd;
+	for (dd = defines.begin(); dd != defines.end(); ++dd) {
+		Exp* lhs = ((Assign*)*dd)->getLeft();
+		if (useCol.exists(lhs))
+			ret->append(*dd);
+	}
+	return ret;
+}

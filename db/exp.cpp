@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.8 $
+ * $Revision: 1.172.2.9 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -1115,6 +1115,10 @@ char* Exp::prints() {
 	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
 	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
+}
+
+void Exp::dump() {
+	print(std::cerr);
 }
 
 
@@ -3459,6 +3463,7 @@ Exp* Location::polySimplify(bool& bMod) {
 
 void Location::getDefinitions(LocationSet& defs) {
 	// This is a hack to fix aliasing (replace with something general)
+	// HACK! This is x86 specific too. Use -O for overlapped registers!
 	if (op == opRegOf && ((Const*)subExp1)->getInt() == 24) {
 		defs.insert(Location::regOf(0));
 	}

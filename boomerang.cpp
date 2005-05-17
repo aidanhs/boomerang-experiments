@@ -6,7 +6,7 @@
  * OVERVIEW:   Command line processing for the Boomerang decompiler
  *============================================================================*/
 /*
- * $Revision: 1.115.2.2 $
+ * $Revision: 1.115.2.3 $
  * 28 Jan 05 - G. Krol: Separated -h output into sections and neatened
 */
 
@@ -901,10 +901,8 @@ Prog *Boomerang::loadAndDecode(const char *fname, const char *pname)
 
 	std::cerr << "found " << std::dec << prog->getNumUserProcs() << " procs\n";
 
-	// GK: The analysis which was performed was not exactly very "analysing", and so
-	// it has been moved to prog::finishDecode, UserProc::assignProcsToCalls and
-	// UserProc::finalSimplify
-	// FIXME: add some real analysis
+	// GK: The analysis which was performed was not exactly very "analysing", and so it has been moved to
+	// prog::finishDecode, UserProc::assignProcsToCalls and UserProc::finalSimplify
 	//std::cerr << "analysing...\n";
  	//prog->analyse();
 

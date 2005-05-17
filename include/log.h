@@ -26,6 +26,8 @@ public:
 };
 
 class FileLogger : public Log {
+protected:
+	std::ofstream out;
 public:
 	FileLogger();		// Implemented in boomerang.cpp
 	virtual Log &operator<<(const char *str) { 
@@ -33,8 +35,6 @@ public:
 		return *this; 
 	}
 	virtual ~FileLogger() {};
-protected:
-	std::ofstream out;
 };
 
 #endif

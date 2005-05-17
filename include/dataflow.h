@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.11 $
+ * $Revision: 1.39.2.12 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -117,6 +117,8 @@ protected:
 		/**
 		 * The set of locations. Use lessExpStar to compare properly
 		 */
+// FIXME: Consider: should DefLocations not be a set at all? The subscript makes the loookup capability of the set
+// pretty much useless...
 		LocationSet	locs;
 public:
 		/**

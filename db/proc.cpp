@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.13 $
+ * $Revision: 1.238.2.14 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -341,10 +341,13 @@ std::ostream& LibProc::put(std::ostream& os) {
 	return os << std::hex << address << std::endl;
 }
 
-Exp *LibProc::getProven(Exp *left)
-{
+Exp *LibProc::getProven(Exp *left) {
 	// Just use the signature information (all we have, after all)
 	return signature->getProven(left);
+}
+
+bool LibProc::isPreserved(Exp* e) {
+	return signature->isPreserved(e);
 }
 
 /**********************
@@ -619,15 +622,27 @@ void UserProc::generateCode(HLLCode *hll) {
 // print this userproc, maining for debugging
 void UserProc::print(std::ostream &out) {
 	signature->print(out);
+	printParams(out);
 	cfg->print(out);
+	out << "\n";
+}
+
+void UserProc::printParams(std::ostream& out) {
+	out << "Parameters: ";
+	bool first = true;
+	for (StatementList::iterator pp = parameters.begin(); pp != parameters.end(); ++pp) {
+		if (first)
+			first = false;
+		else
+			out << ", ";
+		out << ((Assign*)*pp)->getLeft();
+	}
 	out << "\n";
 }
 
 char* UserProc::prints() {
 	std::ostringstream ost;
-	signature->print(ost);
-	cfg->print(ost);
-	ost << "\n";
+	print(ost);
 	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE);
 	debug_buffer[DEBUG_BUFSIZE] = '\0';
 	return debug_buffer;
@@ -635,6 +650,9 @@ char* UserProc::prints() {
 
 void UserProc::printToLog() {
 	signature->printToLog();
+	std::ostringstream ost;
+	printParams(ost);
+	LOG << ost.str().c_str();
 	symbolMapToLog();
 	for (std::map<std::string, Type*>::iterator it = locals.begin(); it != locals.end(); it++) {
 		LOG << it->second->getCtype() << " " << it->first.c_str() << " ";
@@ -645,6 +663,7 @@ void UserProc::printToLog() {
 		else
 			LOG << "-\n";
 	}
+	LOG << "Live on entry: " << col.prints() << "\n";
 	cfg->printToLog();
 	LOG << "\n";
 }
@@ -875,6 +894,12 @@ std::set<UserProc*>* UserProc::decompile() {
 	if (Boomerang::get()->noDecompile) {
 		decompiled = true;
 		return cycleSet;
+	}
+
+	if (VERBOSE) {
+		LOG << "=== Debug Initial Print after decoding " << getName() << " ===\n";
+		printToLog();
+		LOG << "=== End Initial Debug Print after decoding " << getName() << " ===\n\n";
 	}
 
 	// Update the defines in the calls
@@ -1111,6 +1136,10 @@ std::set<UserProc*>* UserProc::decompile() {
 		}
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
+
+	// Update this procedure's parameters
+	updateParameters();
+printToLog();
 
 	// Data flow based type analysis
 	// Want to be after all propagation, but before converting expressions to locals etc
@@ -1364,7 +1393,8 @@ void UserProc::trimReturns() {
 			LOG << "attempting to prove %pc = m[sp]\n";
 		stdret = prove(new Binary(opEquals, new Terminal(opPC), Location::memOf(Location::regOf(sp))));
 
-		// prove preservation for each parameter
+#if 0
+		// prove preservation for each return
 		for (unsigned u = 0; u < signature->getNumReturns(); u++) {
 			Exp *p = signature->getReturnExp(u);
 			Exp *e = new Binary(opEquals, p->clone(), p->clone());
@@ -1374,6 +1404,20 @@ void UserProc::trimReturns() {
 				removes.insert(p);	
 			}
 		}
+#else
+		// prove preservation for all definitions reaching the exit
+		DefCollector* defCol = theReturnStatement->getCollector();
+		Collector::iterator rd;
+		for (rd = defCol->begin(); rd != defCol->end(); ++rd) {
+			Exp* base = ((RefExp*)*rd)->getSubExp1();
+			Exp* equation = new Binary(opEquals, base, base);
+			if (DEBUG_PROOF)
+				LOG << "attempting to prove " << equation << " is preserved by " << getName() << "\n";
+			if (prove(equation)) {
+				removes.insert(equation);	
+			}
+		}
+#endif
 	}
 
 	if (!Boomerang::get()->noPromote)
@@ -1469,6 +1513,7 @@ void UserProc::updateReturnTypes()
 	}
 }
 
+// FIXME: Consider moving this functionality inside the propagation logic (propagateTo()).
 void UserProc::fixCallRefs()
 {
 	if (VERBOSE)
@@ -2715,11 +2760,6 @@ Exp* UserProc::newLocal(Type* ty) {
 	}
 	if (VERBOSE)
 		LOG << "assigning type " << ty->getCtype() << " to new " << name.c_str() << "\n";
-std::cerr << "Locals now ";
-std::map<std::string, Type*>::iterator ll;
-for (ll=locals.begin(); ll != locals.end(); ++ll)
-  std::cerr << ll->first.c_str() << "->" << ll->second << ", ";
-std::cerr << "\n";	// HACK!
 	return Location::local(strdup(name.c_str()), this);
 }
 
@@ -3101,8 +3141,12 @@ void UserProc::fromSSAform() {
 	for (ss = temp.begin(); ss != temp.end(); ++ss) {
 		bool allZero;
 		Exp* from = ss->first->removeSubscripts(allZero);
-		assert(allZero);
-		symbolMap[from] = ss->second;
+		if (allZero)
+			symbolMap[from] = ss->second;		// Put the unsubscripted version into the symbolMap
+		else
+			// Put the subscripted version back, e.g. r24{39}, so it will be declared in the decompiled output (e.g.
+			// local10 /* r24{39} */. This one will be the result of a liveness overlap, and the local is already
+			symbolMap[ss->first] = ss->second;	// modified into the IR.
 	}
 }
 
@@ -3631,6 +3675,12 @@ Exp *UserProc::getProven(Exp *left) {
 	return NULL;
 }
 
+bool UserProc::isPreserved(Exp* e) {
+	RefExp	re(e, NULL);				// e{-}
+	Binary equate(opEquals, e, &re);	// e == e{-}
+	return proven.find(&equate) != proven.end();
+}
+
 void UserProc::castConst(int num, Type* ty) {
 	StatementList stmts;
 	getStatements(stmts);
@@ -3867,3 +3917,148 @@ void UserProc::updateCallDefines() {
 		call->updateDefines();
 	}
 }
+
+// Update the parameters, in case the signature and hence ordering and filtering has changed, or the locations in the
+// collector have changed
+void UserProc::updateParameters() {
+	// First, substitute into the xxx part of any collections of the form m[xxx]
+	// Example: m[r29{47} + 4] -> m[r28{-} + 8]
+	LocationSet::iterator ll;
+	for (ll = col.begin(); ll != col.end(); ++ll) {
+		if ((*ll)->isMemOf()) {
+			// Ugh - can only propagate to a statement, so wrap in an ImplicitAssign
+			ImplicitAssign ia(*ll);
+			ia.setProc(this);
+			ia.fixCallRefs();			// In case one of the definitions happens to be a call
+			StatementSet dummy;
+			ia.propagateTo(-1, dummy);
+		}
+	}
+
+	StatementList oldParams(parameters);				// Copy the old parameters
+	parameters.clear();
+	// For each location in the collector, make sure that there is a location in the old parameters, which will
+	// be filtered and sorted to become the new parameters
+	// Ick... O(N*M) (N existing parameters, M collected locations)
+	StatementList::iterator it;
+	for (ll = col.begin(); ll != col.end(); ++ll) {
+		bool found = false;
+		Exp* loc = *ll;
+		if (filterParams(loc))
+			continue;									// Filtered out
+		for (it = oldParams.begin(); it != oldParams.end(); it++) {
+			Exp* lhs = ((Assign*)*it)->getLeft();
+			if (*lhs == *loc) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			ImplicitAssign* as = new ImplicitAssign(loc);
+			oldParams.append(as);
+		}
+	}
+
+	// Mostly the old parameters will be in the correct order, and inserting will be fastest near the start of the
+	// new list. So read the old parameters in reverse order
+	for (it = oldParams.end(); it != oldParams.begin(); ) {
+		--it;										// Becuase we are using a forwards iterator backwards
+		// Make sure the LHS is still in the collector
+		Exp* lhs = ((Assign*)*it)->getLeft();
+		if (!col.existsNS(lhs))
+			continue;						// Not in collector: delete it (don't copy it)
+		if (filterParams(lhs))
+			continue;						// Filtered out: delete it by never inserting it into parameters
+			
+		// Insert *it, in order, into the existing set of parameters
+		StatementList::iterator nn;
+		bool inserted = false;
+		for (nn = parameters.begin(); nn != parameters.end(); ++nn) {
+			// If the new assignment is less than the current one ...
+			if (signature->argumentCompare(*(Assign*)*it, *(Assign*)*nn)) {
+				nn = parameters.insert(nn, *it);		// ... then insert before this position
+				inserted = true;
+				break;
+			}
+		}
+		if (!inserted)
+			parameters.insert(parameters.end(), *it);	// In case larger than all existing elements
+	}
+}
+
+
+// Filter out locations not possible as return locations. Return true to *remove* (filter *out*)
+bool UserProc::filterReturns(Exp* e) {
+	switch (e->getOper()) {
+		case opPC:	return true;
+		case opTemp: return true;
+		case opRegOf: {
+			if (isPreserved(e))
+				return true;			// Don't keep preserved locations
+			int sp;
+			if (signature == NULL)
+				sp = 999;
+			else
+				sp = signature->getStackRegister(prog);
+			int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
+			return r == sp;
+		}
+		case opMemOf: {
+			Exp* addr = ((Location*)e)->getSubExp1();
+			if (addr->isIntConst())
+				return true;			// Global memory location
+			OPER op = addr->getOper();
+			if (op == opPlus || op == opMinus) {
+				// Check for local variable: m[sp +- K]
+				int sp;
+				if (signature == NULL)
+					sp = 999;
+				else
+					sp = signature->getStackRegister(prog);
+				Exp* s1 = ((Binary*)addr)->getSubExp1();
+				if (!s1->isRegN(sp)) return false;
+				Exp* s2 = ((Binary*)addr)->getSubExp2();
+				if (!s2->isIntConst()) return false;
+				// This will filter out sparc struct returns, at m[sp+64] (in the *parent's* stack)
+				if (op == opPlus && ((Const*)s2)->getInt() == 64 && signature->getPlatform() == PLAT_SPARC)
+					return false;
+				return true;			// Don't allow local variables
+			}
+			return false;				// Might be some weird memory expression that is not a local
+		}
+		default:
+			return false;
+	}
+	return false;
+}
+
+// Filter out locations not possible as parameters or arguments. Return true to remove
+bool UserProc::filterParams(Exp* e) {
+	switch (e->getOper()) {
+		case opPC:	return true;
+		case opTemp: return true;
+		case opRegOf: {
+			int sp = 999;
+			if (signature) sp = signature->getStackRegister(prog);
+			int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
+			return r == sp;
+		}
+		case opMemOf: {
+			Exp* addr = ((Location*)e)->getSubExp1();
+			if (addr->isIntConst())
+				return true;			// Global memory location
+			if (addr->isSubscript() && ((RefExp*)addr)->isImplicitDef()) {
+				Exp* reg = ((RefExp*)addr)->getSubExp1();
+				int sp = 999;
+				if (signature) sp = signature->getStackRegister(prog);
+				if (reg->isRegN(sp))
+					return true;		// Filter out m[sp{-}] assuming it is the return address
+			}
+			return false;				// Might be some weird memory expression that is not a local
+		}
+		default:
+			return false;
+	}
+	return false;
+}
+

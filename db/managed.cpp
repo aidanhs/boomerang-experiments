@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.7 $
+ * $Revision: 1.15.2.8 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -188,10 +188,10 @@ bool StatementSet::operator<(const StatementSet& o) const {
 
 // Assignment operator
 LocationSet& LocationSet::operator=(const LocationSet& o) {
-	sset.clear();
+	lset.clear();
 	std::set<Exp*, lessExpStar>::const_iterator it;
-	for (it = o.sset.begin(); it != o.sset.end(); it++) {
-		sset.insert((*it)->clone());
+	for (it = o.lset.begin(); it != o.lset.end(); it++) {
+		lset.insert((*it)->clone());
 	}
 	return *this;
 }
@@ -199,15 +199,15 @@ LocationSet& LocationSet::operator=(const LocationSet& o) {
 // Copy constructor
 LocationSet::LocationSet(const LocationSet& o) {
 	std::set<Exp*, lessExpStar>::const_iterator it;
-	for (it = o.sset.begin(); it != o.sset.end(); it++)
-		sset.insert((*it)->clone());
+	for (it = o.lset.begin(); it != o.lset.end(); it++)
+		lset.insert((*it)->clone());
 }
 
 char* LocationSet::prints() {
 	std::ostringstream ost;
 	std::set<Exp*, lessExpStar>::iterator it;
-	for (it = sset.begin(); it != sset.end(); it++) {
-		if (it != sset.begin()) ost << ",\t";
+	for (it = lset.begin(); it != lset.end(); it++) {
+		if (it != lset.begin()) ost << ",\t";
 		ost << *it;
 	}
 	ost << "\n";
@@ -218,29 +218,29 @@ char* LocationSet::prints() {
 
 void LocationSet::print(std::ostream& os) {
 	std::set<Exp*, lessExpStar>::iterator it;
-	for (it = sset.begin(); it != sset.end(); it++) {
-		if (it != sset.begin()) os << ",\t";
+	for (it = lset.begin(); it != lset.end(); it++) {
+		if (it != lset.begin()) os << ",\t";
 		os << *it;
 	}
 	os << "\n";
 }
 
 void LocationSet::remove(Exp* given) {
-	std::set<Exp*, lessExpStar>::iterator it = sset.find(given);
-	if (it == sset.end()) return;
+	std::set<Exp*, lessExpStar>::iterator it = lset.find(given);
+	if (it == lset.end()) return;
 //std::cerr << "LocationSet::remove at " << std::hex << (unsigned)this << " of " << *it << "\n";
 //std::cerr << "before: "; print();
 	// NOTE: if the below uncommented, things go crazy. Valgrind says that
 	// the deleted value gets used next in LocationSet::operator== ?!
 	//delete *it;		  // These expressions were cloned when created
-	sset.erase(it);
+	lset.erase(it);
 //std::cerr << "after : "; print();
 }
 
 #if 0
 void LocationSet::remove(LocSetIter ll) {
 	//delete *ll;		// Don't trust this either
-	sset.erase(ll);
+	lset.erase(ll);
 }
 #endif
 
@@ -254,37 +254,37 @@ void LocationSet::removeIfDefines(StatementSet& given) {
 		s->getDefinitions(defs);
 		LocationSet::iterator dd;
 		for (dd = defs.begin(); dd != defs.end(); ++dd) 
-			sset.erase(*dd);
+			lset.erase(*dd);
 	}
 }
 
 // Make this set the union of itself and other
 void LocationSet::makeUnion(LocationSet& other) {
 	iterator it;
-	for (it = other.sset.begin(); it != other.sset.end(); it++) {
-		sset.insert(*it);
+	for (it = other.lset.begin(); it != other.lset.end(); it++) {
+		lset.insert(*it);
 	}
 }
 
 // Make this set the set difference of itself and other
 void LocationSet::makeDiff(LocationSet& other) {
 	std::set<Exp*, lessExpStar>::iterator it;
-	for (it = other.sset.begin(); it != other.sset.end(); it++) {
-		sset.erase(*it);
+	for (it = other.lset.begin(); it != other.lset.end(); it++) {
+		lset.erase(*it);
 	}
 }
 
 #if 0
 Exp* LocationSet::getFirst(LocSetIter& it) {
-	it = sset.begin();
-	if (it == sset.end())
+	it = lset.begin();
+	if (it == lset.end())
 		// No elements
 		return NULL;
 	return *it;			// Else return the first element
 }
 
 Exp* LocationSet::getNext(LocSetIter& it) {
-	if (++it == sset.end())
+	if (++it == lset.end())
 		// No more elements
 		return NULL;
 	return *it;			// Else return the next element
@@ -295,7 +295,7 @@ bool LocationSet::operator==(const LocationSet& o) const {
 	// We want to compare the strings, not the pointers
 	if (size() != o.size()) return false;
 	std::set<Exp*, lessExpStar>::const_iterator it1, it2;
-	for (it1 = sset.begin(), it2 = o.sset.begin(); it1 != sset.end();
+	for (it1 = lset.begin(), it2 = o.lset.begin(); it1 != lset.end();
 	  it1++, it2++) {
 		if (!(**it1 == **it2)) return false;
 	}
@@ -303,7 +303,7 @@ bool LocationSet::operator==(const LocationSet& o) const {
 }
 
 bool LocationSet::exists(Exp* e) {
-	return sset.find(e) != sset.end();
+	return lset.find(e) != lset.end();
 }
 
 // This set is assumed to be of subscripted locations (e.g. a Collector), and we want to find the unsubscripted
@@ -311,9 +311,9 @@ bool LocationSet::exists(Exp* e) {
 Exp* LocationSet::findNS(Exp* e) {
 	// Note: can't do this efficiently with a wildcard, since you can't order wildcards sensibly (I think)
 	// RefExp r(e, (Statement*)-1);
-	// return sset.find(&r) != sset.end();
+	// return lset.find(&r) != lset.end();
 	iterator it;
-	for (it = sset.begin(); it != sset.end(); ++it) {
+	for (it = lset.begin(); it != lset.end(); ++it) {
 		if (**it *= *e)				// Ignore subscripts
 			return *it;
 	}
@@ -325,9 +325,9 @@ Exp* LocationSet::findNS(Exp* e) {
 // return true if r28{20} in the set. If return true, dr points to the first different ref
 bool LocationSet::findDifferentRef(RefExp* e, Exp *&dr) {
 	RefExp search(e->getSubExp1()->clone(), (Statement*)-1);
-	std::set<Exp*, lessExpStar>::iterator pos = sset.find(&search);
-	if (pos == sset.end()) return false;
-	while (pos != sset.end()) {
+	std::set<Exp*, lessExpStar>::iterator pos = lset.find(&search);
+	if (pos == lset.end()) return false;
+	while (pos != lset.end()) {
 		// Exit if we've gone to a new base expression
 		// E.g. searching for r13{10} and **pos is r14{0}
 		// Note: we want a ref-sensitive compare, but with the outer refs stripped off
@@ -347,9 +347,9 @@ bool LocationSet::findDifferentRef(RefExp* e, Exp *&dr) {
 void LocationSet::addSubscript(Statement* d /* , Cfg* cfg */) {
 	std::set<Exp*, lessExpStar>::iterator it;
 	std::set<Exp*, lessExpStar> newSet;
-	for (it = sset.begin(); it != sset.end(); it++)
+	for (it = lset.begin(); it != lset.end(); it++)
 		newSet.insert((*it)->expSubscriptVar(*it, d /* , cfg */));
-	sset = newSet;			// Replace the old set!
+	lset = newSet;			// Replace the old set!
 	// Note: don't delete the old exps; they are copied in the new set
 }
 
@@ -367,7 +367,7 @@ void LocationSet::substitute(Assign& a) {
 	LocationSet removeAndDelete;	// These will be removed then deleted
 	LocationSet insertSet;			// These will be inserted after the loop
 	bool change;
-	for (it = sset.begin(); it != sset.end(); it++) {
+	for (it = lset.begin(); it != lset.end(); it++) {
 		Exp* loc = *it;
 		Exp* replace;
 		if (loc->search(lhs, replace)) {
@@ -404,7 +404,7 @@ void LocationSet::substitute(Assign& a) {
 	makeUnion(insertSet);	   // Insert the items to be added
 	// Now delete the expressions that are no longer needed
 	std::set<Exp*, lessExpStar>::iterator dd;
-	for (dd = removeAndDelete.sset.begin(); dd != removeAndDelete.sset.end();
+	for (dd = removeAndDelete.lset.begin(); dd != removeAndDelete.lset.end();
 	  dd++)
 		delete *dd;				// Plug that memory leak
 }

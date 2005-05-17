@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.5 $
+ * $Revision: 1.98.2.6 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -86,7 +86,8 @@ namespace CallingConvention {
 		virtual Exp			*getStackWildcard();
 		virtual int	 		getStackRegister() {return 28; }
 		virtual Exp			*getProven(Exp *left);
-
+		virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
+ 
 		virtual bool		isPromoted() {
 								return true; }
 		virtual platform	getPlatform() { return PLAT_PENTIUM; }
@@ -101,6 +102,7 @@ namespace CallingConvention {
 							Win32TcSignature(Signature &old);
 		virtual Exp			*getArgumentExp(int n);
 		virtual Exp			*getProven(Exp* left);
+		virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
 		virtual Signature	*clone();
 		virtual platform	getPlatform() { return PLAT_PENTIUM; }
 		virtual callconv	getConvention() { return CONV_THISCALL; }
@@ -125,6 +127,7 @@ namespace CallingConvention {
 			virtual Exp			*getStackWildcard();
 			virtual int			getStackRegister() {return 28; }
 			virtual Exp			*getProven(Exp *left);
+			virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
 			virtual bool		isPromoted() { return true; }
 			virtual platform	getPlatform() { return PLAT_PENTIUM; }
 			virtual callconv	getConvention() { return CONV_C; }
@@ -149,6 +152,7 @@ namespace CallingConvention {
 			virtual Exp			*getStackWildcard();
 			virtual int			getStackRegister() {return 14; }
 			virtual Exp			*getProven(Exp *left);
+			virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
 			// Stack offsets can be negative (inherited) or positive:
 			virtual bool		isLocalOffsetPositive() {return true;}
 			virtual bool		isPromoted() { return true; }
@@ -177,6 +181,7 @@ namespace CallingConvention {
 			virtual Exp			*getStackWildcard();
 			virtual int			getStackRegister() {return 1; }
             virtual Exp			*getProven(Exp *left);
+			virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
             virtual bool		isLocalOffsetPositive() {return true;}
             //virtual	bool	isAddrOfStackLocal(Prog* prog, Exp* e);
 		};
@@ -364,46 +369,69 @@ Exp *CallingConvention::Win32Signature::getProven(Exp *left) {
 	if (nparams > 0 && *params[0]->getExp() == *Location::regOf(28)) {
 		nparams--;
 	}
-	if (left->getOper() == opRegOf && left->getSubExp1()->getOper() == opIntConst) {
+	if (left->isRegOfK()) {
 		switch (((Const*)left->getSubExp1())->getInt()) {
-			case 28:
+			case 28:	// esp
 				return new Binary(opPlus, Location::regOf(28), 
 					new Const(4 + nparams*4));
-			case 26:
-				return Location::regOf(26);
-			case 27:
+			//case 26:	// edx !!! This is not library function preserved!
+				//return Location::regOf(26);
+			case 27:	// ebx
 				return Location::regOf(27);
-			case 29:
+			case 29:	// ebp
 				return Location::regOf(29);
-			case 30:
+			case 30:	// esi
 				return Location::regOf(30);
-			case 31:
+			case 31:	// edi
 				return Location::regOf(31);
-			// there are other things that must be preserved here,
-			// look at calling convention
+			// there are other things that must be preserved here, look at calling convention
 		}
 	}
 	return NULL;
 }
 
+bool CallingConvention::Win32Signature::isPreserved(Exp* e) {
+	if (e->isRegOfK()) {
+		switch (((Const*)e->getSubExp1())->getInt()) {
+			case 29:		// ebp
+			case 27:		// ebx
+			case 30:		// esi
+			case 31:		// edi
+			case 3:			// bx
+			case 5:			// bp
+			case 6:			// si
+			case 7:			// di
+			case 11:		// bl
+			case 15:		// bh
+				return true;
+			default:
+				return false;
+		}
+	}
+	return false;
+}
+
 Exp *CallingConvention::Win32TcSignature::getProven(Exp *left)
 {
-	if (left->getOper() == opRegOf &&
-		left->getSubExp1()->getOper() == opIntConst) {
+	if (left->isRegOfK()) {
 		if (((Const*)left->getSubExp1())->getInt() == 28) {
 			int nparams = params.size();
 			if (nparams > 0 && *params[0]->getExp() == *Location::regOf(28)) {
 				nparams--;
 			}
 			// r28 += 4 + nparams*4 - 4		(-4 because ecx is register param)
-			return new Binary(opPlus, Location::regOf(28),
-							new Const(4 + nparams*4 - 4));
+			return new Binary(opPlus,
+				Location::regOf(28),
+				new Const(4 + nparams*4 - 4));
 		}
 	}
 	// Else same as for standard Win32 signature
 	return Win32Signature::getProven(left);
 }
 
+bool CallingConvention::Win32TcSignature::isPreserved(Exp* e) {
+	return Win32Signature::isPreserved(e);
+}
 
 
 CallingConvention::StdC::PentiumSignature::PentiumSignature(const char *nam) : Signature(nam)
@@ -465,20 +493,15 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p, Signature
 		if (e == NULL) continue;
 		if (e->getLeft()->getOper() == opPC) {
 			if (e->getRight()->isMemOf() && 
-					e->getRight()->getSubExp1()->isRegOf() &&
-					e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-					((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt() == 28) {
+					e->getRight()->getSubExp1()->isRegOfN(28) {
 				if (VERBOSE)
 					std::cerr << "got pc = m[r[28]]" << std::endl;
 				gotcorrectret1 = true;
 			}
-		} else if (e->getLeft()->isRegOf() && 
-				e->getLeft()->getSubExp1()->isIntConst() &&
+		} else if (e->getLeft()->isRegOfK() && 
 				((Const*)e->getLeft()->getSubExp1())->getInt() == 28) {
 			if (e->getRight()->getOper() == opPlus &&
-					e->getRight()->getSubExp1()->isRegOf() &&
-					e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-					((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt() == 28 &&
+					e->getRight()->getSubExp1()->isRegOfN(28) &&
 					e->getRight()->getSubExp2()->isIntConst() &&
 					((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
 				if (VERBOSE)
@@ -541,16 +564,35 @@ Exp *CallingConvention::StdC::PentiumSignature::getProven(Exp *left) {
 	if (left->isRegOfK()) {
 		int r = ((Const*)left->getSubExp1())->getInt();
 		switch (r) {
-			case 28:
-				return new Binary(opPlus, Location::regOf(28), new Const(4));
-			case 29: case 30: case 31: case 27:
-				//Registers ebp, esi, edi, and ebx are callee save
+			case 28:	// esp
+				return new Binary(opPlus, Location::regOf(28), new Const(4));	// esp+4
+			case 29: case 30: case 31: case 27:		// ebp, esi, edi, ebx
 				return Location::regOf(r);
 		}
 	}
 	return NULL;
 }
 
+bool CallingConvention::StdC::PentiumSignature::isPreserved(Exp* e) {
+	if (e->isRegOfK()) {
+		switch (((Const*)e->getSubExp1())->getInt()) {
+			case 29:		// ebp
+			case 27:		// ebx
+			case 30:		// esi
+			case 31:		// edi
+			case 3:			// bx
+			case 5:			// bp
+			case 6:			// si
+			case 7:			// di
+			case 11:		// bl
+			case 15:		// bh
+				return true;
+			default:
+				return false;
+		}
+	}
+	return false;
+}
 
 CallingConvention::StdC::PPCSignature::PPCSignature(const char *nam) : Signature(nam) {
 	Signature::addReturn(Location::regOf(1));
@@ -625,6 +667,14 @@ Exp *CallingConvention::StdC::PPCSignature::getProven(Exp* left) {
 		}
 	}
 	return NULL; 
+}
+
+bool CallingConvention::StdC::PPCSignature::isPreserved(Exp* e) {
+	if (e->isRegOfK()) {
+		int r = ((Const*)e->getSubExp1())->getInt();
+		return r == 1;
+	}
+	return false;
 }
 
 /*
@@ -754,15 +804,33 @@ Exp *CallingConvention::StdC::SparcSignature::getProven(Exp* left) {
 		int r = ((Const*)((Location*)left)->getSubExp1())->getInt();
 		switch (r) {
 			// These registers are preserved in Sparc: i0-i7 (24-31), sp (14)
-			case 14:
-			case 24: case 25: case 26: case 27:
-			case 28: case 29: case 30: case 31:
+			case 14:								// sp
+			case 24: case 25: case 26: case 27:		// i0-i3
+			case 28: case 29: case 30: case 31:		// i4-i7
 			// NOTE: Registers %g2 to %g4 are NOT preserved in ordinary application (non library) code
 				return left;
 		}
 	}
 	return NULL; 
 }
+
+bool CallingConvention::StdC::SparcSignature::isPreserved(Exp* e) {
+	if (e->isRegOfK()) {
+		int r = ((Const*)((Location*)e)->getSubExp1())->getInt();
+		switch (r) {
+			// These registers are preserved in Sparc: i0-i7 (24-31), sp (14)
+			case 14:								// sp
+			case 24: case 25: case 26: case 27:		// i0-i3
+			case 28: case 29: case 30: case 31:		// i4-i7
+			// NOTE: Registers %g2 to %g4 are NOT preserved in ordinary application (non library) code
+				return true;
+			default:
+				return false;
+		}
+	}
+	return false; 
+}
+
 
 Exp *CallingConvention::StdC::SparcLibSignature::getProven(Exp* left) {
 	if (left->isRegOfK()) {
@@ -775,7 +843,7 @@ Exp *CallingConvention::StdC::SparcLibSignature::getProven(Exp* left) {
 			// Also the "application global registers" g2-g4 (2-4) (preserved
 			// by library functions, but apparently don't have to be preserved
 			// by application code)
-			case 2:	 case 3:	case 4:
+			case 2:	 case 3:	case 4:			// g2-g4
 			// The system global registers (g5-g7) are also preserved, but
 			// should never be changed in an application anyway
 				return left;
@@ -1611,7 +1679,7 @@ bool Signature::returnCompare(Assign& a, Assign& b) {
 	return *a.getLeft() < *b.getLeft();			// Default: sort by expression only, no explicit ordering
 }
 
-bool Signature::argumentCompare(Assignment& a, Assignment& b) {
+bool Signature::argumentCompare(Assign& a, Assign& b) {
 	return *a.getLeft() < *b.getLeft();			// Default: sort by expression only, no explicit ordering
 }
 
@@ -1657,24 +1725,37 @@ bool CallingConvention::StdC::SparcSignature::returnCompare(Assign& a, Assign& b
 	return *la < *lb;
 }
 
-bool CallingConvention::StdC::PentiumSignature::argumentCompare(Assign& a, Assign& b) {
-	Exp* la = a.getLeft();
-	Exp* lb = b.getLeft();
-	int ma = 0, mb = 0;
-	if (la->isMemOf()) {
-		Exp* sub = ((Location*)la)->getSubExp1();
-		if (sub->getOper() == opMinus) {
+// From m[sp +- K] return K (or -K for subtract). sp could be subscripted with {-}
+// Helper function for the below
+int stackOffset(Exp* e, int sp) {
+	int ret = 0;
+	if (e->isMemOf()) {
+		Exp* sub = ((Location*)e)->getSubExp1();
+		OPER op = sub->getOper();
+		if (op == opPlus || op == opMinus) {
 			Exp* op1 = ((Binary*)sub)->getSubExp1();
-			if (op1->isRegN(28)) {
+			if (op1->isSubscript())
+				op1 = ((RefExp*)op1)->getSubExp1();
+			if (op1->isRegN(sp)) {
 				Exp* op2 = ((Binary*)sub)->getSubExp2();
 				if (op2->isIntConst())
-					ma = ((Const*)op2)->getInt();
+					ret = ((Const*)op2)->getInt();
+				if (op == opMinus)
+					ret = -ret;
 			}
 		}
 	}
+	return ret;
+}
+
+bool CallingConvention::StdC::PentiumSignature::argumentCompare(Assign& a, Assign& b) {
+	Exp* la = a.getLeft();
+	Exp* lb = b.getLeft();
+	int ma = stackOffset(la, 28);
+	int mb = stackOffset(lb, 28);
 
 	if (ma && mb)
-		return ma > mb;						// Note: greater means sp minus more, which is less!
+		return ma < mb;
 	if (ma && !mb)
 		return true;						// m[sp-K] is less than anything else
 	if (mb && !ma)
@@ -1707,34 +1788,15 @@ bool CallingConvention::StdC::SparcSignature::argumentCompare(Assign& a, Assign&
 		return true;						// r8-r13 less than anything else
 	if (rb && ra == 0)
 		return false;						// Nothing else is less than r8-r13
-	int ma = 999, mb = 999;
-	if (la->isMemOf()) {
-		Exp* sub = ((Location*)la)->getSubExp1();
-		if (sub->getOper() == opPlus) {
-			Exp* op1 = ((Binary*)sub)->getSubExp1();
-			if (op1->isRegN(30)) {
-				Exp* op2 = ((Binary*)sub)->getSubExp2();
-				if (op2->isIntConst())
-					ma = ((Const*)op2)->getInt();
-			}
-		}
-	}
-	if (lb->isMemOf()) {
-		Exp* sub = ((Location*)lb)->getSubExp1();
-		if (sub->getOper() == opPlus) {
-			Exp* op1 = ((Binary*)sub)->getSubExp1();
-			if (op1->isRegN(30)) {
-				Exp* op2 = ((Binary*)sub)->getSubExp2();
-				if (op2->isIntConst())
-					mb = ((Const*)op2)->getInt();
-			}
-		}
-	}
-	if (ma != 999 && mb != 999)
+
+	int ma = stackOffset(la, 30);
+	int mb = stackOffset(lb, 30);
+
+	if (ma && mb)
 		return ma < mb;						// Both m[sp + K]: order by memory offset
-	if (ma != 999 && mb == 999)
+	if (ma && !mb)
 		return true;						// m[sp+K] less than anything left
-	if (mb != 888 && ma == 999)
+	if (mb && !ma)
 		return false;						// nothing left is less than m[sp+K]
 				
 	return *la < *lb;						// Else order arbitrarily

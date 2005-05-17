@@ -14,6 +14,7 @@
  *				StatementList
  *				StatementVec
  *				LocationSet
+ *				//LocationList
  *==============================================================================================*/
 
 /*
@@ -68,9 +69,10 @@ virtual				~StatementSet() {}
 		bool		operator==(const StatementSet& o) const	// Compare if equal
 						{ return sset == o.sset;}
 		bool		operator<(const StatementSet& o) const;	// Compare if less
-		char*		prints();								// Print to std::cerr (for debug)
 		void		print(std::ostream& os);				// Print to os
 		void		printNums(std::ostream& os);			// Print statements as numbers
+		char*		prints();								// Print to string (for debug)
+		void		dump();									// Print to standard error for debugging
 		//bool	isLast(StmtSetIter& it);					// returns true if it is at end
 };		// class StatementSet
 
@@ -103,6 +105,7 @@ virtual				~StatementList() {}
 		iterator	insert(iterator it, Statement* s) {return slist.insert(it, s);}
 		bool		exists(Statement* s);				// Search; returns false if not found
 		char*		prints();							// Print to string (for debugging)
+		void		dump();									// Print to standard error for debugging
 		void		clear() { slist.clear(); }
 		void		makeCloneOf(StatementList& o);		// Make this a clone of o
 		bool		existsOnLeft(Exp* loc);				// True if loc exists on the LHS of any Assignment in this list
@@ -114,7 +117,7 @@ class StatementVec {
 public:
 typedef std::vector<Statement*>::iterator iterator;
 typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
-		unsigned	size() {return svec.size();}		 // Number of elements
+		unsigned	size() {return svec.size();}		 	// Number of elements
 		iterator	begin() { return svec.begin();}
 		iterator	end()	 { return svec.end();}
 		reverse_iterator rbegin() { return svec.rbegin();}
@@ -123,7 +126,8 @@ typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
 		Statement* operator[](int idx) {return svec[idx];}
 		void		putAt(int idx, Statement* s);
 		iterator	remove(iterator it);
-		char*		prints();						// Print to string (for debugging)
+		char*		prints();								// Print to string (for debugging)
+		void		dump();									// Print to standard error for debugging
 		void		printNums(std::ostream& os);
 		void		clear() { svec.clear(); }
 		bool		operator==(const StatementVec& o) const	// Compare if equal
@@ -134,13 +138,13 @@ typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
 		void		erase(iterator it) {svec.erase(it);}
 };	// class StatementVec
 
-// For liveness, we need sets of locations (registers or memory)
+// For various purposes, we need sets of locations (registers or memory)
 class LocationSet {
 		// We use a standard set, but with a special "less than" operator so that the sets are ordered
 		// by expression value. If this is not done, then two expressions with the same value (say r[10])
 		// but that happen to have different addresses (because they came from different statements)
 		// would both be stored in the set (instead of the required set behaviour, where only one is stored)
-		std::set<Exp*, lessExpStar> sset; 
+		std::set<Exp*, lessExpStar> lset; 
 public:
 typedef std::set<Exp*, lessExpStar>::iterator iterator;
 					LocationSet() {}						// Default constructor
@@ -149,26 +153,53 @@ virtual				~LocationSet() {}						// virtual destructor kills warning
 					LocationSet& operator=(const LocationSet& o); // Assignment
 		void		makeUnion(LocationSet& other);			// Set union
 		void		makeDiff (LocationSet& other);			// Set difference
-		void		clear() {sset.clear();}					// Clear the set
-		iterator	begin() {return sset.begin();}
-		iterator	end()	 {return sset.end();}
-		void		insert(Exp* loc) {sset.insert(loc);}	// Insert the given location
+		void		clear() {lset.clear();}					// Clear the set
+		iterator	begin() {return lset.begin();}
+		iterator	end()	 {return lset.end();}
+		void		insert(Exp* loc) {lset.insert(loc);}	// Insert the given location
 		void		remove(Exp* loc);						// Remove the given location
 		void		remove(iterator ll);					// Remove location, given iterator
 		void		removeIfDefines(StatementSet& given);	// Remove locs defined in given
-		unsigned	size() const {return sset.size();}		// Number of elements
+		unsigned	size() const {return lset.size();}		// Number of elements
 		bool		operator==(const LocationSet& o) const; // Compare
 		void		substitute(Assign& a);					// Substitute the given assignment to all
-		char*		prints();								// Print to cerr for debugging
 		void		print(std::ostream& os);				// Print to os
+		char*		prints();								// Print to string for debugging
+		void		dump();
 		bool		exists(Exp* e); 						// Return true if the location exists in the set
 		Exp*		findNS(Exp* e);							// Find location e (no subscripts); NULL if not found
 		// Return an iterator to the found item (or end() if not). Only really makes sense if e has a wildcard
-		iterator	find(Exp* e) {return sset.find(e); }
+		iterator	find(Exp* e) {return lset.find(e); }
 		// Find a location with a different def, but same expression. For example, pass r28{10},
 		// return true if r28{20} in the set. If return true, dr points to the first different ref
 		bool		findDifferentRef(RefExp* e, Exp *&dr);
 		void		addSubscript(Statement* def /* , Cfg* cfg */);		// Add a subscript to all elements
 };	// class LocationSet
+
+#if 0
+class LocationList {
+		std::list<Exp*> llist; 
+public:
+typedef std::list<Exp*>::iterator iterator;
+					LocationList() {}						// Default constructor
+virtual				~LocationList() {}						// virtual destructor kills warning
+					LocationList(const LocationList& o);		// Copy constructor
+					LocationList& operator=(const LocationList& o); // Assignment
+		//void		makeUnion(LocationSet& other);			// Set union
+		//void		makeDiff (LocationSet& other);			// Set difference
+		void		clear() {llist.clear();}					// Clear the set
+		iterator	begin() {return llist.begin();}
+		iterator	end()	 {return llist.end();}
+		//void		insert(Exp* loc) {llist.insert(loc);}	// Insert the given location
+		//void		remove(Exp* loc);						// Remove the given location
+		//void		remove(iterator ll);					// Remove location, given iterator
+		//void		removeIfDefines(StatementSet& given);	// Remove locs defined in given
+		unsigned	size() const {return llist.size();}		// Number of elements
+		bool		operator==(const LocationSet& o) const; // Compare
+		void		print(std::ostream& os);				// Print to os
+		char*		prints();								// Print to string for logging and debugging
+		void		dump();									// Print to standard error for debugging
+};	// class LocationList
+#endif
 
 #endif	// #ifdef __MANAGED_H__

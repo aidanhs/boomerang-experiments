@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.12 $
+ * $Revision: 1.76.2.13 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -227,7 +227,8 @@ virtual void		print(std::ostream &os) = 0;
 		void		printAsUse(std::ostream &os)   {os << std::dec << number;}
 		void		printAsUseBy(std::ostream &os) {os << std::dec << number;}
 		void		printNum(std::ostream &os)	   {os << std::dec << number;}
-		char*		prints();	   // For use in a debugger
+		char*		prints();		// For logging, was also for debugging
+		void		dump();			// For debugging
 
 		// inline / decode any constants in the statement. Return true if need to redo dataflow
 virtual bool		processConstants(Prog *prog) = 0;
@@ -947,7 +948,7 @@ virtual	void		regReplace(UserProc* proc);
 class CallStatement: public GotoStatement {
 		bool		returnAfterCall;// True if call is effectively followed by a return.
 	
-		// The list of arguments passed by this call, actually a list of Assignments
+		// The list of arguments passed by this call, actually a list of Assign statements (location := expr)
 		StatementList arguments;
 
 		// The list of defines for this call, also a list of Assignments (used to be called returns)
@@ -1109,7 +1110,7 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
 		void		updateArgumentWithType(int n);
 		void		updateDefineWithType(int n);
 		void		appendArgument(Assignment* as) {arguments.append(as);}
-	friend class XMLProgParser;
+friend	class		XMLProgParser;
 };		// class CallStatement
 
 

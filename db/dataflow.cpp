@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.9 $
+ * $Revision: 1.43.2.10 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -305,13 +305,14 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					// to an implicit definition at the start of type analysis, but not until all the m[...]
 					// have stopped changing their expressions (complicates implicit assignments considerably).
 					def = NULL;
-					proc->useBeforeDefine(x);
+					proc->useBeforeDefine(x->clone());
 				}
 				else {
 					def = Stack[x].top();
-					if (def->isCall())
+					if (def->isCall()) {
 						// Calls have UseCollectors for locations that are used before definition at the call
-						((CallStatement*)def)->useBeforeDefine(x);
+						((CallStatement*)def)->useBeforeDefine(x->clone());
+					}
 				}
 				// Replace the use of x with x{def} in S
 				if (S->isPhi()) {

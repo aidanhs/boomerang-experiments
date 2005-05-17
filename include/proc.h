@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.7 $
+/* $Revision: 1.115.2.8 $
 */
 
 #ifndef _PROC_H_
@@ -181,6 +181,7 @@ virtual bool		isAggregateUsed() {return false;}
 		friend std::ostream& operator<<(std::ostream& os, Proc& proc);
 		
 virtual Exp			*getProven(Exp *left) = 0;
+virtual	bool		isPreserved(Exp* e) = 0;		// Return whether e is preserved by this proc
 
 		// Set an equation as proven. Useful for some sorts of testing
 		void		setProven(Exp* fact) {proven.insert(fact);}
@@ -276,6 +277,7 @@ virtual				~LibProc();
 virtual bool		isAggregateUsed() {return false;}
 
 virtual Exp*		getProven(Exp* left);
+virtual	bool		isPreserved(Exp* e);			// Return whether e is preserved by this proc
 
 		/*
 		 * Prints this procedure to an output stream.
@@ -365,10 +367,17 @@ private:
 		 */
 		bool		isRecursive;
 
-		/*
+		/**
 		 * A collector for potential parameters (locations used before being defined)
 		 */
 		UseCollector col;
+
+		/**
+		 * The list of parameters. Updated from the UseCollector above, but ordered and filtered
+		 * Note that a LocationList could be used, but then there would be nowhere to store the types (for DFA based TA)
+		 * The RHS is just ignored
+		 */
+		StatementList parameters;
 
 public:
 
@@ -438,6 +447,7 @@ virtual				~UserProc();
 
 		// print this proc, mainly for debugging
 		void		print(std::ostream &out);
+		void		printParams(std::ostream &out);
 		char		*prints();
 		void		printToLog();
 		void		symbolMapToLog();			// Print just the symbol map
@@ -472,6 +482,7 @@ virtual				~UserProc();
 //		void		addNewReturns(int depth);
 		void		updateArguments();			// Update the arguments in calls
 		void		updateCallDefines();		// Update the defines in calls
+		void		updateParameters();			// Update the parameters for this proc
 		// Trim parameters. If depth not given or == -1, perform at all depths
 		void		trimParameters(int depth = -1);
 		void		processFloatConstants();
@@ -668,6 +679,7 @@ virtual void		renameParam(const char *oldName, const char *newName);
 virtual bool		isAggregateUsed() {return aggregateUsed;}
 
 virtual Exp*		getProven(Exp* left);
+virtual	bool		isPreserved(Exp* e);			// Return whether e is preserved by this proc
 
 virtual void		printCallGraphXML(std::ostream &os, int depth,
 									   bool recurse = true);
@@ -699,6 +711,8 @@ public:
 						theReturnStatement = s;
 						theReturnStatement->setRetAddr(r);}
 		ReturnStatement* getTheReturnStatement() {return theReturnStatement;}
+		bool		filterReturns(Exp* e);			// Decide whether to filter out e (return true) or keep it
+		bool		filterParams(Exp* e);			// As above but for parameters and arguments
 protected:
 		friend class XMLProgParser;
 		UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), nextLocal(0), decompileSeen(false),

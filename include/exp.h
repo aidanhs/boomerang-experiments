@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.2 $
+ * $Revision: 1.119.2.3 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -103,7 +103,8 @@ virtual void		print(std::ostream& os) = 0;
 		// Print with <type>
 		void		printt(std::ostream& os = std::cout);
 		void		printAsHL(std::ostream& os = std::cout); // Print with v[5] as v5
-		char*		prints();	   // Print to string (for debugging)
+		char*		prints();		// Print to string (for debugging and logging)
+		void		dump();			// Print to standard error (for debugging)
 		// Recursive print: don't want parens at the top level
 virtual void printr(std::ostream& os) { print(os);}	   // But most classes want standard
 		// For debugging: print in indented hex. In gdb: "p x->printx(0)"

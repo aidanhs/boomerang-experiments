@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.6 $
+ * $Revision: 1.90.2.7 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1229,14 +1229,3 @@ void CHLLCode::AddLineComment(char* cmt) {
 	lines.push_back(strdup(s.str().c_str()));
 }
 
-// Calculate results(this) = defines(this) isect live(this)
-StatementList* CallStatement::calcResults() {
-	StatementList* ret = new StatementList;
-	StatementList::iterator dd;
-	for (dd = defines.begin(); dd != defines.end(); ++dd) {
-		Exp* lhs = ((Assign*)*dd)->getLeft();
-		if (useCol.exists(lhs))
-			ret->append(*dd);
-	}
-	return ret;
-}

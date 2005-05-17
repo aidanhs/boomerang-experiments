@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.5 $
+ * $Revision: 1.53.2.6 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -239,6 +239,7 @@ static	StatementList& getStdRetStmt(Prog* prog);
 
 		// get anything that can be proven as a result of the signature
 virtual Exp			*getProven(Exp *left) { return NULL; }
+virtual	bool		isPreserved(Exp* e) { return false; }		// Return whether e is preserved by this proc
 
 		// Return true if this is a known machine (e.g. SparcSignature as opposed to Signature)
 virtual bool		isPromoted() { return false; }
@@ -262,7 +263,7 @@ virtual callconv	getConvention() { return CONV_NONE; }
 		int			getPreferedParam(int n) { return preferedParams[n]; }
 
 		// A compare function for arguments and returns. Used for sorting returns in calcReturn() etc
-virtual	bool		argumentCompare(Assignment& a, Assignment& b);
+virtual	bool		argumentCompare(Assign& a, Assign& b);
 virtual	bool		returnCompare(Assign& a, Assign& b);
 
 
