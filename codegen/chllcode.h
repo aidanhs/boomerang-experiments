@@ -156,13 +156,13 @@ virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList &args, St
 virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs);
 
 		// proc related
-virtual void	AddProcStart(Signature *signature);
+virtual void	AddProcStart(UserProc* proc);
 virtual void	AddProcEnd();
 virtual void	AddLocal(const char *name, Type *type, bool last = false);
 virtual void	AddGlobal(const char *name, Type *type, Exp *init = NULL);
-virtual void	AddPrototype(Signature *signature);
+virtual void	AddPrototype(UserProc* proc);
 private:
-		void	AddProcDec(Signature *signature, bool open);	// Implement AddProcStart and AddPrototype
+		void	AddProcDec(UserProc* proc, bool open);	// Implement AddProcStart and AddPrototype
 public:
 
 		// comments

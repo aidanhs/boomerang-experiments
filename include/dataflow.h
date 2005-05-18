@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.12 $
+ * $Revision: 1.39.2.13 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -78,7 +78,7 @@ class DataFlow {
 		 */
 		// The stack which remembers the last definition of an expression.
 		// A map from expression (Exp*) to a stack of (pointers to) Statements
-		std::map<Exp*, std::stack<Statement*>, lessExpStar> Stack;
+		std::map<Exp*, std::stack<Statement*>, lessExpStar> Stacks;
 
 
 public:
@@ -91,7 +91,7 @@ public:
 		void		Link(int p, int n);
 		void		computeDF(int n);
 		void		placePhiFunctions(int memDepth, UserProc* proc);
-		void		renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStack = false);
+		void		renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStacks = false);
 		bool		doesDominate(int n, int w);
 
 		// For testing:
@@ -185,7 +185,7 @@ public:
 		/*
 		 * Update the locations with the current set of reaching definitions
 		 */
-		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack);
+		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks);
 
 		/**
 		 * Find the definition for a location. If not found, return NULL

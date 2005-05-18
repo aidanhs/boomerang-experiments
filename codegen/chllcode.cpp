@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.7 $
+ * $Revision: 1.90.2.8 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -756,8 +756,10 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 
 void CHLLCode::appendType(std::ostringstream& str, Type *typ)
 {
-	if (typ == NULL) return;
-	// TODO: decode types
+	if (typ == NULL) {
+		str << "int";			// Default type for C
+		return;
+	}
 	str << typ->getCtype(true);
 }
 
@@ -1116,36 +1118,51 @@ void CHLLCode::AddReturnStatement(int indLevel, ReturnStatement& rs) {
 	lines.push_back(strdup(s.str().c_str()));
 }
 
-void CHLLCode::AddProcStart(Signature *signature) {AddProcDec(signature, true);}
-void CHLLCode::AddPrototype(Signature *signature) {AddProcDec(signature, false);}
-void CHLLCode::AddProcDec(Signature *signature, bool open) {
+void CHLLCode::AddProcStart	(UserProc* proc) { AddProcDec(proc, true); }
+void CHLLCode::AddPrototype	(UserProc* proc) { AddProcDec(proc, false); }
+void CHLLCode::AddProcDec	(UserProc* proc, bool open) {
 	std::ostringstream s;
-	if (signature->getNumReturns() == 0) {
+	if (strncmp("main", proc->getName(), 4+1) == 0) {
+		// Special case for main()
+		lines.push_back("int main(int argc, char* argv[], char** envp) {");
+		return;
+	}
+	ReturnStatement* returns = proc->getTheReturnStatement();
+	if (returns == NULL || returns->getNumReturns() == 0) {
 		s << "void ";
 	}  else {
-		appendType(s, signature->getReturnType(0));
-		if (!signature->getReturnType(0)->isPointer())
+		Assign* firstRet = (Assign*)*returns->begin();
+		appendType(s, firstRet->getType());
+		if (!firstRet->getType() || !firstRet->getType()->isPointer())	// NOTE: assumes type *proc( style
 			s << " ";
 	}
-	s << signature->getName() << "(";
-	for (unsigned i = 0; i < signature->getNumParams(); i++) {
-		Type *ty = signature->getParamType(i); 
+	s << proc->getName() << "(";
+	StatementList* parameters = proc->getParameters();
+	StatementList::iterator pp;
+	bool first = true;
+	for (pp = parameters->begin(); pp != parameters->end(); ++pp) {
+		if (first)
+			first = false;
+		else
+			s << ", ";
+		Assign* as = (Assign*)*pp;
+		Exp* left = as->getLeft();
+		Type *ty = as->getType();
+		char* name = proc->lookup(left);
 		if (ty->isPointer() && ((PointerType*)ty)->getPointsTo()->isArray()) {
-			// C does this by default when you pass an array
-			// FIXME: what the hell is this?
+			// C does this by default when you pass an array, i.e. you pass &array meaning array
+			// Replace all m[param] with foo, param with foo, then foo with param
 			ty = ((PointerType*)ty)->getPointsTo();
 			Exp *foo = new Const("foo123412341234");
-			m_proc->searchAndReplace(Location::memOf(Location::param(signature->getParamName(i)), NULL), foo);
-			m_proc->searchAndReplace(Location::param(signature->getParamName(i)), foo);
-			m_proc->searchAndReplace(foo, Location::param(signature->getParamName(i)));
+			m_proc->searchAndReplace(Location::memOf(left, NULL), foo);
+			m_proc->searchAndReplace(left, foo);
+			m_proc->searchAndReplace(foo, left);
 		}
-		appendTypeIdent(s, ty, signature->getParamName(i));
-		if (i != signature->getNumParams() - 1)
-			s << ", ";
+		appendTypeIdent(s, ty, name);
 	}
 	s << ")";
 	if (open)
-		s << "{";
+		s << " {";
 	else
 		s << ";";
 	lines.push_back(strdup(s.str().c_str()));

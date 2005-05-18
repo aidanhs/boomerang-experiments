@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.13 $
+ * $Revision: 1.76.2.14 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -149,7 +149,7 @@ virtual				~Statement() { }
 		PBB			getBB() { return pbb; }
 		void		setBB(PBB bb) { pbb = bb; }
 
-		bool		operator==(Statement& o);
+//		bool		operator==(Statement& o);
 		// Get and set *enclosing* proc (not destination proc)
 		void		setProc(UserProc *p);
 		UserProc*	getProc() {return proc;}
@@ -374,7 +374,7 @@ virtual Type*		getTypeFor(Exp* e); 				// Get the type for this assignment. It s
 virtual void		setTypeFor(Exp* e, Type* ty); 		// Set the type for this assignment. It should define e
 
 		// Get and set the type. Not polymorphic (any more)
-		Type*		getType() {return type;}
+		Type*		getType();
 		void		setType(Type* ty) {type = ty;}
 
 virtual bool		usesExp(Exp *e);	   // PhiAssign and ImplicitAssign don't override
@@ -1222,6 +1222,9 @@ virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 
 		// From SSA form
 virtual void		fromSSAform(igraph& igm);
+
+		// Temporary hack
+		void		specialProcessing();
 
 	friend class XMLProgParser;
 };	// class ReturnStatement

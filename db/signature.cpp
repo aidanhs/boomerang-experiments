@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.6 $
+ * $Revision: 1.98.2.7 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -132,7 +132,7 @@ namespace CallingConvention {
 			virtual platform	getPlatform() { return PLAT_PENTIUM; }
 			virtual callconv	getConvention() { return CONV_C; }
 			virtual bool		returnCompare(Assign& a, Assign& b);
-			virtual bool		argumentCompare(Assign& a, Assign& b);
+			virtual bool		argumentCompare(Assignment& a, Assignment& b);
 		};	// class PentiumSignature
 
 		class SparcSignature : public Signature {
@@ -159,7 +159,7 @@ namespace CallingConvention {
 			virtual platform	getPlatform() { return PLAT_SPARC; }
 			virtual callconv	getConvention() { return CONV_C; }
 			virtual bool		returnCompare(Assign& a, Assign& b);
-			virtual bool		argumentCompare(Assign& a, Assign& b);
+			virtual bool		argumentCompare(Assignment& a, Assignment& b);
 		};	// class SparcSignature
 
 		class SparcLibSignature : public SparcSignature {
@@ -1233,10 +1233,8 @@ void Signature::print(std::ostream &out)
 			<< implicitParams[i]->getExp();
 		if (i != implicitParams.size()-1) out << ", ";
 	}
-	out << ") { "; 
-#else
-	out << "  { "; 
 #endif
+	out << ") { "; 
 	Returns::iterator it;
 	bool first = true;
 	for (it = returns.begin(); it != returns.end(); ++it) {
@@ -1679,7 +1677,7 @@ bool Signature::returnCompare(Assign& a, Assign& b) {
 	return *a.getLeft() < *b.getLeft();			// Default: sort by expression only, no explicit ordering
 }
 
-bool Signature::argumentCompare(Assign& a, Assign& b) {
+bool Signature::argumentCompare(Assignment& a, Assignment& b) {
 	return *a.getLeft() < *b.getLeft();			// Default: sort by expression only, no explicit ordering
 }
 
@@ -1748,7 +1746,7 @@ int stackOffset(Exp* e, int sp) {
 	return ret;
 }
 
-bool CallingConvention::StdC::PentiumSignature::argumentCompare(Assign& a, Assign& b) {
+bool CallingConvention::StdC::PentiumSignature::argumentCompare(Assignment& a, Assignment& b) {
 	Exp* la = a.getLeft();
 	Exp* lb = b.getLeft();
 	int ma = stackOffset(la, 28);
@@ -1765,7 +1763,7 @@ bool CallingConvention::StdC::PentiumSignature::argumentCompare(Assign& a, Assig
 	return *la < *lb;
 }
 
-bool CallingConvention::StdC::SparcSignature::argumentCompare(Assign& a, Assign& b) {
+bool CallingConvention::StdC::SparcSignature::argumentCompare(Assignment& a, Assignment& b) {
 	Exp* la = a.getLeft();
 	Exp* lb = b.getLeft();
 	// %o0-$o5 (r8-r13) are the preferred argument locations

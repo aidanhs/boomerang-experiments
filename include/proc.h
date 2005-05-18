@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.8 $
+/* $Revision: 1.115.2.9 $
 */
 
 #ifndef _PROC_H_
@@ -32,7 +32,7 @@
 #include "cfg.h"				// For cfg->simplify()
 #include "hllcode.h"
 #include "memo.h"
-#include "dataflow.h"			// For class UseCollector
+//#include "dataflow.h"			// For class UseCollector
 
 class Prog;
 class UserProc;
@@ -369,11 +369,15 @@ private:
 
 		/**
 		 * A collector for potential parameters (locations used before being defined)
+		 * NO! Current thinking is that parameters *have* to be recovered from a separate pass, after unused statements
+		 * are removed. Consider a program that uses say ecx as a parameter, but went ahead and used then restored it.
+		 * This would be uncommon, since parameters are not preserved in C like languages, but it could certainly
+		 * happen.
 		 */
-		UseCollector col;
+		//UseCollector col;
 
 		/**
-		 * The list of parameters. Updated from the UseCollector above, but ordered and filtered
+		 * The list of parameters, ordered and filtered
 		 * Note that a LocationList could be used, but then there would be nowhere to store the types (for DFA based TA)
 		 * The RHS is just ignored
 		 */
@@ -478,7 +482,8 @@ virtual				~UserProc();
 		void		updateReturnTypes();
 		void		fixCallRefs();
 		void		addNewParameters();
-		void		addParameter(Exp *e);
+		void		addParameter(Exp *e);		// Add to signature (temporary now; still needed to create param names)
+		void		insertParameter(Exp* e);	// Insert into parameters list correctly sorted
 //		void		addNewReturns(int depth);
 		void		updateArguments();			// Update the arguments in calls
 		void		updateCallDefines();		// Update the defines in calls
@@ -565,6 +570,7 @@ virtual	void		removeReturn(Exp *e);
 
 		void		getDefinitions(LocationSet &defs);
 		void		addImplicitAssigns();
+		StatementList* getParameters() { return &parameters; }
 
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);
@@ -697,7 +703,7 @@ virtual void		printCallGraphXML(std::ostream &os, int depth,
 
 		// Add a location to the UseCollector; this means this location is used before defined, and hence is probably a
 		// parameter
-		void		useBeforeDefine(Exp* loc) {col.insert(loc);}
+		//void		useBeforeDefine(Exp* loc) {col.insert(loc);}
  
 private:
 		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case

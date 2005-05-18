@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.14 $
+ * $Revision: 1.238.2.15 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -598,7 +598,7 @@ void UserProc::generateCode(HLLCode *hll) {
 	if (VERBOSE || Boomerang::get()->printRtl)
 		printToLog();
 
-	hll->AddProcStart(signature);
+	hll->AddProcStart(this);
 	
 	// Local variables; print everything in the locals map
 	std::map<std::string, Type*>::iterator last = locals.end();
@@ -663,7 +663,6 @@ void UserProc::printToLog() {
 		else
 			LOG << "-\n";
 	}
-	LOG << "Live on entry: " << col.prints() << "\n";
 	cfg->printToLog();
 	LOG << "\n";
 }
@@ -938,7 +937,7 @@ std::set<UserProc*>* UserProc::decompile() {
 	}
 
 	trimReturns();		// Also does proofs, sets signatures to PentiumSignature etc
-						// FIXME: Are there any returns to trim then? Needs a rename
+						// FIXME: Are there any returns to trim yet? Needs a rename
 	
 	// Update the arguments for calls
 	updateArguments();
@@ -949,11 +948,14 @@ std::set<UserProc*>* UserProc::decompile() {
 		if (VERBOSE)
 			LOG << "renaming block variables (2) at depth " << depth << "\n";
 		// Rename variables
-		df.renameBlockVars(this, 0, depth);
+		df.renameBlockVars(this, 0, depth);						// E.g. for new arguments
 
 		// Seed the return statement with reaching definitions
 		if (theReturnStatement)
-			theReturnStatement->copyReachingDefs(depth);
+			theReturnStatement->copyReachingDefs(depth);		// Everything including new arguments reaching ret
+
+		// This gets called so much... it would be great to be able to "repair" the names...
+		df.renameBlockVars(this, 0, depth);						// E.g. update call use collectors with return uses
 
 		printXML();
 
@@ -982,11 +984,13 @@ std::set<UserProc*>* UserProc::decompile() {
 		// recognising globals early prevents them from becoming parameters
 		if (depth == maxDepth)		// Else Sparc problems... MVE
 			replaceExpressionsWithGlobals();
-		// int nparams = signature->getNumParams();
+#if 0 	// No: recovering parameters must be late: after removal of unused statements, so don't get phantom parameters
+		// from preserveds. Note that some preserveds could be prarameters.
 		if (depth > 0 && !Boomerang::get()->noChangeSignatures) {
 			addNewParameters();
 			//trimParameters(depth);
 		}
+#endif
 
 #if 0	// No need to do a whole propagation phase any more; addArguments does the propagation now
 		// if we've added new parameters, need to do propagations up to this depth.  it's a recursive function thing.
@@ -1099,13 +1103,13 @@ std::set<UserProc*>* UserProc::decompile() {
 	// Used to be later...
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
-			replaceExpressionsWithParameters(df, i);
+			//replaceExpressionsWithParameters(df, i);
 			replaceExpressionsWithLocals(true);
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
-		trimReturns();
-		fixCallRefs();
-		trimParameters();
+		trimReturns();		// FIXME: is this necessary here?
+		fixCallRefs();		// FIXME: surely this is not necessary now?
+		trimParameters();	// FIXME: surely there aren't any parameters to trim yet?
 		if (VERBOSE) {
 			LOG << "=== After replacing expressions, trimming params and returns ===\n";
 			printToLog();
@@ -1113,6 +1117,16 @@ std::set<UserProc*>* UserProc::decompile() {
 			LOG << "===== End after replacing params =====\n\n";
 		}
 	}
+
+	// A temporary hack to remove %CF = %CF{7} when 7 isn't a SUBFLAGS
+	if (theReturnStatement)
+		theReturnStatement->specialProcessing();
+
+	/*	*	*	*	*	*	*	*	*	*	*	*	*	*
+	 *													*
+	 *	R e m o v e   u n u s e d   s t a t e m e n t s	*
+	 *													*
+	 *	*	*	*	*	*	*	*	*	*	*	*	*	*/
 
 	// Only remove unused statements after decompiling as much as possible of the proc
 	for (depth = 0; depth <= maxDepth; depth++) {
@@ -1137,9 +1151,21 @@ std::set<UserProc*>* UserProc::decompile() {
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
 
-	// Update this procedure's parameters
-	updateParameters();
-printToLog();
+	addNewParameters();
+	if (!Boomerang::get()->noParameterNames) {
+		for (int i = maxDepth; i >= 0; i--) {
+			replaceExpressionsWithParameters(df, i);
+			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
+		}
+		trimReturns();		// FIXME: is this necessary here?
+		fixCallRefs();		// FIXME: surely this is not necessary now?
+		//trimParameters();	// FIXME: check
+		if (VERBOSE) {
+			LOG << "=== After adding new parameters ===\n";
+			printToLog();
+			LOG << "=== End after adding new parameters ===\n";
+		}
+	}
 
 	// Data flow based type analysis
 	// Want to be after all propagation, but before converting expressions to locals etc
@@ -1161,7 +1187,6 @@ printToLog();
 		} while (ellipsisProcessing());
 		if (VERBOSE || DEBUG_TA)
 			LOG << "=== End Type Analysis for " << getName() << " ===\n";
-
 	}
 
 #if 0		// Want this earlier, before remove unused statements, so assignments to locals can work
@@ -1478,8 +1503,10 @@ void UserProc::trimReturns() {
 	if (!signature->isFullSignature()) {
 		if (stdret)
 			removeReturn(new Terminal(opPC));
-		for (std::set<Exp*>::iterator it = removes.begin(); it != removes.end(); it++)
-			removeReturn(*it);
+		for (std::set<Exp*>::iterator it = removes.begin(); it != removes.end(); it++) {
+			// removes are of the form r29{9} = r29{-}
+			removeReturn(((Binary*)*it)->getSubExp1());
+		}
 	}
 
 	if (DEBUG_PROOF) {
@@ -1729,8 +1756,8 @@ void UserProc::addNewParameters() {
 						LOG << "ignoring m[global + int] " << e << "\n";
 					continue;
 				}
-#if 1
-				// Has to be r[] or m[esp+K]. NOTE: Won't suit some architectures!
+#if 0
+				// Has to be r[] or m[esp+K]. NOTE: PENTIUM SPECIFIC!
 				if ((e->getOper() != opMemOf ||
 						e->getSubExp1()->getOper() != opPlus ||
 						!(*e->getSubExp1()->getSubExp1() == *Location::regOf(28)) ||
@@ -1742,8 +1769,10 @@ void UserProc::addNewParameters() {
 #endif
 				if (VERBOSE)
 					LOG << "Found new parameter " << e << "\n";
-				// Add this parameter to the signature and all known callers
+				// Add this parameter to the signature (for now; creates parameter names)
 				addParameter(e);
+				// Insert it into the parameters StatementList
+				insertParameter(e);
 			}
 		}
 	}
@@ -2000,6 +2029,7 @@ void UserProc::replaceExpressionsWithGlobals() {
 	}
 	StatementList stmts;
 	getStatements(stmts);
+	int sp = signature->getStackRegister(prog);
 
 	if (VERBOSE)
 		LOG << "replacing expressions with globals\n";
@@ -2142,6 +2172,11 @@ void UserProc::replaceExpressionsWithGlobals() {
 						r1->getSubExp1()->getSubExp1()->getOper() == opMult &&
 						r1->getSubExp1()->getSubExp1()->getSubExp2() ->getOper() == opIntConst &&
 						r1->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
+					Exp* blah = r1->getSubExp1()->getSubExp1()->getSubExp1();
+					if (blah->isSubscript())
+						blah = ((RefExp*)blah)->getSubExp1();
+					if (blah->isRegN(sp))
+						continue;					// sp can't base an array
 					Exp *memof = r1;
 					// K1 is the stride
 					int stride = ((Const*)memof->getSubExp1()->getSubExp1()->getSubExp2())->getInt();
@@ -2587,6 +2622,7 @@ bool UserProc::nameStackLocations() {
 bool UserProc::nameRegisters() {
 	static Exp *regOfWild = Location::regOf(new Terminal(opWild));
 	bool found = false;
+	int sp = signature->getStackRegister(prog);
 
 	StatementList stmts;
 	getStatements(stmts);
@@ -2600,6 +2636,8 @@ bool UserProc::nameRegisters() {
 		s->searchAll(regOfWild, li);
 		for (ll = li.begin(); ll != li.end(); ++ll) {
 			reg = *ll;
+			if (reg->isRegN(sp))
+				continue;				// Never name the stack pointer
 			if (symbolMap.find(reg) != symbolMap.end())
 				continue;
 			if (VERBOSE)
@@ -2846,6 +2884,8 @@ void UserProc::countRefs(RefCounter& refCounts) {
 
 // Note: call the below after translating from SSA form
 void UserProc::removeUnusedLocals() {
+	if (VERBOSE)
+		LOG << "Removing unused locals (final) for " << getName() << "\n";
 	std::set<std::string> usedLocals;
 	StatementList stmts;
 	getStatements(stmts);
@@ -2858,10 +2898,8 @@ void UserProc::removeUnusedLocals() {
 		LocationSet::iterator rr;
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			Exp* r = *rr;
-			if (symbolMap.find(r) != symbolMap.end())
-				continue;						// Ignore e.g. sp in m[sp - K]
-			if (r->isSubscript())				// Presumably never seen now
-				r = ((RefExp*)r)->getSubExp1();
+			//if (r->isSubscript())				// Presumably never seen now
+			//	r = ((RefExp*)r)->getSubExp1();
 			char* sym = lookup(r);				// Look up raw expressions in the symbolMap
 			if (sym) {
 				std::string name(sym);
@@ -3920,81 +3958,40 @@ void UserProc::updateCallDefines() {
 
 // Update the parameters, in case the signature and hence ordering and filtering has changed, or the locations in the
 // collector have changed
-void UserProc::updateParameters() {
-	// First, substitute into the xxx part of any collections of the form m[xxx]
-	// Example: m[r29{47} + 4] -> m[r28{-} + 8]
-	LocationSet::iterator ll;
-	for (ll = col.begin(); ll != col.end(); ++ll) {
-		if ((*ll)->isMemOf()) {
-			// Ugh - can only propagate to a statement, so wrap in an ImplicitAssign
-			ImplicitAssign ia(*ll);
-			ia.setProc(this);
-			ia.fixCallRefs();			// In case one of the definitions happens to be a call
-			StatementSet dummy;
-			ia.propagateTo(-1, dummy);
-		}
-	}
+void UserProc::insertParameter(Exp* e) {
 
-	StatementList oldParams(parameters);				// Copy the old parameters
-	parameters.clear();
-	// For each location in the collector, make sure that there is a location in the old parameters, which will
-	// be filtered and sorted to become the new parameters
-	// Ick... O(N*M) (N existing parameters, M collected locations)
-	StatementList::iterator it;
-	for (ll = col.begin(); ll != col.end(); ++ll) {
-		bool found = false;
-		Exp* loc = *ll;
-		if (filterParams(loc))
-			continue;									// Filtered out
-		for (it = oldParams.begin(); it != oldParams.end(); it++) {
-			Exp* lhs = ((Assign*)*it)->getLeft();
-			if (*lhs == *loc) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			ImplicitAssign* as = new ImplicitAssign(loc);
-			oldParams.append(as);
-		}
-	}
-
-	// Mostly the old parameters will be in the correct order, and inserting will be fastest near the start of the
-	// new list. So read the old parameters in reverse order
-	for (it = oldParams.end(); it != oldParams.begin(); ) {
-		--it;										// Becuase we are using a forwards iterator backwards
-		// Make sure the LHS is still in the collector
-		Exp* lhs = ((Assign*)*it)->getLeft();
-		if (!col.existsNS(lhs))
-			continue;						// Not in collector: delete it (don't copy it)
-		if (filterParams(lhs))
-			continue;						// Filtered out: delete it by never inserting it into parameters
+	if (filterParams(e))
+		return;						// Filtered out
+	if (isPreserved(e))
+		return;						// Also filter out preserveds (filterParams doesn't do it, since we don't want to
+									// filter out preserveds for arguments)
 			
-		// Insert *it, in order, into the existing set of parameters
-		StatementList::iterator nn;
-		bool inserted = false;
-		for (nn = parameters.begin(); nn != parameters.end(); ++nn) {
-			// If the new assignment is less than the current one ...
-			if (signature->argumentCompare(*(Assign*)*it, *(Assign*)*nn)) {
-				nn = parameters.insert(nn, *it);		// ... then insert before this position
-				inserted = true;
-				break;
-			}
+	// Wrap it in an implicit assignment; DFA based TA should update the type later
+	ImplicitAssign* as = new ImplicitAssign(e);
+	// Insert as, in order, into the existing set of parameters
+	StatementList::iterator nn;
+	bool inserted = false;
+	for (nn = parameters.begin(); nn != parameters.end(); ++nn) {
+		// If the new assignment is less than the current one ...
+		if (signature->argumentCompare(*as, *(Assign*)*nn)) {
+			nn = parameters.insert(nn, as);		// ... then insert before this position
+			inserted = true;
+			break;
 		}
-		if (!inserted)
-			parameters.insert(parameters.end(), *it);	// In case larger than all existing elements
 	}
+	if (!inserted)
+		parameters.insert(parameters.end(), as);	// In case larger than all existing elements
 }
 
 
 // Filter out locations not possible as return locations. Return true to *remove* (filter *out*)
 bool UserProc::filterReturns(Exp* e) {
 	switch (e->getOper()) {
+		if (isPreserved(e))
+			return true;			// Don't keep preserved locations
 		case opPC:	return true;
 		case opTemp: return true;
 		case opRegOf: {
-			if (isPreserved(e))
-				return true;			// Don't keep preserved locations
 			int sp;
 			if (signature == NULL)
 				sp = 999;

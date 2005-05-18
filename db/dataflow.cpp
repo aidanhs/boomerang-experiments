@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.10 $
+ * $Revision: 1.43.2.11 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -270,10 +270,10 @@ void DataFlow::placePhiFunctions(int memDepth, UserProc* proc) {
 }
 
 // Subscript dataflow variables
-void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStack /* = false */ ) {
-	// Need to clear the Stack of old, renamed locations like m[esp-4] (these will be deleted, and will cause compare
-	// failures in the Stack, so it can't be correctly ordered and hence balanced etc, and will lead to segfaults)
-	if (clearStack) Stack.clear();
+void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStacks /* = false */ ) {
+	// Need to clear the Stacks of old, renamed locations like m[esp-4] (these will be deleted, and will cause compare
+	// failures in the Stacks, so it can't be correctly ordered and hence balanced etc, and will lead to segfaults)
+	if (clearStacks) Stacks.clear();
 
 	// For each statement S in block n
 	BasicBlock::rtlit rit; StatementList::iterator sit;
@@ -297,18 +297,30 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				Exp* x = *xx;
 				// Ignore variables of the wrong memory depth
 				if (x->getMemDepth() != memDepth) continue;
-				// Ignore variables that have already been subscripted
-				if (x->isSubscript()) continue;
 				Statement* def;
-				if (Stack[x].empty()) {
+				if (x->isSubscript()) {					// Already subscripted?
+					// No renaming required, but this might be a new use from a return, possibly requiring an update
+					// to a call's UseCollector
+					Exp* base = ((RefExp*)x)->getSubExp1();	
+					if (!Stacks[base].empty()) {
+						def = Stacks[base].top();
+						if (def->isCall())
+							// Calls have UseCollectors for locations that are used before definition at the call
+							((CallStatement*)def)->useBeforeDefine(base->clone());
+						continue;						// Don't re-rename the renamed variable
+					}
+				}
+				// Else x is not subscripted yet
+				if (Stacks[x].empty()) {
 					// If the stack is empty, use a NULL definition. This will be changed into a pointer
 					// to an implicit definition at the start of type analysis, but not until all the m[...]
 					// have stopped changing their expressions (complicates implicit assignments considerably).
 					def = NULL;
-					proc->useBeforeDefine(x->clone());
+					// No longer updating the collector at the start of the UserProc
+					// proc->useBeforeDefine(x->clone());
 				}
 				else {
-					def = Stack[x].top();
+					def = Stacks[x].top();
 					if (def->isCall()) {
 						// Calls have UseCollectors for locations that are used before definition at the call
 						((CallStatement*)def)->useBeforeDefine(x->clone());
@@ -323,7 +335,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 			}
 		}
 
-		// MVE: Check for Call and Return Statements; these have Collector objects that need to be updated
+		// MVE: Check for Call and Return Statements; these have DefCollector objects that need to be updated
 		// Do before the below, so CallStatements have not yet processed their defines
 		if (S->isCall() || S->isReturn()) {
 			DefCollector* col;
@@ -331,7 +343,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				col = ((CallStatement*)S)->getDefCollector();
 			else
 				col = ((ReturnStatement*)S)->getCollector();
-			col->updateLocs(Stack);
+			col->updateLocs(Stacks);
 		}
 
 		// For each definition of some variable a in S
@@ -341,20 +353,20 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 		for (dd = defs.begin(); dd != defs.end(); dd++) {
 			Exp *a = *dd;
 			if (a->getMemDepth() == memDepth) {
-				// Push i onto Stack[a]
+				// Push i onto Stacks[a]
 				// Note: we clone a because otherwise it could be an expression that gets deleted through various
 				// modifications. This is necessary because we do several passes of this algorithm with various memory
 				// depths
-				Stack[a->clone()].push(S);
+				Stacks[a->clone()].push(S);
 				// Replace definition of a with definition of a_i in S (we don't do this)
 			}
 			// MVE: do we need this awful hack?
 			if (a->getOper() == opLocal) {
 				a = S->getProc()->expFromSymbol(((Const*)a->getSubExp1())->getStr());
 				assert(a);
-				// Stack already has a definition for a (as just the bare local)
+				// Stacks already has a definition for a (as just the bare local)
 				if (a && a->getMemDepth() == memDepth)
-					Stack[a->clone()].push(S);
+					Stacks[a->clone()].push(S);
 			}
 		}
 	}
@@ -380,10 +392,10 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 			// Only consider variables of the current memory depth
 			if (a->getMemDepth() != memDepth) continue;
 			Statement* def;
-			if (Stack[a].empty())
+			if (Stacks[a].empty())
 				def = NULL;				// See comment above
 			else
-				def = Stack[a].top();
+				def = Stacks[a].top();
 			// "Replace jth operand with a_i"
 			pa->putAt(j, def, a);
 		}
@@ -403,15 +415,15 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 		LocationSet::iterator dd;
 		for (dd = defs.begin(); dd != defs.end(); dd++) {
 			if ((*dd)->getMemDepth() == memDepth)
-				Stack[*dd].pop();
+				Stacks[*dd].pop();
 		}
 	}
 }
 
 
-void DefCollector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stack) {
+void DefCollector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks) {
 	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator it;
-	for (it = Stack.begin(); it != Stack.end(); it++) {
+	for (it = Stacks.begin(); it != Stacks.end(); it++) {
 		if (it->second.size() == 0)
 			continue;					// This variable's definition doesn't reach here
 		RefExp* re = new RefExp(it->first->clone(), it->second.top());

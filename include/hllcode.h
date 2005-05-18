@@ -108,14 +108,14 @@ virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList& args, St
 virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs) = 0;
 
 		// procedure related
-virtual void	AddProcStart(Signature *signature) = 0;
+virtual void	AddProcStart(UserProc* proc) = 0;
 virtual void	AddProcEnd() = 0;
 virtual void	AddLocal(const char *name, Type *type, bool last = false) = 0;
 virtual void	AddGlobal(const char *name, Type *type, Exp *init = NULL) = 0;
-virtual void	AddPrototype(Signature* signature) = 0;
+virtual void	AddPrototype(UserProc* proc) = 0;
 
 	// comments
-virtual void AddLineComment(char* cmt) = 0;
+virtual void	AddLineComment(char* cmt) = 0;
 	
 		/*
 		 * output functions, pure virtual.

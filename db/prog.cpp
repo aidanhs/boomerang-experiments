@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.4 $
+ * $Revision: 1.126.2.5 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -223,7 +223,7 @@ void Prog::generateCode(Cluster *cluster, UserProc *proc, bool intermixRTL) {
 		proto = true;
 		UserProc* up = (UserProc*)*it;
 		HLLCode *code = Boomerang::get()->getHLLCode(up);
-		code->AddPrototype(up->getSignature());		// May be the wrong signature if up has ellipsis
+		code->AddPrototype(up);					// May be the wrong signature if up has ellipsis
 		if (cluster == NULL || cluster == m_rootCluster)
 			code->print(os);
 	}

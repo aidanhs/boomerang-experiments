@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.14 $
+ * $Revision: 1.148.2.15 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1615,19 +1615,35 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
  
 	// Return(s), if any
-	if (defines.size()) {
-		if (defines.size() > 1) os << "{";
-		StatementList::iterator rr;
-		bool first = true;
-		for (rr = defines.begin(); rr != defines.end(); ++rr) {
-			if (first)
-				first = false;
-			else
-				os << ", ";
-			os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
+	if (procDest && procDest->isLib()) {
+		Signature* sig = procDest->getSignature();
+		int n = sig->getNumReturns();
+		if (n) {
+			if (n > 1+1) os << "{";				// Note: sp is always first return (ugh)
+			for (int i=1; i < n; i++) {
+				if (i != 0+1)
+					os << ", ";
+				os << sig->getReturnType(i) << " " << sig->getReturnExp(i);
+			}
+			if (n > 1+1)
+				os << "}";
+			os << " := ";
 		}
-		if (defines.size() > 1) os << "}";
-		os << " := ";
+	} else {
+		if (defines.size()) {
+			if (defines.size() > 1) os << "{";
+			StatementList::iterator rr;
+			bool first = true;
+			for (rr = defines.begin(); rr != defines.end(); ++rr) {
+				if (first)
+					first = false;
+				else
+					os << ", ";
+				os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
+			}
+			if (defines.size() > 1) os << "}";
+			os << " := ";
+		}
 	}
 
 	os << "CALL ";
@@ -1810,6 +1826,14 @@ bool CallStatement::isDefinition() {
 
 void CallStatement::getDefinitions(LocationSet &defs) {
 	// FIXME: may need to update defines first...
+	if (procDest && procDest->isLib()) {
+		// Get returns from the signature
+		Signature* sig = procDest->getSignature();
+		int n = sig->getNumReturns();
+		for (int i=1; i < n; i++)					// Skip first return = stack pointer
+			defs.insert(sig->getReturnExp(i));
+		return;
+	}
 	StatementList::iterator ss;
 	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		(*ss)->getDefinitions(defs);
@@ -4305,6 +4329,7 @@ void CallStatement::updateArguments() {
 	int n;						// Number of parameters in the destination signature
 	// Ensure everything in the callee's parameters (or the use collector if no callee) exists in oldArguments
 	if (procDest) {
+	
 		destSig = procDest->getSignature();
 		n = destSig->getNumParams();
 	}
@@ -4342,9 +4367,11 @@ void CallStatement::updateArguments() {
 		if (procDest) {
 			if (!destSig->hasEllipsis()) {
 				bool found = false;
-				for (int i=0; i < n; i++)
-					if (*destSig->getParamExp(i) == *lhs)
+				for (int i=0; i < n; i++) {
+					Exp* sigParam = fromCalleeContext(destSig->getParamExp(i))->simplifyArith()->simplify();
+					if (*sigParam == *lhs)
 						found = true;
+				}
 				if (!found)
 					continue;					// Not in callee parameters: delete it (don't copy it)
 			}
@@ -4404,7 +4431,7 @@ Exp* CallStatement::fromCalleeContext(Exp* e) {
 		return e;				// ? Definition for sp is not an assignment
 	Exp* rhs = ((Assign*)def)->getRight();	// RHS of assign should be in terms of sp{-}
 	bool change;
-	return e->searchReplaceAll(sp, rhs, change);
+	return e->clone()->searchReplaceAll(sp, rhs, change);
 }
 
 // Calculate results(this) = defines(this) isect live(this)
@@ -4412,11 +4439,45 @@ Exp* CallStatement::fromCalleeContext(Exp* e) {
 // So the RHS is just ignored
 StatementList* CallStatement::calcResults() {
 	StatementList* ret = new StatementList;
-	StatementList::iterator dd;
-	for (dd = defines.begin(); dd != defines.end(); ++dd) {
-		Exp* lhs = ((Assign*)*dd)->getLeft();
-		if (useCol.exists(lhs))
-			ret->append(*dd);
+	if (procDest && procDest->isLib()) {
+		Signature* sig = procDest->getSignature();
+		int n = sig->getNumReturns();
+		for (int i=1; i < n; i++) {						// Ignore first (stack pointer) return
+			Exp* sigReturn = sig->getReturnExp(i);
+			if (useCol.exists(sigReturn))
+				ret->append(new ImplicitAssign(sig->getReturnType(i), sigReturn));
+		}
+	} else {
+		StatementList::iterator dd;
+		for (dd = defines.begin(); dd != defines.end(); ++dd) {
+			Exp* lhs = ((Assign*)*dd)->getLeft();
+			if (useCol.exists(lhs))
+				ret->append(*dd);
+		}
 	}
 	return ret;
+}
+
+Type* Assignment::getType() {
+	if (ADHOC_TYPE_ANALYSIS)
+		return lhs->getType();
+	else
+		return type;
+}
+
+void ReturnStatement::specialProcessing() {
+	iterator it;
+	for (it = defs.begin(); it != defs.end(); it++) {
+		Exp* lhs = ((Assign*)*it)->getLeft();
+		if (lhs->getOper() == opCF) {
+			Exp* rhs = ((Assign*)*it)->getRight();
+			if (rhs->isSubscript() &&
+					!((RefExp*)rhs)->isImplicitDef() &&
+					((RefExp*)rhs)->getSubExp1()->getOper() == opCF) {
+				// We have a non SUBFLAGS definition reaching the exit; just delete the return of %CF
+				defs.erase(it);
+				return;
+			}
+		}
+	}
 }
