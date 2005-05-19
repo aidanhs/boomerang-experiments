@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.8 $
+ * $Revision: 1.90.2.9 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -983,36 +983,61 @@ void CHLLCode::RemoveLabel(int ord) {
 
 void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn) {
 	if (asgn->getLeft()->getOper() == opPC)
-		return;
+		return;						// Never want to see assignments to %PC
 
 	std::ostringstream s;
 	indent(s, indLevel);
 	Type* asgnType = asgn->getType();
-	if (asgn->getLeft()->getOper() == opMemOf && asgnType) 
+	Exp* lhs = asgn->getLeft();
+	Exp* rhs = asgn->getRight();
+	if (lhs->getOper() == opMemOf && asgnType) 
 		appendExp(s,
 			new TypedExp(
 				asgnType,
-				asgn->getLeft()), PREC_ASSIGN);
-	else if (asgn->getLeft()->getOper() == opGlobal &&
-			 ((Location*)asgn->getLeft())->getType() && 
-			 ((Location*)asgn->getLeft())->getType()->isArray())
-		appendExp(s, new Binary(opArraySubscript, asgn->getLeft(),
+				lhs), PREC_ASSIGN);
+	else if (lhs->getOper() == opGlobal &&
+			 ((Location*)lhs)->getType() && 
+			 ((Location*)lhs)->getType()->isArray())
+		appendExp(s, new Binary(opArraySubscript,
+			lhs,
 			new Const(0)), PREC_ASSIGN);
-	else
-		appendExp(s, asgn->getLeft(), PREC_ASSIGN);
-	if (asgn->getRight()->getOper() == opPlus && 
-		*asgn->getRight()->getSubExp1() == *asgn->getLeft()) {
+	else if (lhs->getOper() == opAt &&
+			((Ternary*)lhs)->getSubExp2()->isIntConst() &&
+			((Ternary*)lhs)->getSubExp3()->isIntConst()) {
+		// exp1@[n:m] := rhs -> exp1 = exp1 & mask | rhs << m  where mask = ~((1 << m-n+1)-1)
+		Exp* exp1 = ((Ternary*)lhs)->getSubExp1();
+		int n = ((Const*)((Ternary*)lhs)->getSubExp2())->getInt();
+		int m = ((Const*)((Ternary*)lhs)->getSubExp3())->getInt();
+		appendExp(s, exp1, PREC_ASSIGN);
+		s << " = ";
+		int mask = ~((1 << m-n+1)-1 << m);
+		rhs = new Binary(opBitAnd,
+			exp1,
+			new Binary(opBitOr,
+				new Const(mask),
+				new Binary(opShiftL,
+					rhs,
+					new Const(m))));
+		rhs = rhs->simplify();
+		appendExp(s, rhs, PREC_ASSIGN);
+		s << ";";
+		lines.push_back(strdup(s.str().c_str()));
+		return;
+	} else
+		appendExp(s, lhs, PREC_ASSIGN);			// Ordinary LHS
+	if (rhs->getOper() == opPlus && 
+			*rhs->getSubExp1() == *lhs) {
 		// C has special syntax for this, eg += and ++
-		if (asgn->getRight()->getSubExp2()->getOper() == opIntConst &&
-			((Const*)asgn->getRight()->getSubExp2())->getInt() == 1) 
+		if (rhs->getSubExp2()->isIntConst() &&
+				((Const*)rhs->getSubExp2())->getInt() == 1) 
 			s << "++";
 		else {
 			s << " += ";
-			appendExp(s, asgn->getRight()->getSubExp2(), PREC_ASSIGN);
+			appendExp(s, rhs->getSubExp2(), PREC_ASSIGN);
 		}
 	} else {
 		s << " = ";
-		appendExp(s, asgn->getRight(), PREC_ASSIGN);
+		appendExp(s, rhs, PREC_ASSIGN);
 	}
 	s << ";";
 	lines.push_back(strdup(s.str().c_str()));
