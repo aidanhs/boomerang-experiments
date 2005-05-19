@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.16 $
+ * $Revision: 1.238.2.17 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -2901,7 +2901,12 @@ void UserProc::removeUnusedLocals() {
 			//if (r->isSubscript())					// Presumably never seen now
 			//	r = ((RefExp*)r)->getSubExp1();
 			char* sym = findLocal(r);				// Look up raw expressions in the symbolMap, and check in symbols
-			if (sym && !s->definesLoc(r)) {			// Must be a real symbol, and not defined in this statement
+			// Must be a real symbol, and not defined in this statement, unless it is a return statement (in which case
+			// it is used outside this procedure). Consider local7 = local7+1 and return local7 = local7+1, where in
+			// both cases, local7 is not used elsewhere outside this procedure. With the assign, it can be deleted,
+			// but with the return statement, it can't.
+			if (sym && (s->isReturn() || !s->definesLoc(r))) {
+			// Must be a real symbol, and not defined in this statement
 				std::string name(sym);				// (e.g. consider local7 = local7 & 0xFB, and never used elsewhere)
 				usedLocals.insert(name);
 				if (VERBOSE) LOG << "Counted local " << sym << " in " << s << "\n";
@@ -2948,8 +2953,10 @@ void UserProc::removeUnusedLocals() {
 				if (s->isAssignment()) {
 					removeStatement(s);
 					break;				// Break to next statement
-				} else
+				} else if (s->isCall())
+					// Remove just this define. May end up removing several defines from this call.
 					((CallStatement*)s)->removeDefine(*ll);
+				// else if a ReturnStatement, don't attempt to remove it. The definition is used *outside* this proc.
 			}
 		}
 	}

@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.9 $
+ * $Revision: 1.23.2.10 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -395,14 +395,13 @@ bool UsedLocsVisitor::visit(ReturnStatement* s, bool& override) {
 	ReturnStatement::iterator rr;
 	if (final) {
 		if (n != 0) {
-			// Find the first non null return
-			for (rr = s->begin(); rr != s->end(); ++rr)
-				(*rr)->accept(this);
+			// Visit the first return
+			(*s->begin())->accept(this);
 		}
 	} else {
 		// Otherwise, consider all returns. If of form m[x] then x is used
 		for (rr = s->begin(); rr != s->end(); ++rr)
-			/*if (*rr)*/ (*rr)->accept(this);
+			(*rr)->accept(this);
 	}
 	override = true;			// Don't do the normal accept logic
 	return true;				// Continue the recursion
