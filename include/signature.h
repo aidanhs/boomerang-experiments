@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.7 $
+ * $Revision: 1.53.2.8 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -26,48 +26,48 @@ class XMLProgParser;
 
 class Parameter : public Memoisable { 
 private:
-	Type *type;
-	std::string name;
-	Exp *exp;
+		Type *type;
+		std::string name;
+		Exp *exp;
 
 public: 
-			Parameter(Type *type, const char *name, Exp *exp = NULL) :
-			  type(type), name(name), exp(exp)	{ }
-			~Parameter() { delete type; delete exp; }
-	bool	operator==(Parameter& other);
-	Parameter* clone();
+					Parameter(Type *type, const char *name, Exp *exp = NULL) :
+					type(type), name(name), exp(exp)	{ }
+					~Parameter() { delete type; delete exp; }
+		bool		operator==(Parameter& other);
+		Parameter*	clone();
 
-	Type *getType() { return type; }
-	void setType(Type *ty) { type = ty; }
-	const char *getName() { return name.c_str(); }
-	void setName(const char *nam) { name = nam; }
-	Exp *getExp()		{ return exp; }
-	void setExp(Exp *e) { exp = e; }
+		Type		*getType() { return type; }
+		void		setType(Type *ty) { type = ty; }
+		const char	*getName() { return name.c_str(); }
+		void		setName(const char *nam) { name = nam; }
+		Exp			*getExp()		{ return exp; }
+		void		setExp(Exp *e) { exp = e; }
 
-	virtual Memo *makeMemo(int mId);
-	virtual void readMemo(Memo *m, bool dec);
+virtual Memo		*makeMemo(int mId);
+virtual void		readMemo(Memo *m, bool dec);
 
 protected:
-	friend class XMLProgParser;
-	Parameter() : type(NULL), name(""), exp(NULL) { }
-};
+		friend		class XMLProgParser;
+					Parameter() : type(NULL), name(""), exp(NULL) { }
+};		// class Parameter
 
 #if 0
 class ImplicitParameter : public Parameter {
 private:
-	Parameter *parent;
+		Parameter	*parent;
 
 public:
-	ImplicitParameter(Type *type, const char *name, Exp *exp, Parameter *parent) : 
-							Parameter(type, name, exp), parent(parent) { }
-	~ImplicitParameter() { }
-	ImplicitParameter* clone();
+					ImplicitParameter(Type *type, const char *name, Exp *exp, Parameter *parent) : 
+						Parameter(type, name, exp), parent(parent) { }
+					~ImplicitParameter() { }
+		ImplicitParameter* clone();
 
-	void setParent(Parameter *p) { parent = p; }
-	Parameter *getParent() { return parent; }
+		void		setParent(Parameter *p) { parent = p; }
+		Parameter	*getParent() { return parent; }
 
-	virtual Memo *makeMemo(int mId);
-	virtual void readMemo(Memo *m, bool dec);
+virtual Memo		*makeMemo(int mId);
+virtual void		readMemo(Memo *m, bool dec);
 
 protected:
 	friend class XMLProgParser;
@@ -145,6 +145,7 @@ virtual void		setReturnType(int n, Type *ty);
 //		void		fixReturnsWithParameters();			// Needs description
 		void		setRetType(Type *t) { rettype = t; }
 		Returns&	getReturns() {return returns;}
+		Type*		getTypeFor(Exp* e);
 
 		// get/set the name
 virtual const char	*getName();

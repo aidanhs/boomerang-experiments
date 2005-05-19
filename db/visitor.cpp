@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.8 $
+ * $Revision: 1.23.2.9 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -287,13 +287,20 @@ bool UsedLocsVisitor::visit(Assign* s, bool& override) {
 	if (rhs) rhs->accept(ev);
 	// Special logic for the LHS. Note: PPC can have r[tmp + 30] on LHS
 	if (lhs->isMemOf() || lhs->isRegOf()) {
-		Exp* child = ((Location*)lhs)->getSubExp1();
+		Exp* child = ((Location*)lhs)->getSubExp1();	// m[xxx] uses xxx
 		child->accept(ev);
 	} else if (lhs->getOper() == opArraySubscript || lhs->getOper() == opMemberAccess) {
-		Exp* subExp1 = ((Binary*)lhs)->getSubExp1();
-		subExp1->accept(ev);
+		Exp* subExp1 = ((Binary*)lhs)->getSubExp1();	// array(base, index) and member(base, offset)?? use
+		subExp1->accept(ev);							// base and index
 		Exp* subExp2 = ((Binary*)lhs)->getSubExp2();
 		subExp2->accept(ev);
+	} else if (lhs->getOper() == opAt) {				// foo@[first:last] uses foo, first, and last
+		Exp* subExp1 = ((Ternary*)lhs)->getSubExp1();
+		subExp1->accept(ev);
+		Exp* subExp2 = ((Ternary*)lhs)->getSubExp2();
+		subExp2->accept(ev);
+		Exp* subExp3 = ((Ternary*)lhs)->getSubExp3();
+		subExp3->accept(ev);
 	}
 	override = true;				// Don't do the usual accept logic
 	return true;					// Continue the recursion

@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.15 $
+ * $Revision: 1.238.2.16 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -2898,29 +2898,29 @@ void UserProc::removeUnusedLocals() {
 		LocationSet::iterator rr;
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			Exp* r = *rr;
-			//if (r->isSubscript())				// Presumably never seen now
+			//if (r->isSubscript())					// Presumably never seen now
 			//	r = ((RefExp*)r)->getSubExp1();
-			char* sym = lookup(r);				// Look up raw expressions in the symbolMap
-			if (sym) {
-				std::string name(sym);
+			char* sym = findLocal(r);				// Look up raw expressions in the symbolMap, and check in symbols
+			if (sym && !s->definesLoc(r)) {			// Must be a real symbol, and not defined in this statement
+				std::string name(sym);				// (e.g. consider local7 = local7 & 0xFB, and never used elsewhere)
 				usedLocals.insert(name);
 				if (VERBOSE) LOG << "Counted local " << sym << " in " << s << "\n";
 			}
 		}
 	}
-	// Now remove the unused ones
+	// Now record the unused ones in set removes
 	std::map<std::string, Type*>::iterator it;
+	std::set<std::string> removes;
 #if 0
 	int nextLocal = 0;
 #endif
-	std::vector<std::string> removes;
 	for (it = locals.begin(); it != locals.end(); it++) {
 		std::string& name = const_cast<std::string&>(it->first);
 		// LOG << "Considering local " << name << "\n";
 		if (usedLocals.find(name) == usedLocals.end()) {
 			if (VERBOSE)
 				LOG << "Removed unused local " << name.c_str() << "\n";
-			removes.push_back(name);
+			removes.insert(name);
 		}
 #if 0	// Ugh - still have to rename the variables.
 		else {
@@ -2933,7 +2933,28 @@ void UserProc::removeUnusedLocals() {
 		}
 #endif
 	}
-	for (std::vector<std::string>::iterator it1 = removes.begin(); it1 != removes.end(); it1++)
+	// Remove any definitions of the removed locals
+	for (ss = stmts.begin(); ss != stmts.end(); ++ss) {
+		Statement* s = *ss;
+		LocationSet ls;
+		LocationSet::iterator ll;
+		s->getDefinitions(ls);
+		for (ll = ls.begin(); ll != ls.end(); ++ll) {
+			char* name = findLocal(*ll);
+			if (name == NULL) continue;
+			std::string str(name);
+			if (removes.find(str) != removes.end()) {
+				// Remove it. If an assign, delete it; otherwise (call), remove the define
+				if (s->isAssignment()) {
+					removeStatement(s);
+					break;				// Break to next statement
+				} else
+					((CallStatement*)s)->removeDefine(*ll);
+			}
+		}
+	}
+	// Finally, remove them from locals, so they don't get declared
+	for (std::set<std::string>::iterator it1 = removes.begin(); it1 != removes.end(); it1++)
 		locals.erase(*it1);
 }
 
@@ -4057,5 +4078,19 @@ bool UserProc::filterParams(Exp* e) {
 			return false;
 	}
 	return false;
+}
+
+char* UserProc::findLocal(Exp* e) {
+	if (e->isLocal())
+		return ((Const*)((Unary*)e)->getSubExp1())->getStr();
+	// Look it up in the symbol map
+	char* name = lookup(e);
+	if (name == NULL)
+		return NULL;
+	// Now make sure it is a local; some symbols (e.g. parameters) are in the symbol map but not locals
+	std::string str(name);
+	if (locals.find(str) != locals.end())
+		return name;
+	return NULL;
 }
 

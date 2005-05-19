@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.15 $
+ * $Revision: 1.148.2.16 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2253,6 +2253,10 @@ void Assignment::setTypeFor(Exp* e, Type* ty) {
 
 // Scan the returns for e. If found, return the type associated with that return
 Type* CallStatement::getTypeFor(Exp* e) {
+	if (procDest && procDest->isLib()) {
+		Signature* sig = procDest->getSignature();
+		return sig->getTypeFor(e);
+	}
 	if (calleeReturn == NULL) return NULL;
 	return calleeReturn->getTypeFor(e);
 }
@@ -3207,7 +3211,10 @@ void ImplicitAssign::printCompact(std::ostream& os) {
 
 // All the Assignment-derived classes have the same definitions: the lhs
 void Assignment::getDefinitions(LocationSet &defs) {
-	defs.insert(lhs);
+	if (lhs->getOper() == opAt)							// foo@[m:n] really only defines foo
+		defs.insert(((Ternary*)lhs)->getSubExp1());
+	else
+		defs.insert(lhs);
 	// Special case: flag calls define %CF (and others)
 	if (lhs->isFlags()) {
 		defs.insert(new Terminal(opCF));
@@ -4109,7 +4116,9 @@ void CallStatement::setLeftFor(Exp* forExp, Exp* newExp) {
 }
 
 bool Assignment::definesLoc(Exp* loc) {
-	return (*lhs == *loc);
+	if (lhs->getOper() == opAt)					// For foo@[x:y], match of foo==loc OR whole thing == loc
+		if (*((Ternary*)lhs)->getSubExp1() == *loc) return true;
+	return *lhs == *loc;
 }
 
 bool CallStatement::definesLoc(Exp* loc) {
@@ -4480,4 +4489,16 @@ void ReturnStatement::specialProcessing() {
 			}
 		}
 	}
+}
+
+void CallStatement::removeDefine(Exp* e) {
+	StatementList::iterator ss;
+	for (ss = defines.begin(); ss != defines.end(); ++ss) {
+		Assign* as = ((Assign*)*ss);
+		if (*as->getLeft() == *e) {
+			defines.erase(ss);
+			return;
+		}
+	}
+	LOG << "WARNING: could not remove define " << e << " from call " << this << "\n";
 }

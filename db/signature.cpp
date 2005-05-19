@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.7 $
+ * $Revision: 1.98.2.8 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -1840,4 +1840,13 @@ void Return::readMemo(Memo *mm, bool dec)
 
 	type->restoreMemo(m->mId, dec);
 	exp->restoreMemo(m->mId, dec);
+}
+
+Type* Signature::getTypeFor(Exp* e) {
+	int n = returns.size();
+	for (int i=0; i < n; ++i) {
+		if (*returns[i]->exp == *e)
+			return returns[i]->type;
+	}
+	return NULL;
 }
