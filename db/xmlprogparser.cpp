@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17.2.6 $
+ * $Revision: 1.17.2.7 $
  *
  * June 2004 - Trent: created
  */
@@ -457,21 +457,9 @@ void XMLProgParser::start_userproc(const char **attr)
 	const char *address = getAttr(attr, "address");
 	if (address)
 	proc->address = atoi(address);
-	address = getAttr(attr, "decoded");
+	address = getAttr(attr, "status");
 	if (address)
-	proc->decoded = atoi(address) > 0;
-	address = getAttr(attr, "analysed");
-	if (address)
-	proc->analysed = atoi(address) > 0;
-	address = getAttr(attr, "decompileSeen");
-	if (address)
-	proc->decompileSeen = atoi(address) > 0;
-	address = getAttr(attr, "decompiled");
-	if (address)
-	proc->decompiled = atoi(address) > 0;
-	address = getAttr(attr, "isRecursive");
-	if (address)
-	proc->isRecursive = atoi(address) > 0;
+	proc->status = (ProcStatus)atoi(address);
 	address = getAttr(attr, "firstCallerAddress");
 	if (address)
 	proc->m_firstCallerAddr = atoi(address);
@@ -2325,11 +2313,7 @@ void XMLProgParser::persistToXML(std::ostream &out, UserProc *proc)
 {
 	out << "<userproc id=\"" << (int)proc << "\"";
 	out << " address=\"" << (int)proc->address << "\"";
-	out << " decoded=\"" << (int)proc->decoded << "\"";
-	out << " analysed=\"" << (int)proc->analysed << "\"";
-	out << " decompileSeen=\"" << (int)proc->decompileSeen << "\"";
-	out << " decompiled=\"" << (int)proc->decompiled << "\"";
-	out << " isRecursive=\"" << (int)proc->isRecursive << "\"";
+	out << " status=\"" << (int)proc->status << "\"";
 	out << " firstCallerAddress=\"" << proc->m_firstCallerAddr << "\"";
 	if (proc->m_firstCaller)
 	out << " firstCaller=\"" << (int)proc->m_firstCaller << "\"";

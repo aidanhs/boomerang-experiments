@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.10 $
+/* $Revision: 1.115.2.11 $
 */
 
 #ifndef _PROC_H_
@@ -108,7 +108,7 @@ virtual void		renameParam(const char *oldName, const char *newName);
 		/*
 		 * Prints this procedure to an output stream.
 		 */
-virtual std::ostream& put(std::ostream& os) = 0;
+//virtual std::ostream& put(std::ostream& os) = 0;
 
 		/*
 		 * Modify actuals so that it is now the list of locations that must
@@ -221,7 +221,7 @@ virtual void		readMemo(Memo *m, bool dec) = 0;
 
 protected:
 
-		bool		visited;
+		bool		visited;						// For printCallGraphXML
 
 		Prog		*prog;							// Program containing this procedure.
 
@@ -282,7 +282,7 @@ virtual	bool		isPreserved(Exp* e);			// Return whether e is preserved by this pr
 		/*
 		 * Prints this procedure to an output stream.
 		 */
-		std::ostream& put(std::ostream& os);
+		//std::ostream& put(std::ostream& os);
 
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);
@@ -297,14 +297,17 @@ protected:
 
 enum ProcStatus {
 	PROC_UNDECODED,		// Has not even been decoded
-	PROC_TRAVERSED,		// Has been traversed on the way down in the recursion manager
-	PROC_PRIMARY,		// Has had primary processing only (some callees were childless)
-	PROC_ANALYSED		// Has been completely analysed
+	PROC_DECODED,		// Decoded, no attempt at decompiling
+	PROC_SORTED,		// Decoded and CFG has been sorted by address
+	PROC_VISITED,		// Has been visited on the way down in the recursion manager
+	PROC_INITIAL,		// Has had initial decompiling only (some callees were involved in recursion)
+	PROC_FINAL			// Has had final decompilation
 	// , PROC_RETURNS	// Has had returns intersected with all caller's defines
 };
 /*==============================================================================
  * UserProc class.
  *============================================================================*/
+
 class UserProc : public Proc {
 
 		/*
@@ -312,20 +315,25 @@ class UserProc : public Proc {
 		 */
 		Cfg*		cfg;
 
+		/**
+		 * The status of this user procedure
+		 */
+		ProcStatus	status;			// Status: undecoded .. final decompiled
+
 		/*
 		 * True if this procedure has been decoded.
 		 */
-		bool		decoded;		// Deprecated; use ProcStatus
+		//bool		decoded;		// Deprecated; use ProcStatus
 		
 		// true if the procedure has been analysed.
-		bool		analysed;		// Deprecated; use ProcStatus
+		//bool		analysed;		// Deprecated; use ProcStatus
 
 		/*
 		 * Indicate that the aggregate location pointer "hidden" parameter is used, and is thus explicit in this
 		 * translation.  Needed only by architectures like Sparc where a special parent stack location is used to pass
 		 * the address of aggregates. Set with the setParams() member function.
 		 */
-		bool		aggregateUsed;
+		//bool		aggregateUsed;
 
 		/*
 		 * This map records the names and types for local variables. It should be a subset of the symbolMap, which also
@@ -355,26 +363,24 @@ private:
 		/*
 		 * Set if visited on the way down the call tree during decompile(). Used for recursion detection
 		 */
-		bool		decompileSeen;
+		//bool		decompileSeen;
 
 		/*
 		 * Set if decompilation essentially completed (there may be extra return locations set later)
 		 */
-		bool		decompiled;
+		//bool		decompiled;
 
 		/*
 		 * Set if involved in recursion (a cycle in the call graph)
 		 */
-		bool		isRecursive;
+		//bool		isRecursive;
 
 		/**
-		 * A collector for potential parameters (locations used before being defined)
-		 * NO! Current thinking is that parameters *have* to be recovered from a separate pass, after unused statements
-		 * are removed. Consider a program that uses say ecx as a parameter, but went ahead and used then restored it.
-		 * This would be uncommon, since parameters are not preserved in C like languages, but it could certainly
-		 * happen.
+		 * A collector for initial parameters (locations used before being defined)
+		 * Note that final parameters don't use this; it's only of use during group decompilation analysis (sorting out
+		 * recursion)
 		 */
-		//UseCollector col;
+		UseCollector col;
 
 		/**
 		 * The list of parameters, ordered and filtered
@@ -401,10 +407,10 @@ virtual				~UserProc();
 		/*
 		 * Returns a pointer to the CFG.
 		 */
-		Cfg*		getCFG();
+		Cfg*		getCFG() { return cfg; }
 
 		/*
-		 * Deletes the whole CFG and all the RTLs, RTs, and Exp*s associated with it. Also nulls the internal cfg
+		 * Deletes the whole CFG and all the RTLs and Exps associated with it. Also nulls the internal cfg
 		 * pointer (to prevent strange errors)
 		 */
 		void		deleteCFG();
@@ -431,11 +437,11 @@ virtual				~UserProc();
 		/*
 		 * Returns whether or not this procedure can be decoded (i.e. has it already been decoded).
 		 */
-		bool		isDecoded();
-		bool		isDecompiled() { return decompiled; }
+		bool		isDecoded() { return status >= PROC_DECODED; }
+		bool		isDecompiled() { return status >= PROC_FINAL; }
 
-		bool		isAnalysed() { return analysed; }
-		void		setAnalysed() { analysed = true; }
+		bool		isSorted() { return status >= PROC_SORTED; }
+		void		setSorted() { status = PROC_SORTED; }
 
 		/*
 		 * Return the number of bytes allocated for locals on the stack.
@@ -651,7 +657,7 @@ virtual void		renameParam(const char *oldName, const char *newName);
 		/*
 		 * Prints this procedure to an output stream.
 		 */
-		std::ostream& put(std::ostream& os);
+		//std::ostream& put(std::ostream& os);
 
 		/*
 		 * Set the entry BB for this procedure (constructor has the entry address)
@@ -688,7 +694,7 @@ virtual void		renameParam(const char *oldName, const char *newName);
 		 * Return true if this proc uses the special aggregate pointer as the
 		 * first parameter
 		 */
-virtual bool		isAggregateUsed() {return aggregateUsed;}
+//virtual bool		isAggregateUsed() {return aggregateUsed;}
 
 virtual Exp*		getProven(Exp* left);
 virtual	bool		isPreserved(Exp* e);			// Return whether e is preserved by this proc
@@ -727,8 +733,7 @@ public:
 		bool		filterParams(Exp* e);			// As above but for parameters and arguments
 protected:
 		friend class XMLProgParser;
-		UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), nextLocal(0), decompileSeen(false),
-			decompiled(false), isRecursive(false) { }
+					UserProc();
 		void		setCFG(Cfg *c) { cfg = c; }
 };		// class UserProc
 #endif

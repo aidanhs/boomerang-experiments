@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.17 $
+ * $Revision: 1.238.2.18 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -297,9 +297,9 @@ void UserProc::printUseGraph()
  *					proc -
  * RETURNS:			os
  *============================================================================*/
-std::ostream& operator<<(std::ostream& os, Proc& proc) {
-	return proc.put(os);
-}
+//std::ostream& operator<<(std::ostream& os, Proc& proc) {
+//	return proc.put(os);
+//}
 
 
 Proc *Proc::getFirstCaller() { 
@@ -336,10 +336,10 @@ LibProc::~LibProc()
  * PARAMETERS:		os -
  * RETURNS:			os
  *============================================================================*/
-std::ostream& LibProc::put(std::ostream& os) {
-	os << "library procedure `" << signature->getName() << "' resides at 0x";
-	return os << std::hex << address << std::endl;
-}
+//std::ostream& LibProc::put(std::ostream& os) {
+//	os << "library procedure `" << signature->getName() << "' resides at 0x";
+//	return os << std::hex << address << std::endl;
+//}
 
 Exp *LibProc::getProven(Exp *left) {
 	// Just use the signature information (all we have, after all)
@@ -361,49 +361,25 @@ bool LibProc::isPreserved(Exp* e) {
  *					uNative - Native address of entry point of procedure
  * RETURNS:			<nothing>
  *============================================================================*/
+UserProc::UserProc() : Proc(), cfg(NULL), status(PROC_UNDECODED),
+		// decoded(false), analysed(false),
+		nextLocal(0),	// decompileSeen(false), decompiled(false), isRecursive(false)
+		theReturnStatement(NULL) {
+}
 UserProc::UserProc(Prog *prog, std::string& name, ADDRESS uNative) :
 		// Not quite ready for the below fix:
 		// Proc(prog, uNative, prog->getDefaultSignature(name.c_str())),
 		Proc(prog, uNative, new Signature(name.c_str())),
-		cfg(new Cfg()), decoded(false), analysed(false), nextLocal(0), decompileSeen(false), decompiled(false),
-		isRecursive(false), theReturnStatement(NULL) {
+		cfg(new Cfg()), status(PROC_UNDECODED),
+		// decoded(false), analysed(false),
+		nextLocal(0), // decompileSeen(false), decompiled(false), isRecursive(false),
+		theReturnStatement(NULL) {
 	cfg->setProc(this);				 // Initialise cfg.myProc
 }
 
 UserProc::~UserProc() {
 	if (cfg)
 		delete cfg; 
-}
-
-/*==============================================================================
- * FUNCTION:		UserProc::isDecoded
- * OVERVIEW:		
- * PARAMETERS:		
- * RETURNS:			
- *============================================================================*/
-bool UserProc::isDecoded() {
-	return decoded;
-}
-
-/*==============================================================================
- * FUNCTION:		UserProc::put
- * OVERVIEW:		Display on os.
- * PARAMETERS:		os -
- * RETURNS:			os
- *============================================================================*/
-std::ostream& UserProc::put(std::ostream& os) {
-	os << "user procedure `" << signature->getName() << "' resides at 0x";
-	return os << std::hex << address << std::endl;
-}
-
-/*==============================================================================
- * FUNCTION:		UserProc::getCFG
- * OVERVIEW:		Returns a pointer to the CFG.
- * PARAMETERS:		<none>
- * RETURNS:			a pointer to the CFG
- *============================================================================*/
-Cfg* UserProc::getCFG() {
-	return cfg;
 }
 
 /*==============================================================================
@@ -515,7 +491,7 @@ void UserProc::printAST(SyntaxNode *a)
  * RETURNS:			
  *============================================================================*/
 void UserProc::setDecoded() {
-	decoded = true;
+	status = PROC_DECODED;
 	printDecodedXML();
 }
 
@@ -527,7 +503,7 @@ void UserProc::setDecoded() {
  *============================================================================*/
 void UserProc::unDecode() {
 	cfg->clear();
-	decoded = false;
+	status = PROC_UNDECODED;
 }
 
 /*==============================================================================
@@ -820,16 +796,18 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
 // Decompile this UserProc
 std::set<UserProc*>* UserProc::decompile() {
 	// Prevent infinite loops when there are cycles in the call graph
-	if (decompiled) return NULL;
+	if (status >= PROC_FINAL) return NULL;
 
-	// We have seen this proc
-	decompileSeen = true;
+	// We have visited this proc "on the way down"
+	status = PROC_VISITED;
 
-	if (!decoded)
+	if (status < PROC_DECODED)
 		return NULL;
 
 	// Sort by address, so printouts make sense
 	cfg->sortByAddress();
+	status = PROC_SORTED;
+
 	// Initialise statements
 	initStatements();
 
@@ -850,7 +828,7 @@ std::set<UserProc*>* UserProc::decompile() {
 				CallStatement* call = (CallStatement*)bb->getRTLs()->back()->getHlStmt();
 				UserProc* destProc = (UserProc*)call->getDestProc();
 				if (destProc->isLib()) continue;
-				if (destProc->decompileSeen && !destProc->decompiled)
+				if (destProc->status >= PROC_VISITED && destProc->status < PROC_FINAL)
 					// We have discovered a cycle in the call graph
 					cycleSet->insert(destProc);
 					// Don't recurse into the loop
@@ -865,7 +843,7 @@ std::set<UserProc*>* UserProc::decompile() {
 			}
 		}
 
-		isRecursive = cycleSet->size() != 0;
+		// isRecursive = cycleSet->size() != 0;
 		// Remove self from the cycle list
 		cycleSet->erase(this);
 	}
@@ -891,7 +869,7 @@ std::set<UserProc*>* UserProc::decompile() {
 	printXML();
 
 	if (Boomerang::get()->noDecompile) {
-		decompiled = true;
+		status = PROC_FINAL;				// ??!
 		return cycleSet;
 	}
 
@@ -1218,7 +1196,7 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	printXML();
 
-	decompiled = true;			// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
+	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
 	Boomerang::get()->alert_end_decompile(this);
 	return cycleSet;
 }
@@ -3838,15 +3816,10 @@ public:
 	Cluster *cluster;
 
 	Cfg* cfg;
-	bool decoded;
-	bool analysed;
-	bool aggregateUsed;
+	ProcStatus status;
 	std::map<std::string, Type*> locals;		// r
 	UserProc::SymbolMapType symbolMap;			// r
 	std::list<Proc*> calleeList;
-	bool decompileSeen;
-	bool decompiled;
-	bool isRecursive;
 };
 
 Memo *UserProc::makeMemo(int mId)
@@ -3863,15 +3836,10 @@ Memo *UserProc::makeMemo(int mId)
 	m->cluster = cluster;
 
 	m->cfg = cfg;
-	m->decoded = decoded;
-	m->analysed = analysed;
-	m->aggregateUsed = aggregateUsed;
+	m->status = status;
 	m->locals = locals;
 	m->symbolMap = symbolMap;
 	m->calleeList = calleeList;
-	m->decompileSeen = decompileSeen;
-	m->decompiled = decompiled;
-	m->isRecursive = isRecursive;
 
 	signature->takeMemo(mId);
 	for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++)
@@ -3902,15 +3870,10 @@ void UserProc::readMemo(Memo *mm, bool dec)
 	cluster = m->cluster;
 
 	cfg = m->cfg;
-	decoded = m->decoded;
-	analysed = m->analysed;
-	aggregateUsed = m->aggregateUsed;
+	status = m->status;
 	locals = m->locals;
 	symbolMap = m->symbolMap;
 	calleeList = m->calleeList;
-	decompileSeen = m->decompileSeen;
-	decompiled = m->decompiled;
-	isRecursive = m->isRecursive;
 
 	signature->restoreMemo(m->mId, dec);
 	for (std::set<Exp*, lessExpStar>::iterator it = proven.begin(); it != proven.end(); it++)

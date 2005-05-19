@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.5 $
+ * $Revision: 1.126.2.6 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -146,7 +146,6 @@ void Prog::finishDecode()
 }
 
 // Analyse any procedures that are decoded
-#if 1
 void Prog::analyse() {
 	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
 		Proc *pProc = *it;
@@ -154,16 +153,15 @@ void Prog::analyse() {
 		if (pProc->isLib()) continue;
 		UserProc *p = (UserProc*)pProc;
 		if (!p->isDecoded()) continue;
-		if (p->isAnalysed()) continue;
+		if (p->isSorted()) continue;
 
-		p->setAnalysed();
+		p->setSorted();
 
 		// decoded userproc.. analyse it
 		p->getCFG()->sortByAddress();
 		p->printAnalysedXML();
 	}
 }
-#endif
 
 void Prog::generateDotFile() {
 	assert(Boomerang::get()->dotFile);
