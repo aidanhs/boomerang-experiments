@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.11 $
+ * $Revision: 1.43.2.12 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -61,8 +61,8 @@ void DataFlow::dominators(Cfg* cfg) {
 	best.resize(numBB, -1);
 	bucket.resize(numBB);
 	DF.resize(numBB);
-	// Set up the BBs and indices vectors. Do this here because sometimes a BB can be unreachable (so relying on in-edges
-	// doesn't work)
+	// Set up the BBs and indices vectors. Do this here because sometimes a BB can be unreachable (so relying on
+	// in-edges doesn't work)
 	std::list<PBB>::iterator ii;
 	int idx = 1;
 	for (ii = cfg->begin(); ii != cfg->end(); ii++) {
@@ -95,34 +95,32 @@ void DataFlow::dominators(Cfg* cfg) {
 				s = sdash;
 		}
 		semi[n] = s;
-		/* Calculation of n'd dominator is deferred until the path from s to n
-			has been linked into the forest */
+		/* Calculation of n'd dominator is deferred until the path from s to n has been linked into the forest */
 		bucket[s].insert(n);
 		Link(p, n);
 		// for each v in bucket[p]
 		std::set<int>::iterator jj;
 		for (jj=bucket[p].begin(); jj != bucket[p].end(); jj++) {
 			int v = *jj;
-			/* Now that the path from p to v has been linked into the spanning
-				forest, these lines calculate the dominator of v, based on the
-				first clause of the Dominator Theorem, or else defer the calc-
-				ulation until y's dominator is known. */
+			/* Now that the path from p to v has been linked into the spanning forest, these lines calculate the
+				dominator of v, based on the first clause of the Dominator Theorem, or else defer the calculation until
+				y's dominator is known. */
 			int y = ancestorWithLowestSemi(v);
 			if (semi[y] == semi[v])
-				idom[v] = p;		 // Success!
-			else samedom[v] = y;	 // Defer
+				idom[v] = p;		 		// Success!
+			else samedom[v] = y;	 		// Defer
 		}
 		bucket[p].clear();
 	}
 	for (i=1; i < N-1; i++) {
-		/* Now all the deferred dominator calculations, based on the second
-			clause of the Dominator Theorem, are performed. */
+		/* Now all the deferred dominator calculations, based on the second clause of the Dominator Theorem, are
+			performed. */
 		int n = vertex[i];
 		if (samedom[n] != -1) {
-			idom[n] = idom[samedom[n]];	   // Deferred success!
+			idom[n] = idom[samedom[n]];		// Deferred success!
 		}
 	}
-	computeDF(0);				// Finally, compute the dominance frontiers
+	computeDF(0);							// Finally, compute the dominance frontiers
 }
 
 int DataFlow::ancestorWithLowestSemi(int v) {
@@ -237,7 +235,7 @@ void DataFlow::placePhiFunctions(int memDepth, UserProc* proc) {
 	std::map<Exp*, std::set<int>, lessExpStar>::iterator mm;
 	for (mm = defsites.begin(); mm != defsites.end(); mm++) {
 		Exp* a = (*mm).first;				// *mm is pair<Exp*, set<int>>
-		std::set<int> W = defsites[a];	 // set copy
+		std::set<int> W = defsites[a];		// set copy
 		// While W not empty
 		while (W.size()) {
 			// Remove some node n from W
@@ -268,6 +266,13 @@ void DataFlow::placePhiFunctions(int memDepth, UserProc* proc) {
 		}
 	}
 }
+
+static Exp* defineAll = new Terminal(opDefineAll);		// An expression representing <all>
+
+// There is an entry in stacks[defineAll] that represents the latest definition from a define-all source. It is needed
+// for variables that don't have a definition as yet (i.e. stacks[x].empty() is true). As soon as a real definition to
+// x appears, stacks[defineAll] does not apply for variable x. This is needed to get correct operation of the use
+// collectors in calls.
 
 // Subscript dataflow variables
 void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStacks /* = false */ ) {
@@ -312,20 +317,22 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				}
 				// Else x is not subscripted yet
 				if (Stacks[x].empty()) {
-					// If the stack is empty, use a NULL definition. This will be changed into a pointer
-					// to an implicit definition at the start of type analysis, but not until all the m[...]
-					// have stopped changing their expressions (complicates implicit assignments considerably).
-					def = NULL;
-					// No longer updating the collector at the start of the UserProc
-					// proc->useBeforeDefine(x->clone());
-				}
-				else {
-					def = Stacks[x].top();
-					if (def->isCall()) {
-						// Calls have UseCollectors for locations that are used before definition at the call
-						((CallStatement*)def)->useBeforeDefine(x->clone());
+					if (!Stacks[defineAll].empty())
+						def = Stacks[defineAll].top();
+					else {
+						// If the both stacks are empty, use a NULL definition. This will be changed into a pointer
+						// to an implicit definition at the start of type analysis, but not until all the m[...]
+						// have stopped changing their expressions (complicates implicit assignments considerably).
+						def = NULL;
+						// Update the collector at the start of the UserProc
+						proc->useBeforeDefine(x->clone());
 					}
 				}
+				else
+					def = Stacks[x].top();
+				if (def && def->isCall())
+					// Calls have UseCollectors for locations that are used before definition at the call
+					((CallStatement*)def)->useBeforeDefine(x->clone());
 				// Replace the use of x with x{def} in S
 				if (S->isPhi()) {
 					Exp* phiLeft = ((PhiAssign*)S)->getLeft();
@@ -369,6 +376,13 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					Stacks[a->clone()].push(S);
 			}
 		}
+		// Special processing for define-alls (presently, only childless calls).
+		if (S->isCall() && ((CallStatement*)S)->isChildless()) {	// If S is a childless call
+			Stacks[defineAll];										// Ensure that there is an entry for defineAll
+			std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator dd;
+			for (dd = Stacks.begin(); dd != Stacks.end(); ++dd)
+				dd->second.push(S);									// Add a definition for all vars
+		}
 	}
 
 	// For each successor Y of block n
@@ -408,7 +422,11 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 			renameBlockVars(proc, X, memDepth);
 	}
 	// For each statement S in block n
-	for (S = bb->getFirstStmt(rit, sit); S; S = bb->getNextStmt(rit, sit)) {
+	// NOTE: Because of the need to pop childless calls from the Stacks, it is important in my algorithm to process the
+	// statments in the BB *backwards*. (It is not important in Appel's algorithm, since he always pushes a definition
+	// for every variable defined on the Stacks).
+	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
+	for (S = bb->getLastStmt(rrit, srit); S; S = bb->getPrevStmt(rrit, srit)) {
 		// For each definition of some variable a in S
 		LocationSet defs;
 		S->getDefinitions(defs);
@@ -416,6 +434,32 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 		for (dd = defs.begin(); dd != defs.end(); dd++) {
 			if ((*dd)->getMemDepth() == memDepth)
 				Stacks[*dd].pop();
+		}
+		// Pop all defs due to childless calls
+		if (S->isCall() && ((CallStatement*)S)->isChildless()) {
+std::cerr << "About to pop for childless call " << S->getNumber() << "; before:\n";
+std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator zz;
+for (zz = Stacks.begin(); zz != Stacks.end(); zz++) {
+ std::cerr << "Var " << zz->first << " [ ";
+ std::stack<Statement*>tt = zz->second;		// Copy the stack!
+ while (!tt.empty()) {
+  std::cerr << tt.top()->getNumber() << " "; tt.pop(); }
+ std::cerr << "]\n";
+}
+			std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator sss;
+			for (sss = Stacks.begin(); sss != Stacks.end(); ++sss) {
+				if (!sss->second.empty() && sss->second.top() == S) {
+					sss->second.pop();
+				}
+			}
+std::cerr << "Popped for childless call " << S->getNumber() << "; after:\n";
+for (zz = Stacks.begin(); zz != Stacks.end(); zz++) {
+ std::cerr << "Var " << zz->first << " [ ";
+ std::stack<Statement*>tt = zz->second;		// Copy the stack!
+ while (!tt.empty()) {
+  std::cerr << tt.top()->getNumber() << " "; tt.pop(); }
+ std::cerr << "]\n";
+}
 		}
 	}
 }

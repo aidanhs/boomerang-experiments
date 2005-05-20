@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.2 $
+ * $Revision: 1.69.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -409,9 +409,12 @@ static void			doAvail(StatementSet& s, PBB inEdge);
 		 * save a lot of duplicated, easily-bugged code
 		 */
 		typedef std::list<RTL*>::iterator rtlit;
+		typedef std::list<RTL*>::reverse_iterator rtlrit;
 		typedef std::list<Exp*>::iterator elit;
 		Statement*	getFirstStmt(rtlit& rit, StatementList::iterator& sit);
 		Statement*	getNextStmt(rtlit& rit, StatementList::iterator& sit);
+		Statement*	getLastStmt(rtlrit& rit, StatementList::reverse_iterator& sit);
+		Statement*	getPrevStmt(rtlrit& rit, StatementList::reverse_iterator& sit);
 
 		/**
 		 * Get the statement number for the first BB as a character array.

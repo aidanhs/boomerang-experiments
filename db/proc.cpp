@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.18 $
+ * $Revision: 1.238.2.19 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -361,7 +361,7 @@ bool LibProc::isPreserved(Exp* e) {
  *					uNative - Native address of entry point of procedure
  * RETURNS:			<nothing>
  *============================================================================*/
-UserProc::UserProc() : Proc(), cfg(NULL), status(PROC_UNDECODED),
+UserProc::UserProc() : Proc(), cfg(NULL), status(PROC_UNDECODED), maxDepth(-1),
 		// decoded(false), analysed(false),
 		nextLocal(0),	// decompileSeen(false), decompiled(false), isRecursive(false)
 		theReturnStatement(NULL) {
@@ -370,7 +370,7 @@ UserProc::UserProc(Prog *prog, std::string& name, ADDRESS uNative) :
 		// Not quite ready for the below fix:
 		// Proc(prog, uNative, prog->getDefaultSignature(name.c_str())),
 		Proc(prog, uNative, new Signature(name.c_str())),
-		cfg(new Cfg()), status(PROC_UNDECODED),
+		cfg(new Cfg()), status(PROC_UNDECODED), maxDepth(-1),
 		// decoded(false), analysed(false),
 		nextLocal(0), // decompileSeen(false), decompiled(false), isRecursive(false),
 		theReturnStatement(NULL) {
@@ -639,6 +639,10 @@ void UserProc::printToLog() {
 		else
 			LOG << "-\n";
 	}
+	LOG << "Live variables: ";
+	std::ostringstream ost2;
+	col.print(ost2);
+	LOG << ost2.str().c_str() << "\n";
 	cfg->printToLog();
 	LOG << "\n";
 }
@@ -795,21 +799,34 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
 
 // Decompile this UserProc
 std::set<UserProc*>* UserProc::decompile() {
+	// Initial decompile: transform to SSA, propagation, initial returns and parameters
+	std::set<UserProc*>* ret = initialDecompile();
+	if (ret == NULL)
+		return NULL;
+
+	// For recursion, need much other processing here
+
+	// Final decompile
+	finalDecompile();
+
+	return ret;
+}
+
+std::set<UserProc*>* UserProc::initialDecompile() {
 	// Prevent infinite loops when there are cycles in the call graph
 	if (status >= PROC_FINAL) return NULL;
+	if (status < PROC_DECODED) return NULL;
+
+	// Sort by address, so printouts make sense
+	cfg->sortByAddress();
+
+	// Initialise statements
+	initStatements();
 
 	// We have visited this proc "on the way down"
 	status = PROC_VISITED;
 
-	if (status < PROC_DECODED)
-		return NULL;
 
-	// Sort by address, so printouts make sense
-	cfg->sortByAddress();
-	status = PROC_SORTED;
-
-	// Initialise statements
-	initStatements();
 
 	/*	*	*	*	*	*	*	*	*	*	*	*
 	 *											*
@@ -834,7 +851,7 @@ std::set<UserProc*>* UserProc::decompile() {
 					// Don't recurse into the loop
 				else {
 					// Recurse to this child (in the call graph)
-					std::set<UserProc*>* childSet = destProc->decompile();
+					std::set<UserProc*>* childSet = destProc->initialDecompile();
 					call->setCalleeReturn(destProc->getTheReturnStatement());
 					// Union this child's set into cycleSet
 					if (childSet)
@@ -859,7 +876,6 @@ std::set<UserProc*>* UserProc::decompile() {
 
 
 	// Compute dominance frontier
-	DataFlow df;
 	df.dominators(cfg);
 
 	// Number the statements
@@ -884,7 +900,7 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	// For each memory depth (1). First path is just to do the initial propagation (especially for the stack pointer),
 	// place phi functions, number statements, initial propagation
-	int maxDepth = findMaxDepth() + 1;
+	maxDepth = findMaxDepth() + 1;
 	if (Boomerang::get()->maxMemDepth < maxDepth)
 		maxDepth = Boomerang::get()->maxMemDepth;
 	int depth;
@@ -904,14 +920,18 @@ std::set<UserProc*>* UserProc::decompile() {
 			LOG << "renaming block variables (1) at depth " << depth << "\n";
 		// Rename variables
 		df.renameBlockVars(this, 0, depth);
+		if (VERBOSE) {
+			LOG << "\n=== After rename (1) of " << getName() << " at depth " << depth << ": ===\n";
+			printToLog();
+			LOG << "\n=== Done after rename (1) of " << getName() << " at depth " << depth << ": ===\n\n";
+		}
 
 		propagateStatements(depth, -1);
-	}
-
-	if (VERBOSE) {		// was if debugPrintSSA
-		LOG << "=== Debug Initial Print SSA with propagations for " << getName() << " ===\n";
-		printToLog();
-		LOG << "=== End Initial Debug Print SSA for " << getName() << " ===\n\n";
+		if (VERBOSE) {
+			LOG << "\n=== After propagation (1) of " << getName() << " at depth " << depth << ": ===\n";
+			printToLog();
+			LOG << "\n=== Done after propagation (1) of " << getName() << " at depth " << depth << ": ===\n\n";
+		}
 	}
 
 	trimReturns();		// Also does proofs, sets signatures to PentiumSignature etc
@@ -1051,9 +1071,9 @@ std::set<UserProc*>* UserProc::decompile() {
 				depth = 0;		// Start again from depth 0
 				// FIXME: is this needed?
 				df.renameBlockVars(this, 0, 0, true);	 // Initial dataflow level 0
-				LOG << "\nAfter initial rename:\n";
+				LOG << "\nAfter rename (2) of " << getName() << ":\n";
 				printToLog();
-				LOG << "\nDone after initial rename:\n\n";
+				LOG << "\nDone after rename (2) of " << getName() << ":\n\n";
 			}
 		} while (convert);
 
@@ -1075,7 +1095,7 @@ std::set<UserProc*>* UserProc::decompile() {
 		LOG << "=== About to restart decompilation of " << getName() <<
 			" because indirect jumps or calls have been removed\n\n";
 		//assignProcsToCalls();		// Surely this should be done at decode time!
-		return decompile();	 // Restart decompiling this proc
+		return initialDecompile();	 // Restart decompiling this proc
 	}
 
 	// Used to be later...
@@ -1096,6 +1116,11 @@ std::set<UserProc*>* UserProc::decompile() {
 		}
 	}
 
+	return cycleSet;
+}
+
+void UserProc::finalDecompile() {
+
 	// A temporary hack to remove %CF = %CF{7} when 7 isn't a SUBFLAGS
 	if (theReturnStatement)
 		theReturnStatement->specialProcessing();
@@ -1107,7 +1132,7 @@ std::set<UserProc*>* UserProc::decompile() {
 	 *	*	*	*	*	*	*	*	*	*	*	*	*	*/
 
 	// Only remove unused statements after decompiling as much as possible of the proc
-	for (depth = 0; depth <= maxDepth; depth++) {
+	for (int depth = 0; depth <= maxDepth; depth++) {
 		// Remove unused statements
 		RefCounter refCounts;			// The map
 		// Count the references first
@@ -1198,7 +1223,6 @@ std::set<UserProc*>* UserProc::decompile() {
 
 	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
 	Boomerang::get()->alert_end_decompile(this);
-	return cycleSet;
 }
 
 void UserProc::updateBlockVars(DataFlow& df)
@@ -4004,6 +4028,8 @@ bool UserProc::filterReturns(Exp* e) {
 				else
 					sp = signature->getStackRegister(prog);
 				Exp* s1 = ((Binary*)addr)->getSubExp1();
+				if (s1->isSubscript())
+					s1 = ((RefExp*)s1)->getSubExp1();
 				if (!s1->isRegN(sp)) return false;
 				Exp* s2 = ((Binary*)addr)->getSubExp2();
 				if (!s2->isIntConst()) return false;

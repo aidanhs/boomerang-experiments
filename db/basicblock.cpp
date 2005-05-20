@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.93.2.3 $
+ * $Revision: 1.93.2.4 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -700,6 +700,33 @@ Statement* BasicBlock::getNextStmt(rtlit& rit, StatementList::iterator& sit) {
 	} while (1);
 	return NULL;
 }
+
+Statement* BasicBlock::getLastStmt(rtlrit& rit, StatementList::reverse_iterator& sit) {
+	if (m_pRtls == NULL) return NULL;
+	rit = m_pRtls->rbegin();
+	while (rit != m_pRtls->rend()) {
+		RTL* rtl = *rit;
+		sit = rtl->getList().rbegin();
+		if (sit != rtl->getList().rend())
+			return *sit;
+		rit++;
+	}
+	return NULL;
+}
+
+Statement* BasicBlock::getPrevStmt(rtlrit& rit, StatementList::reverse_iterator& sit) {
+	do {
+		if (++sit != (*rit)->getList().rend())
+			return *sit;
+		if (++rit == m_pRtls->rend())
+			break;
+		sit = (*rit)->getList().rbegin();
+		if (sit != (*rit)->getList().rend())
+			return *sit;
+	} while (1);
+	return NULL;
+}
+
 
 /*
  * Structuring and code generation.

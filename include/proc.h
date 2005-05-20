@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.11 $
+/* $Revision: 1.115.2.12 $
 */
 
 #ifndef _PROC_H_
@@ -32,7 +32,7 @@
 #include "cfg.h"				// For cfg->simplify()
 #include "hllcode.h"
 #include "memo.h"
-//#include "dataflow.h"			// For class UseCollector
+#include "dataflow.h"			// For class UseCollector
 
 class Prog;
 class UserProc;
@@ -298,7 +298,7 @@ protected:
 enum ProcStatus {
 	PROC_UNDECODED,		// Has not even been decoded
 	PROC_DECODED,		// Decoded, no attempt at decompiling
-	PROC_SORTED,		// Decoded and CFG has been sorted by address
+	PROC_SORTED,		// Decoded, and CFG has been sorted by address
 	PROC_VISITED,		// Has been visited on the way down in the recursion manager
 	PROC_INITIAL,		// Has had initial decompiling only (some callees were involved in recursion)
 	PROC_FINAL			// Has had final decompilation
@@ -334,6 +334,11 @@ class UserProc : public Proc {
 		 * the address of aggregates. Set with the setParams() member function.
 		 */
 		//bool		aggregateUsed;
+
+		/**
+		 * Maximum depth this function (or limited by a command line switch). -1 if not set.
+		 */
+		int			maxDepth;
 
 		/*
 		 * This map records the names and types for local variables. It should be a subset of the symbolMap, which also
@@ -388,6 +393,11 @@ private:
 		 * The RHS is just ignored
 		 */
 		StatementList parameters;
+
+		/**
+		 * DataFlow object. Holds information relevant to transforming to and from SSA form.
+		 */
+		DataFlow	df;
 
 public:
 
@@ -473,7 +483,9 @@ virtual				~UserProc();
 		void		simplify() { cfg->simplify(); }
 
 		// decompile this proc
-		std::set<UserProc*>* decompile();
+		std::set<UserProc*>* decompile();		// Temporary now till recursion manager written
+		std::set<UserProc*>* initialDecompile();// Initial decompile: to SSA, propagate, initial params and returns
+		void		finalDecompile();			// Final decompile: remove unused statements, from SSA form, TA, etc
 		void		propagateAtDepth(DataFlow& df, int depth);
 		void		updateBlockVars(DataFlow& df);
 
@@ -713,9 +725,9 @@ virtual void		printCallGraphXML(std::ostream &os, int depth,
 		// Cast the constant whose conscript is num to be type ty
 		void		castConst(int num, Type* ty);
 
-		// Add a location to the UseCollector; this means this location is used before defined, and hence is probably a
-		// parameter
-		//void		useBeforeDefine(Exp* loc) {col.insert(loc);}
+		// Add a location to the UseCollector; this means this location is used before defined, and hence is an
+		// *initial* parameter. Note that final parameters don't use this information; it's only for handling recursion.
+		void		useBeforeDefine(Exp* loc) {col.insert(loc);}
  
 private:
 		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case

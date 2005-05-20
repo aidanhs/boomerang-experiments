@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.14 $
+ * $Revision: 1.76.2.15 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1005,6 +1005,7 @@ virtual bool		accept(StmtModifier* visitor);
 		StatementList* calcResults();			// Calculate defines(this) isect live(this)
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		void		setCalleeReturn(ReturnStatement* ret) {calleeReturn = ret;}
+		bool		isChildless() {return calleeReturn == NULL;}
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call

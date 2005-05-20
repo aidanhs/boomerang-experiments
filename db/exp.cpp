@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.9 $
+ * $Revision: 1.172.2.10 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -863,7 +863,7 @@ void Terminal::print(std::ostream& os) {
 		case opNil:		break;
 		case opTrue:	os << "true"; break;
 		case opFalse:	os << "false"; break;
-		case opDefineAll: os << "all"; break;
+		case opDefineAll: os << "<all>"; break;
 		default:
 			LOG << "Terminal::print invalid operator " << operStrings[op] << "\n";
 			assert(0);
