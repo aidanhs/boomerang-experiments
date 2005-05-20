@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.12 $
+ * $Revision: 1.43.2.13 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -437,29 +437,12 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 		}
 		// Pop all defs due to childless calls
 		if (S->isCall() && ((CallStatement*)S)->isChildless()) {
-std::cerr << "About to pop for childless call " << S->getNumber() << "; before:\n";
-std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator zz;
-for (zz = Stacks.begin(); zz != Stacks.end(); zz++) {
- std::cerr << "Var " << zz->first << " [ ";
- std::stack<Statement*>tt = zz->second;		// Copy the stack!
- while (!tt.empty()) {
-  std::cerr << tt.top()->getNumber() << " "; tt.pop(); }
- std::cerr << "]\n";
-}
 			std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator sss;
 			for (sss = Stacks.begin(); sss != Stacks.end(); ++sss) {
 				if (!sss->second.empty() && sss->second.top() == S) {
 					sss->second.pop();
 				}
 			}
-std::cerr << "Popped for childless call " << S->getNumber() << "; after:\n";
-for (zz = Stacks.begin(); zz != Stacks.end(); zz++) {
- std::cerr << "Var " << zz->first << " [ ";
- std::stack<Statement*>tt = zz->second;		// Copy the stack!
- while (!tt.empty()) {
-  std::cerr << tt.top()->getNumber() << " "; tt.pop(); }
- std::cerr << "]\n";
-}
 		}
 	}
 }
