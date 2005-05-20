@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.20 $
+ * $Revision: 1.238.2.21 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -855,7 +855,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 					// Don't recurse into the loop
 				else {
 					// Recurse to this child (in the call graph)
-					std::set<UserProc*>* childSet = destProc->initialDecompile();
+					std::set<UserProc*>* childSet = destProc->decompile();
 					call->setCalleeReturn(destProc->getTheReturnStatement());
 					// Union this child's set into cycleSet
 					if (childSet)
@@ -894,7 +894,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 	}
 
 	if (VERBOSE) {
-		LOG << "=== Debug Initial Print after decoding " << getName() << " ===\n";
+		LOG << "--- Debug Initial Print after decoding " << getName() << " ---\n";
 		printToLog();
 		LOG << "=== End Initial Debug Print after decoding " << getName() << " ===\n\n";
 	}
@@ -925,16 +925,16 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		// Rename variables
 		df.renameBlockVars(this, 0, depth);
 		if (VERBOSE) {
-			LOG << "\n=== After rename (1) of " << getName() << " at depth " << depth << ": ===\n";
+			LOG << "\n--- After rename (1) for " << getName() << " at depth " << depth << ": ---\n";
 			printToLog();
-			LOG << "\n=== Done after rename (1) of " << getName() << " at depth " << depth << ": ===\n\n";
+			LOG << "\n=== Done after rename (1) for " << getName() << " at depth " << depth << ": ===\n\n";
 		}
 
 		propagateStatements(depth, -1);
 		if (VERBOSE) {
-			LOG << "\n=== After propagation (1) of " << getName() << " at depth " << depth << ": ===\n";
+			LOG << "\n--- After propagation (1) for " << getName() << " at depth " << depth << ": ---\n";
 			printToLog();
-			LOG << "\n=== Done after propagation (1) of " << getName() << " at depth " << depth << ": ===\n\n";
+			LOG << "\n=== Done after propagation (1) for " << getName() << " at depth " << depth << ": ===\n\n";
 		}
 
 		// The call bypass logic should be staged as well. For example, consider m[r1{11}]{11} where 11 is a call.
@@ -943,7 +943,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		fixCallBypass();
 		propagateStatements(depth, -1);
 		if (VERBOSE) {
-			LOG << "\n=== After fixCallBypass (1) of " << getName() << " at depth " << depth << ": ===\n";
+			LOG << "\n--- After fixCallBypass (1) of " << getName() << " at depth " << depth << ": ---\n";
 			printToLog();
 			LOG << "\n=== Done after fixCallBypass (1) of " << getName() << " at depth " << depth << ": ===\n\n";
 		}
@@ -963,7 +963,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 	for (depth = 0; depth <= maxDepth; depth++) {
 		// Redo the renaming process to take into account the arguments
 		if (VERBOSE)
-			LOG << "renaming block variables (2) at depth " << depth << "\n";
+			LOG << "Renaming block variables (2) at depth " << depth << "\n";
 		// Rename variables
 		df.renameBlockVars(this, 0, depth);						// E.g. for new arguments
 
@@ -978,8 +978,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 
 		// Print if requested
 		if (VERBOSE) {		// was if debugPrintSSA
-			LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth << " (no propagations) ==="
-				"\n";
+			LOG << "--- Debug Print SSA for " << getName() << " at depth " << depth << " (no propagations) ---\n";
 			printToLog();
 			LOG << "=== End Debug Print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 		}
@@ -1047,8 +1046,8 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 			df.renameBlockVars(this, 0, depth, true);
 			printXML();
 			if (VERBOSE) {
-				LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth <<
-					" (after adding new returns) ===\n";
+				LOG << "--- Debug Print SSA for " << getName() << " at memory depth " << depth <<
+					" (after adding new returns) ---\n";
 				printToLog();
 				LOG << "=== End Debug Print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 			}
@@ -1060,8 +1059,8 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		printXML();
 		// Print if requested
 		if (VERBOSE) {		// was if debugPrintSSA
-			LOG << "=== Debug Print SSA for " << getName() << " at memory depth " << depth <<
-				" (after trimming return set) ===\n";
+			LOG << "--- Debug Print SSA for " << getName() << " at memory depth " << depth <<
+				" (after trimming return set) ---\n";
 			printToLog();
 			LOG << "=== End Debug Print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 		}
@@ -1098,7 +1097,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 
 		printXML();
 		if (VERBOSE) {
-			LOG << "=== After propagate for " << getName() << " at memory depth " << depth << " ===\n";
+			LOG << "--- After propagate for " << getName() << " at memory depth " << depth << " ---\n";
 			printToLog();
 			LOG << "=== End propagate for " << getName() << " at depth " << depth << " ===\n\n";
 		}
@@ -1131,7 +1130,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		fixCallBypass();		// FIXME: surely this is not necessary now?
 		trimParameters();	// FIXME: surely there aren't any parameters to trim yet?
 		if (VERBOSE) {
-			LOG << "=== After replacing expressions, trimming params and returns ===\n";
+			LOG << "--- After replacing expressions, trimming params and returns ---\n";
 			printToLog();
 			LOG << "=== End after replacing expressions, trimming params and returns ===\n";
 			LOG << "===== End after replacing params =====\n\n";
@@ -1169,9 +1168,9 @@ void UserProc::finalDecompile() {
 
 		printXML();
 		if (VERBOSE && !Boomerang::get()->noRemoveNull) {
-			LOG << "===== After removing unused and null statements depth " << depth << " =====\n";
+			LOG << "--- After removing unused and null statements depth " << depth << " ---\n";
 			printToLog();
-			LOG << "===== End after removing unused statements =====\n\n";
+			LOG << "=== End after removing unused statements ===\n\n";
 		}
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
@@ -1186,7 +1185,7 @@ void UserProc::finalDecompile() {
 		fixCallBypass();		// FIXME: surely this is not necessary now?
 		//trimParameters();	// FIXME: check
 		if (VERBOSE) {
-			LOG << "=== After adding new parameters ===\n";
+			LOG << "--- After adding new parameters ---\n";
 			printToLog();
 			LOG << "=== End after adding new parameters ===\n";
 		}
@@ -1196,7 +1195,7 @@ void UserProc::finalDecompile() {
 	// Want to be after all propagation, but before converting expressions to locals etc
 	if (DFA_TYPE_ANALYSIS) {
 		if (VERBOSE || DEBUG_TA)
-			LOG << "=== Start Data-flow-based Type Analysis for " << getName() << " ===\n";
+			LOG << "--- Start Data-flow-based Type Analysis for " << getName() << " ---\n";
 
 		// Now we need to add the implicit assignments. Doing this earlier is extremely problematic, because
 		// of all the m[...] that change their sorting order as their arguments get subscripted or propagated into
