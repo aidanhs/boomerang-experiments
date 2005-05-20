@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.13 $
+ * $Revision: 1.43.2.14 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -377,11 +377,14 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 			}
 		}
 		// Special processing for define-alls (presently, only childless calls).
+		// But note that only everythings at the current memory level are defined!
 		if (S->isCall() && ((CallStatement*)S)->isChildless()) {	// If S is a childless call
 			Stacks[defineAll];										// Ensure that there is an entry for defineAll
 			std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator dd;
-			for (dd = Stacks.begin(); dd != Stacks.end(); ++dd)
-				dd->second.push(S);									// Add a definition for all vars
+			for (dd = Stacks.begin(); dd != Stacks.end(); ++dd) {
+				if (dd->first->isMemDepth(memDepth))
+					dd->second.push(S);									// Add a definition for all vars
+			}
 		}
 	}
 
@@ -498,4 +501,17 @@ void DefCollector::searchReplaceAll(Exp* from, Exp* to, bool& change) {
 	change = false;
 	for (it=locs.begin(); it != locs.end(); ++it)
 		(*it)->searchReplaceAll(from, to, change);
+}
+
+void DataFlow::dumpStacks() {
+	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator zz;
+	for (zz = Stacks.begin(); zz != Stacks.end(); zz++) {
+		std::cerr << "Var " << zz->first << " [ ";
+		std::stack<Statement*>tt = zz->second;               // Copy the stack!
+		while (!tt.empty()) {
+			std::cerr << tt.top()->getNumber() << " "; tt.pop();
+		}
+		std::cerr << "]\n";
+}
+
 }

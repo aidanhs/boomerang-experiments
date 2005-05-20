@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.12 $
+/* $Revision: 1.115.2.13 $
 */
 
 #ifndef _PROC_H_
@@ -475,6 +475,7 @@ virtual				~UserProc();
 		void		print(std::ostream &out);
 		void		printParams(std::ostream &out);
 		char		*prints();
+		void		dump();
 		void		printToLog();
 		void		symbolMapToLog();			// Print just the symbol map
 		void		dumpSymbolMap();			// For debugging
@@ -504,7 +505,7 @@ virtual				~UserProc();
 		void		removeRedundantPhis();
 		void		trimReturns();
 		void		updateReturnTypes();
-		void		fixCallRefs();
+		void		fixCallBypass();
 		void		addNewParameters();
 		void		addParameter(Exp *e);		// Add to signature (temporary now; still needed to create param names)
 		void		insertParameter(Exp* e);	// Insert into parameters list correctly sorted

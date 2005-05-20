@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.16 $
+ * $Revision: 1.148.2.17 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1357,7 +1357,7 @@ Exp *CallStatement::getProven(Exp *e) {
 }
 
 // Substitute the various components of expression e with the appropriate reaching definitions.
-// Used in e.g. fixCallRefs (via the CallRefsFixer). Locations defined in this call are replaced with their proven
+// Used in e.g. fixCallBypass (via the CallRefsBypasser). Locations defined in this call are replaced with their proven
 // values, which are in terms of the initial values at the start of the call (reaching definitions at the call)
 Exp* CallStatement::localiseExp(Exp* e, int depth /* = -1 */) {
 	if (!defCol.isInitialised()) return e;				// Don't attempt to subscript if the data flow not started yet
@@ -1887,7 +1887,7 @@ bool CallStatement::convertToDirect() {
 		}
 		// we need to:
 		// 1) replace the current return set with the return set of the new procDest
-		// 2) call fixCallRefs on the enclosing procedure
+		// 2) call fixCallBypass on the enclosing procedure
 		// 3) fix the arguments (this will only affect the implicit arguments, the regular arguments should
 		//    be empty at this point)
 		// 3a replace current arguments with those of the new proc
@@ -1913,7 +1913,7 @@ bool CallStatement::convertToDirect() {
 #endif
 
 		// 2
-		proc->fixCallRefs();
+		proc->fixCallBypass();
 
 		// 3
 #if 0
@@ -2065,9 +2065,9 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 #if 0
 	for (i = 0; i < implicitArguments.size(); i++) {
 		// Don't replace the implicit argument if it matches whole expression.
-		// A large part of the use of these is to allow fixCallRefs to change a definition of a location
+		// A large part of the use of these is to allow fixCallBypass to change a definition of a location
 		// (say sp) by what the function does with it (maybe replaces it with sp+4). If you substitute sp{K}
-		// with say sp{K-3}+4, then it won't do its job with fixCallRefs.
+		// with say sp{K-3}+4, then it won't do its job with fixCallBypass.
 		if (!(*implicitArguments[i] == *from)) {
 			implicitArguments[i] = implicitArguments[i]->searchReplaceAll(from, to, change);
 			if (change) {
@@ -3827,7 +3827,7 @@ bool CallStatement::accept(StmtModifier* v) {
 	for (it = implicitArguments.begin(); recur && it != implicitArguments.end(); it++)
 		*it = (*it)->accept(v->mod);
 #else
-	// For example: needed for CallRefsFixer so that a collected definition that happens to be another call gets
+	// For example: needed for CallRefsBypasser so that a collected definition that happens to be another call gets
 	// adjusted
 	Collector::iterator cc;
 	for (cc = defCol.begin(); cc != defCol.end(); cc++)
@@ -3863,8 +3863,8 @@ bool BoolAssign::accept(StmtModifier* v) {
 }
 
 // Fix references to the returns of call statements
-void Statement::fixCallRefs() {
-	CallRefsFixer crf(this);
+void Statement::fixCallBypass() {
+	CallRefsBypasser crf(this);
 	StmtModifier sm(&crf);
 	accept(&sm);
 }

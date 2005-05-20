@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.13 $
+ * $Revision: 1.39.2.14 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -101,6 +101,9 @@ public:
 		int			getIdom(int node) {return idom[node];}
 		int			getSemi(int node) {return semi[node];}
 		std::set<int>& getA_phi(Exp* e) {return A_phi[e];}
+
+		// For debugging:
+		void		dumpStacks();
 
 };
 

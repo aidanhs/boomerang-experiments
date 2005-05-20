@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.19 $
+ * $Revision: 1.238.2.20 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -624,6 +624,10 @@ char* UserProc::prints() {
 	return debug_buffer;
 }
 
+void UserProc::dump() {
+	print(std::cerr);
+}
+
 void UserProc::printToLog() {
 	signature->printToLog();
 	std::ostringstream ost;
@@ -932,11 +936,26 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 			printToLog();
 			LOG << "\n=== Done after propagation (1) of " << getName() << " at depth " << depth << ": ===\n\n";
 		}
+
+		// The call bypass logic should be staged as well. For example, consider m[r1{11}]{11} where 11 is a call.
+		// The first stage bypass yields m[r1{2}]{11}, which needs another round of propagation to yield m[r1{-}-32]{11}
+		// (which can safely be processed at depth 1).
+		fixCallBypass();
+		propagateStatements(depth, -1);
+		if (VERBOSE) {
+			LOG << "\n=== After fixCallBypass (1) of " << getName() << " at depth " << depth << ": ===\n";
+			printToLog();
+			LOG << "\n=== Done after fixCallBypass (1) of " << getName() << " at depth " << depth << ": ===\n\n";
+		}
 	}
 
-	trimReturns();		// Also does proofs, sets signatures to PentiumSignature etc
+//	trimReturns();		// Also does proofs (preserveds)
 						// FIXME: Are there any returns to trim yet? Needs a rename
 	
+	if (!Boomerang::get()->noPromote)
+		// We want functions other than main to be promoted
+		promoteSignature();
+
 	// Update the arguments for calls
 	updateArguments();
 
@@ -968,7 +987,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		Boomerang::get()->alert_decompile_SSADepth(this, depth);
 
 		if (depth == maxDepth) {
-			fixCallRefs();
+			fixCallBypass();			// FIXME: needed?
 			if (processConstants()) {
 				for (int i = 0; i <= maxDepth; i++) {
 					df.renameBlockVars(this, 0, i, true);	// Needed if there was an indirect call to an ellipsis
@@ -978,7 +997,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 			}
 			removeRedundantPhis();
 		}
-		fixCallRefs();
+		fixCallBypass();				// FIXME: needed? If so, document why
 		// recognising globals early prevents them from becoming parameters
 		if (depth == maxDepth)		// Else Sparc problems... MVE
 			replaceExpressionsWithGlobals();
@@ -1035,7 +1054,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 			}
 			trimReturns();
 			updateReturnTypes();
-			fixCallRefs();
+			fixCallBypass();
 		}
 
 		printXML();
@@ -1098,6 +1117,9 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		return initialDecompile();	 // Restart decompiling this proc
 	}
 
+	// Trim returns, calculate preserveds
+	trimReturns();
+
 	// Used to be later...
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
@@ -1106,7 +1128,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
 		trimReturns();		// FIXME: is this necessary here?
-		fixCallRefs();		// FIXME: surely this is not necessary now?
+		fixCallBypass();		// FIXME: surely this is not necessary now?
 		trimParameters();	// FIXME: surely there aren't any parameters to trim yet?
 		if (VERBOSE) {
 			LOG << "=== After replacing expressions, trimming params and returns ===\n";
@@ -1161,7 +1183,7 @@ void UserProc::finalDecompile() {
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
 		trimReturns();		// FIXME: is this necessary here?
-		fixCallRefs();		// FIXME: surely this is not necessary now?
+		fixCallBypass();		// FIXME: surely this is not necessary now?
 		//trimParameters();	// FIXME: check
 		if (VERBOSE) {
 			LOG << "=== After adding new parameters ===\n";
@@ -1200,7 +1222,7 @@ void UserProc::finalDecompile() {
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
 		trimReturns();
-		fixCallRefs();
+		fixCallBypass();
 		trimParameters();
 		if (VERBOSE) {
 			LOG << "=== After replacing expressions, trimming params and returns ===\n";
@@ -1447,13 +1469,9 @@ void UserProc::trimReturns() {
 #endif
 	}
 
-	if (!Boomerang::get()->noPromote)
-		// We want functions other than main to be promoted
-		promoteSignature();
-
 	if (stdsp) {
 		// I've been removing sp from the return set as it makes the output look better, but this only works for
-		// recursive procs (because no other proc calls them and fixCallRefs can replace refs to the call with a valid
+		// recursive procs (because no other proc calls them and fixCallBypass can replace refs to the call with a valid
 		// expression). Not removing sp will make basically every procedure that doesn't preserve sp return it, and take
 		// it as a parameter.  Maybe a later pass can get rid of this.	Trent 22/8/2003
 		// We handle this now by doing a final pass which removes any unused returns of a procedure.  So r28 will remain
@@ -1543,20 +1561,20 @@ void UserProc::updateReturnTypes()
 }
 
 // FIXME: Consider moving this functionality inside the propagation logic (propagateTo()).
-void UserProc::fixCallRefs()
+void UserProc::fixCallBypass()
 {
 	if (VERBOSE)
-		LOG << "\nfixCallRefs for " << getName() << "\n";
+		LOG << "\nfixCallBypass for " << getName() << "\n";
 	StatementList stmts;
 	getStatements(stmts);
 	StatementList::iterator it;
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
-		s->fixCallRefs();
+		s->fixCallBypass();
 	}
 	simplify();
 	if (VERBOSE)
-		LOG << "end fixCallRefs for " << getName() << "\n\n";
+		LOG << "end fixCallBypass for " << getName() << "\n\n";
 }
 
 /*
@@ -1905,7 +1923,7 @@ void Proc::removeParameter(Exp *e) {
 		signature->removeImplicitParameter(n);
 		for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
 			// Don't remove an implicit argument if it is also a return of this call.
-			// Implicit arguments are needed for each return in fixCallRefs
+			// Implicit arguments are needed for each return in fixCallBypass
 			if (DEBUG_UNUSED_RETS_PARAMS)
 				LOG << "removing implicit argument " << e << " in pos " << n << " from " << *it << "\n";
 			(*it)->removeImplicitArgument(n);

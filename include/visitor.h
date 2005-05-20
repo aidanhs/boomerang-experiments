@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.3 $
+ * $Revision: 1.13.2.4 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -251,7 +251,7 @@ virtual void		visit(PhiAssign* stmt, bool& recur);
 		bool		getDelete() {return del;}
 };
 
-class CallRefsFixer : public ExpModifier {
+class CallRefsBypasser : public ExpModifier {
 		// These two provide 31 bits (or sizeof(int)-1) of information about whether the child is unchanged.
 		// If the mask overflows, it goes to zero, and from then on the child is reported as always changing.
 		// This is used to avoid calling simplify in most cases where it is not necessary.
@@ -259,7 +259,8 @@ class CallRefsFixer : public ExpModifier {
 		unsigned	unchanged;
 		Statement*	enclosingStmt;		// Statement that is being modified at present, for debugging
 public:
-					CallRefsFixer(Statement* enclosing) { enclosingStmt = enclosing; mask = 1; unchanged = (unsigned)-1;}
+					CallRefsBypasser(Statement* enclosing) {
+						enclosingStmt = enclosing; mask = 1; unchanged = (unsigned)-1;}
 virtual Exp*		preVisit(Unary		*e, bool& recur) { recur = true; mask <<= 1; return e;}
 virtual Exp*		preVisit(Binary		*e, bool& recur) { recur = true; mask <<= 1; return e;}
 virtual Exp*		preVisit(Ternary	*e, bool& recur) { recur = true; mask <<= 1; return e;}

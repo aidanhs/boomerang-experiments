@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.15 $
+ * $Revision: 1.76.2.16 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -279,7 +279,7 @@ virtual	void		regReplace(UserProc* proc) = 0;
 	// Adds (inserts) all locations (registers or memory etc) used by this
 	// statement
 		void		addUsedLocs(LocationSet& used, bool final = false);
-		void		fixCallRefs();
+		void		fixCallBypass();
 
 
 		// replaces a use in this statement with an expression from an ordinary assignment
@@ -951,7 +951,7 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call, actually a list of Assign statements (location := expr)
 		StatementList arguments;
 
-		// The list of defines for this call, also a list of Assignments (used to be called returns)
+		// The list of defines for this call, also a list of ImplicitAssigns (used to be called returns)
 		// Note that not necessarily all of the defines end up being declared as results
 		StatementList defines;
 
@@ -967,7 +967,7 @@ class CallStatement: public GotoStatement {
 		// results
 		UseCollector useCol;
 
-		// A DefCollector object to collect the reaching definitions; used for fixCallRefs/localiseExp etc; also
+		// A DefCollector object to collect the reaching definitions; used for fixCallBypass/localiseExp etc; also
 		// the basis for arguments if this is an unanlysed indirect call
 		DefCollector defCol;
 
@@ -1097,6 +1097,7 @@ virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, 
 		UseCollector*	getUseCollector() {return &useCol;}			// Return pointer to the use collector object
 		void		useBeforeDefine(Exp* x) {useCol.insert(x);}		// Add x to the UseCollector for this call
 		Exp*		fromCalleeContext(Exp* e);			// Convert e from callee to caller (this) context
+		StatementList*	getDefines() {return &defines;}	// Get list of locations defined by this call
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
 		// parameters if needed, and return true if any signature parameters added
 		bool		ellipsisProcessing(Prog* prog);

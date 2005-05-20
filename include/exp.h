@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.3 $
+ * $Revision: 1.119.2.4 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -273,6 +273,7 @@ virtual void		setSubExp3(Exp* e) {};
 
 		// Get the memory nesting depth. Non mem-ofs return 0; m[m[x]] returns 2
 virtual int			getMemDepth() {return 0;}
+virtual bool		isMemDepth(int d) {return d == 0;}
 
 		//	//	//	//	//	//	//
 		//	Guarded assignment	//
@@ -464,6 +465,8 @@ virtual void		appendDotFile(std::ofstream& of);
 virtual void		printx(int ind);
 
 virtual bool		isTerminal() { return true; }
+
+virtual bool		isMemDepth(int d);
 
 		// Visitation
 virtual bool		accept(ExpVisitor* v);
@@ -903,6 +906,7 @@ virtual void		getDefinitions(LocationSet& defs);
 virtual Type		*getType();
 virtual void		setType(Type *t);
 virtual int			getMemDepth();
+virtual bool		isMemDepth(int d);
 
 		// Visitation
 virtual bool		accept(ExpVisitor* v);

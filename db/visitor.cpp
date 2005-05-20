@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.10 $
+ * $Revision: 1.23.2.11 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -154,43 +154,35 @@ void PhiStripper::visit(PhiAssign* s, bool& recur) {
 	recur = true;
 }
 
-Exp* CallRefsFixer::postVisit(RefExp* r) {
-	Exp* ret = r;
+Exp* CallRefsBypasser::postVisit(RefExp* r) {
 	// If child was modified, simplify now
+	Exp* ret = r;
 	if (!(unchanged & ~mask)) ret = r->simplify();
 	mask >>= 1;
-	// Note: r will always == ret here, so the below is safe
+	// Note: r (the pointer) will always == ret (also the pointer) here, so the below is safe and avoids a cast
 	Statement* def = r->getDef();
 	CallStatement *call = dynamic_cast<CallStatement*>(def);
 	if (call) {
-		// Get the right had side of the proven expression (e.g. from r28 = r28 + 4, get r28 + 4)
-		Exp *e = call->getProven(r->getSubExp1());
-		if (e) {
-			// Express e in terms of the definitions reaching the call
-			e = e->clone();					// So that the expression in the Proc is not altered
-			e = call->localiseExp(e);
-			assert(e);
-			if (VERBOSE)
-				LOG << "fixcall refs replacing " << r << " with " << e << "\n";
-			// e = e->simplify();	// No: simplify the parent
-			unchanged &= ~mask;
-			mod = true;
-			return e;
-		} else {
-			Exp* subExp1 = r->getSubExp1();
-			if (call->findDefine(subExp1) == -1) {
-				if (VERBOSE && !subExp1->isPC()) {
-					LOG << "nothing proven about " << subExp1 << " and yet it is referenced by stmt " <<
-						enclosingStmt->getNumber() << ", and not in returns of " << "\n" << "	" << call << "\n";
-				}
-			}
-		}
+		StatementList* defines = call->getDefines();
+		Exp* base = ret->getSubExp1();
+		if (defines->existsOnLeft(base))
+			// This call defines base. So leave it as is
+			return r;
+		// Express base in terms of definitions reaching the call
+		ret = call->localiseExp(base);
+		assert(ret);
+		if (VERBOSE)
+			LOG << "fixcall refs replacing " << r << " with " << ret << "\n";
+		// e = e->simplify();	// No: simplify the parent
+		unchanged &= ~mask;
+		mod = true;
+		return ret;
 	}
-	return ret;
+	return r;
 }
 
 
-Exp* CallRefsFixer::postVisit(Unary *e)	   {
+Exp* CallRefsBypasser::postVisit(Unary *e)	   {
 	bool isAddrOfMem = e->isAddrOf() && e->getSubExp1()->isMemOf();
 	if (isAddrOfMem) return e;
 	Exp* ret = e;
@@ -198,45 +190,45 @@ Exp* CallRefsFixer::postVisit(Unary *e)	   {
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsFixer::postVisit(Binary *e)	{
+Exp* CallRefsBypasser::postVisit(Binary *e)	{
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplifyArith()->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsFixer::postVisit(Ternary *e)	 {
+Exp* CallRefsBypasser::postVisit(Ternary *e)	 {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsFixer::postVisit(TypedExp *e)	  {
+Exp* CallRefsBypasser::postVisit(TypedExp *e)	  {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsFixer::postVisit(FlagDef *e)	 {
+Exp* CallRefsBypasser::postVisit(FlagDef *e)	 {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsFixer::postVisit(Location *e)	  {
+Exp* CallRefsBypasser::postVisit(Location *e)	  {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsFixer::postVisit(Const *e)	   {
+Exp* CallRefsBypasser::postVisit(Const *e)	   {
 	mask >>= 1;
 	return e;
 }
-Exp* CallRefsFixer::postVisit(TypeVal *e)	 {
+Exp* CallRefsBypasser::postVisit(TypeVal *e)	 {
 	mask >>= 1;
 	return e;
 }
-Exp* CallRefsFixer::postVisit(Terminal *e)	  {
+Exp* CallRefsBypasser::postVisit(Terminal *e)	  {
 	mask >>= 1;
 	return e;
 }

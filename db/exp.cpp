@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.10 $
+ * $Revision: 1.172.2.11 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -4139,3 +4139,12 @@ Location* Location::local(const char *nam, UserProc *p) {
 	return new Location(opLocal, new Const((char*)nam), p);
 }
 
+bool Terminal::isMemDepth(int d) {
+	if (op == opDefineAll)
+		return true;			// define-all matches all memory depths
+	return d == 0;
+}
+
+bool Location::isMemDepth(int d) {
+	return d == getMemDepth();
+}
