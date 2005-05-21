@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.21 $
+ * $Revision: 1.238.2.22 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -801,25 +801,48 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
 	assert(false);			// Should have found this statement in this BB
 }
 
+/* Cycle detection logic:
+ * *********************
+ * At the top of partialDecompile, an empty set of known cycles is created. This set represents the procedures involved
+ * in the current recursion group (and have to be analysed together). The union of these sets for all child procedures
+ * becomes the return set for the current procedure. However, if (after all children have been processed: important!)
+ * this set contains the current procedure, we have the maximal set of vertex-disjoint cycles, we can do the recursion
+ * group analysis and return an empty set. At the end of the recursion group analysis, the whole group can be completed
+ * by calling finalDecompile, which does everything from removing unused statements, from SSA, generate code, and delete
+ * the memory. */
+
 // Decompile this UserProc
-std::set<UserProc*>* UserProc::decompile() {
+CycleSet* UserProc::decompile() {
 	// Initial decompile: transform to SSA, propagation, initial returns and parameters
-	std::set<UserProc*>* ret = initialDecompile();
-	if (ret == NULL)
+	CycleSet* cycleSet = initialDecompile();
+	if (cycleSet == NULL)
 		return NULL;
 
-	// For recursion, need much other processing here
+	if (cycleSet->size()) {
+		if (cycleSet->find(this) == cycleSet->end()) {
+			// The current procedure isn't the top of the cycle graph, so postpone final decompilation of this group
+			// until that happens
+			cycleSet->insert(this);
+			return cycleSet;
+		} else {
+			recursionGroupAnalysis(cycleSet);
+			// The above will have finalised all procedures in the group
+			return new std::set<UserProc*>;
+		}
+	}
 
 	// Final decompile
+	removeUnusedStatements();
 	finalDecompile();
+	status = PROC_FINAL;
 
-	return ret;
+	return new std::set<UserProc*>;
 }
 
-std::set<UserProc*>* UserProc::initialDecompile() {
+CycleSet* UserProc::initialDecompile() {
 	// Prevent infinite loops when there are cycles in the call graph
-	if (status >= PROC_FINAL) return NULL;
-	if (status < PROC_DECODED) return NULL;
+	if (status >= PROC_FINAL) return NULL;		// Already decompiled
+	if (status < PROC_DECODED) return NULL;		// FIXME: should just decode it
 
 	// Sort by address, so printouts make sense
 	cfg->sortByAddress();
@@ -851,22 +874,18 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 				if (destProc->isLib()) continue;
 				if (destProc->status >= PROC_VISITED && destProc->status < PROC_FINAL)
 					// We have discovered a cycle in the call graph
-					cycleSet->insert(destProc);
-					// Don't recurse into the loop
+					cycleSet->insert(this);
+					// Don't recurse into this child (endless loop)
 				else {
 					// Recurse to this child (in the call graph)
 					std::set<UserProc*>* childSet = destProc->decompile();
-					call->setCalleeReturn(destProc->getTheReturnStatement());
-					// Union this child's set into cycleSet
+					// Union this set into the result
 					if (childSet)
 						cycleSet->insert(childSet->begin(), childSet->end());
+					call->setCalleeReturn(destProc->getTheReturnStatement());
 				}
 			}
 		}
-
-		// isRecursive = cycleSet->size() != 0;
-		// Remove self from the cycle list
-		cycleSet->erase(this);
 	}
 
 	Boomerang::get()->alert_start_decompile(this);
@@ -894,9 +913,9 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 	}
 
 	if (VERBOSE) {
-		LOG << "--- Debug Initial Print after decoding " << getName() << " ---\n";
+		LOG << "--- Debug Initial Print after decoding for " << getName() << " ---\n";
 		printToLog();
-		LOG << "=== End Initial Debug Print after decoding " << getName() << " ===\n\n";
+		LOG << "=== End Initial Debug Print after decoding for " << getName() << " ===\n\n";
 	}
 
 	// Update the defines in the calls
@@ -949,8 +968,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		}
 	}
 
-//	trimReturns();		// Also does proofs (preserveds)
-						// FIXME: Are there any returns to trim yet? Needs a rename
+//	findPreserveds();
 	
 	if (!Boomerang::get()->noPromote)
 		// We want functions other than main to be promoted
@@ -1003,7 +1021,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 #if 0 	// No: recovering parameters must be late: after removal of unused statements, so don't get phantom parameters
 		// from preserveds. Note that some preserveds could be prarameters.
 		if (depth > 0 && !Boomerang::get()->noChangeSignatures) {
-			addNewParameters();
+			findFinalParameters();
 			//trimParameters(depth);
 		}
 #endif
@@ -1044,16 +1062,17 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		if (!Boomerang::get()->noChangeSignatures) {
 			// addNewReturns(depth);
 			df.renameBlockVars(this, 0, depth, true);
+			findPreserveds();
+			theReturnStatement->updateReturns();
+			updateReturnTypes();
+			fixCallBypass();
 			printXML();
 			if (VERBOSE) {
 				LOG << "--- Debug Print SSA for " << getName() << " at memory depth " << depth <<
-					" (after adding new returns) ---\n";
+					" (after updating returns) ---\n";
 				printToLog();
 				LOG << "=== End Debug Print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 			}
-			trimReturns();
-			updateReturnTypes();
-			fixCallBypass();
 		}
 
 		printXML();
@@ -1116,8 +1135,7 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 		return initialDecompile();	 // Restart decompiling this proc
 	}
 
-	// Trim returns, calculate preserveds
-	trimReturns();
+	findPreserveds();
 
 	// Used to be later...
 	if (!Boomerang::get()->noParameterNames) {
@@ -1126,8 +1144,8 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 			replaceExpressionsWithLocals(true);
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
-		trimReturns();		// FIXME: is this necessary here?
-		fixCallBypass();		// FIXME: surely this is not necessary now?
+		findPreserveds();		// FIXME: is this necessary here?
+		fixCallBypass();	// FIXME: surely this is not necessary now?
 		trimParameters();	// FIXME: surely there aren't any parameters to trim yet?
 		if (VERBOSE) {
 			LOG << "--- After replacing expressions, trimming params and returns ---\n";
@@ -1140,17 +1158,11 @@ std::set<UserProc*>* UserProc::initialDecompile() {
 	return cycleSet;
 }
 
-void UserProc::finalDecompile() {
+void UserProc::removeUnusedStatements() {
 
 	// A temporary hack to remove %CF = %CF{7} when 7 isn't a SUBFLAGS
 	if (theReturnStatement)
 		theReturnStatement->specialProcessing();
-
-	/*	*	*	*	*	*	*	*	*	*	*	*	*	*
-	 *													*
-	 *	R e m o v e   u n u s e d   s t a t e m e n t s	*
-	 *													*
-	 *	*	*	*	*	*	*	*	*	*	*	*	*	*/
 
 	// Only remove unused statements after decompiling as much as possible of the proc
 	for (int depth = 0; depth <= maxDepth; depth++) {
@@ -1174,16 +1186,18 @@ void UserProc::finalDecompile() {
 		}
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
+}
 
-	addNewParameters();
+void UserProc::finalDecompile() {
+	findFinalParameters();
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
 			replaceExpressionsWithParameters(df, i);
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
-		trimReturns();		// FIXME: is this necessary here?
+		findPreserveds();		// FIXME: is this necessary here?
 		fixCallBypass();		// FIXME: surely this is not necessary now?
-		//trimParameters();	// FIXME: check
+		//trimParameters();		// FIXME: check
 		if (VERBOSE) {
 			LOG << "--- After adding new parameters ---\n";
 			printToLog();
@@ -1220,7 +1234,7 @@ void UserProc::finalDecompile() {
 			replaceExpressionsWithLocals(true);
 			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
 		}
-		trimReturns();
+		findPreserveds();
 		fixCallBypass();
 		trimParameters();
 		if (VERBOSE) {
@@ -1245,6 +1259,124 @@ void UserProc::finalDecompile() {
 	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
 	Boomerang::get()->alert_end_decompile(this);
 }
+
+
+void UserProc::recursionGroupAnalysis(CycleSet* cs) {
+	/* Overall algorithm:
+		Find all subcycles sc in cs
+		for each sc
+			for each proc pp in sc
+				for each return r in p
+					attempt to prove preservation conditional on all calls in sc preserving r
+		for each proc in cs
+			update parameters and returns, redoing call bypass, until no change
+		for each proc in cs
+			remove unused statements
+		for each proc in cs
+			update parameters and returns, redoing call bypass, until no change
+		for each proc p cs
+			call finalDecompile on p
+	*/
+	CycleList path;
+	std::list<CycleList*> ret;
+	findSubCycles(path, ret, *cs);
+
+	std::list<CycleList*>::iterator sc;
+	for (sc = ret.begin(); sc != ret.end(); ++sc) {
+		CycleList::iterator p;
+		for (p = (*sc)->begin(); p != (*sc)->end(); ++p) {
+			(*p)->conditionalPreservation(*sc);
+		}
+	}
+
+	CycleSet::iterator p;
+	// while no change...
+	for (p = cs->begin(); p != cs->end(); ++p) {
+		(*p)->updateCalls();
+	}
+
+	for (p = cs->begin(); p != cs->end(); ++p) {
+		(*p)->removeUnusedStatements();
+	}
+
+	// while no change
+	for (p = cs->begin(); p != cs->end(); ++p) {
+		(*p)->updateCalls();
+	}
+
+	for (p = cs->begin(); p != cs->end(); ++p) {
+		(*p)->finalDecompile();
+	}
+
+
+}
+
+void UserProc::findSubCycles(CycleList& path, std::list<CycleList*>& ret, CycleSet& cs) {
+	// s is a list of the procs in the path from the top node down to but excluding the current node
+	// ret is the list of lists of nodes that is the final result
+	// cs is the set of all nodes involved in this recursion group
+	/* Overall algorithm:
+		proc findSubCycles (list path, list of lists ret, set cs)
+			if (path contains this)
+				insert the list from this to end into ret
+			else
+				for each child c of this also in cs
+					if c == this insert a self cycle
+					else
+						append this to path
+						processChild(path, ret, cs)
+						remove this from end of path
+			return		
+	*/
+	// if path contains this
+	CycleList::iterator pp;
+	bool cycleFound = false;
+	for (pp = path.begin(); pp != path.end(); ++pp) {
+		if (*pp == this) {
+			cycleFound = true;
+			CycleList* newCycle = new CycleList;
+			do {
+				newCycle->push_back(*pp);
+				++pp;
+			} while (pp != path.end());
+			ret.push_back(newCycle);
+			break;
+		}
+	}
+	if (!cycleFound) {
+		BB_IT it;
+		// Look at each call, to find children in the call graph
+		for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
+			if (bb->getType() != CALL) continue;
+			// The call Statement will be in the last RTL in this BB
+			CallStatement* call = (CallStatement*)bb->getRTLs()->back()->getHlStmt();
+			UserProc* c = (UserProc*)call->getDestProc();
+			if (cs.find(c) == cs.end())
+				continue;			// Only interested in calls to other procs in this cycle set
+			if (c == this) {
+				// Always seem to need special processing for self recursion (unit) cycles
+				CycleList* selfCycle = new CycleList;
+				selfCycle->push_back(this);
+				ret.push_back(selfCycle);
+			} else {
+				path.push_back(this);
+				c->findSubCycles(path, ret, cs);
+				path.erase(--path.end());
+			}
+		}
+	}
+}
+
+void UserProc::updateCalls() {
+	updateCallDefines();
+	updateArguments();
+}
+
+void UserProc::conditionalPreservation(CycleList* sc) {
+
+}
+
+
 
 void UserProc::updateBlockVars(DataFlow& df)
 {
@@ -1410,13 +1542,13 @@ void UserProc::removeRedundantPhis() {
 #endif
 }
 
-void UserProc::trimReturns() {
+void UserProc::findPreserveds() {
 	std::set<Exp*> removes;
 	bool stdsp = false;
 	bool stdret = false;
 
 	if (VERBOSE)
-		LOG << "Trimming return set for " << getName() << "\n";
+		LOG << "Finding preserveds for " << getName() << "\n";
 
 	// Note: need this non-virtual version most of the time, since nothing proved yet
 	int sp = signature->getStackRegister(prog);
@@ -1468,6 +1600,7 @@ void UserProc::trimReturns() {
 #endif
 	}
 
+#if 0
 	if (stdsp) {
 		// I've been removing sp from the return set as it makes the output look better, but this only works for
 		// recursive procs (because no other proc calls them and fixCallBypass can replace refs to the call with a valid
@@ -1480,7 +1613,6 @@ void UserProc::trimReturns() {
 		// be.
 		//removeReturn(regsp);
 		// also check for any locals that slipped into the returns
-#if 0
 		Unary *regsp = Location::regOf(sp);
 		for (int i = 0; i < signature->getNumReturns(); i++) {
 			Exp *e = signature->getReturnExp(i);
@@ -1490,7 +1622,7 @@ void UserProc::trimReturns() {
 				assert(theReturnStatement);
 				Exp *e = getProven(regsp)->clone();
 				// Make sure that the regsp in this expression is subscripted with a proper implicit assignment.
-				// Note that trimReturns() is sometimes called before and after implicit assignments are created,
+				// Note that findPreserveds() is sometimes called before and after implicit assignments are created,
 				// hence call findTHEimplicitAssign()
 				// NOTE: This assumes simple functions of regsp, e.g. regsp + K, not involving other locations that
 				// need to be subscripted
@@ -1505,7 +1637,7 @@ void UserProc::trimReturns() {
 				}
 			}
 		}
-#else	// Assume that sp doesn't need special processing, so just remove any locals
+//#else	// Assume that sp doesn't need special processing, so just remove any locals
 		if (theReturnStatement) {
 			ReturnStatement::iterator rr;
 			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
@@ -1517,7 +1649,6 @@ void UserProc::trimReturns() {
 				}
 			}
 		}
-#endif
 	}
 	if (!signature->isFullSignature()) {
 		if (stdret)
@@ -1527,6 +1658,7 @@ void UserProc::trimReturns() {
 			removeReturn(((Binary*)*it)->getSubExp1());
 		}
 	}
+#endif
 
 	if (DEBUG_PROOF) {
 		LOG << "Proven for procedure " << getName() << ":\n";
@@ -1559,7 +1691,7 @@ void UserProc::updateReturnTypes()
 	}
 }
 
-// FIXME: Consider moving this functionality inside the propagation logic (propagateTo()).
+// Consider moving this functionality inside the propagation logic (propagateTo()).
 void UserProc::fixCallBypass()
 {
 	if (VERBOSE)
@@ -1716,14 +1848,15 @@ static RefExp* regOfWild = new RefExp(
 //	a = a xor b
 //	ret
 
-void UserProc::addNewParameters() {
+void UserProc::findFinalParameters() {
 
 	if (signature->isFullSignature())
 		return;
 
 	if (VERBOSE)
-		LOG << "Adding new parameters for " << getName() << "\n";
+		LOG << "Finding final parameters for " << getName() << "\n";
 
+	parameters.clear();
 	StatementList stmts;
 	getStatements(stmts);
 
@@ -3761,8 +3894,7 @@ Exp *UserProc::getProven(Exp *left) {
 }
 
 bool UserProc::isPreserved(Exp* e) {
-	RefExp	re(e, NULL);				// e{-}
-	Binary equate(opEquals, e, &re);	// e == e{-}
+	Binary equate(opEquals, e, e);	// e == e
 	return proven.find(&equate) != proven.end();
 }
 
@@ -4018,9 +4150,9 @@ void UserProc::insertParameter(Exp* e) {
 
 // Filter out locations not possible as return locations. Return true to *remove* (filter *out*)
 bool UserProc::filterReturns(Exp* e) {
+	if (isPreserved(e))
+		return true;			// Don't keep preserved locations
 	switch (e->getOper()) {
-		if (isPreserved(e))
-			return true;			// Don't keep preserved locations
 		case opPC:	return true;
 		case opTemp: return true;
 		case opRegOf: {

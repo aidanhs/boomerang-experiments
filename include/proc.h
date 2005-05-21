@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.13 $
+/* $Revision: 1.115.2.14 $
 */
 
 #ifndef _PROC_H_
@@ -188,8 +188,7 @@ virtual	bool		isPreserved(Exp* e) = 0;		// Return whether e is preserved by this
 
 		/*
 		 * Get the callers
-		 * Note: the callers will be in a random order (determined by memory
-		 * allocation)
+		 * Note: the callers will be in a random order (determined by memory allocation)
 		 */
 		std::set<CallStatement*>& getCallers() { return callerSet; }
 
@@ -238,7 +237,9 @@ protected:
 		ADDRESS		address;						// Procedure's address.
 		Proc		*m_firstCaller;					// first procedure to call this procedure.
 		ADDRESS		m_firstCallerAddr;				// can only be used once.
-		std::set<Exp*, lessExpStar> proven;			// all the expressions that have been proven
+		// All the expressions that have been proven true. (Could perhaps do with a list of some that are proven false.)
+		// Of the form r29 = r29 (NO subscripts) or r28 = r28 + 4
+		std::set<Exp*, lessExpStar> proven;
 		std::set<CallStatement*> callerSet;			// Set of callers (CallStatements that call this procedure).
 		Cluster		*cluster;						// Cluster this procedure is contained within.
 
@@ -304,6 +305,10 @@ enum ProcStatus {
 	PROC_FINAL			// Has had final decompilation
 	// , PROC_RETURNS	// Has had returns intersected with all caller's defines
 };
+
+typedef std::set <UserProc*> CycleSet;
+typedef std::list<UserProc*> CycleList;
+
 /*==============================================================================
  * UserProc class.
  *============================================================================*/
@@ -365,21 +370,6 @@ private:
 		 */
 		std::list<Proc*> calleeList;
 	 
-		/*
-		 * Set if visited on the way down the call tree during decompile(). Used for recursion detection
-		 */
-		//bool		decompileSeen;
-
-		/*
-		 * Set if decompilation essentially completed (there may be extra return locations set later)
-		 */
-		//bool		decompiled;
-
-		/*
-		 * Set if involved in recursion (a cycle in the call graph)
-		 */
-		//bool		isRecursive;
-
 		/**
 		 * A collector for initial parameters (locations used before being defined)
 		 * Note that final parameters don't use this; it's only of use during group decompilation analysis (sorting out
@@ -458,16 +448,6 @@ virtual				~UserProc();
 		 */
 		int			getLocalsSize();
 
-		/*
-		 * Get the type of the given var
-		 */
-//		Type		getVarType(int idx);
-
-		/*
-		 * Set the size of the given var
-		 */
-//		void		setVarSize(int idx, int size);
-
 		// code generation
 		void		generateCode(HLLCode *hll);
 
@@ -483,17 +463,32 @@ virtual				~UserProc();
 		// simplify the statements in this proc
 		void		simplify() { cfg->simplify(); }
 
-		// decompile this proc
-		std::set<UserProc*>* decompile();		// Temporary now till recursion manager written
-		std::set<UserProc*>* initialDecompile();// Initial decompile: to SSA, propagate, initial params and returns
-		void		finalDecompile();			// Final decompile: remove unused statements, from SSA form, TA, etc
+		/// Begin the decompile process at this procedure
+		CycleSet*	decompile();
+		/// Initial decompile: to SSA, propagate, initial params and returns
+		CycleSet*	initialDecompile();
+		/// Analyse the whole group of procedures for conditional preserveds, and update till no change
+		/// Also finalise the whole group
+		void		recursionGroupAnalysis(CycleSet* cycleSet);
+		/// Remove unused statements
+		void		removeUnusedStatements();
+		/// Final decompile: everything from remove unused statements to generate code
+		void		finalDecompile();
+		// Split the set of cycle-associated procs into individual subcycles
+		void		findSubCycles(CycleList& path, std::list<CycleList*>& ret, CycleSet& cs);
+		// The conditional preservation analysis. Basically, redo the preservation for all returns with the assumption
+		// that all calls in the set cs will preserve those returns
+		void		conditionalPreservation(CycleList* sc);
+		// Update the defines and arguments in calls
+		void		updateCalls();
+
 		void		propagateAtDepth(DataFlow& df, int depth);
 		void		updateBlockVars(DataFlow& df);
 
 		Statement	*getStmtAtLex(unsigned int begin, unsigned int end);
 
 		// All the decompile stuff except propagation, DFA repair, and null/unused statement removal
-		void    	complete(); 
+		void    	complete(); 		// FIXME: is this used?
 
 		// Initialise the statements, e.g. proc, bb pointers
 		void		initStatements();
@@ -503,10 +498,10 @@ virtual				~UserProc();
 		bool		replaceReg(Exp* match, Exp* e, Statement* def);		// Helper function for nameRegisters()
 		bool		nameRegisters();
 		void		removeRedundantPhis();
-		void		trimReturns();
+		void		findPreserveds();			// Was trimReturns()
 		void		updateReturnTypes();
 		void		fixCallBypass();
-		void		addNewParameters();
+		void		findFinalParameters();
 		void		addParameter(Exp *e);		// Add to signature (temporary now; still needed to create param names)
 		void		insertParameter(Exp* e);	// Insert into parameters list correctly sorted
 //		void		addNewReturns(int depth);

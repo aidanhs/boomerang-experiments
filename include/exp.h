@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.4 $
+ * $Revision: 1.119.2.5 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -516,14 +516,14 @@ virtual void		appendDotFile(std::ofstream& of);
 virtual void		printx(int ind);
 
 		// Set first subexpression
-		void			setSubExp1(Exp* e);
-		void			setSubExp1ND(Exp* e) {subExp1 = e;}
+		void		setSubExp1(Exp* e);
+		void		setSubExp1ND(Exp* e) {subExp1 = e;}
 		// Get first subexpression
-		Exp*			getSubExp1();
+		Exp*		getSubExp1();
 		// "Become"	subexpression 1 (delete all but that subexpression)
-		Exp*			becomeSubExp1();
+		Exp*		becomeSubExp1();
 		// Get a reference to subexpression 1
-		Exp*&			refSubExp1();
+		Exp*&		refSubExp1();
 virtual int			getMemDepth();
 
 virtual Exp*		match(Exp *pattern); 

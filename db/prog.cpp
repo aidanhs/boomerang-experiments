@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.6 $
+ * $Revision: 1.126.2.7 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -987,7 +987,7 @@ void Prog::decompile() {
 		if (!Boomerang::get()->noRemoveReturns) {
 			// A final pass to remove returns not used by any caller
 			if (VERBOSE)
-				LOG << "Prog: final removing unused returns\n";
+				LOG << "Prog: global removing unused returns\n";
 			removeUnusedReturns();
 		}
 

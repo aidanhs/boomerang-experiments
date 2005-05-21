@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.17 $
+ * $Revision: 1.148.2.18 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -4131,8 +4131,7 @@ bool CallStatement::definesLoc(Exp* loc) {
 	return false;
 }
 
-// Does a ReturnStatement define anything? Yes, so we can propagate into the ReturnStatement, and delete the
-// original definitions (something needs to define it).
+// Does a ReturnStatement define anything? Yes, so there is a place to put the return type for example.
 bool ReturnStatement::definesLoc(Exp* loc) {
 	iterator it;
 	for (it = defs.begin(); it != defs.end(); it++) {

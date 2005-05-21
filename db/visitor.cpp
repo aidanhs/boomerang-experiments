@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.11 $
+ * $Revision: 1.23.2.12 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -163,16 +163,27 @@ Exp* CallRefsBypasser::postVisit(RefExp* r) {
 	Statement* def = r->getDef();
 	CallStatement *call = dynamic_cast<CallStatement*>(def);
 	if (call) {
-		StatementList* defines = call->getDefines();
 		Exp* base = ret->getSubExp1();
-		if (defines->existsOnLeft(base))
-			// This call defines base. So leave it as is
-			return r;
+		Proc* destProc = call->getDestProc();
+		if (destProc && destProc->isLib()) {
+			Signature* sig = destProc->getSignature();
+			Exp* e = sig->getProven(base);	
+			if (e == NULL) {			// Not (known to be) preserved
+				if (sig->findReturn(base) != -1)
+					return r;			// Definately defined, it's the return
+				// Otherwise, not all that sure. Assume that library calls pass things like local variables
+			}
+		} else {
+			StatementList* defines = call->getDefines();
+			if (defines->existsOnLeft(base))
+				// This call defines base. So leave it as is
+				return r;
+		}
 		// Express base in terms of definitions reaching the call
 		ret = call->localiseExp(base);
 		assert(ret);
 		if (VERBOSE)
-			LOG << "fixcall refs replacing " << r << " with " << ret << "\n";
+			LOG << "fixCallBypass replacing " << r << " with " << ret << "\n";
 		// e = e->simplify();	// No: simplify the parent
 		unchanged &= ~mask;
 		mod = true;
