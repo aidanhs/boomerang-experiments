@@ -1,4 +1,5 @@
-/* Compile with gcc -O4 -fno-inline -o ...  or cc -xO4 -xinline= -o ...  */
+/* Compile with gcc -O1 -fno-inline -o ...  or cc -xO4 -xinline= -o ...  */
+/* Note: only -O1 for gcc since don't want tail recursion optimisation just yet (c2 branches to c1) */
 int c1(int x);
 int c2(int y);
 int main(int argc) {
