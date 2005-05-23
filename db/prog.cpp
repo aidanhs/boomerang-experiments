@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.7 $
+ * $Revision: 1.126.2.8 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -960,7 +960,7 @@ void Prog::decompile() {
 			continue;		// Can happen with -E
 		if (VERBOSE)
 			LOG << "Starting with " << entryProc->getName() << "\n";
-		entryProc->decompile();
+		entryProc->decompile(new CycleList);
 		break;			// Only decompile top function in this loop
 	}
 #else
@@ -969,7 +969,7 @@ void Prog::decompile() {
 	if (entryUserProc != NULL && !entryUserProc->isLib() && entryUserProc->isDecoded()) {
 		if (VERBOSE)
 			LOG << "Starting with " << entryUserProc->getName() << "\n";
-		entryUserProc->decompile();
+		entryUserProc->decompile(new CycleList);
     }
 #endif
 
@@ -979,7 +979,7 @@ void Prog::decompile() {
 		for (pp = m_procs.begin(); pp != m_procs.end(); pp++) {
 			UserProc* proc = (UserProc*)(*pp);
 			if (proc->isLib()) continue;
-			proc->decompile();
+			proc->decompile(new CycleList);
 		}
 	}
 

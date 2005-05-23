@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.14 $
+/* $Revision: 1.115.2.15 $
 */
 
 #ifndef _PROC_H_
@@ -464,15 +464,15 @@ virtual				~UserProc();
 		void		simplify() { cfg->simplify(); }
 
 		/// Begin the decompile process at this procedure
-		CycleSet*	decompile();
+		CycleSet*	decompile(CycleList* path);
 		/// Initial decompile: to SSA, propagate, initial params and returns
-		CycleSet*	initialDecompile();
+		void		initialDecompile();
 		/// Analyse the whole group of procedures for conditional preserveds, and update till no change
 		/// Also finalise the whole group
 		void		recursionGroupAnalysis(CycleSet* cycleSet);
 		/// Remove unused statements
 		void		removeUnusedStatements();
-		/// Final decompile: everything from remove unused statements to generate code
+		/// Final decompile: final parameters, type analysis (unless ad-hoc), process constants
 		void		finalDecompile();
 		// Split the set of cycle-associated procs into individual subcycles
 		void		findSubCycles(CycleList& path, std::list<CycleList*>& ret, CycleSet& cs);
@@ -498,7 +498,7 @@ virtual				~UserProc();
 		bool		replaceReg(Exp* match, Exp* e, Statement* def);		// Helper function for nameRegisters()
 		bool		nameRegisters();
 		void		removeRedundantPhis();
-		void		findPreserveds();			// Was trimReturns()
+		void		findPreserveds(CycleList* sc = NULL);			// Was trimReturns()
 		void		updateReturnTypes();
 		void		fixCallBypass();
 		void		findFinalParameters();
@@ -563,9 +563,9 @@ typedef	std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
 		// returns true if the prover is working right now
 		bool		canProveNow();
 		// prove any arbitary property of this procedure
-		bool		prove(Exp *query);
+		bool		prove(Exp *query, CycleList* sc = NULL);
 		// helper function, should be private
-		bool		prover(Exp *query, std::set<PhiAssign*> &lastPhis, std::map<PhiAssign*, Exp*> &cache,
+		bool		prover(Exp *query, std::set<PhiAssign*> &lastPhis, std::map<PhiAssign*, Exp*> &cache, CycleList* sc,
 						PhiAssign *lastPhi = NULL);	  
 
 		// promote the signature if possible

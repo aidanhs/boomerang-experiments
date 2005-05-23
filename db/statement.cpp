@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.18 $
+ * $Revision: 1.148.2.19 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -4289,7 +4289,7 @@ void CallStatement::updateDefines() {
 		// Ensure that everything in the UseCollector has an entry in oldDefines
 		LocationSet::iterator ll;
 		for (ll = useCol.begin(); ll != useCol.end(); ++ll) {
-			Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
+			Exp* loc = *ll;
 			if (proc->filterReturns(loc))
 				continue;									// Filtered out
 			if (!oldDefines.existsOnLeft(loc)) {

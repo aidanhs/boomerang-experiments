@@ -6,7 +6,7 @@
  * OVERVIEW:   Command line processing for the Boomerang decompiler
  *============================================================================*/
 /*
- * $Revision: 1.115.2.3 $
+ * $Revision: 1.115.2.4 $
  * 28 Jan 05 - G. Krol: Separated -h output into sections and neatened
 */
 
@@ -266,7 +266,7 @@ int Boomerang::parseCmd(int argc, const char **argv)
 				std::cerr << "cannot decompile a lib proc\n";
 				return 1;
 			}
-			((UserProc*)proc)->decompile();
+			((UserProc*)proc)->decompile(new CycleList);
 		} else {
 			prog->decompile();
 		}
@@ -509,8 +509,8 @@ int Boomerang::parseCmd(int argc, const char **argv)
 				UserProc *p = (UserProc*)proc;
 				if (p->isDecoded())
 					std::cout << "\thas been decoded.\n";
-				if (p->isAnalysed())
-					std::cout << "\thas been analysed.\n";
+				//if (p->isAnalysed())
+				//	std::cout << "\thas been analysed.\n";
 			}
 			std::cout << "\n";
 

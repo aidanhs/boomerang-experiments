@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.22 $
+ * $Revision: 1.238.2.23 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -808,52 +808,44 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
  * becomes the return set for the current procedure. However, if (after all children have been processed: important!)
  * this set contains the current procedure, we have the maximal set of vertex-disjoint cycles, we can do the recursion
  * group analysis and return an empty set. At the end of the recursion group analysis, the whole group can be completed
- * by calling finalDecompile, which does everything from removing unused statements, from SSA, generate code, and delete
- * the memory. */
+ * by calling finalDecompile, which does everything from removing unused statements, transforming from SSA form,
+ * generating code, and possibly deleting the memory.
+ cycleSet* decompile(CycleList path)	// path initially empty
+	ret = new CycleSet
+	append this to path
+	for each child c called by this proc
+		if (c is in path)
+			// have new cycle
+			insert every proc from c to the end of path into ret
+		else
+			ret1 = c->decompile(path)
+			ret = union(ret, ret1)
+	if (ret empty)
+		initialDecompile()
+		removeUnusedStatments()		// Not involved in recursion
+		finalDecompile()
+	else
+		initialDecompile()			// involved in recursion
+		find first element f in path that is also in ret
+		if (f == this)
+			recursionGroupAnalysis(ret)
+			empty ret
+	remove last element (= this) from path
+	return ret
+ */
+ 
 
 // Decompile this UserProc
-CycleSet* UserProc::decompile() {
-	// Initial decompile: transform to SSA, propagation, initial returns and parameters
-	CycleSet* cycleSet = initialDecompile();
-	if (cycleSet == NULL)
-		return NULL;
-
-	if (cycleSet->size()) {
-		if (cycleSet->find(this) == cycleSet->end()) {
-			// The current procedure isn't the top of the cycle graph, so postpone final decompilation of this group
-			// until that happens
-			cycleSet->insert(this);
-			return cycleSet;
-		} else {
-			recursionGroupAnalysis(cycleSet);
-			// The above will have finalised all procedures in the group
-			return new std::set<UserProc*>;
-		}
-	}
-
-	// Final decompile
-	removeUnusedStatements();
-	finalDecompile();
-	status = PROC_FINAL;
-
-	return new std::set<UserProc*>;
-}
-
-CycleSet* UserProc::initialDecompile() {
+CycleSet* UserProc::decompile(CycleList* path) {
+	if (VERBOSE)
+		LOG << "Decompiling " << getName() << "\n";
 	// Prevent infinite loops when there are cycles in the call graph
 	if (status >= PROC_FINAL) return NULL;		// Already decompiled
 	if (status < PROC_DECODED) return NULL;		// FIXME: should just decode it
+	status = PROC_VISITED; 						// We have visited this proc "on the way down"
 
-	// Sort by address, so printouts make sense
-	cfg->sortByAddress();
-
-	// Initialise statements
-	initStatements();
-
-	// We have visited this proc "on the way down"
-	status = PROC_VISITED;
-
-
+	CycleSet* ret = new CycleSet;
+	path->push_back(this);
 
 	/*	*	*	*	*	*	*	*	*	*	*	*
 	 *											*
@@ -861,7 +853,6 @@ CycleSet* UserProc::initialDecompile() {
 	 *											*
 	 *	*	*	*	*	*	*	*	*	*	*	*/
 
-	std::set<UserProc*>* cycleSet = new std::set<UserProc*>;
 	if (!Boomerang::get()->noDecodeChildren) {
 		// Recurse to children first, to perform a depth first search
 		BB_IT it;
@@ -870,33 +861,77 @@ CycleSet* UserProc::initialDecompile() {
 			if (bb->getType() == CALL) {
 				// The call Statement will be in the last RTL in this BB
 				CallStatement* call = (CallStatement*)bb->getRTLs()->back()->getHlStmt();
-				UserProc* destProc = (UserProc*)call->getDestProc();
-				if (destProc->isLib()) continue;
-				if (destProc->status >= PROC_VISITED && destProc->status < PROC_FINAL)
-					// We have discovered a cycle in the call graph
-					cycleSet->insert(this);
-					// Don't recurse into this child (endless loop)
-				else {
-					// Recurse to this child (in the call graph)
-					std::set<UserProc*>* childSet = destProc->decompile();
-					// Union this set into the result
-					if (childSet)
-						cycleSet->insert(childSet->begin(), childSet->end());
-					call->setCalleeReturn(destProc->getTheReturnStatement());
+				UserProc* c = (UserProc*)call->getDestProc();
+				if (c->isLib()) continue;
+				// if c is in path
+				CycleList::iterator pi;
+				bool inPath = false;
+				for (pi = path->begin(); pi != path->end(); ++pi) {
+					if (*pi == c) {
+						inPath = true;
+						// Insert every proc from c to the end of path into ret
+						do {
+							ret->insert(*pi);
+							++pi;
+						} while (pi != path->end());
+						break;
+					}
+				}
+				if (!inPath) {
+					CycleSet* ret1 = c->decompile(path);
+					// Union ret1 into ret
+					ret->insert(ret1->begin(), ret1->end());
+					// Child has at least done initialDecompile(), possibly more
+					call->setCalleeReturn(c->getTheReturnStatement());
 				}
 			}
 		}
 	}
 
+	initialDecompile();				// Every proc gets at least this done
+	// if ret is empty
+	if (ret->size() == 0) {
+		removeUnusedStatements();	// Do the whole works
+		finalDecompile();
+		status = PROC_FINAL;
+	} else {
+		// this proc is involved in recursion
+		// find first element f in path that is also in ret
+		CycleList::iterator f;
+		for (f = path->begin(); f != path->end(); ++f)
+			if (ret->find(*f) != ret->end())
+				break;
+		if (*f == this) {
+			recursionGroupAnalysis(ret);	// Includes removeUnusedStatements and finalDecompile on all procs in ret
+			ret->clear();
+		}
+	}
+
+	// Remove last element (= this) from path
+std::cerr << "path was "; CycleList::iterator zz; for (zz = path->begin(); zz != path->end(); ++zz) std::cerr << (*zz)->getName() << ", "; std::cerr << "\n";
+	path->erase(--path->end());
+std::cerr << "path now "; for (zz = path->begin(); zz != path->end(); ++zz) std::cerr << (*zz)->getName() << ", "; std::cerr << "\n";
+
+	return ret;
+}
+
+/*	*	*	*	*	*	*	*	*	*	*	*
+ *											*
+ *		D e c o m p i l e   p r o p e r		*
+ *			( i n i t i a l )				*
+ *											*
+ *	*	*	*	*	*	*	*	*	*	*	*/
+
+void UserProc::initialDecompile() {
+
 	Boomerang::get()->alert_start_decompile(this);
-	if (VERBOSE) LOG << "decompiling: " << getName() << "\n";
+	if (VERBOSE) LOG << "Initial decompile for " << getName() << "\n";
 
-	/*	*	*	*	*	*	*	*	*	*	*	*
-	 *											*
-	 *		D e c o m p i l e   p r o p e r		*
-	 *											*
-	 *	*	*	*	*	*	*	*	*	*	*	*/
+	// Sort by address, so printouts make sense
+	cfg->sortByAddress();
 
+	// Initialise statements
+	initStatements();
 
 	// Compute dominance frontier
 	df.dominators(cfg);
@@ -909,7 +944,7 @@ CycleSet* UserProc::initialDecompile() {
 
 	if (Boomerang::get()->noDecompile) {
 		status = PROC_FINAL;				// ??!
-		return cycleSet;
+		return;
 	}
 
 	if (VERBOSE) {
@@ -1151,15 +1186,22 @@ CycleSet* UserProc::initialDecompile() {
 			LOG << "--- After replacing expressions, trimming params and returns ---\n";
 			printToLog();
 			LOG << "=== End after replacing expressions, trimming params and returns ===\n";
-			LOG << "===== End after replacing params =====\n\n";
 		}
 	}
-
-	return cycleSet;
+	if (VERBOSE)
+		LOG << "===== End initial decompile for " << getName() << " =====\n\n";
 }
+
+/*	*	*	*	*	*	*	*	*	*	*	*	*	*
+ *													*
+ *	R e m o v e   u n u s e d   s t a t e m e n t s	*
+ *													*
+ *	*	*	*	*	*	*	*	*	*	*	*	*	*/
 
 void UserProc::removeUnusedStatements() {
 
+	if (VERBOSE)
+		LOG << "=== Remove unused statements for " << getName() << " ===\n";
 	// A temporary hack to remove %CF = %CF{7} when 7 isn't a SUBFLAGS
 	if (theReturnStatement)
 		theReturnStatement->specialProcessing();
@@ -1188,7 +1230,16 @@ void UserProc::removeUnusedStatements() {
 	}
 }
 
+/*	*	*	*	*	*	*	*	*	*	*	*
+ *											*
+ *		D e c o m p i l e   p r o p e r		*
+ *				( f i n a l )				*
+ *											*
+ *	*	*	*	*	*	*	*	*	*	*	*/
+
 void UserProc::finalDecompile() {
+	if (VERBOSE)
+		LOG << "=== Final decompile for " << getName() << " ===\n";
 	findFinalParameters();
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
@@ -1219,7 +1270,7 @@ void UserProc::finalDecompile() {
 		do {
 			if (!first)
 				propagateAtDepth(df, maxDepth);		// HACK: Can sometimes be needed, if call was indirect
-													// MVE: Check if still needed
+													// FIXME: Check if still needed
 			first = false;
 			dfaTypeAnalysis();
 		} while (ellipsisProcessing());
@@ -1257,6 +1308,8 @@ void UserProc::finalDecompile() {
 	printXML();
 
 	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
+	if (VERBOSE)
+		LOG << "=== End final decompile for " << getName() << "\n";
 	Boomerang::get()->alert_end_decompile(this);
 }
 
@@ -1277,6 +1330,14 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 		for each proc p cs
 			call finalDecompile on p
 	*/
+	if (VERBOSE) {
+		LOG << "Recursion Group Analysis for ";
+		CycleSet::iterator csi;
+		for (csi = cs->begin(); csi != cs->end(); ++csi)
+			LOG << (*csi)->getName() << ", ";
+		LOG << "\n";
+	}
+
 	CycleList path;
 	std::list<CycleList*> ret;
 	findSubCycles(path, ret, *cs);
@@ -1304,6 +1365,13 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 		(*p)->updateCalls();
 	}
 
+	if (VERBOSE) {
+		LOG << "Group finalisation for ";
+		CycleSet::iterator csi;
+		for (csi = cs->begin(); csi != cs->end(); ++csi)
+			LOG << (*csi)->getName() << ", ";
+		LOG << "\n";
+	}
 	for (p = cs->begin(); p != cs->end(); ++p) {
 		(*p)->finalDecompile();
 	}
@@ -1312,7 +1380,7 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 }
 
 void UserProc::findSubCycles(CycleList& path, std::list<CycleList*>& ret, CycleSet& cs) {
-	// s is a list of the procs in the path from the top node down to but excluding the current node
+	// path is a list of the procs in the path from the top node down to but excluding the current node
 	// ret is the list of lists of nodes that is the final result
 	// cs is the set of all nodes involved in this recursion group
 	/* Overall algorithm:
@@ -1542,7 +1610,7 @@ void UserProc::removeRedundantPhis() {
 #endif
 }
 
-void UserProc::findPreserveds() {
+void UserProc::findPreserveds(CycleList* sc /* = NULL */) {
 	std::set<Exp*> removes;
 	bool stdsp = false;
 	bool stdret = false;
@@ -1562,13 +1630,13 @@ void UserProc::findPreserveds() {
 			if (DEBUG_PROOF)
 				LOG << "attempting to prove sp = sp + " << p*4 << " for " << getName() << "\n";
 			stdsp = prove(new Binary(opEquals,
-						Location::regOf(sp),
-						new Binary(opPlus,
-							Location::regOf(sp),
-							new Const(p * 4))));
+				Location::regOf(sp),
+				new Binary(opPlus,
+					Location::regOf(sp),
+					new Const(p * 4))), sc);
 		}
 
-		// Prove that pc is set to the return value
+		// Prove that pc is set to the return value. FIXME: do we use this? Maybe for signature promotion.
 		if (DEBUG_PROOF)
 			LOG << "attempting to prove %pc = m[sp]\n";
 		stdret = prove(new Binary(opEquals, new Terminal(opPC), Location::memOf(Location::regOf(sp))));
@@ -3380,7 +3448,7 @@ bool UserProc::canProveNow()
 }
 
 // this function is non-reentrant
-bool UserProc::prove(Exp *query)
+bool UserProc::prove(Exp *query, CycleList* sc /* = NULL */)
 {
 	if (inProve) {
 		LOG << "attempted reentry of prove, returning false\n";
@@ -3427,10 +3495,10 @@ bool UserProc::prove(Exp *query)
 		}
 	}
 
-	proven.insert(original);
+	// proven.insert(original);			// This was the "induction" step
 	std::set<PhiAssign*> lastPhis;
 	std::map<PhiAssign*, Exp*> cache;
-	if (!prover(query, lastPhis, cache)) {
+	if (!prover(query, lastPhis, cache, sc)) {
 		proven.erase(original);
 		//delete original;
 		inProve = false;
@@ -3439,13 +3507,15 @@ bool UserProc::prove(Exp *query)
 	}
 	//delete query;
  
+	proven.insert(original);			// Save the now proven equation
 	inProve = false;
 	if (DEBUG_PROOF) LOG << "prove returns true\n";
 	return true;
 }
 
-bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAssign*, Exp*> &cache, PhiAssign* lastPhi)
-{
+bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAssign*, Exp*> &cache, CycleList* sc,
+		PhiAssign* lastPhi /* = NULL */) {
+	// A map that seems to be used to detect loops in the call graph:
 	std::map<CallStatement*, Exp*> callwd;
 	Exp *phiInd = query->getSubExp2()->clone();
 
@@ -3498,7 +3568,8 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 				CallStatement *call = dynamic_cast<CallStatement*>(s);
 				if (call) {
 					// See if we can prove something about this register.
-					// Note: it could be the original register we are looking for ("proven" by induction)
+					// Note: formerly it could also have been the original register we are looking for ("proven" by
+					// induction, but this is no longer done)
 					Exp *right = call->getProven(r->getSubExp1());
 					if (right) {
 						right = right->clone();
@@ -3541,7 +3612,7 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 							if (DEBUG_PROOF)
 								LOG << "proving for " << e << "\n";
 							lastPhis.insert(lastPhi);
-							if (!prover(e, lastPhis, cache, pa)) { 
+							if (!prover(e, lastPhis, cache, sc, pa)) { 
 								ok = false; 
 								//delete e; 
 								break; 
