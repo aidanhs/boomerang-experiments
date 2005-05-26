@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.9 $
+ * $Revision: 1.90.2.10 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -739,6 +739,10 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 			appendExp(str, b->getSubExp2(), PREC_PRIM);
 			str << "]";
 			break;
+		case opDefineAll:
+			str << "<all>";
+			LOG << "ERROR: should not see opDefineAll in codegen\n";
+			break;
 		default:
 			// others
 			OPER op = exp->getOper();
@@ -748,7 +752,7 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 				str << operStrings[op]+2;
 				break;
 			}
-			LOG << "ERROR: not implemented for codegen " << operStrings[exp->getOper()] << "\n";
+			LOG << "ERROR: not implemented for codegen " << operStrings[op] << "\n";
 			//assert(false);
 	}
 

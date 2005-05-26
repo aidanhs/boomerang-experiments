@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.15 $
+/* $Revision: 1.115.2.16 $
 */
 
 #ifndef _PROC_H_
@@ -389,6 +389,11 @@ private:
 		 */
 		DataFlow	df;
 
+		/*
+		 * Current statement number. Makes it easier to split initialiseDecompile from initialDecompile.
+		 */
+		int			stmtNumber;
+
 public:
 
 					UserProc(Prog *prog, std::string& name, ADDRESS address);
@@ -459,12 +464,16 @@ virtual				~UserProc();
 		void		printToLog();
 		void		symbolMapToLog();			// Print just the symbol map
 		void		dumpSymbolMap();			// For debugging
+		void		dumpSymbols(std::ostream& os);
+		void		dumpSymbols();
 
 		// simplify the statements in this proc
 		void		simplify() { cfg->simplify(); }
 
 		/// Begin the decompile process at this procedure
 		CycleSet*	decompile(CycleList* path);
+		/// Initialise decompile: sort CFG, number statements, dominator tree, etc
+		void		initialiseDecompile();
 		/// Initial decompile: to SSA, propagate, initial params and returns
 		void		initialDecompile();
 		/// Analyse the whole group of procedures for conditional preserveds, and update till no change
@@ -566,7 +575,7 @@ typedef	std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
 		bool		prove(Exp *query, CycleList* sc = NULL);
 		// helper function, should be private
 		bool		prover(Exp *query, std::set<PhiAssign*> &lastPhis, std::map<PhiAssign*, Exp*> &cache, CycleList* sc,
-						PhiAssign *lastPhi = NULL);	  
+						Exp* original, PhiAssign *lastPhi = NULL);	  
 
 		// promote the signature if possible
 		void		promoteSignature();

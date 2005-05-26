@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.12 $
+ * $Revision: 1.23.2.13 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -154,7 +154,7 @@ void PhiStripper::visit(PhiAssign* s, bool& recur) {
 	recur = true;
 }
 
-Exp* CallRefsBypasser::postVisit(RefExp* r) {
+Exp* CallBypasser::postVisit(RefExp* r) {
 	// If child was modified, simplify now
 	Exp* ret = r;
 	if (!(unchanged & ~mask)) ret = r->simplify();
@@ -193,7 +193,7 @@ Exp* CallRefsBypasser::postVisit(RefExp* r) {
 }
 
 
-Exp* CallRefsBypasser::postVisit(Unary *e)	   {
+Exp* CallBypasser::postVisit(Unary *e)	   {
 	bool isAddrOfMem = e->isAddrOf() && e->getSubExp1()->isMemOf();
 	if (isAddrOfMem) return e;
 	Exp* ret = e;
@@ -201,45 +201,45 @@ Exp* CallRefsBypasser::postVisit(Unary *e)	   {
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsBypasser::postVisit(Binary *e)	{
+Exp* CallBypasser::postVisit(Binary *e)	{
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplifyArith()->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsBypasser::postVisit(Ternary *e)	 {
+Exp* CallBypasser::postVisit(Ternary *e)	 {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsBypasser::postVisit(TypedExp *e)	  {
+Exp* CallBypasser::postVisit(TypedExp *e)	  {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsBypasser::postVisit(FlagDef *e)	 {
+Exp* CallBypasser::postVisit(FlagDef *e)	 {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsBypasser::postVisit(Location *e)	  {
+Exp* CallBypasser::postVisit(Location *e)	  {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallRefsBypasser::postVisit(Const *e)	   {
+Exp* CallBypasser::postVisit(Const *e)	   {
 	mask >>= 1;
 	return e;
 }
-Exp* CallRefsBypasser::postVisit(TypeVal *e)	 {
+Exp* CallBypasser::postVisit(TypeVal *e)	 {
 	mask >>= 1;
 	return e;
 }
-Exp* CallRefsBypasser::postVisit(Terminal *e)	  {
+Exp* CallBypasser::postVisit(Terminal *e)	  {
 	mask >>= 1;
 	return e;
 }
@@ -261,6 +261,7 @@ bool UsedLocsFinder::visit(Terminal* e) {
 		case opPC:
 		case opFlags:
 		case opFflags:
+		case opDefineAll:
 		// Fall through
 		// The carry flag can be used in some SPARC idioms, etc
 		case opDF: case opCF: case opZF: case opNF: case opOF:	// also these
@@ -406,6 +407,11 @@ bool UsedLocsVisitor::visit(ReturnStatement* s, bool& override) {
 		for (rr = s->begin(); rr != s->end(); ++rr)
 			(*rr)->accept(this);
 	}
+
+	// Insert a phantom use of "everything" here, so that we can find out if any childless calls define something that
+	// may end up being returned
+	((UsedLocsFinder*)ev)->getLocSet()->insert(new Terminal(opDefineAll));
+
 	override = true;			// Don't do the normal accept logic
 	return true;				// Continue the recursion
 }
@@ -624,3 +630,14 @@ Exp* Localiser::postVisit(Location* e) {
 	return ret;
 }
 
+// Want to be able to localise a few terminals, in particular <all>
+Exp* Localiser::postVisit(Terminal* e) {
+	if (depth >= 1) return e;
+	Exp* r = call->findDefFor(e);
+	Exp* ret;
+	if (r)
+		ret = r->clone();
+	else
+		ret = new RefExp(e, NULL);				// No definition reaches, so subscript with {-}
+	return ret;
+}

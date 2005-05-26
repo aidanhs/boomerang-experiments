@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.19 $
+ * $Revision: 1.148.2.20 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1834,9 +1834,12 @@ void CallStatement::getDefinitions(LocationSet &defs) {
 			defs.insert(sig->getReturnExp(i));
 		return;
 	}
-	StatementList::iterator ss;
-	for (ss = defines.begin(); ss != defines.end(); ++ss)
-		(*ss)->getDefinitions(defs);
+	if (calleeReturn) {
+		StatementList::iterator ss;
+		for (ss = defines.begin(); ss != defines.end(); ++ss)
+			(*ss)->getDefinitions(defs);
+	} else
+		defs.insert(new Terminal(opDefineAll));	// Childless call defines everything
 }
 
 bool CallStatement::convertToDirect() {
@@ -4329,64 +4332,142 @@ void CallStatement::updateDefines() {
 	}
 }
 
-void CallStatement::updateArguments() {
+// A helper class for updateArguments. It just dishes out a new argument from one of the three sources: the signature,
+// the callee parameters, or the defCollector in the call
+class ArgSourceProvider {
+enum Src {SRC_LIB, SRC_CALLEE, SRC_COL};
+		Src			src;
+		CallStatement* call;
+		int			i, n;				// For SRC_LIB
+		Signature*	destSig;
+		StatementList::iterator pp;		// For SRC_CALLEE
+		StatementList* calleeParams;
+		DefCollector::iterator cc;		// For SRC_COL
+		DefCollector* defCol;
+public:
+					ArgSourceProvider(CallStatement* call);
+		Exp*		nextArg();
+		Type*		curType(Exp* e);
+		bool		exists(Exp* loc);
+};
 
-	StatementList oldArguments(arguments);
-	arguments.clear();
-	Signature *destSig, *sig = proc->getSignature();
-	int n;						// Number of parameters in the destination signature
-	// Ensure everything in the callee's parameters (or the use collector if no callee) exists in oldArguments
-	if (procDest) {
-	
+ArgSourceProvider::ArgSourceProvider(CallStatement* call) : call(call) {
+	Proc* procDest = call->getDestProc();
+	if (procDest && procDest->isLib()) {
+		src = SRC_LIB;
 		destSig = procDest->getSignature();
 		n = destSig->getNumParams();
-	}
-	if (procDest) {
-		for (int i=0; i < n; i++) {
-			Exp* loc = destSig->getParamExp(i);
-			if (proc->filterParams(loc))
-				continue;
-			Exp* callContextLoc = fromCalleeContext(loc)->simplifyArith()->simplify();
-			if (!oldArguments.existsOnLeft(callContextLoc)) {
-				Assign* as = new Assign(destSig->getParamType(i), callContextLoc->clone(), callContextLoc->clone());
-				oldArguments.append(as);
-			}
-		}
+		i = 0;
+	} else if (call->getCalleeReturn() != NULL) {
+		src = SRC_CALLEE;
+		calleeParams = ((UserProc*)procDest)->getParameters();
+		pp = calleeParams->begin();
 	} else {
-		// Just use the locations in the use collector
-		UseCollector::iterator cc;
-		for (cc = useCol.begin(); cc != useCol.end(); ++cc) {
-			Exp* loc = *cc;
-			if (proc->filterParams(loc))
-				continue;
-			if (!oldArguments.existsOnLeft(loc)) {
-				Assign* as = new Assign((*cc)->clone(), (*cc)->clone());
-				oldArguments.append(as);
+		src = SRC_COL;
+		defCol = call->getDefCollector();
+		cc = defCol->begin();
+	}
+}
+
+Exp* ArgSourceProvider::nextArg() {
+	Exp* s;
+	switch(src) {
+		case SRC_LIB:
+			if (i == n) return NULL;
+			s = destSig->getParamExp(i++);
+			return call->fromCalleeContext(s)->simplifyArith()->simplify();
+		case SRC_CALLEE:
+			if (pp == calleeParams->end()) return NULL;
+			s = ((Assignment*)*pp++)->getLeft();
+			return call->fromCalleeContext(s)->simplifyArith()->simplify();
+		case SRC_COL:
+			if (cc == defCol->end()) return NULL;
+			return ((RefExp*)*cc++)->getSubExp1();
+	}
+	return NULL;		// Suppress warning
+}
+
+Type* ArgSourceProvider::curType(Exp* e) {
+	switch(src) {
+		case SRC_LIB:
+			return destSig->getParamType(i-1);
+		case SRC_CALLEE: {
+			Type* ty = ((Assignment*)*--pp)->getType();
+			pp++;
+			return ty;
+		}
+		case SRC_COL: {
+			Statement* def = ((RefExp*)*--cc)->getDef();
+			cc++;
+			return def->getTypeFor(e);
+		}
+	}
+	return NULL;		// Suppress warning
+}
+
+bool ArgSourceProvider::exists(Exp* e) {
+	switch (src) {
+		case SRC_LIB:
+			if (destSig->hasEllipsis())
+				// FIXME: for now, just don't check
+				return true;
+			for (i=0; i < n; i++) {
+				Exp* sigParam = call->fromCalleeContext(destSig->getParamExp(i))->simplifyArith()->simplify();
+				if (*sigParam == *e)
+					return true;
 			}
+			return false;
+		case SRC_CALLEE:
+			for (pp = calleeParams->begin(); pp != calleeParams->end(); ++pp) {
+				Exp* par = call->fromCalleeContext(((Assignment*)*pp)->getLeft())->simplifyArith()->simplify();
+				if (*par == *e)
+					return true;
+			}
+			return false;
+		case SRC_COL:
+			return defCol->existsNS(e);
+	}
+	return false;			// Suppress warning
+}
+
+void CallStatement::updateArguments() {
+	/* If this is a library call, source = signature
+		else if there is a callee, source = callee parameters
+		else no callee, source is def collector in this call.
+		oldArguments = arguments
+		clear arguments
+		for each arg lhs in source
+			if exists in oldArguments, leave alone
+			else if not filtered append assignment lhs=lhs to oldarguments
+		for each argument as in oldArguments in reverse order
+			lhs = as->getLeft
+			if (lhs does not exist in source) continue
+			if filterParams(lhs) continue
+			insert as into arguments, considering sig->argumentCompare
+	*/
+	StatementList oldArguments(arguments);
+	arguments.clear();
+	Signature* sig = proc->getSignature();
+	// Ensure everything in the callee's signature (if this is a library call), or the callee parameters (if available),
+	// or the def collector if not,  exists in oldArguments
+	ArgSourceProvider asp(this);
+	Exp* loc;
+	while ((loc = asp.nextArg()) != NULL) {
+		if (proc->filterParams(loc))
+			continue;
+		if (!oldArguments.existsOnLeft(loc)) {
+			Assign* as = new Assign(asp.curType(loc), loc->clone(), loc->clone());
+			oldArguments.append(as);
 		}
 	}
 
 	StatementList::iterator it;
 	for (it = oldArguments.end(); it != oldArguments.begin(); ) {
 		--it;										// Becuase we are using a forwards iterator backwards
-		// Make sure the LHS is still in the callee parameters or in the use collector
+		// Make sure the LHS is still in the callee signature / callee parameters / use collector
 		Assign* as = (Assign*)*it;
 		Exp* lhs = as->getLeft();
-		if (procDest) {
-			if (!destSig->hasEllipsis()) {
-				bool found = false;
-				for (int i=0; i < n; i++) {
-					Exp* sigParam = fromCalleeContext(destSig->getParamExp(i))->simplifyArith()->simplify();
-					if (*sigParam == *lhs)
-						found = true;
-				}
-				if (!found)
-					continue;					// Not in callee parameters: delete it (don't copy it)
-			}
-		} else {
-			if (!useCol.existsNS(lhs))
-				continue;					// Not in collector: delete it (don't copy it)
-		}
+		if (!asp.exists(lhs)) continue;
 		if (proc->filterParams(lhs))
 			continue;						// Filtered out: delete it
 
@@ -4500,4 +4581,17 @@ void CallStatement::removeDefine(Exp* e) {
 		}
 	}
 	LOG << "WARNING: could not remove define " << e << " from call " << this << "\n";
+}
+
+bool CallStatement::isInCycle(CycleList* sc) {
+	CycleList::iterator ii;
+	// Look for entry <proc> followed immediately by entry <procDest>
+	for (ii = sc->begin(); ii != sc->end(); ++ii) {
+		if (*ii != proc) continue;
+		if (++ii == sc->end())
+			// The call from d to a is a cycle of abcd (cycles wrap around)
+			return *sc->begin() == procDest;
+		return *ii == procDest;
+	}
+	return false;
 }

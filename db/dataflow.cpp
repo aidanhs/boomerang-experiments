@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.14 $
+ * $Revision: 1.43.2.15 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -294,6 +294,14 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				Exp* phiLeft = pa->getLeft();
 				if (phiLeft->isMemOf() || phiLeft->isRegOf())
 					phiLeft->getSubExp1()->addUsedLocs(locs);
+				// A phi statement may use a location defined in a childless call, in which case its use collector
+				// needs updating
+				PhiAssign::iterator pp;
+				for (pp = pa->begin(); pp != pa->end(); ++pp) {
+					Statement* def = pp->def;
+					if (def && def->isCall())
+						((CallStatement*)def)->useBeforeDefine(phiLeft->clone());
+				}
 			}
 			else
 				S->addUsedLocs(locs);

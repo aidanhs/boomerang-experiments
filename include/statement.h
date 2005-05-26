@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.16 $
+ * $Revision: 1.76.2.17 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -76,6 +76,8 @@ class Assign;
 class RTL;
 class XMLProgParser;
 class ReturnStatement;
+
+typedef std::list<UserProc*> CycleList;
 
 // The map of interferences. It maps locations such as argc{55} to a local, e.g. local17
 typedef std::map<Exp*, Exp*, lessExpStar> igraph;
@@ -314,7 +316,7 @@ virtual	void		regReplace(UserProc* proc) = 0;
 		Type		*getTypeFor(Exp *e, Prog *prog);
 
 		// Get the type for the definition, if any, for expression e in this statement 
-		// Overridden only by Assignment and CallStatement. (ReturnStatements do not define anything.)
+		// Overridden only by Assignment and CallStatement, and ReturnStatement.
 virtual	Type*		getTypeFor(Exp* e) { return NULL;}
 		// Set the type for the definition of e in this Statement
 virtual	void		setTypeFor(Exp* e, Type* ty) {assert(0);}
@@ -1006,6 +1008,7 @@ virtual bool		accept(StmtModifier* visitor);
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		void		setCalleeReturn(ReturnStatement* ret) {calleeReturn = ret;}
 		bool		isChildless() {return calleeReturn == NULL;}
+		bool		isInCycle(CycleList* sc);	// True if this call is in part of the given recursion cycle
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call

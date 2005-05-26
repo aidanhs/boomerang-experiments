@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.8 $
+ * $Revision: 1.98.2.9 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -740,6 +740,10 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p, Signature &
 	platform plat = p->getProg()->getFrontEndId();
 	if (plat != PLAT_SPARC) return false;
 
+// I don't really like the idea of these promotions. Yes, we assume that sparc programs behave in certain ways... but
+// the fact that r14 and r30 doesn't really make that much more likely. We don't assume calling conventions, just some
+// fairly basic things like m[sp+K] is in the parent's stack frame.
+#if 0
 	Exp* provenStack = p->getProven(Location::regOf(14));
 	// Don't remove the clone() below; the original is still in the proven set
 	if (!provenStack) return false;
@@ -748,6 +752,7 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p, Signature &
 		return false;
 	if (!(*p->getProven(Location::regOf(30)) == *Location::regOf(30)))
 		return false;
+#endif
 
 	if (VERBOSE)
 		LOG << "Promoted to StdC::SparcSignature\n";
