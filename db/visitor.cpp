@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.13 $
+ * $Revision: 1.23.2.14 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -163,33 +163,39 @@ Exp* CallBypasser::postVisit(RefExp* r) {
 	Statement* def = r->getDef();
 	CallStatement *call = dynamic_cast<CallStatement*>(def);
 	if (call) {
+		Exp* proven;
 		Exp* base = ret->getSubExp1();
 		Proc* destProc = call->getDestProc();
 		if (destProc && destProc->isLib()) {
 			Signature* sig = destProc->getSignature();
-			Exp* e = sig->getProven(base);	
-			if (e == NULL) {			// Not (known to be) preserved
+			proven = sig->getProven(base);	
+			if (proven == NULL) {			// Not (known to be) preserved
 				if (sig->findReturn(base) != -1)
-					return r;			// Definately defined, it's the return
+					return r;				// Definately defined, it's the return
 				// Otherwise, not all that sure. Assume that library calls pass things like local variables
 			}
 		} else {
-			StatementList* defines = call->getDefines();
-			if (defines->existsOnLeft(base))
-				// This call defines base. So leave it as is
-				return r;
+			// Was using the defines to decide if something is preserved, but consider sp+4 for stack based machines
+			// Have to use the proven information for the callee (if any)
+			if (destProc == NULL)
+				return r;				// Childless callees transmit nothing
+			proven = destProc->getProven(base);				// e.g. r28+4
 		}
-		// Express base in terms of definitions reaching the call
-		ret = call->localiseExp(base);
-		assert(ret);
+		if (proven == NULL)
+			return r;										// Can't bypass, since nothing proven
+		Exp* to = call->localiseExp(base);					// e.g. r28{27}
+assert(to);
+		bool ch;
+		proven = proven->clone();							// Don't modify the expressions in destProc->proven!
+		proven = proven->searchReplaceAll(base, to, ch);	// e.g. r28{27} + 4
 		if (VERBOSE)
-			LOG << "fixCallBypass replacing " << r << " with " << ret << "\n";
+			LOG << "fixCallBypass replacing " << r << " with " << proven << "\n";
 		// e = e->simplify();	// No: simplify the parent
 		unchanged &= ~mask;
 		mod = true;
-		return ret;
+		return proven;
 	}
-	return r;
+	return r;			// Not a call: no change
 }
 
 

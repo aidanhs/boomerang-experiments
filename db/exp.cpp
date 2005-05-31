@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.12 $
+ * $Revision: 1.172.2.13 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -2726,67 +2726,16 @@ Exp* RefExp::polySimplify(bool& bMod) {
 	}
 
 	// another hack, this time for aliasing
-	if (subExp1->getOper() == opRegOf && ((Const*)subExp1->getSubExp1())->getInt() == 0 &&
-			def && def->isAssign() && *((Assign*)def)->getLeft() == *Location::regOf(24)) {
+	// FIXME: do we really want this now? Pentium specific, and only handles ax/eax (not al or ah)
+	if (subExp1->isRegN(0) &&							// r0 (ax)
+			def && def->isAssign() &&
+			((Assign*)def)->getLeft()->isRegN(24)) {	// r24 (eax)
 		res = new TypedExp(new IntegerType(16), new RefExp(Location::regOf(24), def));
 		bMod = true;
 		return res;
 	}
 
-	// hack to fixing refs to phis which don't do anything
-	if (def && def->isPhi() && def->getProc()->canProveNow()) {
-		Exp *base = new RefExp(subExp1, NULL);
-		PhiAssign::iterator uu;
-		PhiAssign *phi = (PhiAssign*)def;
-		for (uu = phi->begin(); uu != phi->end(); uu++) {
-			if (uu->def && uu->def->isAssign() && *((Assign*)uu->def)->getLeft() == *subExp1) {
-				bool allZero = true;
-				Assign* asDef = (Assign*)uu->def;
-				Exp* asDefRight = asDef->getRight()->clone();
-				asDefRight->removeSubscripts(allZero);
-				if (allZero) {
-					base = asDefRight;
-					break;
-				}
-			}
-		}
-		bool allProven = true;
-		LocationSet used;
-		base->addUsedLocs(used);
-		if (used.size() == 0) {
-			allProven = false;
-		} else {
-			if (VERBOSE)
-				LOG << "attempting to simplify ref to " << phi << " with base "
-				  << base << "\n";
-		}
-		// Experiment MVE: compare 1 to 2, 1 to 3 ... 1 to n instead of
-		// base to 1, base to 2, ... base to n
-		// Seems to work
-		Exp* first = new RefExp(subExp1->clone(), phi->begin()->def);
-		//for (uu = phi->begin(); allProven && uu != phi->end(); uu++) { // }
-		for (uu = ++phi->begin(); allProven && uu != phi->end(); uu++) {
-			//Exp *query = new Binary(opEquals, new RefExp(subExp1->clone(), uu->base), base->clone());
-			Exp* query = new Binary(opEquals,
-				first,
-				new RefExp(subExp1->clone(), uu->def));
-			if (DEBUG_PROOF)
-				LOG << "attempting to prove " << query << " for ref to phi\n";
-			if (!def->getProc()->prove(query)) {
-				if (DEBUG_PROOF) LOG << "not proven\n";
-				allProven = false;
-				break;
-			}
-		}
-		if (allProven) {
-			bMod = true;
-			//res = base->clone();
-			res = first;
-			if (DEBUG_PROOF)
-				LOG << "replacing ref to phi " << def << " with " << res << "\n";
-			return res;
-		}
-	}
+	// Was code here for bypassing phi statements that are now redundant
 
 	return res;
 }

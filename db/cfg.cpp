@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.95.2.1 $
+ * $Revision: 1.95.2.2 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -2281,3 +2281,4 @@ void Cfg::removeImplicitAssign(Exp* x) {
 	// assert(it != implicitMap.end());
 	implicitMap.erase(it);
 }
+

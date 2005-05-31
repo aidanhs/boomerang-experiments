@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.17 $
+ * $Revision: 1.76.2.18 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -278,10 +278,11 @@ virtual	void		regReplace(UserProc* proc) = 0;
 //									//
 //	//	//	//	//	//	//	//	//	//
 
-	// Adds (inserts) all locations (registers or memory etc) used by this
-	// statement
+		// Adds (inserts) all locations (registers or memory etc) used by this statement
 		void		addUsedLocs(LocationSet& used, bool final = false);
-		void		fixCallBypass();
+		// Bypass calls and phi statements using callee proven information
+		//void		fixCallBypass();
+		//void		fixPhiBybass();
 
 
 		// replaces a use in this statement with an expression from an ordinary assignment

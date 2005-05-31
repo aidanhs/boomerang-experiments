@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.16 $
+/* $Revision: 1.115.2.17 $
 */
 
 #ifndef _PROC_H_
@@ -488,11 +488,14 @@ virtual				~UserProc();
 		// The conditional preservation analysis. Basically, redo the preservation for all returns with the assumption
 		// that all calls in the set cs will preserve those returns
 		void		conditionalPreservation(CycleList* sc);
+		// Mark calls involved in the recursion cycle as non childless (each child has had initialDecompile called on
+		// it now)
+		void		markAsNonChildless(CycleSet* cs);
 		// Update the defines and arguments in calls
 		void		updateCalls();
 
-		void		propagateAtDepth(DataFlow& df, int depth);
-		void		updateBlockVars(DataFlow& df);
+		void		propagateAtDepth(int depth);
+		void		updateBlockVars();
 
 		Statement	*getStmtAtLex(unsigned int begin, unsigned int end);
 
@@ -509,7 +512,10 @@ virtual				~UserProc();
 		void		removeRedundantPhis();
 		void		findPreserveds(CycleList* sc = NULL);			// Was trimReturns()
 		void		updateReturnTypes();
-		void		fixCallBypass();
+		void		fixCallAndPhiRefs(int d);	// Perform call and phi statement bypassing at depth d
+		void		fixCallAndPhiRefs();		// Perform call and phi statement bypassing at all depths
+					// Helper function for the above
+		void		fixRefs(int n, int depth, std::map<Exp*, Exp*, lessExpStar>& pres, StatementList& removes);
 		void		findFinalParameters();
 		void		addParameter(Exp *e);		// Add to signature (temporary now; still needed to create param names)
 		void		insertParameter(Exp* e);	// Insert into parameters list correctly sorted
@@ -522,7 +528,7 @@ virtual				~UserProc();
 		void		processFloatConstants();
 		void		replaceExpressionsWithGlobals();
 		void		replaceExpressionsWithSymbols();
-		void		replaceExpressionsWithParameters(DataFlow& df, int depth);   // must be in SSA form
+		void		replaceExpressionsWithParameters(int depth);   // must be in SSA form
 		void		replaceExpressionsWithLocals(bool lastPass = false);
 
 		// find the procs the calls point to

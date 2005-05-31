@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.15 $
+ * $Revision: 1.43.2.16 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -274,6 +274,10 @@ static Exp* defineAll = new Terminal(opDefineAll);		// An expression representin
 // x appears, stacks[defineAll] does not apply for variable x. This is needed to get correct operation of the use
 // collectors in calls.
 
+// Care with the Stacks object (a map from expression to stack); using Stacks[q].empty() can needlessly insert an empty
+// stack
+#define STACKS_EMPTY(q) (Stacks.find(q) == Stacks.end() || Stacks[q].empty())
+
 // Subscript dataflow variables
 void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearStacks /* = false */ ) {
 	// Need to clear the Stacks of old, renamed locations like m[esp-4] (these will be deleted, and will cause compare
@@ -315,7 +319,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					// No renaming required, but this might be a new use from a return, possibly requiring an update
 					// to a call's UseCollector
 					Exp* base = ((RefExp*)x)->getSubExp1();	
-					if (!Stacks[base].empty()) {
+					if (!STACKS_EMPTY(base)) {
 						def = Stacks[base].top();
 						if (def->isCall())
 							// Calls have UseCollectors for locations that are used before definition at the call
@@ -324,7 +328,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					}
 				}
 				// Else x is not subscripted yet
-				if (Stacks[x].empty()) {
+				if (STACKS_EMPTY(x)) {
 					if (!Stacks[defineAll].empty())
 						def = Stacks[defineAll].top();
 					else {
@@ -417,8 +421,8 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 			// Only consider variables of the current memory depth
 			if (a->getMemDepth() != memDepth) continue;
 			Statement* def;
-			if (Stacks[a].empty())
-				def = NULL;				// See comment above
+			if (STACKS_EMPTY(a))
+				def = NULL;				// No reaching definition
 			else
 				def = Stacks[a].top();
 			// "Replace jth operand with a_i"
@@ -520,6 +524,6 @@ void DataFlow::dumpStacks() {
 			std::cerr << tt.top()->getNumber() << " "; tt.pop();
 		}
 		std::cerr << "]\n";
+	}
 }
 
-}

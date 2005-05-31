@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.14 $
+ * $Revision: 1.39.2.15 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -50,8 +50,7 @@ class DataFlow {
 		// if dfnum[a] < denum[b]
 		std::vector<int> dfnum;				// Number set in depth first search
 		std::vector<int> semi;				// Semi dominators
-		std::vector<int> ancestor;			// Defines the forest that becomes the
-											// spanning tree
+		std::vector<int> ancestor;			// Defines the forest that becomes the spanning tree
 		std::vector<int> idom;				// Immediate dominator
 		std::vector<int> samedom;			// ? To do with deferring
 		std::vector<int> vertex;			// ?
