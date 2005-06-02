@@ -4,7 +4,7 @@
  *				tests the Proc class
  *============================================================================*/
 /*
- * $Revision: 1.8 $
+ * $Revision: 1.8.2.1 $
  *
  * 23 Apr 02 - Mike: Created
  * 10 Mar 03 - Mike: Mods to not use Prog::pBF (no longer public)
@@ -46,10 +46,6 @@ int ProcTest::countTestCases () const
  * RETURNS:			<nothing>
  *============================================================================*/
 void ProcTest::setUp () {
-	BinaryFile *pBF = new BinaryFileStub();
-	CPPUNIT_ASSERT(pBF != 0);
-	FrontEnd *pFE = new PentiumFrontEnd(pBF);
-	CPPUNIT_ASSERT(pFE != 0);
 }
 
 /*==============================================================================
@@ -69,9 +65,10 @@ void ProcTest::tearDown () {
  *============================================================================*/
 void ProcTest::testName () {
 	std::string nm("default name");
+	Prog* prog = new Prog();
 	BinaryFile *pBF = BinaryFileFactory::Load(HELLO_PENTIUM);
-	FrontEnd *pFE = new PentiumFrontEnd(pBF);
-	Prog* prog = new Prog(pBF, pFE);
+	FrontEnd *pFE = new PentiumFrontEnd(pBF, prog);
+	prog->setFrontEnd(pFE);
 	CPPUNIT_ASSERT(prog);
 	pFE->readLibraryCatalog();				// Since we are not decoding
 	m_proc = new UserProc(prog, nm, 20000); // Will print in decimal if error

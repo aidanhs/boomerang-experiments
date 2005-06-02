@@ -6,6 +6,8 @@
 #ifndef __EXPHELP_H__
 #define __EXPHELP_H__
 
+#include	<map>
+
 class Exp;
 class Assignment;
 
@@ -30,4 +32,8 @@ class lessAssignment : public std::binary_function<Assignment*, Assignment*, boo
 public:
 	bool operator()(const Assignment* x, const Assignment* y) const;
 };
+
+// A type for an "interference graph". Needed by various classes to implement the transforation out of SSA form.
+typedef std::map<Exp*, Exp*, lessExpStar> igraph;
+
 #endif		// __EXPHELP_H__

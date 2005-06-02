@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.5 $
+ * $Revision: 1.13.2.6 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -39,12 +39,14 @@
 #define NULL 0		// Often defined in stdio.h
 #endif
 
-#include "exp.h"
+#include "exp.h"			// Needs to know class hierarchy, e.g. so that can convert Unary* to Exp* in return of
+							// ExpModifier::preVisit()
 
 class Statement;
 class Assignment;
 class Assign;
 class ImplicitAssign;
+class PhiAssign;
 class BoolAssign;
 class CaseStatement;
 class CallStatement;
@@ -54,6 +56,8 @@ class BranchStatement;
 
 class RTL;
 class UserProc;
+class Cfg;
+class Prog;
 class BasicBlock;
 typedef BasicBlock* PBB;
 

@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.3 $
+ * $Revision: 1.69.2.4 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -41,6 +41,7 @@
 #define DEBUG_LIVENESS	(Boomerang::get()->debugLiveness)
 
 class Proc;
+class Prog;
 class UserProc;
 class UseSet;
 class LocationSet;
@@ -50,11 +51,13 @@ class BasicBlock;
 typedef BasicBlock* PBB;
 class HLLCode;
 class CallStatement;
+class BranchStatement;
 class RTL;
 struct DOM;
 class XMLProgParser;
 class Global;
 class Parameter;
+struct SWITCH_INFO;
 
 #define BTHEN 0
 #define BELSE 1

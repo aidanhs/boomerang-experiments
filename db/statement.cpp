@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.21 $
+ * $Revision: 1.148.2.22 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -70,16 +70,16 @@ Exp *Statement::getExpAtLex(unsigned int begin, unsigned int end)
 	return NULL;
 }
 
-// replace a use in this statement
+// replace a use of def->getLeft() by def->getRight() in this statement
 bool Statement::replaceRef(Assign *def) {
 	Exp* lhs = def->getLeft();
 	Exp* rhs = def->getRight();
 	assert(lhs);
 	assert(rhs);
-	// "Wrap" the LHS in a RefExp.  This was so that it matches with the thing it is replacing.
+	// "Wrap" the LHS in a RefExp.  This is so that it matches with the thing it is replacing.
 	// Example: 42: r28 := r28{14}-4 into m[r28-24] := m[r28{42}] + ...
 	// The r28 needs to be subscripted with {42} to match the thing on the RHS that is being substituted into.
-	// (It also makes sure it never matches the other r28, which should really be r28{0}).
+	// (It also makes sure it never matches the other r28, which should really be r28{-}).
 	Unary* re;
 	re = new RefExp(lhs, def);
 
@@ -283,9 +283,8 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 				if (def->isBool())
 					continue;
 #endif
-#if 1	// Sorry, I don't believe prop into branches is wrong... MVE
-		// By not propagating into branches, we get memory locations not
-		// converted to locals, for example (e.g. test/source/csp.c)
+#if 1	// Sorry, I don't believe prop into branches is wrong... MVE.  By not propagating into branches, we get memory
+		// locations not converted to locals, for example (e.g. test/source/csp.c)
 		 
 				Assign* adef = (Assign*)def;
 				if (isBranch()) {
@@ -325,8 +324,8 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 			}
 		}
 	} while (change && ++changes < 20);
-	// Simplify is very costly, especially for calls. I hope that doing one
-	// simplify at the end will not affect any result...
+	// Simplify is very costly, especially for calls. I hope that doing one simplify at the end will not affect any
+	// result...
 	simplify();
 	return convert;
 }

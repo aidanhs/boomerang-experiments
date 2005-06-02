@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.13 $
+ * $Revision: 1.172.2.14 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -4098,4 +4098,9 @@ bool Terminal::isMemDepth(int d) {
 
 bool Location::isMemDepth(int d) {
 	return d == getMemDepth();
+}
+
+// Don't put in exp.h, as this would require statement.h including before exp.h
+bool RefExp::isImplicitDef() {
+	return def == NULL || def->getKind() == STMT_IMPASSIGN;
 }

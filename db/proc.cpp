@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.25 $
+ * $Revision: 1.238.2.26 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -856,12 +856,12 @@ CycleSet* UserProc::decompile(CycleList* path) {
 				CallStatement* call = (CallStatement*)bb->getRTLs()->back()->getHlStmt();
 				UserProc* c = (UserProc*)call->getDestProc();
 				if (c->isLib()) continue;
-				// if c is in path
+				// if c is in path (i.e. we have discovered a cycle)
 				CycleList::iterator pi;
-				bool inPath = false;
+				bool inCycle = false;
 				for (pi = path->begin(); pi != path->end(); ++pi) {
 					if (*pi == c) {
-						inPath = true;
+						inCycle = true;
 						// Insert every proc from c to the end of path into ret
 						do {
 							ret->insert(*pi);
@@ -870,12 +870,18 @@ CycleSet* UserProc::decompile(CycleList* path) {
 						break;
 					}
 				}
-				if (!inPath) {
+				if (inCycle)
+					status = PROC_INCYCLE;	
+				else {
+					if (VERBOSE)
+						LOG << "Visiting on the way down child " << c->getName() << " from " << getName() << "\n";
 					CycleSet* ret1 = c->decompile(path);
 					// Union ret1 into ret
 					ret->insert(ret1->begin(), ret1->end());
 					// Child has at least done initialDecompile(), possibly more
 					call->setCalleeReturn(c->getTheReturnStatement());
+					if (ret->size() > 0)
+						status = PROC_INCYCLE;
 				}
 			}
 		}
@@ -948,7 +954,7 @@ void UserProc::initialiseDecompile() {
 
 void UserProc::initialDecompile() {
 
-	if (VERBOSE) LOG << "initialise decompile for " << getName() << "\n";
+	if (VERBOSE) LOG << "initial decompile for " << getName() << "\n";
 
 	// Update the defines in the calls
 	updateCallDefines();
@@ -971,28 +977,39 @@ void UserProc::initialDecompile() {
 		// Number them
 		numberPhiStatements(stmtNumber);
 
-		if (VERBOSE)
-			LOG << "renaming block variables (1) at depth " << depth << "\n";
-		// Rename variables
-		df.renameBlockVars(this, 0, depth);
-		if (VERBOSE) {
-			LOG << "\n--- after rename (1) for " << getName() << " at depth " << depth << ": ---\n";
-			printToLog();
-			LOG << "\n=== done after rename (1) for " << getName() << " at depth " << depth << ": ===\n\n";
-		}
+		if (status == PROC_INCYCLE && depth > 0) {
+			// When involved in cycles, there can be phi statements referring to call statements that have not yet been
+			// untangled (e.g. because we don't know if the stack pointer is preserved or not).
+			// As a result, fib can't prove that r29 is preserved, for example. To avoid this problem, we don't rename
+			// or propagate memory locations until recursionGroupAnalysis time.
+			if (VERBOSE)
+				LOG << "*** not renaming variables (1) at depth " << depth << " since " << getName() <<
+					" is involved in a recursion group\n";
+		} else {
+			if (VERBOSE)
+				LOG << "renaming block variables (1) at depth " << depth << "\n";
+			// Rename variables
+			df.renameBlockVars(this, 0, depth);
+			if (VERBOSE) {
+				LOG << "\n--- after rename (1) for " << getName() << " at depth " << depth << ": ---\n";
+				printToLog();
+				LOG << "\n=== done after rename (1) for " << getName() << " at depth " << depth << ": ===\n\n";
+			}
 
-		propagateStatements(depth, -1);
-		if (VERBOSE) {
-			LOG << "\n--- after propagation (1) for " << getName() << " at depth " << depth << ": ---\n";
-			printToLog();
-			LOG << "\n=== done after propagation (1) for " << getName() << " at depth " << depth << ": ===\n\n";
+			propagateStatements(depth, -1);
+			if (VERBOSE) {
+				LOG << "\n--- after propagation (1) for " << getName() << " at depth " << depth << ": ---\n";
+				printToLog();
+				LOG << "\n=== done after propagation (1) for " << getName() << " at depth " << depth << ": ===\n\n";
+			}
 		}
 
 		// The call bypass logic should be staged as well. For example, consider m[r1{11}]{11} where 11 is a call.
 		// The first stage bypass yields m[r1{2}]{11}, which needs another round of propagation to yield m[r1{-}-32]{11}
 		// (which can safely be processed at depth 1).
 		fixCallAndPhiRefs(depth);
-		propagateStatements(depth, -1);
+		if (status != PROC_INCYCLE || depth == 0)
+			propagateStatements(depth, -1);
 		if (VERBOSE) {
 			LOG << "\n--- after call and phi bypass (1) of " << getName() << " at depth " << depth << ": ---\n";
 			printToLog();
@@ -1012,17 +1029,25 @@ void UserProc::initialDecompile() {
 	// For each memory depth (2)
 	for (depth = 0; depth <= maxDepth; depth++) {
 		// Redo the renaming process to take into account the arguments
-		if (VERBOSE)
-			LOG << "renaming block variables (2) at depth " << depth << "\n";
-		// Rename variables
-		df.renameBlockVars(this, 0, depth);						// E.g. for new arguments
+		if (status == PROC_INCYCLE && depth > 0) {
+			if (VERBOSE)
+				LOG << "*** not renaming variables (2) at depth " << depth << " since " << getName() <<
+					" is involved in a recursion group\n";
+		} else {
+			if (VERBOSE)
+				LOG << "renaming block variables (2) at depth " << depth << "\n";
+			// Rename variables
+			df.renameBlockVars(this, 0, depth);						// E.g. for new arguments
+		}
 
 		// Seed the return statement with reaching definitions
 		if (theReturnStatement)
 			theReturnStatement->copyReachingDefs(depth);		// Everything including new arguments reaching ret
 
-		// This gets called so much... it would be great to be able to "repair" the names...
-		df.renameBlockVars(this, 0, depth);						// E.g. update call use collectors with return uses
+		if (status != PROC_INCYCLE || depth == 0) {
+			// This gets called so much... it would be great to be able to "repair" the names...
+			df.renameBlockVars(this, 0, depth);						// E.g. update call use collectors with return uses
+		}
 
 		printXML();
 
@@ -1039,9 +1064,11 @@ void UserProc::initialDecompile() {
 			//fixCallAndPhiRefs();			// FIXME: needed?
 			if (processConstants()) {
 				for (int i = 0; i <= maxDepth; i++) {
-					df.renameBlockVars(this, 0, i, true);	// Needed if there was an indirect call to an ellipsis
-															// function
-					propagateStatements(i, -1);
+					if (status != PROC_INCYCLE || i == 0) {
+						df.renameBlockVars(this, 0, i, true);	// Needed if there was an indirect call to an ellipsis
+																// function
+						propagateStatements(i, -1);
+					}
 				}
 			}
 			//removeRedundantPhis();
@@ -1085,7 +1112,8 @@ void UserProc::initialDecompile() {
 		// replacing expressions with Parameters as we go
 		if (!Boomerang::get()->noParameterNames) {
 			replaceExpressionsWithParameters(depth);
-			df.renameBlockVars(this, 0, depth, true);
+			if (status != PROC_INCYCLE || depth == 0)
+				df.renameBlockVars(this, 0, depth, true);
 		}
 
 		// recognising locals early prevents them from becoming returns
@@ -1096,7 +1124,8 @@ void UserProc::initialDecompile() {
 			for (int i=0; i < 3; i++) {		// FIXME: should be iterate until no change
 			 	if (VERBOSE)
 					LOG << "*** update returns loop iteration " << i << " ***\n";
-				df.renameBlockVars(this, 0, depth, true);
+				if (status != PROC_INCYCLE || depth == 0)
+					df.renameBlockVars(this, 0, depth, true);
 				findPreserveds();
 				theReturnStatement->updateReturns();
 				updateReturnTypes();
@@ -1128,14 +1157,21 @@ void UserProc::initialDecompile() {
 		bool convert;			// True when indirect call converted to direct
 		do {
 			convert = false;
-			for (int td = maxDepth; td >= 0; td--) {
-				if (VERBOSE)
-					LOG << "propagating at depth " << depth << " to depth " << td << "\n";
-				convert |= propagateStatements(depth, td);
-				if (convert)
-					break;			// Just calling renameBlockVars now can cause problems
-				for (int i = 0; i <= depth; i++)
-					df.renameBlockVars(this, 0, i, true);
+			if (status == PROC_INCYCLE && depth > 0) {
+				if (VERBOSE) {
+					LOG << "*** not propagating at depth " << depth << " since " << getName() <<
+						" is involved in recursion cycles\n";
+				}
+			} else {
+				for (int td = maxDepth; td >= 0; td--) {
+					if (VERBOSE)
+						LOG << "propagating at depth " << depth << " to depth " << td << "\n";
+					convert |= propagateStatements(depth, td);
+					if (convert)
+						break;			// Just calling renameBlockVars now can cause problems
+					for (int i = 0; i <= depth; i++)
+						df.renameBlockVars(this, 0, i, true);
+				}
 			}
 			// If you have an indirect to direct call conversion, some propagations that were blocked by
 			// the indirect call might now succeed, and may be needed to prevent alias problems
@@ -1356,7 +1392,9 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 		CycleList::iterator p;
 		for (p = (*sc)->begin(); p != (*sc)->end(); ++p) {
 			(*p)->conditionalPreservation(*sc);
+			status = PROC_VISITED;			// It's finally safe to propagate m[...]
 			for (int d=0; d < maxDepth; ++d) {
+				(*p)->df.renameBlockVars(this, 0, d, true);
 				(*p)->fixCallAndPhiRefs(d);
 				propagateAtDepth(d);
 			}
@@ -1465,21 +1503,28 @@ void UserProc::updateCalls() {
 
 void UserProc::conditionalPreservation(CycleList* sc) {
 	if (VERBOSE)
-		LOG << "*** conditional preservation for " << getName() << " ***\n";
+		LOG << "*** start conditional preservation for " << getName() << " ***\n";
 	findPreserveds(sc);
+	if (VERBOSE)
+		LOG << "*** end conditional preservation for " << getName() << " ***\n";
 }
 
 
 
 void UserProc::updateBlockVars()
 {
-	int depth = findMaxDepth() + 1;
-	for (int i = 0; i <= depth; i++)
-		df.renameBlockVars(this, 0, i, true);
+	int depth = findMaxDepth() + 1;					// FIXME: why +1?
+	if (status != PROC_INCYCLE || depth == 0) {
+		for (int i = 0; i <= depth; i++)
+			df.renameBlockVars(this, 0, i, true);
+	} else
+		df.renameBlockVars(this, 0, 0, true);
 }
 
 void UserProc::propagateAtDepth(int depth)
 {
+	if (status == PROC_INCYCLE && depth > 0)
+		return;
 	propagateStatements(depth, -1);
 	for (int i = 0; i <= depth; i++)
 		df.renameBlockVars(this, 0, i, true);
@@ -2549,8 +2594,11 @@ void UserProc::replaceExpressionsWithParameters(int depth) {
 	}
 	if (found) {
 		// Must redo all the subscripting, just for the a[m[...]] thing!
-		for (int d=0; d <= depth; d++)
-			df.renameBlockVars(this, 0, d /* Memory depth */, true);
+		if (status != PROC_INCYCLE || depth == 0) {
+			for (int d=0; d <= depth; d++)
+				df.renameBlockVars(this, 0, d /* Memory depth */, true);
+		} else
+			df.renameBlockVars(this, 0, 0 /* Memory depth */, true);
 	}
 
 	// replace expressions in regular statements with parameters
@@ -4420,10 +4468,14 @@ typedef std::map<Exp*, Exp*, lessExpStar> PRESMAP;
 void UserProc::fixCallAndPhiRefs(int depth) {
 	PRESMAP pres;
 	StatementList removes;
+	if (VERBOSE)
+		LOG << "*** start fix call and phi bypass analysis for " << getName() << " ***\n";
 	fixRefs(0, depth, pres, removes);			// Index 0 is always the entry BB, i.e. the root of the dominator tree
 	StatementList::iterator rr;
 	for (rr = removes.begin(); rr != removes.end(); ++rr)
 		removeStatement(*rr);
+	if (VERBOSE)
+		LOG << "*** end fix call and phi bypass analysis for " << getName() << " ***\n";
 }
 // Algorithm:
 /* fixRefs(n)		// n is a basic block index
@@ -4433,38 +4485,26 @@ void UserProc::fixCallAndPhiRefs(int depth) {
 		  let l be lhs of d
 		  pres[l{c}] := localised proven for l
 	for each phi statement ps in n
-	  allSim = true
-	  gotSimTo = false
-	  for each parameter p of ps
-		let def be defn of p
-		if def is NULL
-		  if gotSimTo
-			if simTo != NULL
-			  allSim = false
-			  break
-			else
-				simTo = NULL
-		  if def is a call
-			if p not in pres
-			  allSim = false
-			  break
-			else
-			  if !gotSimTo
-				gotSimTo = true
-				simTo = pres[p]
-			  else if simTo != pres[p]
-				allSim = false
-				break
-		  else if def is an assignment
-			if !gotSimTo
-			  gotSimTo = true
-			  simTo = def->rhs
-			else if simTo != def->rhs
-			  allSim = false
-			  break
-	if allSim
-	  pres[simTo{ps}] = simTo
+	  let lhs be left hand side of ps
+	  allSame = true
+	  let first be a ref built from first p
+	  for each parameter p of ps after the first
+		let current be a ref built from p
+		if !prove(first == current)
+		  allSame = false
+		  break
+	if allSame
+	  let best be ref built from the "best" parameter p in ps ({-} better than {assign} better than {call})
+	  pres[lhs{ps}] = best
       insert ps into removes
+	else
+	  // Not removing this phi statement. Rename all the parameters that point to call statements, but only
+	  // if the resulting expressions are simple references
+	  for each parameter p of ps
+		let current be a ref build from p
+		if current exists in pres
+		  if pres[current] is a simple reference (not e.g. r28{17}+4)
+			replace p with pres[current]
 	for each statement s in n
 	  let locs be the set of locations used by s
 	  for each location l in locs
@@ -4491,92 +4531,95 @@ void UserProc::fixRefs(int n, int depth, PRESMAP& pres, StatementList& removes) 
 			if (proven) {
 				RefExp* latc = new RefExp(l, c);
 				pres[latc] = c->localiseExp(proven->clone());
+				if (VERBOSE)
+					LOG << "call bypass: added " << latc << " -> " << pres[latc] << " to pres set\n";
 			}
 		}
 	}
 
-	// For each phi statement ps in n
-	Statement* s;
-	BasicBlock::rtlit rit; StatementList::iterator sit;
-	for (s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit)) {
-		if (!s->isPhi()) continue;
-		PhiAssign* ps = (PhiAssign*)s;
-		bool allSim = true;
-		bool gotSimTo = false;
-		Exp* simTo = NULL;
-		// For each parameter p of ps
-		PhiAssign::iterator p;
-		for (p = ps->begin(); p != ps->end(); ++p) {
-			Statement* def = p->def;
-			if (def == NULL) {
-				if (gotSimTo) {
-					if (simTo != NULL) {
-						allSim = false;
-						break;
-					} else
-						simTo = NULL;
+	if (pres.size() != 0) { 		// No need to check for redundant phi statements, or refs to call statements
+
+		// For each phi statement ps in n
+		Statement* s;
+		BasicBlock::rtlit rit; StatementList::iterator sit;
+		for (s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit)) {
+			if (!s->isPhi()) continue;
+			PhiAssign* ps = (PhiAssign*)s;
+			if (ps->getNumDefs() == 0) continue;		// Can happen e.g. for m[...] := phi {} when this proc is
+														// involved in a recursion group
+			Exp* lhs = ps->getLeft();
+			bool allSame = true;
+			// Let first be a reference build from the first parameter
+			PhiAssign::iterator p = ps->begin();
+			RefExp* first = new RefExp(p->e, p->def);
+			// For each parameter p of ps after the first
+			for (++p; p != ps->end(); ++p) {
+				Exp* current = new RefExp(p->e, p->def);
+				Exp* equation = new Binary(opEquals, first, current);
+				if (!prove(equation)) {
+					allSame = false;
+					break;
 				}
-			} else {
-				if (def->isCall()) {
-					Exp* ref = new RefExp(p->e, p->def);
-					if (pres.find(ref) == pres.end()) {
-						allSim = false;
+			}
+			if (allSame) {
+				// let best be ref built from the "best" parameter p in ps ({-} better than {assign} better than {call})
+				p = ps->begin();
+				RefExp* best = first;
+				for (++p; p != ps->end(); ++p) {
+					RefExp* current = new RefExp(p->e, p->def);
+					if (current->isImplicitDef()) {
+						best = current;
 						break;
 					}
-					else {
-						if (!gotSimTo) {
-							gotSimTo = true;
-							simTo = pres[ref];
-						} else if (!(*simTo ==  *pres[ref])) {
-							allSim = false;
-							break;
-						}
-					}
-				} else {		// def must be an assignment
-					if (!gotSimTo) {
-						gotSimTo = true;
-						if (def->isAssign())
-							simTo = ((Assign*)def)->getRight();
-						else
-							// def in an implicit assignment
-							simTo =new RefExp(((Assignment*)def)->getLeft(), NULL);
-					}
-					else {
-						if (def->isAssign())
-							if (!(*simTo == *((Assign*)def)->getRight())) {
-								allSim = false;
-								break;
-							}
-						else if (simTo != NULL) {
-							allSim = false;
-							break;
+					if (p->def->isAssign())
+						best = current;
+					// If p->def is a call, this is the worst case; keep only (via first) if all parameters are calls
+				}
+				RefExp* ref = new RefExp(lhs, ps);
+				pres[ref] = best;
+				removes.append(ps);
+				if (VERBOSE)
+					LOG << "phi bypass: bypassing " << ref << " with " << best << " and phi stmt " << ps->getNumber() <<
+						" will be removed\n";
+			} else {
+				// Not removing this phi statement. Rename all the parameters that point to call statements, but only
+				// if the resulting expressions are simple references
+				for (p = ps->begin(); p != ps->end(); ++p) {
+					Exp* current = new RefExp(p->e, p->def);
+					// if current exists in pres
+					PRESMAP::iterator ff = pres.find(current);
+					if (ff != pres.end()) {
+						// if pres[current] is a simple reference (e.g. not r28{17}+5)
+						RefExp* res = (RefExp*)ff->second;
+						if (res->isSubscript()) {
+							// Replace p with pres[current]
+							if (VERBOSE)
+								LOG << "phi bypass: replacing parameter " << p->def << " with " << res << " in " <<
+									ps << "\n";
+							p->e   = res->getSubExp1();
+							p->def = res->getDef();
 						}
 					}
 				}
 			}
 		}
-		if (allSim) {
-			RefExp* ref = new RefExp(((RefExp*)simTo)->getSubExp1(), ps);
-			pres[ref] = simTo;
-			removes.append(ps);
-		}
-	}
-	// For each statement s of n
-	for (s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit)) {
-		LocationSet locs;
-		LocationSet::iterator l;
-		s->addUsedLocs(locs);
-		// for each location l in locs
-		for (l=locs.begin(); l != locs.end(); ++l) {
-			// if l in pres
-			if (depth != -1 && (*l)->getMemDepth() != depth) continue;
-			PRESMAP::iterator ff = pres.find(*l);
-			if (ff != pres.end()) {
-				// Replace all l in s with pres[l]
-				s->searchAndReplace(*l, ff->second);
-				if (VERBOSE)
-					LOG << "call or phi bypass: replacing " << *l << " with " << ff->second << "; result is " << s <<
-						"\n";
+		// For each statement s of n
+		for (s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit)) {
+			LocationSet locs;
+			LocationSet::iterator l;
+			s->addUsedLocs(locs);
+			// for each location l in locs
+			for (l=locs.begin(); l != locs.end(); ++l) {
+				// if l in pres
+				if (depth != -1 && (*l)->getMemDepth() != depth) continue;
+				PRESMAP::iterator ff = pres.find(*l);
+				if (ff != pres.end()) {
+					// Replace all l in s with pres[l]
+					s->searchAndReplace(*l, ff->second);
+					if (VERBOSE)
+						LOG << "call or phi bypass: replacing " << *l << " with " << ff->second << "; result is " <<
+							s << "\n";
+				}
 			}
 		}
 	}

@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.5 $
+ * $Revision: 1.119.2.6 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -43,7 +43,7 @@
 #include "operator.h"	// Declares the OPER enum
 #include "types.h"		// For ADDRESS, etc
 #include "type.h"		// The Type class for typed expressions
-#include "statement.h"	// For StmtSet etc
+//#include "statement.h"	// For StmtSet etc
 #include "exphelp.h"
 #include "memo.h"
 
@@ -58,6 +58,8 @@ class TypeVal;
 class ExpVisitor;
 class ExpModifier;
 class XMLProgParser;
+class Proc;
+class UserProc;
 typedef BasicBlock* PBB;
 
 #define DEBUG_BUFSIZE	5000		// Size of the debug print buffer
@@ -823,7 +825,8 @@ virtual Type*		getType();
 virtual Exp			*match(Exp *pattern);
 		// Before type analysis, implicit definitions are NULL.
 		// During and after TA, they point to an implicit assignment statement.
-		bool		isImplicitDef() {return def == NULL || def->getKind() == STMT_IMPASSIGN;}
+		// Don't implement here, since it would require #including of statement.h
+		bool		isImplicitDef();
 
 		// Visitation
 virtual bool		accept(ExpVisitor* v);

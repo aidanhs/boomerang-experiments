@@ -29,7 +29,6 @@
 #include <vector>
 
 #include "exphelp.h"		// For lessExpStar
-#include "left.h"
 
 class Statement;
 class Assign;

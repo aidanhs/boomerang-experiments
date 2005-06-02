@@ -4,7 +4,7 @@
  *				tests the RTL and derived classes
  *============================================================================*/
 /*
- * $Revision: 1.18.2.1 $
+ * $Revision: 1.18.2.2 $
  *
  * 13 May 02 - Mike: Created
  */
@@ -214,7 +214,7 @@ void RtlTest::testIsCompare () {
 	BinaryFile *pBF = BinaryFileFactory::Load(SWITCH_SPARC);
 	CPPUNIT_ASSERT(pBF != 0);
 	CPPUNIT_ASSERT(pBF->GetMachine() == MACHINE_SPARC);
-	FrontEnd *pFE = new SparcFrontEnd(pBF);
+	FrontEnd *pFE = new SparcFrontEnd(pBF, new Prog());
 
 	// Decode second instruction: "sub		%i0, 2, %o1"
 	int iReg;
@@ -240,7 +240,7 @@ void RtlTest::testIsCompare () {
 	pBF = BinaryFileFactory::Load(SWITCH_PENT);
 	CPPUNIT_ASSERT(pBF != 0);
 	CPPUNIT_ASSERT(pBF->GetMachine() == MACHINE_PENTIUM);
-	pFE = new PentiumFrontEnd(pBF);
+	pFE = new PentiumFrontEnd(pBF, new Prog());
 
 	// Decode fifth instruction: "cmp	$0x5,%eax"
 	inst = pFE->decodeInstruction(0x80488fb);

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.18 $
+ * $Revision: 1.76.2.19 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -80,7 +80,7 @@ class ReturnStatement;
 typedef std::list<UserProc*> CycleList;
 
 // The map of interferences. It maps locations such as argc{55} to a local, e.g. local17
-typedef std::map<Exp*, Exp*, lessExpStar> igraph;
+//typedef std::map<Exp*, Exp*, lessExpStar> igraph;
 
 /*==============================================================================
  * Kinds of Statements, or high-level register transfer lists.
@@ -528,8 +528,8 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
  * and the reference is to a CallStatement returning multiple locations.
  * Besides, the lhs gives it useful common functionality with other Assignments
  *============================================================================*/
-// The below could almost be a RefExp. But we can't #include exp.h, we don't need another copy of the Memo class,
-// and it's more convenient to have these members public
+// The below could almost be a RefExp. But we could not at one stage #include exp.h as part of statement,h; that's since
+// changed so it is now possible, and arguably desirable.  However, it's convenient to have these members public
 struct PhiInfo {
 		Statement*	def;		// The defining statement
 		Exp*		e;			// The expression for the thing being defined (never subscripted)
@@ -887,7 +887,7 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
  * CaseStatement is derived from GotoStatement. In addition to the destination
  * of the jump, it has a switch variable Exp.
  *============================================================================*/
-typedef struct {
+struct SWITCH_INFO {
 		Exp*		pSwitchVar;		// Ptr to Exp repres switch var, e.g. v[7]
 		char		chForm;			// Switch form: 'A', 'O', 'R', 'H', or 'F' etc
 		int			iLower;			// Lower bound of the switch variable
@@ -896,7 +896,7 @@ typedef struct {
 		int			iNumTable;		// Number of entries in the table (form H only)
 		int			iOffset;		// Distance from jump to table (form R only)
 		//int		delta;			// Host address - Native address
-} SWITCH_INFO;
+};
 
 class CaseStatement: public GotoStatement {
 		SWITCH_INFO* pSwitchInfo;	// Ptr to struct with info about the switch

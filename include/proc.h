@@ -16,7 +16,7 @@
  *			   as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.17 $
+/* $Revision: 1.115.2.18 $
 */
 
 #ifndef _PROC_H_
@@ -300,7 +300,8 @@ enum ProcStatus {
 	PROC_UNDECODED,		// Has not even been decoded
 	PROC_DECODED,		// Decoded, no attempt at decompiling
 	PROC_SORTED,		// Decoded, and CFG has been sorted by address
-	PROC_VISITED,		// Has been visited on the way down in the recursion manager
+	PROC_VISITED,		// Has been visited on the way down in decompile()
+	PROC_INCYCLE,		// Is involved in cycles, has not completed initial decompilation as yet
 	PROC_INITIAL,		// Has had initial decompiling only (some callees were involved in recursion)
 	PROC_FINAL			// Has had final decompilation
 	// , PROC_RETURNS	// Has had returns intersected with all caller's defines
