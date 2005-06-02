@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.22 $
+ * $Revision: 1.148.2.23 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1577,9 +1577,9 @@ bool CallStatement::searchAndReplace(Exp* search, Exp* replace) {
 	StatementList::iterator ss;
 	// FIXME: MVE: Check if we ever want to change the LHS of arguments or defines...
 	for (ss = defines.begin(); ss != defines.end(); ++ss)
-		change |= (*ss)->search(search, replace);
+		change |= (*ss)->searchAndReplace(search, replace);
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
-		change |= (*ss)->search(search, replace);
+		change |= (*ss)->searchAndReplace(search, replace);
 	return change;
 }
 
@@ -4597,67 +4597,8 @@ bool CallStatement::isInCycle(CycleList* sc) {
 	return false;
 }
 
-#if 0
-void Statement::fixPhiBypass() {
-	LocationSet locs;
-	LocationSet::iterator ll;
-	addUsedLocs(locs);
-	for (ll = locs.begin(); ll != locs.end(); ll++) {
-		if (!(*ll)->isSubscript()) continue; 		// Only interested in subscripted locations
-		RefExp* r = (RefExp*)*ll;
-		Statement* def = r->getDef();
-		if (def == NULL || !def->isPhi() || !def->getProc()->canProveNow())
-			// Only interested in refs to phi statements
-			continue;
-		Exp *base = new RefExp(((RefExp*)*ll)->getSubExp1(), NULL);
-		PhiAssign::iterator uu;
-		PhiAssign *phi = (PhiAssign*)def;
-		for (uu = phi->begin(); uu != phi->end(); uu++) {
-			if (uu->def && uu->def->isAssign() && *((Assign*)uu->def)->getLeft() == *subExp1) {
-				bool allZero = true;
-				Assign* asDef = (Assign*)uu->def;
-				Exp* asDefRight = asDef->getRight()->clone();
-				asDefRight->removeSubscripts(allZero);
-				if (allZero) {
-					base = asDefRight;
-					break;
-				}
-			}
-		}
-		bool allProven = true;
-		LocationSet used;
-		base->addUsedLocs(used);
-		if (used.size() == 0) {
-			allProven = false;
-		} else {
-			if (VERBOSE)
-				LOG << "fix phi bypass: attempting to simplify ref to " << phi << " with base " << base << "\n";
-		}
-		// Experiment MVE: compare 1 to 2, 1 to 3 ... 1 to n instead of base to 1, base to 2, ...
-		// Seems to work
-		Exp* first = new RefExp(subExp1->clone(), phi->begin()->def);
-		//for (uu = phi->begin(); allProven && uu != phi->end(); uu++) { // }
-		for (uu = ++phi->begin(); allProven && uu != phi->end(); uu++) {
-			//Exp *query = new Binary(opEquals, new RefExp(subExp1->clone(), uu->base), base->clone());
-			Exp* query = new Binary(opEquals,
-				first,
-				new RefExp(subExp1->clone(), uu->def));
-			if (DEBUG_PROOF)
-				LOG << "attempting to prove " << query << " for ref to phi\n";
-			if (!def->getProc()->prove(query)) {
-				if (DEBUG_PROOF) LOG << "not proven\n";
-				allProven = false;
-				break;
-			}
-		}
-		if (allProven) {
-			bMod = true;
-			//res = base->clone();
-			res = first;
-			if (DEBUG_PROOF)
-				LOG << "replacing ref to phi " << def << " with " << res << "\n";
-			return res;
-		}
-	}
+bool CallStatement::isChildless() {
+	if (procDest == NULL) return true;
+	if (procDest->isLib()) return false;
+	return calleeReturn == NULL;
 }
-#endif

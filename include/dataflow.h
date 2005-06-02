@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.15 $
+ * $Revision: 1.39.2.16 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -210,7 +210,12 @@ public:
 		 * Add a new use from Statement u
 		 */
 		void		updateLocs(Statement* u);
-
+		void		remove(Exp* loc) {				// Remove the given location
+						locs.remove(loc);
+					}
+		void		remove(iterator it) {			// Remove the current location
+						locs.remove(it);
+					}
 };
 
 

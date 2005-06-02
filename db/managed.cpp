@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.8 $
+ * $Revision: 1.15.2.9 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -236,13 +236,6 @@ void LocationSet::remove(Exp* given) {
 	lset.erase(it);
 //std::cerr << "after : "; print();
 }
-
-#if 0
-void LocationSet::remove(LocSetIter ll) {
-	//delete *ll;		// Don't trust this either
-	lset.erase(ll);
-}
-#endif
 
 // Remove locations defined by any of the given set of statements
 // Used for killing in liveness sets

@@ -76,13 +76,13 @@ virtual				~StatementSet() {}
 };		// class StatementSet
 
 class StatementList {
-		std::list<Statement*> slist;		  			// For now, use use standard list
+		std::list<Statement*> slist;		  				// For now, use use standard list
 
 public:
 typedef std::list<Statement*>::iterator iterator;
 typedef std::list<Statement*>::reverse_iterator reverse_iterator;
 virtual				~StatementList() {}
-		unsigned	size() {return slist.size();}		 // Number of elements
+		unsigned	size() {return slist.size();}		 	// Number of elements
 		iterator	begin()  {return slist.begin();}
 		iterator	end()	  {return slist.end();}
 		reverse_iterator rbegin() {return slist.rbegin();}
@@ -104,7 +104,7 @@ virtual				~StatementList() {}
 		iterator	insert(iterator it, Statement* s) {return slist.insert(it, s);}
 		bool		exists(Statement* s);				// Search; returns false if not found
 		char*		prints();							// Print to string (for debugging)
-		void		dump();									// Print to standard error for debugging
+		void		dump();								// Print to standard error for debugging
 		void		clear() { slist.clear(); }
 		void		makeCloneOf(StatementList& o);		// Make this a clone of o
 		bool		existsOnLeft(Exp* loc);				// True if loc exists on the LHS of any Assignment in this list
@@ -157,7 +157,7 @@ virtual				~LocationSet() {}						// virtual destructor kills warning
 		iterator	end()	 {return lset.end();}
 		void		insert(Exp* loc) {lset.insert(loc);}	// Insert the given location
 		void		remove(Exp* loc);						// Remove the given location
-		void		remove(iterator ll);					// Remove location, given iterator
+		void		remove(iterator ll) {lset.erase(ll);}	// Remove location, given iterator
 		void		removeIfDefines(StatementSet& given);	// Remove locs defined in given
 		unsigned	size() const {return lset.size();}		// Number of elements
 		bool		operator==(const LocationSet& o) const; // Compare

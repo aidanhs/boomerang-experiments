@@ -11,12 +11,11 @@
 
 /*==============================================================================
  * FILE:	   proc.h
- * OVERVIEW:   Interface for the procedure classes, which are used to
- *			   store information about variables in the procedure such
- *			   as parameters and locals.
+ * OVERVIEW:   Interface for the procedure classes, which are used to store information about variables in the
+ *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.18 $
+/* $Revision: 1.115.2.19 $
 */
 
 #ifndef _PROC_H_
@@ -381,7 +380,7 @@ private:
 		/**
 		 * The list of parameters, ordered and filtered
 		 * Note that a LocationList could be used, but then there would be nowhere to store the types (for DFA based TA)
-		 * The RHS is just ignored
+		 * The RHS is just ignored; the list is of ImplicitAssigns
 		 */
 		StatementList parameters;
 
@@ -517,6 +516,7 @@ virtual				~UserProc();
 		void		fixCallAndPhiRefs();		// Perform call and phi statement bypassing at all depths
 					// Helper function for the above
 		void		fixRefs(int n, int depth, std::map<Exp*, Exp*, lessExpStar>& pres, StatementList& removes);
+		void		initialParameters();		// Get initial parameters based on proc's use collector
 		void		findFinalParameters();
 		void		addParameter(Exp *e);		// Add to signature (temporary now; still needed to create param names)
 		void		insertParameter(Exp* e);	// Insert into parameters list correctly sorted
@@ -541,24 +541,25 @@ virtual				~UserProc();
 private:
 		void		searchRegularLocals(OPER minusOrPlus, bool lastPass, int sp, StatementList& stmts);
 public:
-		bool		 removeNullStatements();
-		bool		 removeDeadStatements();
+		bool		removeNullStatements();
+		bool		removeDeadStatements();
 typedef std::map<Statement*, int> RefCounter;
-		void		 countRefs(RefCounter& refCounts);
-		void		 removeUnusedStatements(RefCounter& refCounts, int depth);
-		void		 removeUnusedLocals();
-		bool		 propagateAndRemoveStatements();
+		void		countRefs(RefCounter& refCounts);
+		void		removeUnusedStatements(RefCounter& refCounts, int depth);
+		void		removeUnusedLocals();
+		bool		propagateAndRemoveStatements();
 		// Propagate statemtents; return true if an indirect call is converted to direct
-		bool		 propagateStatements(int memDepth, int toDepth = -1);
-		int			 findMaxDepth();					// Find max memory nesting depth
+		bool		propagateStatements(int memDepth, int toDepth = -1);
+		void		propagateToCollector(int depth);
+		int			findMaxDepth();					// Find max memory nesting depth
 
-		void		 toSSAform(int memDepth, StatementSet& rs);
-		void		 fromSSAform();
-		void		 insertAssignAfter(Statement* s, Exp* left, Exp* right);
+		void		toSSAform(int memDepth, StatementSet& rs);
+		void		fromSSAform();
+		void		insertAssignAfter(Statement* s, Exp* left, Exp* right);
 		// Insert statement a after statement s
-		void		 insertStatementAfter(Statement* s, Statement* a);
-		void		 conTypeAnalysis();
-		void		 dfaTypeAnalysis();
+		void		insertStatementAfter(Statement* s, Statement* a);
+		void		conTypeAnalysis();
+		void		dfaTypeAnalysis();
 		// Trim parameters to procedure calls with ellipsis (...). Also add types for ellipsis parameters, if any
 		// Returns true if any signature types so added
 		bool		ellipsisProcessing();

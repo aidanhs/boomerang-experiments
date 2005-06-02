@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.26 $
+ * $Revision: 1.238.2.27 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1415,6 +1415,7 @@ for (int i=0; i < 3; i++) {
 	}
 }
 
+	initialParameters();
 	for (p = cs->begin(); p != cs->end(); ++p) {
 		(*p)->removeUnusedStatements();
 	}
@@ -3061,6 +3062,7 @@ bool UserProc::propagateStatements(int memDepth, int toDepth) {
 		convertedIndirect |= s->propagateTo(memDepth, empty, toDepth, limitPropagations);
 	}
 	simplify();
+	propagateToCollector(memDepth);
 	return convertedIndirect;
 }
 
@@ -4469,13 +4471,13 @@ void UserProc::fixCallAndPhiRefs(int depth) {
 	PRESMAP pres;
 	StatementList removes;
 	if (VERBOSE)
-		LOG << "*** start fix call and phi bypass analysis for " << getName() << " ***\n";
+		LOG << "*** start fix call and phi bypass analysis for " << getName() << ", depth " << depth << " ***\n";
 	fixRefs(0, depth, pres, removes);			// Index 0 is always the entry BB, i.e. the root of the dominator tree
 	StatementList::iterator rr;
 	for (rr = removes.begin(); rr != removes.end(); ++rr)
 		removeStatement(*rr);
 	if (VERBOSE)
-		LOG << "*** end fix call and phi bypass analysis for " << getName() << " ***\n";
+		LOG << "*** end fix call and phi bypass analysis for " << getName() << ", depth " << depth << " ***\n";
 }
 // Algorithm:
 /* fixRefs(n)		// n is a basic block index
@@ -4622,6 +4624,33 @@ void UserProc::fixRefs(int n, int depth, PRESMAP& pres, StatementList& removes) 
 				}
 			}
 		}
+		// Also do xxx in m[xxx] in the use collector
+		Collector::iterator cc;
+		for (cc = col.begin(); cc != col.end(); ++cc) {
+			if (!(*cc)->isMemOf()) continue;
+			Exp* addr = ((Location*)*cc)->getSubExp1();
+			LocationSet used;
+			LocationSet::iterator uu;
+			addr->addUsedLocs(used);
+			for (uu = used.begin(); uu != used.end(); ++uu) {
+				if (depth != -1 && (*uu)->getMemDepth() != depth) continue;
+				PRESMAP::iterator ff = pres.find(*uu);
+				if (ff != pres.end()) {
+					// Replace all uu in addr with pres[uu]
+					bool ch;
+					Exp* res = addr->clone()->searchReplaceAll(*uu, ff->second, ch);
+					if (!ch) continue;
+					Exp* memOfRes = Location::memOf(res)->simplify();
+					if (col.exists(memOfRes))
+						col.remove(memOfRes);				// Already exists; just remove
+					else
+						((Location*)*cc)->setSubExp1(res);	// Modify the existing entry
+					if (VERBOSE)
+						LOG << "collector call or ref bypass: replacing " << *uu << " with " << ff->second <<
+							"; result is " << memOfRes << "\n";
+				}
+			}
+		}
 	}
 
 	// For each child ch f n (in the dominator graph)
@@ -4645,4 +4674,45 @@ void UserProc::markAsNonChildless(CycleSet* cs) {
 				c->setCalleeReturn(dest->getTheReturnStatement());
 		}
 	}
+}
+
+// Propagate into xxx of m[xxx] in the UseCollector (locations live at the entry of this proc)
+void UserProc::propagateToCollector(int depth) {
+	Collector::iterator it;
+	for (it = col.begin(); it != col.end(); ++it) {
+		if (!(*it)->isMemOf()) continue;
+		Exp* addr = ((Location*)*it)->getSubExp1();
+		LocationSet used;
+		LocationSet::iterator uu;
+		addr->addUsedLocs(used);
+		for (uu = used.begin(); uu != used.end(); uu++) {
+			RefExp* r = (RefExp*)*uu;
+			if (!r->isSubscript()) continue;
+			Assign* as = (Assign*)r->getDef();
+			if (as == NULL || !as->isAssign()) continue;
+			if (depth != -1 && depth != as->getLeft()->getMemDepth()) continue;
+			bool ch;
+			Exp* res = addr->clone()->searchReplaceAll(r, as->getRight(), ch);
+			if (!ch) continue;				// No change
+			Exp* memOfRes = Location::memOf(res)->simplify();
+			// First check to see if memOfRes is already in the set
+			if (col.exists(memOfRes)) {
+				/* it = */ col.remove(it);		// Already exists; just remove the old one
+				continue;
+			} else {
+				if (VERBOSE)
+					LOG << "propagating " << r << " to " << as->getRight() << " in collector; result " << memOfRes <<
+						"\n";
+				((Location*)*it)->setSubExp1(res);	// Change the child of the memof
+			}
+		}
+	}
+}
+
+// Get the initial parameters, based on the UserProc's use collector
+void UserProc::initialParameters() {
+	parameters.clear();
+	Collector::iterator cc;
+	for (cc = col.begin(); cc != col.end(); ++cc)
+		parameters.append(new ImplicitAssign(*cc));
 }

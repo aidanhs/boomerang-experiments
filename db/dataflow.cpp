@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.16 $
+ * $Revision: 1.43.2.17 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -314,7 +314,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				Exp* x = *xx;
 				// Ignore variables of the wrong memory depth
 				if (x->getMemDepth() != memDepth) continue;
-				Statement* def;
+				Statement* def = NULL;
 				if (x->isSubscript()) {					// Already subscripted?
 					// No renaming required, but this might be a new use from a return, possibly requiring an update
 					// to a call's UseCollector
@@ -324,8 +324,8 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 						if (def->isCall())
 							// Calls have UseCollectors for locations that are used before definition at the call
 							((CallStatement*)def)->useBeforeDefine(base->clone());
-						continue;						// Don't re-rename the renamed variable
 					}
+					continue;							// Don't re-rename the renamed variable
 				}
 				// Else x is not subscripted yet
 				if (STACKS_EMPTY(x)) {
