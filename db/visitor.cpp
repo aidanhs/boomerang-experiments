@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.14 $
+ * $Revision: 1.23.2.15 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -154,52 +154,52 @@ void PhiStripper::visit(PhiAssign* s, bool& recur) {
 	recur = true;
 }
 
-Exp* CallBypasser::postVisit(RefExp* r) {
+Exp* BypassingPropagator::postVisit(RefExp* r) {
 	// If child was modified, simplify now
 	Exp* ret = r;
-	if (!(unchanged & ~mask)) ret = r->simplify();
+	if (!(unchanged & mask)) ret = r->simplify();
 	mask >>= 1;
 	// Note: r (the pointer) will always == ret (also the pointer) here, so the below is safe and avoids a cast
 	Statement* def = r->getDef();
-	CallStatement *call = dynamic_cast<CallStatement*>(def);
-	if (call) {
-		Exp* proven;
-		Exp* base = ret->getSubExp1();
-		Proc* destProc = call->getDestProc();
-		if (destProc && destProc->isLib()) {
-			Signature* sig = destProc->getSignature();
-			proven = sig->getProven(base);	
-			if (proven == NULL) {			// Not (known to be) preserved
-				if (sig->findReturn(base) != -1)
-					return r;				// Definately defined, it's the return
-				// Otherwise, not all that sure. Assume that library calls pass things like local variables
-			}
-		} else {
-			// Was using the defines to decide if something is preserved, but consider sp+4 for stack based machines
-			// Have to use the proven information for the callee (if any)
-			if (destProc == NULL)
-				return r;				// Childless callees transmit nothing
-			proven = destProc->getProven(base);				// e.g. r28+4
-		}
-		if (proven == NULL)
-			return r;										// Can't bypass, since nothing proven
-		Exp* to = call->localiseExp(base);					// e.g. r28{27}
-assert(to);
+	CallStatement* call = (CallStatement*)def;
+	if (call && call->isCall()) {
 		bool ch;
-		proven = proven->clone();							// Don't modify the expressions in destProc->proven!
-		proven = proven->searchReplaceAll(base, to, ch);	// e.g. r28{27} + 4
-		if (VERBOSE)
-			LOG << "fixCallBypass replacing " << r << " with " << proven << "\n";
-		// e = e->simplify();	// No: simplify the parent
-		unchanged &= ~mask;
-		mod = true;
-		return proven;
+		ret = call->bypassRef((RefExp*)ret, ch);
+		if (ch) {
+			unchanged &= ~mask;
+			mod = true;
+			// Now have to recurse to do any propagation or further bypassing that may be required
+std::cerr << "About to recurse inside BypassingPropagator::postVisit(RefExp*): " << enclosingStmt << "\n";
+			return ret->accept(new BypassingPropagator(enclosingStmt));
+		}
 	}
-	return r;			// Not a call: no change
+	Assign* as = (Assign*)def;
+	if (as && as->isAssign()) {
+		// Propagate everything for now. May need to implement more rules soon.
+		Exp* lhs = as->getLeft();
+		Exp* rhs = as->getRight();
+		bool ch;
+		Exp* old;
+		if (VERBOSE)
+			old = ret->clone();
+		ret = ret->searchReplaceAll(new RefExp(lhs, def), rhs->clone(), ch);
+		if (ch) {
+			unchanged &= ~mask;			// Been changed now (so simplify parent)
+			mod = true;
+			if (VERBOSE)
+				LOG << "bypassing propagator propagating " << def << " into " << old << " within stmt " <<
+					(enclosingStmt ? enclosingStmt->getNumber() : 0) << " result " << ret << "\n";
+			return ret->accept(this);	// Recursively propagate and/or bypass more if possible
+		}
+	}
+
+	// Else just leave as is (perhaps simplified)	
+	return ret;
 }
 
 
-Exp* CallBypasser::postVisit(Unary *e)	   {
+Exp* BypassingPropagator::postVisit(Location *e)	   {
+	// ? FIXME: What's this hack for?
 	bool isAddrOfMem = e->isAddrOf() && e->getSubExp1()->isMemOf();
 	if (isAddrOfMem) return e;
 	Exp* ret = e;
@@ -207,45 +207,57 @@ Exp* CallBypasser::postVisit(Unary *e)	   {
 	mask >>= 1;
 	return ret;
 }
-Exp* CallBypasser::postVisit(Binary *e)	{
+Exp* SimpExpModifier::postVisit(Location *e)	   {
+	Exp* ret = e;
+	if (!(unchanged & mask)) ret = e->simplify();
+	mask >>= 1;
+	return ret;
+}
+Exp* SimpExpModifier::postVisit(RefExp *e)	   {
+	Exp* ret = e;
+	if (!(unchanged & mask)) ret = e->simplify();
+	mask >>= 1;
+	return ret;
+}
+Exp* SimpExpModifier::postVisit(Unary *e)	   {
+	Exp* ret = e;
+	if (!(unchanged & mask)) ret = e->simplify();
+	mask >>= 1;
+	return ret;
+}
+Exp* SimpExpModifier::postVisit(Binary *e)	{
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplifyArith()->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallBypasser::postVisit(Ternary *e)	 {
+Exp* SimpExpModifier::postVisit(Ternary *e)	 {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallBypasser::postVisit(TypedExp *e)	  {
+Exp* SimpExpModifier::postVisit(TypedExp *e)	  {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallBypasser::postVisit(FlagDef *e)	 {
+Exp* SimpExpModifier::postVisit(FlagDef *e)	 {
 	Exp* ret = e;
 	if (!(unchanged & mask)) ret = e->simplify();
 	mask >>= 1;
 	return ret;
 }
-Exp* CallBypasser::postVisit(Location *e)	  {
-	Exp* ret = e;
-	if (!(unchanged & mask)) ret = e->simplify();
-	mask >>= 1;
-	return ret;
-}
-Exp* CallBypasser::postVisit(Const *e)	   {
+Exp* SimpExpModifier::postVisit(Const *e)	   {
 	mask >>= 1;
 	return e;
 }
-Exp* CallBypasser::postVisit(TypeVal *e)	 {
+Exp* SimpExpModifier::postVisit(TypeVal *e)	 {
 	mask >>= 1;
 	return e;
 }
-Exp* CallBypasser::postVisit(Terminal *e)	  {
+Exp* SimpExpModifier::postVisit(Terminal *e)	  {
 	mask >>= 1;
 	return e;
 }
@@ -647,3 +659,18 @@ Exp* Localiser::postVisit(Terminal* e) {
 		ret = new RefExp(e, NULL);				// No definition reaches, so subscript with {-}
 	return ret;
 }
+
+#if 0
+Exp* ExpPropagator::postVisit(RefExp* e) {
+	Statement* def = e->getDef();
+	if (def && def->isAssign()) {
+		Exp* lhs = ((Assign*)def)->getLeft();
+		Exp* rhs = ((Assign*)def)->getRight();
+		bool ch;
+		Exp* res = e->searchReplaceAll(new RefExp(lhs, def), rhs->clone(), ch);
+		if (ch) unchanged &= ~mask;			// Been changed now (so simplify parent)
+		return res->propagateToExp();		// Recursively propagate more if possible
+	}
+	return e;
+}
+#endif

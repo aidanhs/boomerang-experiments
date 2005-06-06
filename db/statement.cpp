@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.23 $
+ * $Revision: 1.148.2.24 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -249,15 +249,21 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 		addUsedLocs(exps);
 		LocationSet::iterator ll;
 		change = false;
+		// Example: m[r24{10}] := r25{20} + m[r26{30}]
+		// exps has r24{10}, r25{30}, m[r26{30}], r26{30}
 		for (ll = exps.begin(); ll != exps.end(); ll++) {
 			Exp* m = *ll;
 			if (toDepth != -1 && m->getMemDepth() != toDepth)
 				continue;
+#if 0
 			LocationSet refs;
 			m->addUsedLocs(refs);
 			LocationSet::iterator rl;
-			for (rl = refs.begin(); rl != refs.end(); rl++) {
+			for (rl = refs.begin(); rl != refs.end(); rl++) {	// }
 				Exp* e = *rl;
+#else
+				{Exp* e = m;				// Was getting components of the components!
+#endif
 				if (!e->isSubscript()) continue;
 				// Can propagate TO this (if memory depths are suitable)
 				if (((RefExp*)e)->isImplicitDef())
@@ -1363,6 +1369,7 @@ Exp* CallStatement::localiseExp(Exp* e, int depth /* = -1 */) {
 	Localiser l(this, depth);
 	e = e->accept(&l);
 
+#if 0		// Use the BypassingPropagator to do this now
 	// Now check if e happens to have components that are references to other call statements
 	// Example: test/pentium/fib: r29 needs to get through 2 call statements to the original def
 	LocationSet locs;
@@ -1380,7 +1387,12 @@ Exp* CallStatement::localiseExp(Exp* e, int depth /* = -1 */) {
 			e = e->searchReplaceAll(*xx, r, ch);
 		}
 	}
-	return e->simplifyArith()->simplify();
+	//e = e->simplifyArith()->simplify();
+	// Now propagate to this expression
+	//return e->propagateToExp();
+#else
+	return e;
+#endif
 }
 
 // Find the definition for the given expression, using the embedded Collector object
@@ -2049,6 +2061,7 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 
 	StatementList::iterator ss;
 	for (ss = arguments.begin(), i=0; ss != arguments.end(); ++ss, ++i) {
+		// Propagate into the RIGHT hand side of arguments
 		Exp*& a = ((Assign*)*ss)->getRightRef();
 		a = a->searchReplaceAll(from, to, change);
 		if (change) {
@@ -2057,7 +2070,7 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 				LOG << "call doReplaceRef: updated argument " << i << " with " << a << "\n";
 			updateArgumentWithType(i);
 		}
-		// Also substitute into m[...] on the LHS, but don't change the LHS itself.
+		// Also substitute into m[...] on the LEFT hand side, but don't change the LHS itself.
 		Exp* al = ((Assign*)*ss)->getLeft();
 		if (al->isMemOf()) {
 			al->searchReplaceAll(from, to, change);
@@ -2537,6 +2550,17 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 	return true;
 }
 
+// Make an assign suitable for use as an argument from a callee context expression
+Assign* CallStatement::makeArgAssign(Exp* e) {
+	Exp* lhs = e->clone();
+	if (lhs->isMemOf()) {
+		Exp*& addr = ((Location*)lhs)->refSubExp1();
+		addr = localiseExp(addr);
+	}
+	Exp* rhs = localiseExp(e);
+	return new Assign(lhs, rhs);
+}
+
 // Helper function for the above
 void CallStatement::addSigParam(Type* ty, bool isScanf) {
 	if (isScanf) ty = new PointerType(ty);
@@ -2545,8 +2569,7 @@ void CallStatement::addSigParam(Type* ty, bool isScanf) {
 	if (VERBOSE)
 		LOG << "  ellipsisProcessing: adding parameter " << paramExp << " of type " << ty->getCtype() << "\n";
 	if (arguments.size() < (unsigned)signature->getNumParams()) {
-		Exp* arg = fromCalleeContext(paramExp);
-		Assign* as = new Assign(ty, arg->clone(), arg->clone());
+		Assign* as = makeArgAssign(paramExp);
 		arguments.append(as);
 	}
 }
@@ -3864,14 +3887,12 @@ bool BoolAssign::accept(StmtModifier* v) {
 	return true;
 }
 
-#if 0
 // Fix references to the returns of call statements
-void Statement::fixCallBypass() {
-	CallBypasser crf(this);
-	StmtModifier sm(&crf);
+void Statement::bypassAndPropagate() {
+	BypassingPropagator bp(this);
+	StmtModifier sm(&bp);
 	accept(&sm);
 }
-#endif
 
 // Find the locations used by expressions in this Statement.
 // Use the StmtExpVisitor and UsedLocsFinder visitor classes
@@ -4376,14 +4397,14 @@ Exp* ArgSourceProvider::nextArg() {
 		case SRC_LIB:
 			if (i == n) return NULL;
 			s = destSig->getParamExp(i++);
-			return call->fromCalleeContext(s)->simplifyArith()->simplify();
+			return call->localiseExp(s);
 		case SRC_CALLEE:
 			if (pp == calleeParams->end()) return NULL;
 			s = ((Assignment*)*pp++)->getLeft();
-			return call->fromCalleeContext(s)->simplifyArith()->simplify();
+			return call->localiseExp(s);
 		case SRC_COL:
 			if (cc == defCol->end()) return NULL;
-			return ((RefExp*)*cc++)->getSubExp1();
+			return *cc++;
 	}
 	return NULL;		// Suppress warning
 }
@@ -4413,14 +4434,14 @@ bool ArgSourceProvider::exists(Exp* e) {
 				// FIXME: for now, just don't check
 				return true;
 			for (i=0; i < n; i++) {
-				Exp* sigParam = call->fromCalleeContext(destSig->getParamExp(i))->simplifyArith()->simplify();
+				Exp* sigParam = call->localiseExp(destSig->getParamExp(i));
 				if (*sigParam == *e)
 					return true;
 			}
 			return false;
 		case SRC_CALLEE:
 			for (pp = calleeParams->begin(); pp != calleeParams->end(); ++pp) {
-				Exp* par = call->fromCalleeContext(((Assignment*)*pp)->getLeft())->simplifyArith()->simplify();
+				Exp* par = call->localiseExp(((Assignment*)*pp)->getLeft());
 				if (*par == *e)
 					return true;
 			}
@@ -4457,7 +4478,7 @@ void CallStatement::updateArguments() {
 		if (proc->filterParams(loc))
 			continue;
 		if (!oldArguments.existsOnLeft(loc)) {
-			Assign* as = new Assign(asp.curType(loc), loc->clone(), loc->clone());
+			Assign* as = new Assign(asp.curType(loc), ((RefExp*)loc)->getSubExp1()->clone(), loc->clone());
 			oldArguments.append(as);
 		}
 	}
@@ -4510,6 +4531,7 @@ void ReturnStatement::intersectWithLive(LocationSet& sset) {
 	}
 }
 
+#if 0		// localiseExp() is the same thing
 // Convert an expression like m[sp+4] in the callee context to m[sp{-} - 32] (in the context of the call)
 Exp* CallStatement::fromCalleeContext(Exp* e) {
 	Exp* sp = Location::regOf(signature->getStackRegister());
@@ -4523,6 +4545,7 @@ Exp* CallStatement::fromCalleeContext(Exp* e) {
 	bool change;
 	return e->clone()->searchReplaceAll(sp, rhs, change);
 }
+#endif
 
 // Calculate results(this) = defines(this) isect live(this)
 // Note: could use a LocationList for this, but then there is nowhere to store the types (for DFA based TA)
@@ -4601,4 +4624,34 @@ bool CallStatement::isChildless() {
 	if (procDest == NULL) return true;
 	if (procDest->isLib()) return false;
 	return calleeReturn == NULL;
+}
+
+Exp* CallStatement::bypassRef(RefExp* r, bool& ch) {
+	Exp* base = r->getSubExp1();
+	Exp* proven;
+	ch = false;
+	if (procDest && procDest->isLib()) {
+		Signature* sig = procDest->getSignature();
+		proven = sig->getProven(base);	
+		if (proven == NULL) {			// Not (known to be) preserved
+			if (sig->findReturn(base) != -1)
+				return r;				// Definately defined, it's the return
+			// Otherwise, not all that sure. Assume that library calls pass things like local variables
+		}
+	} else {
+		// Was using the defines to decide if something is preserved, but consider sp+4 for stack based machines
+		// Have to use the proven information for the callee (if any)
+		if (procDest == NULL)
+			return r;				// Childless callees transmit nothing
+		proven = procDest->getProven(base);				// e.g. r28+4
+	}
+	if (proven == NULL)
+		return r;										// Can't bypass, since nothing proven
+	Exp* to = localiseExp(base);						// e.g. r28{17}
+	assert(to);
+	proven = proven->clone();							// Don't modify the expressions in destProc->proven!
+	proven = proven->searchReplaceAll(base, to, ch);	// e.g. r28{17} + 4
+	if (ch && VERBOSE)
+		LOG << "bypassRef() replacing " << r << " with " << proven << "\n";
+	return proven;
 }

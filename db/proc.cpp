@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.27 $
+ * $Revision: 1.238.2.28 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -604,7 +604,7 @@ void UserProc::print(std::ostream &out) {
 }
 
 void UserProc::printParams(std::ostream& out) {
-	out << "Parameters: ";
+	out << "parameters: ";
 	bool first = true;
 	for (StatementList::iterator pp = parameters.begin(); pp != parameters.end(); ++pp) {
 		if (first)
@@ -862,17 +862,17 @@ CycleSet* UserProc::decompile(CycleList* path) {
 				for (pi = path->begin(); pi != path->end(); ++pi) {
 					if (*pi == c) {
 						inCycle = true;
-						// Insert every proc from c to the end of path into ret
-						do {
-							ret->insert(*pi);
-							++pi;
-						} while (pi != path->end());
 						break;
 					}
 				}
-				if (inCycle)
+				if (inCycle) {
+					// Insert every proc from c to the end of path into ret
+					do {
+						ret->insert(*pi);
+						++pi;
+					} while (pi != path->end());
 					status = PROC_INCYCLE;	
-				else {
+				} else {
 					if (VERBOSE)
 						LOG << "Visiting on the way down child " << c->getName() << " from " << getName() << "\n";
 					CycleSet* ret1 = c->decompile(path);
@@ -1007,7 +1007,8 @@ void UserProc::initialDecompile() {
 		// The call bypass logic should be staged as well. For example, consider m[r1{11}]{11} where 11 is a call.
 		// The first stage bypass yields m[r1{2}]{11}, which needs another round of propagation to yield m[r1{-}-32]{11}
 		// (which can safely be processed at depth 1).
-		fixCallAndPhiRefs(depth);
+		// Except that this seems to be inherent in the visitor nature of the latest algorithm!
+		fixCallAndPhiRefs();
 		if (status != PROC_INCYCLE || depth == 0)
 			propagateStatements(depth, -1);
 		if (VERBOSE) {
@@ -1023,7 +1024,7 @@ void UserProc::initialDecompile() {
 		// We want functions other than main to be promoted
 		promoteSignature();
 
-	// Update the arguments for calls
+	// Update the arguments for calls (mainly for the non recursion affected calls)
 	updateArguments();
 
 	// For each memory depth (2)
@@ -1117,7 +1118,7 @@ void UserProc::initialDecompile() {
 		}
 
 		// recognising locals early prevents them from becoming returns
-		// But with indirect procs in a loop, the propagation is not yet complete
+		// But with indirect calls in a loop, the propagation is not yet complete
 		// replaceExpressionsWithLocals(depth == maxDepth);
 		if (!Boomerang::get()->noChangeSignatures) {
 			// addNewReturns(depth);
@@ -1267,6 +1268,30 @@ void UserProc::removeUnusedStatements() {
 		}
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
+
+	// FIXME: not sure where these belong as yet...
+	findFinalParameters();
+	if (!Boomerang::get()->noParameterNames) {
+		for (int i = maxDepth; i >= 0; i--) {
+			replaceExpressionsWithParameters(i);
+			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
+		}
+		//findPreserveds();		// FIXME: is this necessary here?
+		//fixCallAndPhiRef();		// FIXME: surely this is not necessary now?
+		//trimParameters();		// FIXME: check
+		if (VERBOSE) {
+			LOG << "--- after adding new parameters ---\n";
+			printToLog();
+			LOG << "=== end after adding new parameters ===\n";
+		}
+	}
+	updateCalls();				// Or just updateArguments?
+	
+	if (VERBOSE) {
+		LOG << "--- after remove unused statements etc for " << getName() << "\n";
+		printToLog();
+		LOG << "=== after remove unused statements etc for " << getName() << "\n";
+	}
 }
 
 /*	*	*	*	*	*	*	*	*	*	*	*
@@ -1279,21 +1304,6 @@ void UserProc::removeUnusedStatements() {
 void UserProc::finalDecompile() {
 	if (VERBOSE)
 		LOG << "=== final decompile for " << getName() << " ===\n";
-	findFinalParameters();
-	if (!Boomerang::get()->noParameterNames) {
-		for (int i = maxDepth; i >= 0; i--) {
-			replaceExpressionsWithParameters(i);
-			//cfg->renameBlockVars(this, 0, i, true);		// MVE: is this really needed?
-		}
-		findPreserveds();		// FIXME: is this necessary here?
-		//fixCallAndPhiRef();		// FIXME: surely this is not necessary now?
-		//trimParameters();		// FIXME: check
-		if (VERBOSE) {
-			LOG << "--- after adding new parameters ---\n";
-			printToLog();
-			LOG << "=== end after adding new parameters ===\n";
-		}
-	}
 
 	// Data flow based type analysis
 	// Want to be after all propagation, but before converting expressions to locals etc
@@ -1392,38 +1402,42 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 		CycleList::iterator p;
 		for (p = (*sc)->begin(); p != (*sc)->end(); ++p) {
 			(*p)->conditionalPreservation(*sc);
-			status = PROC_VISITED;			// It's finally safe to propagate m[...]
-			for (int d=0; d < maxDepth; ++d) {
-				(*p)->df.renameBlockVars(this, 0, d, true);
-				(*p)->fixCallAndPhiRefs(d);
-				propagateAtDepth(d);
-			}
+			(*p)->fixCallAndPhiRefs();
 			if (VERBOSE) {
 				LOG << "--- after conditional preservation/remove redundant phis/fix call bypass\n";
 				(*p)->printToLog();
 				LOG << "=== after conitional preservation/remove redundant phis/fix call bypass\n";
 			}
 		}
+		status = PROC_VISITED;			// It's finally safe to propagate m[...]
+		for (p = (*sc)->begin(); p != (*sc)->end(); ++p) {
+			for (int d=0; d < maxDepth; ++d) {
+				(*p)->df.renameBlockVars(this, 0, d, true);
+				propagateAtDepth(d);
+			}
+			if (VERBOSE) {
+				LOG << "--- after propagation of m[...]\n";
+				(*p)->printToLog();
+				LOG << "=== after propagation of m[...]\n";
+			}
+		}
 	}
 
 	CycleSet::iterator p;
-for (int i=0; i < 3; i++) {
-	// while no change...
+	// Need to propagate into the initial arguments, since arguments are uses, and we are about to remove unused
+	// statements.
 	for (p = cs->begin(); p != cs->end(); ++p) {
-		//(*p)->updateCalls();
-		(*p)->initialDecompile();
-	}
-}
-
-	initialParameters();
-	for (p = cs->begin(); p != cs->end(); ++p) {
-		(*p)->removeUnusedStatements();
+		(*p)->initialParameters();
+		(*p)->updateArguments();
+		(*p)->propagateAtDepth(maxDepth);			// Need to propagate into arguments
 	}
 
 	// while no change
+for (int i=0; i < 2; i++) {
 	for (p = cs->begin(); p != cs->end(); ++p) {
-		(*p)->updateCalls();
+		(*p)->removeUnusedStatements();				// Also does final parameters and arguments at present
 	}
+}
 
 	if (VERBOSE) {
 		LOG << "group finalisation for ";
@@ -1500,6 +1514,11 @@ void UserProc::updateCalls() {
 		LOG << "*** updateCalls for " << getName() << " ***\n";
 	updateCallDefines();
 	updateArguments();
+	if (VERBOSE) {
+		LOG << "--- after update calls for " << getName() << "\n";
+		printToLog();
+		LOG << "=== after update calls for " << getName() << "\n";
+	}
 }
 
 void UserProc::conditionalPreservation(CycleList* sc) {
@@ -1999,7 +2018,9 @@ void UserProc::findFinalParameters() {
 	if (VERBOSE)
 		LOG << "finding final parameters for " << getName() << "\n";
 
+	int sp = signature->getStackRegister();
 	parameters.clear();
+	signature->setNumParams(0);			// Clear any old ideas
 	StatementList stmts;
 	getStatements(stmts);
 
@@ -2044,11 +2065,16 @@ void UserProc::findFinalParameters() {
 					continue;
 				}
 				if (e->getOper() == opMemOf &&
-					e->getSubExp1()->getOper() == opPlus &&
-					e->getSubExp1()->getSubExp1()->getOper() == opGlobal &&
-					e->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
+						e->getSubExp1()->getOper() == opPlus &&
+						e->getSubExp1()->getSubExp1()->getOper() == opGlobal &&
+						e->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
 					if (VERBOSE)
 						LOG << "ignoring m[global + int] " << e << "\n";
+					continue;
+				}
+				if (e->isRegN(sp)) {
+					if (VERBOSE)
+						LOG << "ignoring stack pointer register\n";
 					continue;
 				}
 #if 0
@@ -3671,24 +3697,14 @@ bool UserProc::prover(Exp *query, std::set<PhiAssign*>& lastPhis, std::map<PhiAs
 					// Note: formerly it could also have been the original register we are looking for ("proven" by
 					// induction, but this is no longer done. Instead, we use the CycleList parameter below.)
 					if (sc && call->isInCycle(sc)) {
-						// Bypass the call. This gives us an expression in terms of definitions reaching the call,
-						// adjusted if necessary by the transformations applied by the call (e.g. sp->sp+4 for stack
-						// based machines)
-						// This code duplicates much code in CallBypasser::postVisit(RefExp*), but it can't be used
-						// because nothing is proven yet...
-						Exp* base = r->getSubExp1();
-						Exp* to = call->localiseExp(base);
-						Exp* proven = ((Binary*)original)->getSubExp2()->clone();
-						if (DEBUG_PROOF) {
+						// Return true by induction
+						if (DEBUG_PROOF)
 							LOG << "using group induction for call from " << getName() << " to " << 
-								call->getDestProc()->getName() << " location " << r << "\n";
-							LOG << "   , replacing " << base << " with " << to << " in " << proven << "\n";
-						}
-						proven = proven->searchReplaceAll(base, to, change);
-						query->setSubExp1(proven);			// Set the left of the current query
+								call->getDestProc()->getName() << ", assuming that " << query << " is true\n";
+						return true;
 					} else {
-						Exp *right = call->getProven(r->getSubExp1());	// The right side of proven
-						if (right) {
+						Exp *right = call->getProven(r->getSubExp1());	// getProven returns the right side of what is
+						if (right) {									// proven about r (the LHS of query)
 							right = right->clone();
 							if (callwd.find(call) != callwd.end() && *callwd[call] == *query) {
 								LOG << "found call loop to " << call->getDestProc()->getName() << " " << query << "\n";
@@ -4313,14 +4329,20 @@ void UserProc::dumpSymbols() {
 void UserProc::updateArguments() {
 	if (VERBOSE)
 		LOG << "*** update arguments for " << getName() << " ***\n";
-	StatementList stmts;
-	getStatements(stmts);
-	StatementList::iterator it;
-	for (it = stmts.begin(); it != stmts.end(); it++) {
-		CallStatement* call = dynamic_cast<CallStatement*>(*it);
-		if (call == NULL) continue;
-		call->updateArguments();
+	BB_IT it;
+	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
+	for (it = cfg->begin(); it != cfg->end(); ++it) {
+		CallStatement* c = (CallStatement*) (*it)->getLastStmt(rrit, srit);
+		if (!c->isCall()) continue;
+		c->updateArguments();
+		if (VERBOSE) {
+			std::ostringstream ost;
+			c->print(ost);
+			LOG << ost.str().c_str() << "\n";
+		}
 	}
+	if (VERBOSE)
+		LOG << "=== end update arguments for " << getName() << "\n";
 }
 
 void UserProc::updateCallDefines() {
@@ -4461,91 +4483,42 @@ char* UserProc::findLocal(Exp* e) {
 	return NULL;
 }
 
-void UserProc::fixCallAndPhiRefs() {
-	for (int d = 0; d <= maxDepth; ++d)
-		fixCallAndPhiRefs(d);
-}
-
-typedef std::map<Exp*, Exp*, lessExpStar> PRESMAP;
-void UserProc::fixCallAndPhiRefs(int depth) {
-	PRESMAP pres;
-	StatementList removes;
-	if (VERBOSE)
-		LOG << "*** start fix call and phi bypass analysis for " << getName() << ", depth " << depth << " ***\n";
-	fixRefs(0, depth, pres, removes);			// Index 0 is always the entry BB, i.e. the root of the dominator tree
-	StatementList::iterator rr;
-	for (rr = removes.begin(); rr != removes.end(); ++rr)
-		removeStatement(*rr);
-	if (VERBOSE)
-		LOG << "*** end fix call and phi bypass analysis for " << getName() << ", depth " << depth << " ***\n";
-}
 // Algorithm:
-/* fixRefs(n)		// n is a basic block index
-	for each non-childless call c in n
-	  for each define d of c
-		if d has a preservation in c's dest
-		  let l be lhs of d
-		  pres[l{c}] := localised proven for l
-	for each phi statement ps in n
-	  let lhs be left hand side of ps
-	  allSame = true
-	  let first be a ref built from first p
-	  for each parameter p of ps after the first
-		let current be a ref built from p
-		if !prove(first == current)
-		  allSame = false
-		  break
-	if allSame
-	  let best be ref built from the "best" parameter p in ps ({-} better than {assign} better than {call})
-	  pres[lhs{ps}] = best
-      insert ps into removes
-	else
-	  // Not removing this phi statement. Rename all the parameters that point to call statements, but only
-	  // if the resulting expressions are simple references
-	  for each parameter p of ps
-		let current be a ref build from p
-		if current exists in pres
-		  if pres[current] is a simple reference (not e.g. r28{17}+4)
-			replace p with pres[current]
-	for each statement s in n
-	  let locs be the set of locations used by s
-	  for each location l in locs
-		if l in pres
-		  replace all l in s with pres[l]
-	for each child ch of n
-	  fixRefs(ch) 
+/* fixCallAndPhiRefs
+	for each statement s in this proc
+	  if s is a phi statement ps
+		let lhs be left hand side of ps
+		allSame = true
+		let first be a ref built from first p
+		do bypass and propagation on first
+		if result is of the form lhs{x}
+		  replace first with x
+		for each parameter p of ps after the first
+		  let current be a ref built from p
+		  do bypass and propagation on current
+		  if result is of form lhs{x}
+			replace cur with x
+		  if first != current
+			allSame = false
+		if allSame
+		  let best be ref built from the "best" parameter p in ps ({-} better than {assign} better than {call})
+		  replace ps with an assignment lhs := best
+	else (ordinary statement)
+	  do bypass and propagation for s
 */
 
-void UserProc::fixRefs(int n, int depth, PRESMAP& pres, StatementList& removes) {
-	PBB bb = df.nodeToBB(n);
-	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
-	// for each non-childless call c of n. There can only be one call statement, and it must be the last
-	CallStatement* c = (CallStatement*) bb->getLastStmt(rrit, srit);
-	if (c->isCall() && !c->isChildless()) {
-		Proc* dest = c->getDestProc();
-		// For each define d of c
-		StatementList* defs = c->getDefines();
-		StatementList::iterator d;
-		for (d = defs->begin(); d != defs->end(); ++d) {
-			Exp* l = ((Assign*)*d)->getLeft();
-			if (depth != -1 && l->getMemDepth() != depth) continue;
-			Exp* proven = dest->getProven(l);
-			if (proven) {
-				RefExp* latc = new RefExp(l, c);
-				pres[latc] = c->localiseExp(proven->clone());
-				if (VERBOSE)
-					LOG << "call bypass: added " << latc << " -> " << pres[latc] << " to pres set\n";
-			}
-		}
-	}
+void UserProc::fixCallAndPhiRefs() {
+	if (VERBOSE)
+		LOG << "*** start fix call and phi bypass analysis for " << getName() << " ***\n";
 
-	if (pres.size() != 0) { 		// No need to check for redundant phi statements, or refs to call statements
-
-		// For each phi statement ps in n
-		Statement* s;
-		BasicBlock::rtlit rit; StatementList::iterator sit;
-		for (s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit)) {
-			if (!s->isPhi()) continue;
+	// For each phi statement ps in this proc
+	Statement* s;
+	StatementList stmts;
+	getStatements(stmts);
+	StatementList::iterator it;
+	for (it = stmts.begin(); it != stmts.end(); it++) {
+		s = *it;
+		if (s->isPhi()) {
 			PhiAssign* ps = (PhiAssign*)s;
 			if (ps->getNumDefs() == 0) continue;		// Can happen e.g. for m[...] := phi {} when this proc is
 														// involved in a recursion group
@@ -4553,20 +4526,34 @@ void UserProc::fixRefs(int n, int depth, PRESMAP& pres, StatementList& removes) 
 			bool allSame = true;
 			// Let first be a reference build from the first parameter
 			PhiAssign::iterator p = ps->begin();
-			RefExp* first = new RefExp(p->e, p->def);
+			Exp* first = new RefExp(p->e, p->def);
+			// bypass and propagate to first
+			BypassingPropagator bp(ps);
+			first = first->accept(&bp);
+			if (bp.isMod()) {							// Modified?
+				// if first is of the form lhs{x}
+				if (first->isSubscript() && *((RefExp*)first)->getSubExp1() == *lhs)
+					// replace first with x
+					p->def = ((RefExp*)first)->getDef();
+			}
 			// For each parameter p of ps after the first
 			for (++p; p != ps->end(); ++p) {
 				Exp* current = new RefExp(p->e, p->def);
-				Exp* equation = new Binary(opEquals, first, current);
-				if (!prove(equation)) {
+				BypassingPropagator bp2(ps);
+				current = current->accept(&bp2);
+				if (bp2.isMod())					// Modified?
+					// if current is of the form lhs{x}
+					if (current->isSubscript() && *((RefExp*)current)->getSubExp1() == *lhs)
+						// replace current with x
+						p->def = ((RefExp*)current)->getDef();
+				if (!(*first == *current))
 					allSame = false;
-					break;
-				}
 			}
+
 			if (allSame) {
 				// let best be ref built from the "best" parameter p in ps ({-} better than {assign} better than {call})
 				p = ps->begin();
-				RefExp* best = first;
+				RefExp* best = new RefExp(p->e, p->def);
 				for (++p; p != ps->end(); ++p) {
 					RefExp* current = new RefExp(p->e, p->def);
 					if (current->isImplicitDef()) {
@@ -4577,89 +4564,28 @@ void UserProc::fixRefs(int n, int depth, PRESMAP& pres, StatementList& removes) 
 						best = current;
 					// If p->def is a call, this is the worst case; keep only (via first) if all parameters are calls
 				}
-				RefExp* ref = new RefExp(lhs, ps);
-				pres[ref] = best;
-				removes.append(ps);
+				ps->convertToAssign(best);
 				if (VERBOSE)
-					LOG << "phi bypass: bypassing " << ref << " with " << best << " and phi stmt " << ps->getNumber() <<
-						" will be removed\n";
-			} else {
-				// Not removing this phi statement. Rename all the parameters that point to call statements, but only
-				// if the resulting expressions are simple references
-				for (p = ps->begin(); p != ps->end(); ++p) {
-					Exp* current = new RefExp(p->e, p->def);
-					// if current exists in pres
-					PRESMAP::iterator ff = pres.find(current);
-					if (ff != pres.end()) {
-						// if pres[current] is a simple reference (e.g. not r28{17}+5)
-						RefExp* res = (RefExp*)ff->second;
-						if (res->isSubscript()) {
-							// Replace p with pres[current]
-							if (VERBOSE)
-								LOG << "phi bypass: replacing parameter " << p->def << " with " << res << " in " <<
-									ps << "\n";
-							p->e   = res->getSubExp1();
-							p->def = res->getDef();
-						}
-					}
-				}
+					LOG << "redundant phi replaced with copy assign; now " << ps << "\n";
 			}
-		}
-		// For each statement s of n
-		for (s = bb->getFirstStmt(rit, sit); s; s = bb->getNextStmt(rit, sit)) {
-			LocationSet locs;
-			LocationSet::iterator l;
-			s->addUsedLocs(locs);
-			// for each location l in locs
-			for (l=locs.begin(); l != locs.end(); ++l) {
-				// if l in pres
-				if (depth != -1 && (*l)->getMemDepth() != depth) continue;
-				PRESMAP::iterator ff = pres.find(*l);
-				if (ff != pres.end()) {
-					// Replace all l in s with pres[l]
-					s->searchAndReplace(*l, ff->second);
-					if (VERBOSE)
-						LOG << "call or phi bypass: replacing " << *l << " with " << ff->second << "; result is " <<
-							s << "\n";
-				}
-			}
-		}
-		// Also do xxx in m[xxx] in the use collector
-		Collector::iterator cc;
-		for (cc = col.begin(); cc != col.end(); ++cc) {
-			if (!(*cc)->isMemOf()) continue;
-			Exp* addr = ((Location*)*cc)->getSubExp1();
-			LocationSet used;
-			LocationSet::iterator uu;
-			addr->addUsedLocs(used);
-			for (uu = used.begin(); uu != used.end(); ++uu) {
-				if (depth != -1 && (*uu)->getMemDepth() != depth) continue;
-				PRESMAP::iterator ff = pres.find(*uu);
-				if (ff != pres.end()) {
-					// Replace all uu in addr with pres[uu]
-					bool ch;
-					Exp* res = addr->clone()->searchReplaceAll(*uu, ff->second, ch);
-					if (!ch) continue;
-					Exp* memOfRes = Location::memOf(res)->simplify();
-					if (col.exists(memOfRes))
-						col.remove(memOfRes);				// Already exists; just remove
-					else
-						((Location*)*cc)->setSubExp1(res);	// Modify the existing entry
-					if (VERBOSE)
-						LOG << "collector call or ref bypass: replacing " << *uu << " with " << ff->second <<
-							"; result is " << memOfRes << "\n";
-				}
-			}
+		} else {	// Ordinary statement
+			s->bypassAndPropagate();
 		}
 	}
 
-	// For each child ch f n (in the dominator graph)
-	// Note: linear search
-	unsigned numBB = cfg->getNumBBs();
-	for (unsigned ch=0; ch < numBB; ++ch) {
-		if (df.getIdom(ch) == n)
-			fixRefs(ch, depth, pres, removes);
+	// Also do xxx in m[xxx] in the use collector
+	Collector::iterator cc;
+	for (cc = col.begin(); cc != col.end(); ++cc) {
+		if (!(*cc)->isMemOf()) continue;
+		Exp* addr = ((Location*)*cc)->getSubExp1();
+		BypassingPropagator bp(NULL);
+		addr = addr->accept(&bp);
+		if (bp.isMod())
+			((Location*)*cc)->setSubExp1(addr);
 	}
+
+	if (VERBOSE)
+		LOG << "*** end fix call and phi bypass analysis for " << getName() << " ***\n";
 }
 
 void UserProc::markAsNonChildless(CycleSet* cs) {
@@ -4711,8 +4637,15 @@ void UserProc::propagateToCollector(int depth) {
 
 // Get the initial parameters, based on the UserProc's use collector
 void UserProc::initialParameters() {
+	if (VERBOSE)
+		LOG << "*** initial parameters for " << getName() << "\n";
 	parameters.clear();
 	Collector::iterator cc;
 	for (cc = col.begin(); cc != col.end(); ++cc)
-		parameters.append(new ImplicitAssign(*cc));
+		parameters.append(new ImplicitAssign((*cc)->clone()));
+	if (VERBOSE) {
+		std::ostringstream ost;
+		printParams(ost);
+		LOG << ost.str().c_str();
+	}
 }

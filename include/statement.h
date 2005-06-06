@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.20 $
+ * $Revision: 1.76.2.21 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -280,9 +280,8 @@ virtual	void		regReplace(UserProc* proc) = 0;
 
 		// Adds (inserts) all locations (registers or memory etc) used by this statement
 		void		addUsedLocs(LocationSet& used, bool final = false);
-		// Bypass calls and phi statements using callee proven information
-		//void		fixCallBypass();
-		//void		fixPhiBybass();
+		// Bypass calls and perform propagation to this statement
+		void		bypassAndPropagate();
 
 
 		// replaces a use in this statement with an expression from an ordinary assignment
@@ -1014,8 +1013,10 @@ virtual bool		accept(StmtModifier* visitor);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
 		// Was called substituteParams
-		Exp			*localiseExp(Exp *e, int depth);					// Restrict to given depth
-		Exp			*localiseExp(Exp *e) {return localiseExp(e, -1);}	// Do all depths at once
+		Exp			*localiseExp(Exp *e, int depth = -1);			// Restrict to given depth
+		// Do the call bypass logic e.g. r28{20} -> r28{17} + 4 (where 20 is this CallStatement)
+		// Set ch if changed (bypassed)
+		Exp*		bypassRef(RefExp* r, bool& ch);
 		void		addArgument(Exp *e, UserProc* proc);
 		Exp*		findDefFor(Exp* e);			// Find the reaching definition for expression e
 		Exp*		getArgumentExp(int i);
@@ -1100,14 +1101,15 @@ virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, 
 		DefCollector*	getDefCollector() {return &defCol;}			// Return pointer to the def collector object
 		UseCollector*	getUseCollector() {return &useCol;}			// Return pointer to the use collector object
 		void		useBeforeDefine(Exp* x) {useCol.insert(x);}		// Add x to the UseCollector for this call
-		Exp*		fromCalleeContext(Exp* e);			// Convert e from callee to caller (this) context
+//		Exp*		fromCalleeContext(Exp* e);			// Convert e from callee to caller (this) context
 		StatementList*	getDefines() {return &defines;}	// Get list of locations defined by this call
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
 		// parameters if needed, and return true if any signature parameters added
 		bool		ellipsisProcessing(Prog* prog);
 private:
-		// Private helper function for the above
+		// Private helper functions for the above
 		void		addSigParam(Type* ty, bool isScanf);
+		Assign*		makeArgAssign(Exp* e);	
 
 protected:
 virtual bool		doReplaceRef(Exp* from, Exp* to);

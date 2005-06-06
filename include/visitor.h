@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.6 $
+ * $Revision: 1.13.2.7 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -255,16 +255,18 @@ virtual void		visit(PhiAssign* stmt, bool& recur);
 		bool		getDelete() {return del;}
 };
 
-class CallBypasser : public ExpModifier {
+// A simplifying expression modifier. It does a simplification on the parent after a child has been modified
+class SimpExpModifier : public ExpModifier {
+protected:
 		// These two provide 31 bits (or sizeof(int)-1) of information about whether the child is unchanged.
 		// If the mask overflows, it goes to zero, and from then on the child is reported as always changing.
+		// (That's why it's an "unchanged" set of flags, instead of a "changed" set).
 		// This is used to avoid calling simplify in most cases where it is not necessary.
 		unsigned	mask;
 		unsigned	unchanged;
-		Statement*	enclosingStmt;		// Statement that is being modified at present, for debugging
 public:
-					CallBypasser(Statement* enclosing) {
-						enclosingStmt = enclosing; mask = 1; unchanged = (unsigned)-1;}
+					SimpExpModifier()	{ mask = 1; unchanged = (unsigned)-1;}
+		unsigned	getUnchanged()		{ return unchanged;}
 virtual Exp*		preVisit(Unary		*e, bool& recur) { recur = true; mask <<= 1; return e;}
 virtual Exp*		preVisit(Binary		*e, bool& recur) { recur = true; mask <<= 1; return e;}
 virtual Exp*		preVisit(Ternary	*e, bool& recur) { recur = true; mask <<= 1; return e;}
@@ -286,6 +288,16 @@ virtual Exp*		postVisit(Location *e);
 virtual Exp*		postVisit(Const *e);
 virtual Exp*		postVisit(Terminal *e);
 virtual Exp*		postVisit(TypeVal *e);
+};
+
+// A modifying visitor to process all references in an expression, bypassing calls (and phi statements if they have been
+// replaced by copy assignments), and performing simplification and propagation as needed
+class BypassingPropagator : public SimpExpModifier {
+		Statement*	enclosingStmt;		// Statement that is being modified at present, for debugging only
+public:
+					BypassingPropagator(Statement* enclosing) { enclosingStmt = enclosing; }
+virtual Exp*		postVisit(RefExp *e);
+virtual Exp*		postVisit(Location *e);
 };
 
 class UsedLocsFinder : public ExpVisitor {
@@ -434,5 +446,13 @@ public:
 		Exp*		postVisit(Location* e);
 		Exp*		postVisit(Terminal* e);
 };
+
+#if 0
+class ExpPropagator : public SimpExpModifier {
+public:
+					ExpPropagator() { }
+		Exp*		postVisit(RefExp* e);
+};
+#endif
 
 #endif	// #ifndef __VISITOR_H__

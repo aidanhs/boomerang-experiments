@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.14 $
+ * $Revision: 1.172.2.15 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -4104,3 +4104,10 @@ bool Location::isMemDepth(int d) {
 bool RefExp::isImplicitDef() {
 	return def == NULL || def->getKind() == STMT_IMPASSIGN;
 }
+
+#if 0
+Exp* Exp::propagateToExp() {
+	ExpPropagator ep;
+	return accept(&ep);
+}
+#endif

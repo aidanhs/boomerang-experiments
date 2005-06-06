@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.10 $
+ * $Revision: 1.90.2.11 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -788,7 +788,7 @@ void CHLLCode::appendTypeIdent(std::ostringstream& str, Type *typ, const char *i
 		str << "int " << ident;
 	} else {
 		appendType(str, typ);
-		str << " " << ident;
+		str << " " << (ident ? ident : "<null>");
 	}		
 }
 
@@ -1177,6 +1177,10 @@ void CHLLCode::AddProcDec	(UserProc* proc, bool open) {
 		Assign* as = (Assign*)*pp;
 		Exp* left = as->getLeft();
 		Type *ty = as->getType();
+		if (ty == NULL) {
+			LOG << "ERROR: no type for parameter " << left << "!\n";
+			ty = new IntegerType();
+		}
 		char* name = proc->lookup(left);
 		if (ty->isPointer() && ((PointerType*)ty)->getPointsTo()->isArray()) {
 			// C does this by default when you pass an array, i.e. you pass &array meaning array
