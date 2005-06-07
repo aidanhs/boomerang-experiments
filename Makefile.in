@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.91.2.7 $
+# $Revision: 1.91.2.8 $
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
 # 20 Jul 04 - Mike: Removed BOOMDIR
@@ -83,7 +83,6 @@ static: boomerang$(EXEEXT)
 # Make the lib directory if needed
 lib:
 	mkdir lib
-	touch lib		# So don't recurse so often into the loader's Makefile
 
 testDyn: lib
 	cd util     && ${MAKE} test
