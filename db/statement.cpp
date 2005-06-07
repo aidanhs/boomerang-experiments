@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.24 $
+ * $Revision: 1.148.2.25 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1361,13 +1361,20 @@ Exp *CallStatement::getProven(Exp *e) {
 	return NULL;
 }
 
+// Localise only components of e, i.e. xxx if e is m[xxx]
+void CallStatement::localiseComp(Exp* e, int depth /* = -1 */) {
+	if (e->isMemOf()) {
+		Exp*& sub1 = ((Location*)e)->refSubExp1();
+		sub1 = localiseExp(sub1, depth);
+	}
+}
 // Substitute the various components of expression e with the appropriate reaching definitions.
 // Used in e.g. fixCallBypass (via the CallBypasser). Locations defined in this call are replaced with their proven
 // values, which are in terms of the initial values at the start of the call (reaching definitions at the call)
 Exp* CallStatement::localiseExp(Exp* e, int depth /* = -1 */) {
 	if (!defCol.isInitialised()) return e;				// Don't attempt to subscript if the data flow not started yet
 	Localiser l(this, depth);
-	e = e->accept(&l);
+	e = e->clone()->accept(&l);
 
 #if 0		// Use the BypassingPropagator to do this now
 	// Now check if e happens to have components that are references to other call statements
@@ -3137,7 +3144,11 @@ void Assign::simplify() {
 	if (lhs->isLocation() && rhs->isIntConst() && (lhs->getType() == NULL || lhs->getType()->isVoid())) {
 		Location *llhs = dynamic_cast<Location*>(lhs);
 		assert(llhs);
-		Type *ty = new IntegerType(type->getSize());
+		Type* ty;
+		if (type)
+			ty = new IntegerType(type->getSize());
+		else
+			ty = new IntegerType();
 		llhs->setType(ty);
 		if (VERBOSE)
 			LOG << "setting type of " << llhs << " to " << ty->getCtype() << "\n";
@@ -4368,7 +4379,7 @@ enum Src {SRC_LIB, SRC_CALLEE, SRC_COL};
 		DefCollector* defCol;
 public:
 					ArgSourceProvider(CallStatement* call);
-		Exp*		nextArg();
+		Exp*		nextArgLoc();
 		Type*		curType(Exp* e);
 		bool		exists(Exp* loc);
 };
@@ -4391,17 +4402,19 @@ ArgSourceProvider::ArgSourceProvider(CallStatement* call) : call(call) {
 	}
 }
 
-Exp* ArgSourceProvider::nextArg() {
+Exp* ArgSourceProvider::nextArgLoc() {
 	Exp* s;
 	switch(src) {
 		case SRC_LIB:
 			if (i == n) return NULL;
-			s = destSig->getParamExp(i++);
-			return call->localiseExp(s);
+			s = destSig->getParamExp(i++)->clone();
+			call->localiseComp(s);
+			return s;
 		case SRC_CALLEE:
 			if (pp == calleeParams->end()) return NULL;
-			s = ((Assignment*)*pp++)->getLeft();
-			return call->localiseExp(s);
+			s = ((Assignment*)*pp++)->getLeft()->clone();
+			call->localiseComp(s);
+			return s;
 		case SRC_COL:
 			if (cc == defCol->end()) return NULL;
 			return *cc++;
@@ -4434,14 +4447,16 @@ bool ArgSourceProvider::exists(Exp* e) {
 				// FIXME: for now, just don't check
 				return true;
 			for (i=0; i < n; i++) {
-				Exp* sigParam = call->localiseExp(destSig->getParamExp(i));
+				Exp* sigParam = destSig->getParamExp(i)->clone();
+				call->localiseComp(sigParam);
 				if (*sigParam == *e)
 					return true;
 			}
 			return false;
 		case SRC_CALLEE:
 			for (pp = calleeParams->begin(); pp != calleeParams->end(); ++pp) {
-				Exp* par = call->localiseExp(((Assignment*)*pp)->getLeft());
+				Exp* par = ((Assignment*)*pp)->getLeft()->clone();
+				call->localiseComp(par);
 				if (*par == *e)
 					return true;
 			}
@@ -4474,11 +4489,12 @@ void CallStatement::updateArguments() {
 	// or the def collector if not,  exists in oldArguments
 	ArgSourceProvider asp(this);
 	Exp* loc;
-	while ((loc = asp.nextArg()) != NULL) {
+	while ((loc = asp.nextArgLoc()) != NULL) {
 		if (proc->filterParams(loc))
 			continue;
 		if (!oldArguments.existsOnLeft(loc)) {
-			Assign* as = new Assign(asp.curType(loc), ((RefExp*)loc)->getSubExp1()->clone(), loc->clone());
+			Exp* rhs = localiseExp(loc->clone());
+			Assign* as = new Assign(asp.curType(loc), loc->clone(), rhs);
 			oldArguments.append(as);
 		}
 	}

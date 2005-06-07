@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.15 $
+ * $Revision: 1.172.2.16 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -4105,9 +4105,13 @@ bool RefExp::isImplicitDef() {
 	return def == NULL || def->getKind() == STMT_IMPASSIGN;
 }
 
-#if 0
-Exp* Exp::propagateToExp() {
-	ExpPropagator ep;
-	return accept(&ep);
+Exp* Exp::bypassAndPropagate() {
+	BypassingPropagator bp(NULL);
+	return accept(&bp);
 }
-#endif
+
+void Exp::bypassAndPropagateComp() {
+	if (op != opMemOf) return;
+	Exp*& sub1 = ((Location*)this)->refSubExp1();
+	sub1 = sub1->bypassAndPropagate();
+}

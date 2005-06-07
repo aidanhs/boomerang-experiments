@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.15 $
+ * $Revision: 1.23.2.16 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -169,7 +169,6 @@ Exp* BypassingPropagator::postVisit(RefExp* r) {
 			unchanged &= ~mask;
 			mod = true;
 			// Now have to recurse to do any propagation or further bypassing that may be required
-std::cerr << "About to recurse inside BypassingPropagator::postVisit(RefExp*): " << enclosingStmt << "\n";
 			return ret->accept(new BypassingPropagator(enclosingStmt));
 		}
 	}
@@ -189,7 +188,8 @@ std::cerr << "About to recurse inside BypassingPropagator::postVisit(RefExp*): "
 			if (VERBOSE)
 				LOG << "bypassing propagator propagating " << def << " into " << old << " within stmt " <<
 					(enclosingStmt ? enclosingStmt->getNumber() : 0) << " result " << ret << "\n";
-			return ret->accept(this);	// Recursively propagate and/or bypass more if possible
+			// Recursively propagate and/or bypass more if possible
+			return ret->accept(new BypassingPropagator(enclosingStmt));
 		}
 	}
 
@@ -626,6 +626,7 @@ void StmtImplicitConverter::visit(PhiAssign* s, bool& recur) {
 // Localiser. Subscript a location with the definitions that reach the call, or with {-} if none
 Exp* Localiser::preVisit(RefExp* e, bool& recur) {
 	recur = false;				// Don't recurse into already subscripted variables
+	mask <<= 1;
 	return e;
 }
 
@@ -633,30 +634,39 @@ Exp* Localiser::preVisit(Location* e, bool& recur) {
 	int d = e->getMemDepth();
 	if (d <= depth)				// Don't recurse if depth already too low, or equal
 		recur = false;
+	mask <<= 1;
 	return e;
 }
 
 Exp* Localiser::postVisit(Location* e) {
-	int d = e->getMemDepth();
+	Exp* ret = e;
+	if (!(unchanged & mask)) ret = e->simplify();
+	mask >>= 1;
+	int d = ret->getMemDepth();
 	if (d != depth && depth != -1) return e;	// Only subscript at the requested depth, or any if depth == -1
-	Exp* r = call->findDefFor(e);
-	Exp* ret;
-	if (r)
-		ret = r->clone();
-	else
-		ret = new RefExp(e, NULL);				// No definition reaches, so subscript with {-}
+	Exp* r = call->findDefFor(ret);
+	if (r) {
+		ret = r->clone()->bypassAndPropagate();
+		unchanged &= ~mask;
+		mod = true;
+	} else
+		ret = new RefExp(ret, NULL);				// No definition reaches, so subscript with {-}
 	return ret;
 }
 
 // Want to be able to localise a few terminals, in particular <all>
 Exp* Localiser::postVisit(Terminal* e) {
-	if (depth >= 1) return e;
-	Exp* r = call->findDefFor(e);
-	Exp* ret;
-	if (r)
-		ret = r->clone();
-	else
-		ret = new RefExp(e, NULL);				// No definition reaches, so subscript with {-}
+	Exp* ret = e;
+	if (!(unchanged & mask)) ret = e->simplify();
+	mask >>= 1;
+	if (depth >= 1) return ret;
+	Exp* r = call->findDefFor(ret);
+	if (r) {
+		ret = r->clone()->bypassAndPropagate();
+		unchanged &= ~mask;
+		mod = true;
+	} else
+		ret = new RefExp(ret, NULL);				// No definition reaches, so subscript with {-}
 	return ret;
 }
 

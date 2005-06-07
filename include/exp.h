@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.7 $
+ * $Revision: 1.119.2.8 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -344,8 +344,10 @@ virtual Exp*		accept(ExpModifier* v) = 0;
 		Exp*		expSubscriptValNull(Exp* e /*, Cfg* cfg */);
 		// Subscript all locations in this expression with their implicit assignments
 		Exp*		expSubscriptAllNull(/*Cfg* cfg*/);
-		// Perform simple (assignment only) propagation to this exp
-		Exp*		propagateToExp();
+		// Perform call bypass and simple (assignment only) propagation to this exp
+		// Note: can change this, so often need to clone before calling
+		Exp*		bypassAndPropagate();
+		void		bypassAndPropagateComp();		// As above, but only the xxx of m[xxx]
 virtual Memo		*makeMemo(int mId) = 0;
 virtual void		readMemo(Memo *m, bool dec) = 0;
 

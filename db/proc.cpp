@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.28 $
+ * $Revision: 1.238.2.29 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3541,6 +3541,17 @@ void UserProc::fromSSAform() {
 			// local10 /* r24{39} */. This one will be the result of a liveness overlap, and the local is already
 			symbolMap[ss->first] = ss->second;	// modified into the IR.
 	}
+
+	// Also the parameters
+	StatementList::iterator pp;
+	for (pp = parameters.begin(); pp != parameters.end(); ++pp) {
+		bool allZero;
+		Exp* lhs = ((Assignment*)*pp)->getLeft();
+		Exp* clean = lhs->clone()->removeSubscripts(allZero);
+		if (allZero)
+			((Assignment*)*pp)->setLeft(clean);
+		// Else leave them alone
+	}
 }
 
 void UserProc::insertArguments(StatementSet& rs) {
@@ -4369,7 +4380,7 @@ void UserProc::insertParameter(Exp* e) {
 									// filter out preserveds for arguments)
 			
 	// Wrap it in an implicit assignment; DFA based TA should update the type later
-	ImplicitAssign* as = new ImplicitAssign(e);
+	ImplicitAssign* as = new ImplicitAssign(e->clone());
 	// Insert as, in order, into the existing set of parameters
 	StatementList::iterator nn;
 	bool inserted = false;

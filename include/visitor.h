@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.7 $
+ * $Revision: 1.13.2.8 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -436,7 +436,7 @@ public:
 virtual void		visit(	    PhiAssign *s, bool& recur);
 };
 
-class Localiser : public ExpModifier {
+class Localiser : public SimpExpModifier {
 		CallStatement* call;					// The call to localise to
 		int			depth;						// Depth to allow localisation at
 public:

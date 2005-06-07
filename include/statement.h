@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.21 $
+ * $Revision: 1.76.2.22 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1012,8 +1012,10 @@ virtual bool		accept(StmtModifier* visitor);
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
+		// Note: can change e so usually need to clone the argument
 		// Was called substituteParams
 		Exp			*localiseExp(Exp *e, int depth = -1);			// Restrict to given depth
+		void		localiseComp(Exp* e, int depth = -1);			// Localise only xxx of m[xxx]
 		// Do the call bypass logic e.g. r28{20} -> r28{17} + 4 (where 20 is this CallStatement)
 		// Set ch if changed (bypassed)
 		Exp*		bypassRef(RefExp* r, bool& ch);
