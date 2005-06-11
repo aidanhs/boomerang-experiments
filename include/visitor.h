@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.8 $
+ * $Revision: 1.13.2.9 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -227,6 +227,8 @@ virtual bool		visit(ReturnStatement *stmt, bool& override) {override = false; re
 // StmtModifier is a class that visits all statements in an RTL, and for all expressions in the various types of
 // statements, makes a modification. The modification is as a result of an ExpModifier; there is a pointer to such an
 // ExpModifier in a StmtModifier
+// Even the top level of the LHS of assignments are changed. This is useful e.g. when modifiying locations to locals
+// as a result of converting from SSA form, e.g. eax := ebx -> local1 := local2
 // Classes that derive from StmtModifier inherit the code (in the accept member functions) to modify all the expressions
 // in the various types of statement.
 // Because there is nothing specialised about a StmtModifier, it is not an abstract class (can be instantiated).
@@ -235,6 +237,26 @@ public:
 	ExpModifier* mod;			// The expression modifier object
 					StmtModifier(ExpModifier* em) {mod = em;}	// Constructor
 	virtual			~StmtModifier() {}
+	// This class' visitor functions don't return anything. Maybe we'll need return values at a later stage.
+virtual void		visit(Assign *s,			bool& recur) {recur = true;}
+virtual void		visit(PhiAssign *s,			bool& recur) {recur = true;}
+virtual void		visit(ImplicitAssign *s,	bool& recur) {recur = true;}
+virtual void		visit(BoolAssign *s,		bool& recur) {recur = true;}
+virtual void		visit(GotoStatement *s,		bool& recur) {recur = true;}
+virtual void		visit(BranchStatement *s,	bool& recur) {recur = true;}
+virtual void		visit(CaseStatement *s,		bool& recur) {recur = true;}
+virtual void		visit(CallStatement *s,		bool& recur) {recur = true;}
+virtual void		visit(ReturnStatement *s,	bool& recur) {recur = true;}
+};
+
+// As above, but specialised for propagating to. The top level of the lhs of assignment-like statements (including
+// arguments in calls) is not modified. So for example eax := ebx -> eax := local2. In m[xxx] := rhs, the rhs and
+// xxx are modified, but not the m[xxx]
+class StmtPartModifier {
+public:
+	ExpModifier* mod;			// The expression modifier object
+					StmtPartModifier(ExpModifier* em) {mod = em;}	// Constructor
+	virtual			~StmtPartModifier() {}
 	// This class' visitor functions don't return anything. Maybe we'll need return values at a later stage.
 virtual void		visit(Assign *s,			bool& recur) {recur = true;}
 virtual void		visit(PhiAssign *s,			bool& recur) {recur = true;}
@@ -267,6 +289,7 @@ protected:
 public:
 					SimpExpModifier()	{ mask = 1; unchanged = (unsigned)-1;}
 		unsigned	getUnchanged()		{ return unchanged;}
+		bool		isTopChanged()		{ return !(unchanged & mask);}
 virtual Exp*		preVisit(Unary		*e, bool& recur) { recur = true; mask <<= 1; return e;}
 virtual Exp*		preVisit(Binary		*e, bool& recur) { recur = true; mask <<= 1; return e;}
 virtual Exp*		preVisit(Ternary	*e, bool& recur) { recur = true; mask <<= 1; return e;}

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.11 $
+ * $Revision: 1.90.2.12 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -71,7 +71,7 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 
 	// Check if it's mapped to a symbol
 	if (m_proc) {
-		char* sym = m_proc->lookup(exp);
+		char* sym = m_proc->lookupSym(exp);
 		if (sym) {
 			str << sym;
 			return;
@@ -1181,7 +1181,7 @@ void CHLLCode::AddProcDec	(UserProc* proc, bool open) {
 			LOG << "ERROR: no type for parameter " << left << "!\n";
 			ty = new IntegerType();
 		}
-		char* name = proc->lookup(left);
+		char* name = proc->lookupSym(left);
 		if (ty->isPointer() && ((PointerType*)ty)->getPointsTo()->isArray()) {
 			// C does this by default when you pass an array, i.e. you pass &array meaning array
 			// Replace all m[param] with foo, param with foo, then foo with param

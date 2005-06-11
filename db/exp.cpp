@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.16 $
+ * $Revision: 1.172.2.17 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -3497,10 +3497,8 @@ Type *RefExp::getType()
 	}
 	if (def && def->isPhi()) {
 		PhiAssign *phi = (PhiAssign*)def;
-#if 1
-		if (VERBOSE)
+		if (DEBUG_TA)
 			LOG << "checking statements in " << phi << " for type of " << this << "\n";
-#endif
 		PhiAssign::iterator uu;
 		for (uu = phi->begin(); uu != phi->end(); uu++) {
 			Statement *s = uu->def;

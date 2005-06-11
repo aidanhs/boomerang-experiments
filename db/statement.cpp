@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.25 $
+ * $Revision: 1.148.2.26 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1517,6 +1517,7 @@ void CallStatement::setSigArguments() {
 			l->setProc(proc);		// Needed?
 		}
 		Assign* as = new Assign(signature->getParamType(i), e->clone(), e->clone());
+		as->setNumber(number);		// So fromSSAform will work later
 		arguments.append(as);
 	}
 #if 0
@@ -1632,7 +1633,7 @@ bool CallStatement::searchAll(Exp* search, std::list<Exp *>& result) {
 void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
  
-	// Return(s), if any
+	// Define(s), if any
 	if (procDest && procDest->isLib()) {
 		Signature* sig = procDest->getSignature();
 		int n = sig->getNumReturns();
@@ -1677,25 +1678,14 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	}
 
 	// Print the actual arguments of the call
-	os << "(";
-	bool first = true;
+	os << "(\n";
 	StatementList::iterator aa;
 	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
-		if (first)
-			first = false;
-		else
-			os << ", ";
+		os << "                ";
 		((Assignment*)*aa)->printCompact(os);
+		os << "\n";
 	}
-#if 0
-	os << " implicit: ";
-	for (i = 0; i < implicitArguments.size(); i++) {
-		if (i != 0)
-			os << ", ";
-		os << implicitArguments[i];
-	}
-#endif
-	os << ")";
+	os << "              )";
 
 #if 1
 	// Collected reaching definitions
@@ -2156,10 +2146,16 @@ void CallStatement::fromSSAform(igraph& ig) {
 	if (pDest)
 		pDest = pDest->fromSSA(ig);
 	StatementList::iterator ss;
+	// FIXME: do the arguments need this treatment too? Surely they can't get tangled in interferences though
 	for (ss = arguments.begin(); ss != arguments.end(); ++ss)
 		(*ss)->fromSSAform(ig);
-	for (ss = defines.begin(); ss != defines.end(); ++ss)
-		(*ss)->fromSSAform(ig);
+	// Note that defines have statements (assignments) within a statement (this call). The fromSSA logic, which needs
+	// to subscript definitions on the left with the statement pointer, won't work if we just call the assignment's
+	// fromSSA() function
+	for (ss = defines.begin(); ss != defines.end(); ++ss) {
+		Assignment* as = ((Assignment*)*ss);
+		as->setLeft(as->getLeft()->fromSSAleft(ig, this));
+	}
 	// Don't think we'll need this anyway:
 	// defCol.fromSSAform(ig);
 }
@@ -3859,22 +3855,18 @@ bool CallStatement::accept(StmtModifier* v) {
 	StatementList::iterator it;
 	for (it = arguments.begin(); recur && it != arguments.end(); it++)
 		(*it)->accept(v);
-#if 0
-	for (it = implicitArguments.begin(); recur && it != implicitArguments.end(); it++)
-		*it = (*it)->accept(v->mod);
-#else
 	// For example: needed for CallBypasser so that a collected definition that happens to be another call gets
 	// adjusted
+	// I'm thinking no at present... let the bypass and propagate while possible logic take care of it, and leave the
+	// collectors as the rename logic set it
+#if 0
 	Collector::iterator cc;
 	for (cc = defCol.begin(); cc != defCol.end(); cc++)
 		(*cc)->accept(v->mod);			// Always refexps, so never need to change Exp pointer (i.e. don't need *cc = )
 #endif
-#if 0			// Don't accept modifications to my returns (context is of the callee)
-	std::vector<ReturnInfo>::iterator rr;
-	for (rr = returns->begin(); recur && rr != returns->end(); rr++)
-		if (rr->e)			// Can be NULL now; just ignore
-			rr->e = rr->e->accept(v->mod);
-#endif
+	StatementList::iterator dd;
+	for (dd = defines.begin(); recur && dd != defines.end(); ++dd)
+		(*dd)->accept(v);
 	return true;
 }
 
@@ -3893,6 +3885,120 @@ bool BoolAssign::accept(StmtModifier* v) {
 	v->visit(this, recur);
 	if (pCond && recur)
 		pCond = pCond->accept(v->mod);
+	if (recur && lhs->isMemOf()) {
+		Exp*& sub1 = ((Location*)lhs)->refSubExp1();
+		sub1 = sub1->accept(v->mod);
+	}
+	return true;
+}
+
+// Visiting from class StmtPartModifier
+// Modify all the various expressions in a statement, except for the top level of the LHS of assignments
+bool Assign::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	v->mod->clearMod();
+	if (recur && lhs->isMemOf()) {
+		Exp*& sub1 = ((Location*)lhs)->refSubExp1();
+		sub1 = sub1->accept(v->mod);
+	}
+	if (recur) rhs = rhs->accept(v->mod);
+	if (VERBOSE && v->mod->isMod())
+		LOG << "Assignment changed: now " << this << "\n";
+	return true;
+}
+bool PhiAssign::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	v->mod->clearMod();
+	if (recur && lhs->isMemOf()) {
+		Exp*& sub1 = ((Location*)lhs)->refSubExp1();
+		sub1 = sub1->accept(v->mod);
+	}
+	if (VERBOSE && v->mod->isMod())
+		LOG << "PhiAssign changed: now " << this << "\n";
+	return true;
+}
+
+bool ImplicitAssign::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	v->mod->clearMod();
+	if (recur && lhs->isMemOf()) {
+		Exp*& sub1 = ((Location*)lhs)->refSubExp1();
+		sub1 = sub1->accept(v->mod);
+	}
+	if (VERBOSE && v->mod->isMod())
+		LOG << "ImplicitAssign changed: now " << this << "\n";
+	return true;
+}
+
+
+bool GotoStatement::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	if (pDest && recur)
+		pDest = pDest->accept(v->mod);
+	return true;
+}
+
+bool BranchStatement::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	if (pDest && recur)
+		pDest = pDest->accept(v->mod);
+	if (pCond && recur)
+		pCond = pCond->accept(v->mod);
+	return true;
+}
+
+bool CaseStatement::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	if (pDest && recur)
+		pDest = pDest->accept(v->mod);
+	if (pSwitchInfo && pSwitchInfo->pSwitchVar && recur)
+		pSwitchInfo->pSwitchVar = pSwitchInfo->pSwitchVar->accept(v->mod);
+	return true;
+}
+
+bool CallStatement::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	if (pDest && recur)
+		pDest = pDest->accept(v->mod);
+	StatementList::iterator it;
+	for (it = arguments.begin(); recur && it != arguments.end(); it++)
+		(*it)->accept(v);
+	// For example: needed for CallBypasser so that a collected definition that happens to be another call gets
+	// adjusted
+	// But now I'm thinking no, the bypass and propagate while possible logic should take care of it.
+#if 0
+	Collector::iterator cc;
+	for (cc = defCol.begin(); cc != defCol.end(); cc++)
+		(*cc)->accept(v->mod);			// Always refexps, so never need to change Exp pointer (i.e. don't need *cc = )
+#endif
+	StatementList::iterator dd;
+	for (dd = defines.begin(); recur && dd != defines.end(); dd++)
+		(*dd)->accept(v);
+	return true;
+}
+
+bool ReturnStatement::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	ReturnStatement::iterator rr;
+	for (rr = defs.begin(); rr != defs.end(); ++rr)
+		if (!(*rr)->accept(v))
+			return false;
+	return true;
+}
+
+bool BoolAssign::accept(StmtPartModifier* v) {
+	bool recur;
+	v->visit(this, recur);
+	if (pCond && recur)
+		pCond = pCond->accept(v->mod);
 	if (lhs && recur)
 		lhs = lhs->accept(v->mod);
 	return true;
@@ -3901,8 +4007,10 @@ bool BoolAssign::accept(StmtModifier* v) {
 // Fix references to the returns of call statements
 void Statement::bypassAndPropagate() {
 	BypassingPropagator bp(this);
-	StmtModifier sm(&bp);
+	StmtPartModifier sm(&bp);			// Use the Part modifier so we don't change the top level of LHS of assigns etc
 	accept(&sm);
+	if (bp.isTopChanged())
+		simplify();						// E.g. m[esp{20}] := blah -> m[esp{-}-20+4] := blah
 }
 
 // Find the locations used by expressions in this Statement.
@@ -4417,7 +4525,10 @@ Exp* ArgSourceProvider::nextArgLoc() {
 			return s;
 		case SRC_COL:
 			if (cc == defCol->end()) return NULL;
-			return *cc++;
+			// Note that unlike the above two cases, the collector has the propagated but not call-bypassed location.
+			// It seems a pity to throw away the propagated value, but it needs bypassing anyway.
+			// So just discard the subscript.
+			return ((RefExp*)*cc++)->getSubExp1();
 	}
 	return NULL;		// Suppress warning
 }
@@ -4573,8 +4684,10 @@ StatementList* CallStatement::calcResults() {
 		int n = sig->getNumReturns();
 		for (int i=1; i < n; i++) {						// Ignore first (stack pointer) return
 			Exp* sigReturn = sig->getReturnExp(i);
-			if (useCol.exists(sigReturn))
-				ret->append(new ImplicitAssign(sig->getReturnType(i), sigReturn));
+			if (useCol.exists(sigReturn)) {
+				ImplicitAssign* as = new ImplicitAssign(sig->getReturnType(i), sigReturn);
+				ret->append(as);
+			}
 		}
 	} else {
 		StatementList::iterator dd;
@@ -4623,19 +4736,6 @@ void CallStatement::removeDefine(Exp* e) {
 	LOG << "WARNING: could not remove define " << e << " from call " << this << "\n";
 }
 
-bool CallStatement::isInCycle(CycleList* sc) {
-	CycleList::iterator ii;
-	// Look for entry <proc> followed immediately by entry <procDest>
-	for (ii = sc->begin(); ii != sc->end(); ++ii) {
-		if (*ii != proc) continue;
-		if (++ii == sc->end())
-			// The call from d to a is a cycle of abcd (cycles wrap around)
-			return *sc->begin() == procDest;
-		return *ii == procDest;
-	}
-	return false;
-}
-
 bool CallStatement::isChildless() {
 	if (procDest == NULL) return true;
 	if (procDest->isLib()) return false;
@@ -4659,7 +4759,19 @@ Exp* CallStatement::bypassRef(RefExp* r, bool& ch) {
 		// Have to use the proven information for the callee (if any)
 		if (procDest == NULL)
 			return r;				// Childless callees transmit nothing
-		proven = procDest->getProven(base);				// e.g. r28+4
+		//if (procDest->isLocal(base))					// ICK! Need to prove locals and parameters through calls...
+		// FIXME: temporary HACK! Ignores alias issues.
+		if (!procDest->isLib() &&
+				((UserProc*)procDest)->isLocalOrParam(base)) {
+			Exp* ret = localiseExp(base->clone());	// Assume that it is proved as preserved
+			ch = true;
+			if (VERBOSE)
+				LOG << base << " allowed to bypass call statement " << number << " ignoring aliasing; result " << ret <<
+					"\n";
+			return ret;
+		}
+			
+		proven = procDest->getProven(base);			// e.g. r28+4
 	}
 	if (proven == NULL)
 		return r;										// Can't bypass, since nothing proven

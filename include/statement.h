@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.22 $
+ * $Revision: 1.76.2.23 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -71,13 +71,14 @@ class Signature;
 class StmtVisitor;
 class StmtExpVisitor;
 class StmtModifier;
+class StmtPartModifier;
 class HLLCode;
 class Assign;
 class RTL;
 class XMLProgParser;
 class ReturnStatement;
 
-typedef std::list<UserProc*> CycleList;
+typedef std::set<UserProc*> CycleSet;
 
 // The map of interferences. It maps locations such as argc{55} to a local, e.g. local17
 //typedef std::map<Exp*, Exp*, lessExpStar> igraph;
@@ -171,6 +172,7 @@ virtual Statement*	clone() = 0;			   // Make copy of self
 virtual bool		accept(StmtVisitor* visitor) = 0;
 virtual bool		accept(StmtExpVisitor* visitor) = 0;
 virtual bool		accept(StmtModifier* visitor) = 0;
+virtual bool		accept(StmtPartModifier* visitor) = 0;
 
 		void		setLexBegin(unsigned int n) { lexBegin = n; }
 		void		setLexEnd(unsigned int n) { lexEnd = n; }
@@ -368,6 +370,7 @@ virtual Statement* clone() = 0;
 virtual bool		accept(StmtVisitor* visitor) = 0;
 virtual bool		accept(StmtExpVisitor* visitor) = 0;
 virtual bool		accept(StmtModifier* visitor) = 0;
+virtual bool		accept(StmtPartModifier* visitor) = 0;
 
 		void		print(std::ostream& os);
 virtual void		printCompact(std::ostream& os) = 0;	// Without statement number
@@ -461,6 +464,7 @@ virtual Exp*		getRight() { return rhs; }
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 virtual void		printCompact(std::ostream& os);	// Without statement number
 
@@ -561,6 +565,7 @@ virtual Exp*		getRight() { return NULL; }
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 virtual void		printCompact(std::ostream& os);
 
@@ -648,6 +653,7 @@ virtual void		simplify() {}
 virtual	bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 };		// class ImplicitAssign
 
@@ -673,6 +679,7 @@ virtual Statement*	clone();
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 		// Set and return the BRANCH_TYPE of this scond as well as whether the
 		// floating point condition codes are used.
@@ -746,6 +753,7 @@ virtual Statement*	clone();
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 		// Set and return the destination of the jump. The destination is either an Exp, or an ADDRESS that is
 		// converted to a Exp.
@@ -818,6 +826,7 @@ virtual Statement* clone();
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 		// Set and return the BRANCH_TYPE of this jcond as well as whether the
 		// floating point condition codes are used.
@@ -910,6 +919,7 @@ virtual Statement*	clone();
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 		// Set and return the Exp representing the switch variable
 		SWITCH_INFO* getSwitchInfo(); 
@@ -989,6 +999,7 @@ virtual Statement*	clone();
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 		void		setArguments(StatementList& args);
 		// Set implicit arguments: so far, for testing only:
@@ -1008,7 +1019,6 @@ virtual bool		accept(StmtModifier* visitor);
 		ReturnStatement* getCalleeReturn() {return calleeReturn; }
 		void		setCalleeReturn(ReturnStatement* ret) {calleeReturn = ret;}
 		bool		isChildless();
-		bool		isInCycle(CycleList* sc);	// True if this call is in part of the given recursion cycle
 		Exp			*getProven(Exp *e);
 		Signature*	getSignature() {return signature;}
 		// Localise the various components of expression e with reaching definitions to this call
@@ -1200,6 +1210,7 @@ virtual Statement* clone();
 virtual bool		accept(StmtVisitor* visitor);
 virtual bool		accept(StmtExpVisitor* visitor);
 virtual bool		accept(StmtModifier* visitor);
+virtual bool		accept(StmtPartModifier* visitor);
 
 virtual bool		definesLoc(Exp* loc);					// True if this Statement defines loc
 
