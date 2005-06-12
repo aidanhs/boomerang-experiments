@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.20 $
+/* $Revision: 1.115.2.21 $
 */
 
 #ifndef _PROC_H_
@@ -302,6 +302,7 @@ enum ProcStatus {
 	PROC_VISITED,		// Has been visited on the way down in decompile()
 	PROC_INCYCLE,		// Is involved in cycles, has not completed initial decompilation as yet
 	PROC_PREPRES,		// Has had enough propagation etc to perform preservation analysis
+	PROC_PRESERVES,		// Has had preservation analysis done
 	PROC_INITIAL,		// Has had initial decompiling only (some callees were involved in recursion)
 	PROC_FINAL			// Has had final decompilation
 	// , PROC_RETURNS	// Has had returns intersected with all caller's defines

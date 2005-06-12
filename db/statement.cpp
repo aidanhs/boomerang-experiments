@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.26 $
+ * $Revision: 1.148.2.27 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2158,6 +2158,10 @@ void CallStatement::fromSSAform(igraph& ig) {
 	}
 	// Don't think we'll need this anyway:
 	// defCol.fromSSAform(ig);
+
+	// However, need modifications of the use collector; needed when say eax is renamed to local5, otherwise
+	// local5 is removed from the results of the call
+	useCol.fromSSAform(ig, this);
 }
 
 
@@ -4512,16 +4516,20 @@ ArgSourceProvider::ArgSourceProvider(CallStatement* call) : call(call) {
 
 Exp* ArgSourceProvider::nextArgLoc() {
 	Exp* s;
+	bool allZero;
 	switch(src) {
 		case SRC_LIB:
 			if (i == n) return NULL;
 			s = destSig->getParamExp(i++)->clone();
+			s->removeSubscripts(allZero);		// e.g. m[sp{-} + 4] -> m[sp + 4]
 			call->localiseComp(s);
 			return s;
 		case SRC_CALLEE:
 			if (pp == calleeParams->end()) return NULL;
 			s = ((Assignment*)*pp++)->getLeft()->clone();
-			call->localiseComp(s);
+			s->removeSubscripts(allZero);
+			call->localiseComp(s);					// Localise the components. Has the effect of translating into
+													// the contect of this caller 
 			return s;
 		case SRC_COL:
 			if (cc == defCol->end()) return NULL;
@@ -4552,6 +4560,7 @@ Type* ArgSourceProvider::curType(Exp* e) {
 }
 
 bool ArgSourceProvider::exists(Exp* e) {
+	bool allZero;
 	switch (src) {
 		case SRC_LIB:
 			if (destSig->hasEllipsis())
@@ -4559,6 +4568,7 @@ bool ArgSourceProvider::exists(Exp* e) {
 				return true;
 			for (i=0; i < n; i++) {
 				Exp* sigParam = destSig->getParamExp(i)->clone();
+				sigParam->removeSubscripts(allZero);
 				call->localiseComp(sigParam);
 				if (*sigParam == *e)
 					return true;
@@ -4567,6 +4577,7 @@ bool ArgSourceProvider::exists(Exp* e) {
 		case SRC_CALLEE:
 			for (pp = calleeParams->begin(); pp != calleeParams->end(); ++pp) {
 				Exp* par = ((Assignment*)*pp)->getLeft()->clone();
+				par->removeSubscripts(allZero);
 				call->localiseComp(par);
 				if (*par == *e)
 					return true;

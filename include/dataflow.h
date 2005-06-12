@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.16 $
+ * $Revision: 1.39.2.17 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -216,6 +216,7 @@ public:
 		void		remove(iterator it) {			// Remove the current location
 						locs.remove(it);
 					}
+		void		fromSSAform(igraph& ig, Statement* def);	// Translate out of SSA form
 };
 
 

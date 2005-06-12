@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.17 $
+ * $Revision: 1.43.2.18 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -527,3 +527,20 @@ void DataFlow::dumpStacks() {
 	}
 }
 
+// Called from CallStatement::fromSSAform
+void UseCollector::fromSSAform(igraph& ig, Statement* def) {
+	LocationSet removes, inserts;
+	iterator it;
+	for (it = locs.begin(); it != locs.end(); ++it) {
+		RefExp* ref = new RefExp(*it, def);			// Wrap it in a def
+		Exp* ret = ref->fromSSA(ig);
+		if (!(*ret == **it)) {
+			removes.insert(*it);
+			inserts.insert(ret);
+		}
+	}
+	for (it = removes.begin(); it != removes.end(); ++it)
+		locs.erase(it);
+	for (it = inserts.begin(); it != inserts.end(); ++it)
+		locs.insert(*it);
+}

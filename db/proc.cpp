@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.30 $
+ * $Revision: 1.238.2.31 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1075,6 +1075,7 @@ void UserProc::initialDecompile() {
 		printToLog();
 		LOG << "=== end after preservation, bypass and propagation ===\n";
 	}
+	status = PROC_PRESERVES;		// Preservation done
 
 	if (!Boomerang::get()->noPromote)
 		// We want functions other than main to be promoted. Needed before mapExpressionsToLocals
@@ -1099,6 +1100,11 @@ void UserProc::initialDecompile() {
 
 
 	// Update the arguments for calls (mainly for the non recursion affected calls)
+	// Ick! We have never run renameBlockVars at depth > 0 at this point, so the collectors in the call statements
+	// don't have definitions for m[...], so the findDefFor() in the localiseExp() will fail.
+	// We don't want to collect rubbish like m[esp{51}+8] where 51 is a phi statement that will go away with bypass
+	// analysis, so it's correct to leave renameBlockVars sensitive to the depth parameter
+	updateBlockVars(1);				// Minimum depth 1
 	updateArguments();
 
 	// For each memory depth (2)
@@ -4440,20 +4446,13 @@ void UserProc::dumpIgraph(igraph& ig) {
 void UserProc::updateArguments() {
 	if (VERBOSE)
 		LOG << "### update arguments for " << getName() << " ###\n";
-	// Ick! We have never run renameBlockVars at depth > 0 at this point, so the collectors in the call statements
-	// don't have definitions for m[...], so the findDefFor() in the localiseExp() will fail.
-	// We don't want to collect rubbish like m[esp{51}+8] where 51 is a phi statement that will go away with bypass
-	// analysis, so it's correct to leave renameBlockVars sensitive to the depth parameter
-	updateBlockVars(1);				// Minimum depth 1
-printToLog();
 	BB_IT it;
 	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
 	for (it = cfg->begin(); it != cfg->end(); ++it) {
 		CallStatement* c = (CallStatement*) (*it)->getLastStmt(rrit, srit);
 		if (!c->isCall()) continue;
 		c->updateArguments();
-		updateBlockVars();			// In case there are new arguments to propagate to
-		c->bypassAndPropagate();
+		//c->bypassAndPropagate();
 		if (VERBOSE) {
 			std::ostringstream ost;
 			c->print(ost);
@@ -4639,8 +4638,6 @@ void UserProc::fixCallAndPhiRefs() {
 		s = *it;
 		if (s->isPhi()) {
 			PhiAssign* ps = (PhiAssign*)s;
-if (s->getNumber() == 51)
-  std::cerr << "HACK!\n";
 			if (ps->getNumDefs() == 0) continue;		// Can happen e.g. for m[...] := phi {} when this proc is
 														// involved in a recursion group
 			Exp* lhs = ps->getLeft();
@@ -4760,7 +4757,7 @@ void UserProc::propagateToCollector(int depth) {
 	}
 }
 
-// Get the initial parameters, based on the UserProc's use collector
+// Get the initial parameters, based on this UserProc's use collector
 void UserProc::initialParameters() {
 	if (VERBOSE)
 		LOG << "### initial parameters for " << getName() << "\n";
