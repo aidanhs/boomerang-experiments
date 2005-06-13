@@ -153,7 +153,7 @@ virtual void	AddAssignmentStatement(int indLevel, Assign *asgn);
 virtual void	AddCallStatement(int indLevel, Proc *proc, const char *name, StatementList& args,
 					StatementList* results);
 virtual void	AddIndCallStatement(int indLevel, Exp *exp, StatementList &args, StatementList* results);
-virtual void	AddReturnStatement(int indLevel, ReturnStatement& rs);
+virtual void	AddReturnStatement(int indLevel, StatementList* rets);
 
 		// proc related
 virtual void	AddProcStart(UserProc* proc);

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.23 $
+ * $Revision: 1.76.2.24 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1243,6 +1243,9 @@ virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 
 		// From SSA form
 virtual void		fromSSAform(igraph& igm);
+
+		// Remove the stack pointer and return a statement list
+		StatementList* getCleanReturns();
 
 		// Temporary hack
 		void		specialProcessing();

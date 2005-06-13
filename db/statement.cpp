@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.27 $
+ * $Revision: 1.148.2.28 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2630,7 +2630,7 @@ bool ReturnStatement::accept(StmtVisitor* visitor) {
 }
 
 void ReturnStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
-	hll->AddReturnStatement(indLevel, *this);
+	hll->AddReturnStatement(indLevel, getCleanReturns());
 }
 
 void ReturnStatement::simplify() {
@@ -4690,23 +4690,32 @@ Exp* CallStatement::fromCalleeContext(Exp* e) {
 // So the RHS is just ignored
 StatementList* CallStatement::calcResults() {
 	StatementList* ret = new StatementList;
-	if (procDest && procDest->isLib()) {
+	if (procDest) {
 		Signature* sig = procDest->getSignature();
-		int n = sig->getNumReturns();
-		for (int i=1; i < n; i++) {						// Ignore first (stack pointer) return
-			Exp* sigReturn = sig->getReturnExp(i);
-			if (useCol.exists(sigReturn)) {
-				ImplicitAssign* as = new ImplicitAssign(sig->getReturnType(i), sigReturn);
-				ret->append(as);
+		if (procDest && procDest->isLib()) {
+			int n = sig->getNumReturns();
+			for (int i=1; i < n; i++) {						// Ignore first (stack pointer) return
+				Exp* sigReturn = sig->getReturnExp(i);
+				if (useCol.exists(sigReturn)) {
+					ImplicitAssign* as = new ImplicitAssign(sig->getReturnType(i), sigReturn);
+					ret->append(as);
+				}
+			}
+		} else {
+			Exp* rsp = Location::regOf(sig->getStackRegister());
+			StatementList::iterator dd;
+			for (dd = defines.begin(); dd != defines.end(); ++dd) {
+				Exp* lhs = ((Assign*)*dd)->getLeft();
+				// The stack pointer is allowed as a define, so remove it here as a special case non result
+				if (*lhs == *rsp) continue;
+				if (useCol.exists(lhs))
+					ret->append(*dd);
 			}
 		}
 	} else {
-		StatementList::iterator dd;
-		for (dd = defines.begin(); dd != defines.end(); ++dd) {
-			Exp* lhs = ((Assign*)*dd)->getLeft();
-			if (useCol.exists(lhs))
-				ret->append(*dd);
-		}
+		// For a call with no destination at this late stage, use everything live at the call except for the stack
+		// pointer register. Needs to be sorted
+		assert("not implemented yet" - "not implemented yet");
 	}
 	return ret;
 }
@@ -4793,4 +4802,16 @@ Exp* CallStatement::bypassRef(RefExp* r, bool& ch) {
 	if (ch && VERBOSE)
 		LOG << "bypassRef() replacing " << r << " with " << proven << "\n";
 	return proven;
+}
+
+StatementList* ReturnStatement::getCleanReturns() {
+	StatementList* ret = new StatementList;
+	StatementList::iterator rr;
+	Exp* rsp = Location::regOf(Signature::getStackRegister(proc->getProg()));
+	for (rr = defs.begin(); rr != defs.end(); ++rr) {
+		Exp* lhs = ((Assign*)*rr)->getLeft();
+		if (!(*lhs == *rsp))
+			ret->append(*rr);
+	}
+	return ret;
 }

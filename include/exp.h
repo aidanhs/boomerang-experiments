@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.8 $
+ * $Revision: 1.119.2.9 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -225,6 +225,9 @@ virtual bool		isTerminal() { return false; }
 		bool		isLocation() { return	op == opMemOf || op == opRegOf ||
 								   			op == opGlobal || op == opLocal ||
 								   			op == opParam; }
+
+		// True if this is a typed expression
+		bool		isTypedExp() { return op == opTypedExp;}
 					 
 
 		// Matches this expression to the pattern, if successful returns a list of variable bindings, otherwise returns

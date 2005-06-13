@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.12 $
+ * $Revision: 1.90.2.13 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1082,7 +1082,7 @@ void CHLLCode::AddCallStatement(int indLevel, Proc *proc, const char *name, Stat
 	if (results->size() > 1) {
 		bool first = true;
 		s << " /* OUT: ";
-		for (ss = results->begin(); ss != results->end(); ++ss) {
+		for (ss = ++results->begin(); ss != results->end(); ++ss) {
 			if (first)
 				first = false;
 			else
@@ -1118,15 +1118,17 @@ void CHLLCode::AddIndCallStatement(int indLevel, Exp *exp, StatementList &args, 
 }
 
 
-void CHLLCode::AddReturnStatement(int indLevel, ReturnStatement& rs) {
+void CHLLCode::AddReturnStatement(int indLevel, StatementList* rets) {
 	// FIXME: should be returning a struct of more than one real return */
+	// The stack pointer is wanted as a define in calls, and so appears in returns, but needs to be removed here
+	StatementList::iterator rr;
 	std::ostringstream s;
 	indent(s, indLevel);
 	s << "return";
-	int n = rs.getNumReturns();
+	int n = rets->size();
 	if (n >= 1) {
 		s << " ";
-		appendExp(s, ((Assign*)*rs.begin())->getRight(), PREC_NONE);
+		appendExp(s, ((Assign*)*rets->begin())->getRight(), PREC_NONE);
 	}
 	s << ";";
 
@@ -1134,7 +1136,7 @@ void CHLLCode::AddReturnStatement(int indLevel, ReturnStatement& rs) {
 		if (n > 1)
 			s << "\t/* ";
 		bool first = true;
-		for (ReturnStatement::iterator rr = ++rs.begin(); rr != rs.end(); ++rr) {
+		for (rr = ++rets->begin(); rr != rets->end(); ++rr) {
 			if (first)
 				first = false;
 			else

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.9 $
+ * $Revision: 1.98.2.10 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -165,7 +165,7 @@ namespace CallingConvention {
 		class SparcLibSignature : public SparcSignature {
 		public:
 								SparcLibSignature(const char *nam) : SparcSignature(nam) {}
-								SparcLibSignature(Signature &old) : SparcSignature(old) {}
+								SparcLibSignature(Signature &old);
 			virtual Signature	*clone();
 			virtual Exp*		getProven(Exp* left);
 		};	// class SparcLibSignature
@@ -173,8 +173,10 @@ namespace CallingConvention {
 		class PPCSignature : public Signature {
 		public:
 								PPCSignature(const char *name);
+								PPCSignature(Signature& old);
 			virtual				~PPCSignature() { }
 			virtual	Signature	*clone();
+			static	bool		qualified(UserProc *p, Signature &candidate);
 			virtual void		addReturn(Type *type, Exp *e = NULL);
 			virtual	Exp			*getArgumentExp(int n);
 			virtual	void		addParameter(Type *type, const char *nam /*= NULL*/, Exp *e /*= NULL*/);
@@ -492,8 +494,7 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p, Signature
 		Assign *e = dynamic_cast<Assign*>(s);
 		if (e == NULL) continue;
 		if (e->getLeft()->getOper() == opPC) {
-			if (e->getRight()->isMemOf() && 
-					e->getRight()->getSubExp1()->isRegOfN(28) {
+			if (e->getRight()->isMemOf() && e->getRight()->getSubExp1()->isRegOfN(28)) {
 				if (VERBOSE)
 					std::cerr << "got pc = m[r[28]]" << std::endl;
 				gotcorrectret1 = true;
@@ -599,6 +600,9 @@ CallingConvention::StdC::PPCSignature::PPCSignature(const char *nam) : Signature
 	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "r1",
 	// 								Location::regOf(1), NULL);
 	// FIXME: Should also add m[r1+4] as an implicit parameter? Holds return address
+}
+
+CallingConvention::StdC::PPCSignature::PPCSignature(Signature& old) : Signature(old) {
 }
 
 Signature *CallingConvention::StdC::PPCSignature::clone() {
@@ -741,8 +745,8 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p, Signature &
 	if (plat != PLAT_SPARC) return false;
 
 // I don't really like the idea of these promotions. Yes, we assume that sparc programs behave in certain ways... but
-// the fact that r14 and r30 doesn't really make that much more likely. We don't assume calling conventions, just some
-// fairly basic things like m[sp+K] is in the parent's stack frame.
+// the fact that r14 and r30 are preserved doesn't really make that much more likely. We don't assume calling
+// conventions, just some fairly basic things like m[sp+K] is in the parent's stack frame.
 #if 0
 	Exp* provenStack = p->getProven(Location::regOf(14));
 	// Don't remove the clone() below; the original is still in the proven set
@@ -756,6 +760,19 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p, Signature &
 
 	if (VERBOSE)
 		LOG << "Promoted to StdC::SparcSignature\n";
+	
+	return true;
+}
+
+bool CallingConvention::StdC::PPCSignature::qualified(UserProc *p, Signature &candidate) {
+	if (VERBOSE)
+		LOG << "consider promotion to stdc PPC signature for " << p->getName() << "\n";
+	
+	platform plat = p->getProg()->getFrontEndId();
+	if (plat != PLAT_PPC) return false;
+
+	if (VERBOSE)
+		LOG << "Promoted to StdC::PPCSignature (always qualifies)\n";
 	
 	return true;
 }
@@ -1172,6 +1189,7 @@ Exp *Signature::getArgumentExp(int n) {
 }
 
 Signature *Signature::promote(UserProc *p) {
+	// FIXME: the whole promotion idea needs a redesign...
 	if (CallingConvention::Win32Signature::qualified(p, *this)) {
 		Signature *sig = new CallingConvention::Win32Signature(*this);
 //		sig->analyse(p);
@@ -1188,6 +1206,13 @@ Signature *Signature::promote(UserProc *p) {
 
 	if (CallingConvention::StdC::SparcSignature::qualified(p, *this)) {
 		Signature *sig = new CallingConvention::StdC::SparcSignature(*this);
+//		sig->analyse(p);
+		delete this;
+		return sig;
+	}
+
+	if (CallingConvention::StdC::PPCSignature::qualified(p, *this)) {
+		Signature *sig = new CallingConvention::StdC::PPCSignature(*this);
 //		sig->analyse(p);
 		delete this;
 		return sig;
@@ -1476,7 +1501,7 @@ StatementList& Signature::getStdRetStmt(Prog* prog) {
 	return *new StatementList;
 }
 
-// Needed before the first proof is done. Ugh.
+// Needed before the signature is promoted
 int Signature::getStackRegister(Prog* prog) {
 	MACHINE mach = prog->getMachine();
 	switch (mach) {
@@ -1493,7 +1518,7 @@ int Signature::getStackRegister(Prog* prog) {
 }
 
 bool Signature::isStackLocal(Prog* prog, Exp *e) {
-	// e must me m[...]
+	// e must be m[...]
 	if (!e->isMemOf()) return false;
 	Exp* addr = ((Location*)e)->getSubExp1();
 	return isAddrOfStackLocal(prog, addr);

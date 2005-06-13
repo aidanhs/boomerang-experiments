@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.31 $
+ * $Revision: 1.238.2.32 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -863,6 +863,11 @@ CycleSet* UserProc::decompile(CycleList* path) {
 				CallStatement* call = (CallStatement*)bb->getRTLs()->back()->getHlStmt();
 				UserProc* c = (UserProc*)call->getDestProc();
 				if (c->isLib()) continue;
+				if (c->status == PROC_FINAL) {
+					// Already decompiled, but the return statement still needs to be set for this call
+					call->setCalleeReturn(c->getTheReturnStatement());
+					continue;
+				}
 				// if c has already been visited (i.e. we have a new cycle)
 				if (c->status >= PROC_VISITED && c->status < PROC_FINAL) {
 					// if c is in path
@@ -4397,6 +4402,8 @@ void UserProc::addImplicitAssigns() {
 }
 
 char* UserProc::lookupSym(Exp* e) {
+	if (e->isTypedExp())
+		e = ((TypedExp*)e)->getSubExp1();
 	SymbolMapType::iterator it;
 	it = symbolMap.find(e);
 	if (it == symbolMap.end())
@@ -4511,6 +4518,9 @@ bool UserProc::filterReturns(Exp* e) {
 	switch (e->getOper()) {
 		case opPC:	return true;
 		case opTemp: return true;
+		// Would like to handle at least %ZF, %CF one day. For now, filter them out
+		case opZF: case opCF: case opFlags:
+			return true;
 #if 0							// Ugh - if not a return, then not a define in the callers, and then the whole preserved
 								// locations process falls apart
 		case opRegOf: {
