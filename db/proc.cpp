@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.32 $
+ * $Revision: 1.238.2.33 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1297,9 +1297,9 @@ void UserProc::initialDecompile() {
 		//fixCallBypass();	// FIXME: surely this is not necessary now?
 		//trimParameters();	// FIXME: surely there aren't any parameters to trim yet?
 		if (VERBOSE) {
-			LOG << "--- after replacing expressions, trimming params and returns ---\n";
+			LOG << "--- after replacing expressions, trimming params and returns for " << getName() << " ---\n";
 			printToLog();
-			LOG << "=== end after replacing expressions, trimming params and returns ===\n";
+			LOG << "=== end after replacing expressions, trimming params and returns for " << getName() << " ===\n";
 		}
 	}
 	if (VERBOSE)
@@ -1644,9 +1644,9 @@ int UserProc::findMaxDepth() {
 	return maxDepth;
 }
 
-// FIXME: Not needed now? Check.
+#if 0
 void UserProc::removeRedundantPhis() {
-	if (VERBOSE || DEBUG_UNUSED_STMT)
+	if (VERBOSE || DEBUG_UNUSED)
 		LOG << "removing redundant phi statements" << "\n";
 
 	// some phis are just not used, after certain operations e.g. fixCallBypass
@@ -1681,7 +1681,7 @@ void UserProc::removeRedundantPhis() {
 							allZeroOrSelfCall = false;
 					}
 					if (allZeroOrSelfCall) {
-						if (VERBOSE || DEBUG_UNUSED_STMT)
+						if (VERBOSE || DEBUG_UNUSED)
 							LOG << "removing phi using shakey hack:\n";
 						unused = true;
 						removeReturn(pa->getLeft());
@@ -1709,7 +1709,7 @@ void UserProc::removeRedundantPhis() {
 					// Is the left of the phi assignment the same base variable
 					// as all the operands (or the operand is NULL) ?
 					if (*s->getLeft() *= *first) {
-						if (DEBUG_UNUSED_STMT)
+						if (DEBUG_UNUSED)
 							LOG << "removing phi: left and all refs same or 0: " << s << "\n";
 						// Just removing the refs will work, or removing the whole phi
 						removeStatement(s);
@@ -1718,7 +1718,7 @@ void UserProc::removeRedundantPhis() {
 #endif
 			}
 			if (unused) {
-				if (DEBUG_UNUSED_STMT)
+				if (DEBUG_UNUSED)
 					LOG << "removing redundant phi " << s << "\n";
 				removeStatement(s);
 			}
@@ -1778,6 +1778,7 @@ void UserProc::removeRedundantPhis() {
 	}
 #endif
 }
+#endif
 
 void UserProc::findSpPreservation() {
 	if (VERBOSE)
@@ -1825,18 +1826,6 @@ void UserProc::findPreserveds() {
 	if (VERBOSE)
 		LOG << "finding preserveds for " << getName() << "\n";
 
-#if 0
-	// prove preservation for each return
-	for (unsigned u = 0; u < signature->getNumReturns(); u++) {
-		Exp *p = signature->getReturnExp(u);
-		Exp *e = new Binary(opEquals, p->clone(), p->clone());
-		if (DEBUG_PROOF)
-			LOG << "attempting to prove " << p << " is preserved by " << getName() << "\n";
-		if (prove(e)) {
-			removes.insert(p);	
-		}
-	}
-#else
 	// prove preservation for all definitions reaching the exit
 	DefCollector* defCol = theReturnStatement->getCollector();
 	Collector::iterator rd;
@@ -1849,7 +1838,6 @@ void UserProc::findPreserveds() {
 			removes.insert(equation);	
 		}
 	}
-#endif
 
 	if (DEBUG_PROOF) {
 		LOG << "### proven for procedure " << getName() << ":\n";
@@ -2136,7 +2124,7 @@ void UserProc::findFinalParameters() {
 						LOG << "ignoring local " << e << "\n";
 					continue;
 				}
-				if (e->getOper() == opGlobal) {
+				if (e->isGlobal()) {
 					if (VERBOSE)
 						LOG << "ignoring global " << e << "\n";
 					continue;
@@ -2146,20 +2134,20 @@ void UserProc::findFinalParameters() {
 						LOG << "ignoring complex " << e << "\n";
 					continue;
 				}
-				if (e->getOper() == opMemOf && e->getSubExp1()->getOper() == opGlobal) {
+				if (e->isMemOf() && e->getSubExp1()->isGlobal()) {
 					if (VERBOSE)
 						LOG << "ignoring m[global] " << e << "\n";
 					continue;
 				}
-				if (e->getOper() == opMemOf && e->getSubExp1()->getOper() == opParam) {
+				if (e->isMemOf() && e->getSubExp1()->getOper() == opParam) {
 					if (VERBOSE)
 						LOG << "ignoring m[param] " << e << "\n";
 					continue;
 				}
-				if (e->getOper() == opMemOf &&
+				if (e->isMemOf() &&
 						e->getSubExp1()->getOper() == opPlus &&
-						e->getSubExp1()->getSubExp1()->getOper() == opGlobal &&
-						e->getSubExp1()->getSubExp2()->getOper() == opIntConst) {
+						e->getSubExp1()->getSubExp1()->isGlobal() &&
+						e->getSubExp1()->getSubExp2()->isIntConst()) {
 					if (VERBOSE)
 						LOG << "ignoring m[global + int] " << e << "\n";
 					continue;
@@ -2167,6 +2155,11 @@ void UserProc::findFinalParameters() {
 				if (e->isRegN(sp)) {
 					if (VERBOSE)
 						LOG << "ignoring stack pointer register\n";
+					continue;
+				}
+				if (e->isMemOf() && e->getSubExp1()->isConst()) {
+					if (VERBOSE)
+						LOG << "ignoring m[const]\n";
 					continue;
 				}
 #if 0
@@ -2260,21 +2253,21 @@ int totparams = nparams;
 						// (e.g. r8{0})
 						(s->usesExp(p) || s->usesExp(params[i]))) {
 					referenced[i] = true;
-					if (DEBUG_UNUSED_RETS_PARAMS) {
+					if (DEBUG_UNUSED) {
 						LOG << "parameter " << p << " used by statement " << s->getNumber() << " : " << s->getKind() <<
 							"\n";
 					}
 				}
 				if (!referenced[i] && excluded.find(s) == excluded.end() &&
 						s->isPhi() && *((PhiAssign*)s)->getLeft() == *pe) {
-					if (DEBUG_UNUSED_RETS_PARAMS)
+					if (DEBUG_UNUSED)
 						LOG << "searching " << s << " for uses of " << params[i] << "\n";
 					PhiAssign *pa = (PhiAssign*)s;
 					PhiAssign::iterator it1;
 					for (it1 = pa->begin(); it1 != pa->end(); it1++)
 						if (it1->def == NULL) {
 							referenced[i] = true;
-							if (DEBUG_UNUSED_RETS_PARAMS)
+							if (DEBUG_UNUSED)
 								LOG << "parameter " << p << " used by phi statement " << s->getNumber() << "\n";
 							break;
 						}
@@ -2305,7 +2298,7 @@ void Proc::removeParameter(Exp *e) {
 	if (n != -1) {
 		signature->removeParameter(n);
 		for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
-			if (DEBUG_UNUSED_RETS_PARAMS)
+			if (DEBUG_UNUSED)
 				LOG << "removing argument " << e << " in pos " << n << " from " << *it << "\n";
 			(*it)->removeArgument(n);
 		}
@@ -2317,7 +2310,7 @@ void Proc::removeParameter(Exp *e) {
 		for (std::set<CallStatement*>::iterator it = callerSet.begin(); it != callerSet.end(); it++) {
 			// Don't remove an implicit argument if it is also a return of this call.
 			// Implicit arguments are needed for each return in fixCallBypass
-			if (DEBUG_UNUSED_RETS_PARAMS)
+			if (DEBUG_UNUSED)
 				LOG << "removing implicit argument " << e << " in pos " << n << " from " << *it << "\n";
 			(*it)->removeImplicitArgument(n);
 		}
@@ -3276,7 +3269,7 @@ void UserProc::countRefs(RefCounter& refCounts) {
 			((PhiAssign*)s)->simplifyRefs();
 			s->simplify();
 		}
-		if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
+		if (DEBUG_UNUSED)
 			LOG << "counting references in " << s << "\n";
 		LocationSet refs;
 #define IGNORE_IMPLICITS 0
@@ -3291,13 +3284,13 @@ void UserProc::countRefs(RefCounter& refCounts) {
 				Statement *ref = ((RefExp*)*rr)->getDef();
 				if (ref && ref->getNumber()) {
 					refCounts[ref]++;
-					if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS && s->isReturn())
+					if (DEBUG_UNUSED)
 						LOG << "counted ref to " << *rr << "\n";
 				}
 			}
 		}
 	}
-	if (DEBUG_UNUSED_STMT || DEBUG_UNUSED_RETS_PARAMS) {
+	if (DEBUG_UNUSED) {
 		RefCounter::iterator rr;
 		LOG << "### reference counts for " << getName() << ":\n";
 		for (rr = refCounts.begin(); rr != refCounts.end(); ++rr)
@@ -3463,12 +3456,12 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				StatementSet::iterator dd;
 				for (dd = stmtsRefdByUnused.begin(); dd != stmtsRefdByUnused.end(); dd++) {
 					if (*dd == NULL) continue;
-					if (DEBUG_UNUSED_STMT)
+					if (DEBUG_UNUSED)
 						LOG << "decrementing ref count of " << (*dd)->getNumber() << " because "
 							<< s->getNumber() << " is unused\n";
 					refCounts[*dd]--;
 				}
-				if (DEBUG_UNUSED_STMT)
+				if (DEBUG_UNUSED)
 					LOG << "removing unused statement " << s->getNumber() << " " << s << "\n";
 				removeStatement(s);
 				ll = stmts.erase(ll);	// So we don't try to re-remove it
@@ -3569,7 +3562,7 @@ void UserProc::fromSSAform() {
 		if (phiParamsSame) {
 			// Is the left of the phi assignment the same base variable as all the operands?
 			if (*pa->getLeft() == *first) {
-				if (DEBUG_LIVENESS || DEBUG_UNUSED_STMT)
+				if (DEBUG_LIVENESS || DEBUG_UNUSED)
 					LOG << "removing phi: left and all refs same or 0: " << s << "\n";
 				// Just removing the refs will work, or removing the whole phi
 				// NOTE: Removing the phi here may cause other statments to be not used. Soon I want to remove the
@@ -3974,7 +3967,7 @@ void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
 	// We have a reference to a return of the call statement
 	UserProc* proc = (UserProc*) call->getDestProc();
 	//if (proc->isLib()) return;
-	if (DEBUG_UNUSED_RETS_PARAMS) {
+	if (DEBUG_UNUSED) {
 		LOG << " @@ counted use of return location " << loc << " for call to ";
 		if (proc) 
 			LOG << proc->getName();
@@ -4000,7 +3993,7 @@ void UserProc::doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc)
 }
 
 void UserProc::countUsedReturns(ReturnCounter& rc) {
-	if (DEBUG_UNUSED_RETS_PARAMS)
+	if (DEBUG_UNUSED)
 		LOG << " @@ counting used returns in " << getName() << "\n";
 	StatementList stmts;
 	getStatements(stmts);
@@ -4062,7 +4055,7 @@ bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
 		//if (**it == *stackExp && signature->isFullSignature())
 			// If known to have a full signature, don't attempt to remove the SP
 			// continue;
-		if (DEBUG_UNUSED_RETS_PARAMS)
+		if (DEBUG_UNUSED)
 			LOG << " @@ removing unused return " << *it << " in " << getName() << "\n";
 		removeReturn(*it);
 		removedOne = true;
@@ -4559,7 +4552,10 @@ bool UserProc::filterReturns(Exp* e) {
 			}
 			return false;				// Might be some weird memory expression that is not a local
 #endif
-			return signature->isStackLocal(prog, e);		// Filter out local variables
+			// return signature->isStackLocal(prog, e);		// Filter out local variables
+			// Actually, surely all sensible architectures will only every return in registers. So for now, just
+			// filter out all mem-ofs
+			return true;
 		}
 		default:
 			return false;
