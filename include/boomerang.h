@@ -10,7 +10,7 @@
 /** \file	boomerang.h
  * \brief	Interface for the boomerang singleton object
  *
- * $Revision: 1.61.2.1 $
+ * $Revision: 1.61.2.2 $
  * 04 Dec 2002: Trent: Created
  */
 
@@ -43,6 +43,7 @@
 class Watcher {
 public:
 		Watcher() { }
+virtual	~Watcher() { };							// Prevent gcc4 warning
 
 		virtual void alert_complete() { }
 		virtual void alert_new(Proc *p) { }
@@ -221,7 +222,6 @@ static Boomerang *get() {
     bool debugSwitch;
     bool noParameterNames;
     bool debugLiveness;
-    bool debugUnusedRetsAndParams;
     bool debugTA;
 	/// A vector which contains all know entrypoints for the Prog.
     std::vector<ADDRESS> entrypoints;
@@ -237,7 +237,7 @@ static Boomerang *get() {
     bool decodeThruIndCall;
     bool noDecodeChildren;
     bool debugProof;
-    bool debugUnusedStmt;
+    bool debugUnused;
     bool loadBeforeDecompile;
     bool saveBeforeDecompile;
     bool overlapped;
@@ -253,7 +253,7 @@ static Boomerang *get() {
 #define VERBOSE				(Boomerang::get()->vFlag)
 #define DEBUG_TA			(Boomerang::get()->debugTA)
 #define DEBUG_PROOF 		(Boomerang::get()->debugProof)
-#define DEBUG_UNUSED_STMT 	(Boomerang::get()->debugUnusedStmt)
+#define DEBUG_UNUSED 		(Boomerang::get()->debugUnused)
 #define DEBUG_LIVENESS 		(Boomerang::get()->debugLiveness)
 #define DFA_TYPE_ANALYSIS	(Boomerang::get()->dfaTypeAnalysis)
 #define CON_TYPE_ANALYSIS	(Boomerang::get()->conTypeAnalysis)
@@ -261,7 +261,6 @@ static Boomerang *get() {
 #define DEBUG_GEN			(Boomerang::get()->debugGen)
 #define DUMP_XML			(Boomerang::get()->dumpXML)
 #define DEBUG_SWITCH		(Boomerang::get()->debugSwitch)
-#define DEBUG_UNUSED_RETS_PARAMS (Boomerang::get()->debugUnusedRetsAndParams)
 
 
 

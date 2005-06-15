@@ -6,7 +6,7 @@
  * OVERVIEW:   Command line processing for the Boomerang decompiler
  *============================================================================*/
 /*
- * $Revision: 1.115.2.4 $
+ * $Revision: 1.115.2.5 $
  * 28 Jan 05 - G. Krol: Separated -h output into sections and neatened
 */
 
@@ -43,11 +43,10 @@ Boomerang::Boomerang() : logger(NULL), vFlag(false), printRtl(false),
 	noRemoveLabels(false), noDataflow(false), noDecompile(false), stopBeforeDecompile(false),
 	traceDecoder(false), dotFile(NULL), numToPropagate(-1),
 	noPromote(false), propOnlyToAll(false), debugGen(false),
-	maxMemDepth(99), debugSwitch(false),
-	noParameterNames(false), debugLiveness(false), debugUnusedRetsAndParams(false),
+	maxMemDepth(99), debugSwitch(false), noParameterNames(false), debugLiveness(false), 
 	debugTA(false), decodeMain(true), printAST(false), dumpXML(false),
 	noRemoveReturns(false), debugDecoder(false), decodeThruIndCall(false),
-	noDecodeChildren(false), debugProof(false), debugUnusedStmt(false),
+	noDecodeChildren(false), debugProof(false), debugUnused(false),
 	loadBeforeDecompile(false), saveBeforeDecompile(false), overlapped(false),
 	noProve(false), noChangeSignatures(false), conTypeAnalysis(false), dfaTypeAnalysis(false),
 	noLimitPropagations(false), generateCallGraph(false), generateSymbols(false)
@@ -136,9 +135,8 @@ void Boomerang::help() {
 	std::cout << "  -dg              : Debug code Generation\n";
 	std::cout << "  -dl              : Debug liveness (from SSA) code\n";
 	std::cout << "  -dp              : Debug proof engine\n";
-	std::cout << "  -dr              : Debug removing unused returns and parameters\n";
 	std::cout << "  -dt              : Debug type analysis\n";
-	std::cout << "  -du              : Debug removing unused statements\n";
+	std::cout << "  -du              : Debug removing unused statements etc\n";
 	std::cout << "Restrictions\n";
 	std::cout << "  -nb              : No simplifications for branches\n";
 	std::cout << "  -nd              : No (reduced) dataflow analysis\n";
@@ -754,14 +752,11 @@ int Boomerang::commandLine(int argc, const char **argv)
 					case 'p':
 						debugProof = true;
 						break;
-					case 'r':		// debug counting unused Returns
-						debugUnusedRetsAndParams = true;
-						break;
 					case 't':		// debug type analysis
 						debugTA = true;
 						break;
-					case 'u':		// debug unused locations (incl unused rets)
-						debugUnusedStmt = true;
+					case 'u':		// debug unused locations (including returns and parameters now)
+						debugUnused = true;
 						break;
 					default:
 						help();
