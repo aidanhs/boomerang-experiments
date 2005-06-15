@@ -157,7 +157,6 @@ virtual				~LocationSet() {}						// virtual destructor kills warning
 		iterator	end()	 {return lset.end();}
 		void		insert(Exp* loc) {lset.insert(loc);}	// Insert the given location
 		void		remove(Exp* loc);						// Remove the given location
-		void		erase (iterator it) {lset.erase(it);}
 		void		remove(iterator ll) {lset.erase(ll);}	// Remove location, given iterator
 		void		removeIfDefines(StatementSet& given);	// Remove locs defined in given
 		unsigned	size() const {return lset.size();}		// Number of elements

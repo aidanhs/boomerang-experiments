@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.18 $
+ * $Revision: 1.43.2.19 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -304,7 +304,10 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				for (pp = pa->begin(); pp != pa->end(); ++pp) {
 					Statement* def = pp->def;
 					if (def && def->isCall())
+{ if (phiLeft->isSubscript())
+  std::cerr << "HACK1!\n";
 						((CallStatement*)def)->useBeforeDefine(phiLeft->clone());
+}
 				}
 			}
 			else
@@ -323,7 +326,10 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 						def = Stacks[base].top();
 						if (def->isCall())
 							// Calls have UseCollectors for locations that are used before definition at the call
+{ if (base->isSubscript())
+  std::cerr << "HACK2!\n";
 							((CallStatement*)def)->useBeforeDefine(base->clone());
+}
 					}
 					continue;							// Don't re-rename the renamed variable
 				}
@@ -344,7 +350,10 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					def = Stacks[x].top();
 				if (def && def->isCall())
 					// Calls have UseCollectors for locations that are used before definition at the call
+{ if (x->isSubscript())
+  std::cerr << "HACK3!\n";
 					((CallStatement*)def)->useBeforeDefine(x->clone());
+}
 				// Replace the use of x with x{def} in S
 				if (S->isPhi()) {
 					Exp* phiLeft = ((PhiAssign*)S)->getLeft();
@@ -534,13 +543,15 @@ void UseCollector::fromSSAform(igraph& ig, Statement* def) {
 	for (it = locs.begin(); it != locs.end(); ++it) {
 		RefExp* ref = new RefExp(*it, def);			// Wrap it in a def
 		Exp* ret = ref->fromSSA(ig);
-		if (!(*ret == **it)) {
+		// If there is no change, ret will equal *it again (i.e. fromSSAform just removed the subscript)
+		if (ret != *it) {							// Pointer comparison
+			// There was a change; we want to replace *it with ret
 			removes.insert(*it);
 			inserts.insert(ret);
 		}
 	}
 	for (it = removes.begin(); it != removes.end(); ++it)
-		locs.erase(it);
+		locs.remove(*it);
 	for (it = inserts.begin(); it != inserts.end(); ++it)
 		locs.insert(*it);
 }
