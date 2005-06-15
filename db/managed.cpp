@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.9 $
+ * $Revision: 1.15.2.10 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -210,7 +210,6 @@ char* LocationSet::prints() {
 		if (it != lset.begin()) ost << ",\t";
 		ost << *it;
 	}
-	ost << "\n";
 	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
 	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer;
@@ -222,7 +221,6 @@ void LocationSet::print(std::ostream& os) {
 		if (it != lset.begin()) os << ",\t";
 		os << *it;
 	}
-	os << "\n";
 }
 
 void LocationSet::remove(Exp* given) {

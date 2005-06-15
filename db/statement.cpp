@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.28 $
+ * $Revision: 1.148.2.29 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -3097,11 +3097,13 @@ void Assign::simplify() {
 		for (int i = 0; phi && i < phi->getNumDefs(); i++) 
 			if (phi->getStmtAt(i)) {
 				Assign *def = dynamic_cast<Assign*>(phi->getStmtAt(i));
-				if (def && (def->rhs->getOper() == opIntConst || (def->rhs->getOper() == opMinus &&
-						def->rhs->getSubExp1()->getOper() == opSubscript &&
-						((RefExp*)def->rhs->getSubExp1())->getDef() == NULL &&
-						def->rhs->getSubExp1()->getSubExp1()->getOper() == opRegOf &&
-						def->rhs->getSubExp2()->getOper() == opIntConst))) {
+				// Look for rX{-} - K or K
+				if (def && (def->rhs->isIntConst() ||
+						(def->rhs->getOper() == opMinus &&
+						def->rhs->getSubExp1()->isSubscript() &&
+						((RefExp*)def->rhs->getSubExp1())->isImplicitDef() &&
+						def->rhs->getSubExp1()->getSubExp1()->isRegOf() &&
+						def->rhs->getSubExp2()->isIntConst()))) {
 					Exp *ne = new Unary(opAddrOf, Location::memOf(def->rhs, proc)); 
 					if (VERBOSE)
 						LOG << "replacing " << def->rhs << " with " << ne << " in " << def << "\n";

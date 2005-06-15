@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.8 $
+ * $Revision: 1.126.2.9 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -1190,6 +1190,12 @@ void Prog::removeUnusedReturns() {
 			}
 		}
 		theReturn->intersectWithLive(unionOfCallerLiveLocs);
+		if (DEBUG_UNUSED) {
+			std::ostringstream ost;
+			unionOfCallerLiveLocs.print(ost);
+			LOG << "union of caller live locations for " << proc->getName() << ": " << ost.str().c_str() << "\n";
+			LOG << "final returns for " << proc->getName() << ": " << theReturn->getReturns().prints() << "\n";
+		}
 	}
 }
 #endif
