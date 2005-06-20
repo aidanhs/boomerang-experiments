@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the XMLProgParser and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.17.2.7 $
+ * $Revision: 1.17.2.8 $
  *
  * June 2004 - Trent: created
  */
@@ -34,7 +34,7 @@ typedef enum { e_prog, e_procs, e_global, e_cluster, e_libproc, e_userproc, e_lo
 		   e_cfg, e_bb, e_inedge, e_outedge, e_livein, e_order, e_revorder,
 		   e_rtl, e_stmt, e_assign, e_assignment, e_phiassign, e_lhs, e_rhs, 
 		   e_callstmt, e_dest, e_argument, e_implicitarg, e_returnexp, e_returntype,
-		   e_returnstmt,
+		   e_returnstmt, e_returns, e_modifieds,
 		   e_gotostmt, e_branchstmt, e_cond,
 		   e_casestmt,
 		   e_boolasgn,
@@ -1297,7 +1297,7 @@ void XMLProgParser::addToContext_callstmt(Context *c, int e)
 		// Assume that the corresponding return type will appear next
 		returnExp = stack.front()->exp;
 		break;
-#if 0
+#if 0	// FIXME! This is all wrong
 	case e_returntype:
 		call->addReturn(returnExp, stack.front()->type);
 		break;
@@ -1357,8 +1357,16 @@ void XMLProgParser::addToContext_returnstmt(Context *c, int e)
 	return;
 	}
 	switch(e) {
+#if 0
 	case e_returnexp:
 		ret->defs.append((Assignment*)stack.front()->stmt);
+		break;
+#endif
+	case e_modifieds:
+		ret->modifieds.append((Assignment*)stack.front()->stmt);
+		break;
+	case e_returns:
+		ret->returns.append((Assignment*)stack.front()->stmt);
 		break;
 	default:
 		if (e == e_unknown)
@@ -2779,10 +2787,15 @@ void XMLProgParser::persistToXML(std::ostream &out, Statement *stmt)
 		out << ">\n";
 
 		ReturnStatement::iterator rr;
-		for (rr = r->defs.begin(); rr != r->defs.end(); ++rr) {
-			out << "<returnexp>\n";
+		for (rr = r->modifieds.begin(); rr != r->modifieds.end(); ++rr) {
+			out << "<modifieds>\n";
 			persistToXML(out, *rr);
-			out << "</returnexp>\n";
+			out << "</modifieds>\n";
+		}
+		for (rr = r->returns.begin(); rr != r->returns.end(); ++rr) {
+			out << "<returns>\n";
+			persistToXML(out, *rr);
+			out << "</returns>\n";
 		}
 
 		out << "</returnstmt>\n";

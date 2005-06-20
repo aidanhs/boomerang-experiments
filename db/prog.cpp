@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.9 $
+ * $Revision: 1.126.2.10 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -959,7 +959,7 @@ void Prog::decompile() {
 		if (!entryProc->isDecoded())
 			continue;		// Can happen with -E
 		if (VERBOSE)
-			LOG << "Starting with " << entryProc->getName() << "\n";
+			LOG << "starting with " << entryProc->getName() << "\n";
 		entryProc->decompile(new CycleList);
 		break;			// Only decompile top function in this loop
 	}
@@ -968,7 +968,7 @@ void Prog::decompile() {
     UserProc* entryUserProc = (UserProc*)entryProc;
 	if (entryUserProc != NULL && !entryUserProc->isLib() && entryUserProc->isDecoded()) {
 		if (VERBOSE)
-			LOG << "Starting with " << entryUserProc->getName() << "\n";
+			LOG << "starting with " << entryUserProc->getName() << "\n";
 		entryUserProc->decompile(new CycleList);
     }
 #endif
@@ -987,7 +987,7 @@ void Prog::decompile() {
 		if (!Boomerang::get()->noRemoveReturns) {
 			// A final pass to remove returns not used by any caller
 			if (VERBOSE)
-				LOG << "Prog: global removing unused returns\n";
+				LOG << "prog: global removing unused returns\n";
 			removeUnusedReturns();
 		}
 
@@ -1001,7 +1001,7 @@ void Prog::decompile() {
 
 	// Type analysis, if requested
 	if (Boomerang::get()->conTypeAnalysis && Boomerang::get()->dfaTypeAnalysis) {
-		std::cerr << "Can't use two types of type analysis at once!\n";
+		std::cerr << "can't use two types of type analysis at once!\n";
 		Boomerang::get()->conTypeAnalysis = false;
 	}
 	if (Boomerang::get()->conTypeAnalysis)
@@ -1024,7 +1024,7 @@ void Prog::decompile() {
 
 void Prog::removeUnusedGlobals() {
 	if (VERBOSE)
-		LOG << "Removing unused globals\n";
+		LOG << "removing unused globals\n";
 
     // seach for used globals
 	std::list<Exp*> usedGlobals;
@@ -1056,7 +1056,7 @@ void Prog::removeUnusedGlobals() {
 
 #if 0
 	if (VERBOSE)
-		LOG << "Removing unused globals\n";
+		LOG << "removing unused globals\n";
 	std::list<Exp*> result;
 	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
 		if ((*it)->isLib())
@@ -1073,7 +1073,7 @@ void Prog::removeUnusedGlobals() {
 		unusedGlobals.erase(((Const*)(*it)->getSubExp1())->getStr());
 	for (std::map<std::string, Global*>::iterator it = unusedGlobals.begin(); it != unusedGlobals.end(); it++) {
 		if (VERBOSE)
-			LOG << "Unused global " << it->first.c_str() << " at address " << it->second->getAddress() << "\n";
+			LOG << "unused global " << it->first.c_str() << " at address " << it->second->getAddress() << "\n";
 		usedGlobals.erase((*it).first);
 	}
 	globals.clear();
@@ -1166,36 +1166,32 @@ void Prog::removeUnusedReturns() {
 	} while (change);
 }
 #else
+// This is the global removing of unused returns. The initial idea is simple enough: remove some returns according to
+// the formula returns(p) = modifys(p) isect union(live at c) for all c calling p.
+// However, removing returns reduces the uses, leading to three effects:
+// 1) The statement that defines the return, if only used by that return, becomes unused
+// 2) if the return is implicitly defined, then the parameters may be reduced, which affects all callers
+// 3) if the return is defined at a call, the location may no longer be live at the call. If not, you need to check
+//   the child, and do the union again (hence needing a list of callers) to find out if this change also affects that
+//	 child.
 void Prog::removeUnusedReturns() {
-	// For each UserProc
+	// For each UserProc. Each proc may process many others, so this may duplicate some work. Really need a worklist of
+	// procedures not yet processed.
+	// Define a workset for the procedures who have to have their returns checked
+	std::set<UserProc*> removeRetSet;
 	std::list<Proc*>::iterator pp;
 	for (pp = m_procs.begin(); pp != m_procs.end(); ++pp) {
 		UserProc* proc = (UserProc*)(*pp);
 		if (proc->isLib()) continue;
-		ReturnStatement* theReturn = proc->getTheReturnStatement();
-		if (theReturn == NULL)
-			continue;
-		LocationSet unionOfCallerLiveLocs;
-		if (strcmp(proc->getName(), "main") == 0)
-			// Just insert one return for main. Note: at present, the first parameter is still the stack pointer
-			unionOfCallerLiveLocs.insert(proc->getSignature()->getReturnExp(1));
-		else {
-			// For each caller
-			std::set<CallStatement*>& callers = (*pp)->getCallers();
-			std::set<CallStatement*>::iterator cc;
-			for (cc = callers.begin(); cc != callers.end(); ++cc) {
-				// Union in the set of locations live at this call
-				UseCollector* useCol = (*cc)->getUseCollector();
-				unionOfCallerLiveLocs.makeUnion(useCol->getLocSet());
-			}
-		}
-		theReturn->intersectWithLive(unionOfCallerLiveLocs);
-		if (DEBUG_UNUSED) {
-			std::ostringstream ost;
-			unionOfCallerLiveLocs.print(ost);
-			LOG << "union of caller live locations for " << proc->getName() << ": " << ost.str().c_str() << "\n";
-			LOG << "final returns for " << proc->getName() << ": " << theReturn->getReturns().prints() << "\n";
-		}
+		removeRetSet.insert(proc);
+	}
+	std::set<UserProc*>::iterator it;
+	while (removeRetSet.size()) {
+		it = removeRetSet.begin();		// Pick the first element of the set
+		(*it)->removeUnusedReturns(removeRetSet);
+		// Note: removing the currently processed item here should prevent unnecessary reprocessing of self recursive
+		// procedures
+		removeRetSet.erase(it);			// Remove the current element (may no longer be the first)
 	}
 }
 #endif
@@ -1220,16 +1216,16 @@ void Prog::fromSSAform() {
 		if (proc->isLib()) continue;
 		proc->fromSSAform();
 		if (Boomerang::get()->vFlag) {
-			LOG << "===== After transformation from SSA form for " << proc->getName() << " =====\n";
+			LOG << "===== after transformation from SSA form for " << proc->getName() << " =====\n";
 			proc->printToLog();
-			LOG << "===== End after transformation from SSA for " << proc->getName() << " =====\n\n";
+			LOG << "===== end after transformation from SSA for " << proc->getName() << " =====\n\n";
 		}
 	}
 }
 
 void Prog::conTypeAnalysis() {
 	if (VERBOSE || DEBUG_TA)
-		LOG << "=== Start Constraint-based Type Analysis ===\n";
+		LOG << "=== start constraint-based type analysis ===\n";
 	// FIXME: This needs to be done bottom of the call-tree first, with repeat until no change for cycles
 	// in the call graph
 	std::list<Proc*>::iterator pp;
@@ -1239,12 +1235,12 @@ void Prog::conTypeAnalysis() {
 		proc->conTypeAnalysis();
 	}
 	if (VERBOSE || DEBUG_TA)
-		LOG << "=== End Type Analysis ===\n";
+		LOG << "=== end type analysis ===\n";
 }
 
 void Prog::dfaTypeAnalysis() {
 	if (VERBOSE || DEBUG_TA)
-		LOG << "=== Start Data-flow-based Type Analysis ===\n";
+		LOG << "=== start data-flow-based type analysis ===\n";
 	std::list<Proc*>::iterator pp;
 	for (pp = m_procs.begin(); pp != m_procs.end(); pp++) {
 		UserProc* proc = (UserProc*)(*pp);
@@ -1254,7 +1250,7 @@ void Prog::dfaTypeAnalysis() {
 		while (proc->ellipsisProcessing());
 	}
 	if (VERBOSE || DEBUG_TA)
-		LOG << "=== End Type Analysis ===\n";
+		LOG << "=== end type analysis ===\n";
 }
 
 
@@ -1446,7 +1442,7 @@ Exp* Global::getInitialValue(Prog* prog) {
 		e = new Terminal(opNil);
 		for (int i = (int)type->asArray()->getLength() - 1; i >= 0; --i)
 			e = new Binary(opList, prog->readNativeAs(uaddr + i * baseType->getSize()/8, baseType), e);
-		LOG << "calced init for array global: " << e << "\n";
+		LOG << "calculated init for array global: " << e << "\n";
 		if (e->getOper() == opNil)
 			e = NULL;
 	}

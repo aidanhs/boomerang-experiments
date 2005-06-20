@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.29 $
+ * $Revision: 1.148.2.30 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -179,13 +179,12 @@ void Statement::dump() {
 }
 
 
-/* This function is designed to find basic flag calls, plus in addition
-// two variations seen with Pentium FP code. These variations involve
-// ANDing and/or XORing with constants. So it should return true for these
-// values of e:
- ADDFLAGS(...)
- SETFFLAGS(...) & 0x45
- (SETFFLAGS(...) & 0x45) ^ 0x40
+/* This function is designed to find basic flag calls, plus in addition two variations seen with Pentium FP code.
+	These variations involve ANDing and/or XORing with constants. So it should return true for these values of e:
+	ADDFLAGS(...)
+	SETFFLAGS(...) & 0x45
+	(SETFFLAGS(...) & 0x45) ^ 0x40
+	FIXME: this may not be needed any more...
 */
 bool hasSetFlags(Exp* e) {
 	if (e->isFlagCall()) return true;
@@ -194,13 +193,19 @@ bool hasSetFlags(Exp* e) {
 	Exp* left  = ((Binary*)e)->getSubExp1();
 	Exp* right = ((Binary*)e)->getSubExp2();
 	if (!right->isIntConst()) return false;
-	if (left->isFlagCall()) return true;
+	if (left->isFlagCall()) {
+std::cerr << "hasSetFlags returns true with " << e << "\n";
+		return true;
+	}
 	op = left->getOper();
 	if (op != opBitAnd && op != opBitXor) return false;
 	right = ((Binary*)left)->getSubExp2();
 	left  = ((Binary*)left)->getSubExp1();
 	if (!right->isIntConst()) return false;
-	return left->isFlagCall();
+	bool ret = left->isFlagCall();
+if (ret)
+ std::cerr << "hasSetFlags returns true with " << e << "\n";
+	return ret;
 }
 
 // exclude: a set of statements not to propagate from
@@ -2591,7 +2596,7 @@ void CallStatement::addSigParam(Type* ty, bool isScanf) {
  * PARAMETERS:		 None
  * RETURNS:			 <nothing>
  *============================================================================*/
-ReturnStatement::ReturnStatement() : retAddr(NO_ADDRESS), nBytesPopped(0) {
+ReturnStatement::ReturnStatement() : retAddr(NO_ADDRESS) {
 	kind = STMT_RET;
 }
 
@@ -2613,8 +2618,10 @@ ReturnStatement::~ReturnStatement() {
 Statement* ReturnStatement::clone() {
 	ReturnStatement* ret = new ReturnStatement();
 	iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ++rr)
-		ret->defs.append((Assignment*)(*rr)->clone());
+	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
+		ret->modifieds.append((ImplicitAssign*)(*rr)->clone());
+	for (rr = returns.begin(); rr != returns.end(); ++rr)
+		ret->returns.append((Assignment*)(*rr)->clone());
 	ret->retAddr = retAddr;
 	ret->col.makeCloneOf(col);
 	// Statement members
@@ -2630,11 +2637,14 @@ bool ReturnStatement::accept(StmtVisitor* visitor) {
 }
 
 void ReturnStatement::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
-	hll->AddReturnStatement(indLevel, getCleanReturns());
+	hll->AddReturnStatement(indLevel, &getReturns());
 }
 
 void ReturnStatement::simplify() {
-	for (iterator it = defs.begin(); it != defs.end(); it++)
+	iterator it;
+	for (it = modifieds.begin(); it != modifieds.end(); it++)
+		(*it)->simplify();
+	for (it = returns.begin(); it != returns.end(); it++)
 		(*it)->simplify();
 }
 
@@ -2643,16 +2653,16 @@ void ReturnStatement::removeReturn(Exp* loc) {
 	if (loc->isSubscript())
 		loc = ((Location*)loc)->getSubExp1();
 	iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ++rr) {
+	for (rr = returns.begin(); rr != returns.end(); ++rr) {
 		if (*((Assignment*)*rr)->getLeft() == *loc) {
-			defs.erase(rr);
+			returns.erase(rr);
 			return;					// Assume only one definition
 		}
 	}
 }
 
 void ReturnStatement::addReturn(Assignment* a) {
-	defs.append(a);
+	returns.append(a);
 }
 
 
@@ -3777,7 +3787,10 @@ bool ReturnStatement::accept(StmtExpVisitor* v) {
 		return false;
 	if (override) return true;
 	ReturnStatement::iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ++rr)
+	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
+		if (!(*rr)->accept(v))
+			return false;
+	for (rr = returns.begin(); rr != returns.end(); ++rr)
 		if (!(*rr)->accept(v))
 			return false;
 	return true;
@@ -3880,7 +3893,10 @@ bool ReturnStatement::accept(StmtModifier* v) {
 	bool recur;
 	v->visit(this, recur);
 	ReturnStatement::iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ++rr)
+	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
+		if (!(*rr)->accept(v))
+			return false;
+	for (rr = returns.begin(); rr != returns.end(); ++rr)
 		if (!(*rr)->accept(v))
 			return false;
 	return true;
@@ -3994,7 +4010,10 @@ bool ReturnStatement::accept(StmtPartModifier* v) {
 	bool recur;
 	v->visit(this, recur);
 	ReturnStatement::iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ++rr)
+	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
+		if (!(*rr)->accept(v))
+			return false;
+	for (rr = returns.begin(); rr != returns.end(); ++rr)
 		if (!(*rr)->accept(v))
 			return false;
 	return true;
@@ -4172,6 +4191,7 @@ void PhiAssign::simplifyRefs() {
 static Exp* regOfWild = Location::regOf(new Terminal(opWild));
 static Exp* regOfWildRef = new RefExp(regOfWild, (Statement*)-1);
 
+// FIXME: Check if this is used any more
 void Assignment::regReplace(UserProc* proc) {
 	if (! (*lhs == *regOfWild)) return;
 	std::list<Exp**> li;
@@ -4229,7 +4249,7 @@ void CallStatement::regReplace(UserProc* proc) {
 #endif
 }
 void ReturnStatement::regReplace(UserProc* proc) {
-	for (iterator it = defs.begin(); it != defs.end(); ++it)
+	for (iterator it = modifieds.begin(); it != modifieds.end(); ++it)
 		(*it)->regReplace(proc);
 }
 
@@ -4281,25 +4301,29 @@ bool CallStatement::definesLoc(Exp* loc) {
 	return false;
 }
 
-// Does a ReturnStatement define anything? Yes, so there is a place to put the return type for example.
+// Does a ReturnStatement define anything? Not really, the locations are already defined earlier in the procedure.
+// However, nothing comes after the return statement, so it doesn't hurt to pretend it does, and this is a place to
+// store the return type(s) for example.
+// FIXME: seems it would be cleaner to say that Return Statements don't define anything.
 bool ReturnStatement::definesLoc(Exp* loc) {
 	iterator it;
-	for (it = defs.begin(); it != defs.end(); it++) {
+	for (it = modifieds.begin(); it != modifieds.end(); it++) {
 		if ((*it)->definesLoc(loc))
 			return true;
 	}
 	return false;
 }
 
+// FIXME: see above
 void ReturnStatement::getDefinitions(LocationSet& ls) {
 	iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ++rr)
+	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
 		(*rr)->getDefinitions(ls);
 }
 
 Type* ReturnStatement::getTypeFor(Exp* e) {
 	ReturnStatement::iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); rr++) {
+	for (rr = modifieds.begin(); rr != modifieds.end(); rr++) {
 		if (*((Assignment*)*rr)->getLeft() == *e)
 			return ((Assignment*)*rr)->getType();
 	}
@@ -4308,10 +4332,16 @@ Type* ReturnStatement::getTypeFor(Exp* e) {
 
 void ReturnStatement::setTypeFor(Exp*e, Type* ty) {
 	ReturnStatement::iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); rr++) {
+	for (rr = modifieds.begin(); rr != modifieds.end(); rr++) {
 		if (*((Assignment*)*rr)->getLeft() == *e) {
 			((Assignment*)*rr)->setType(ty);
-			return;
+			break;
+		}
+	}
+	for (rr = returns.begin(); rr != returns.end(); rr++) {
+		if (*((Assignment*)*rr)->getLeft() == *e) {
+			((Assignment*)*rr)->setType(ty);
+			break;
 		}
 	}
 	assert(0);
@@ -4322,13 +4352,22 @@ void ReturnStatement::print(std::ostream& os) {
 	os << "RET";
 	iterator it;
 	bool first = true;
-	for (it = defs.begin(); it != defs.end(); ++it) {
+	for (it = returns.begin(); it != returns.end(); ++it) {
 		if (first) {
 			first = false;
 			os << " ";
 		} else
 			os << ", ";
 		((Assignment*)*it)->printCompact(os);
+	}
+	os << "\n              Modifieds: ";
+	first = true;
+	for (it = modifieds.begin(); it != modifieds.end(); ++it) {
+		if (first)
+			first = false;
+		else
+			os << ", ";
+		os << ((Assignment*)*it)->getLeft();
 	}
 #if 1
 	// Collected reaching definitions
@@ -4346,15 +4385,15 @@ bool lessAssignment::operator()(const Assignment* x, const Assignment* y) const 
 }
 #endif
 
-// Update the returns, in case the signature and hence ordering and filtering has changed, or the locations in the
-// collector have changed
-void ReturnStatement::updateReturns() {
+// Update the modifieds, in case the signature and hence ordering and filtering has changed, or the locations in the
+// collector have changed. Does NOT remove preserveds.
+void ReturnStatement::updateModifieds() {
 	Signature* sig = proc->getSignature();
-	StatementList oldDefs(defs);					// Copy the old definitions
-	defs.clear();
-	// For each location in the collector, make sure that there is an assignment in the old definitions, which will
-	// be filtered and sorted to become the new definitions
-	// Ick... O(N*M) (N existing definitions, M collected locations)
+	StatementList oldMods(modifieds);					// Copy the old modifieds
+	modifieds.clear();
+	// For each location in the collector, make sure that there is an assignment in the old modifieds, which will
+	// be filtered and sorted to become the new modifieds
+	// Ick... O(N*M) (N existing modifeds, M collected locations)
 	LocationSet::iterator ll;
 	StatementList::iterator it;
 	for (ll = col.begin(); ll != col.end(); ++ll) {
@@ -4362,7 +4401,7 @@ void ReturnStatement::updateReturns() {
 		Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
 		if (proc->filterReturns(loc))
 			continue;									// Filtered out
-		for (it = oldDefs.begin(); it != oldDefs.end(); it++) {
+		for (it = oldMods.begin(); it != oldMods.end(); it++) {
 			Exp* lhs = ((Assign*)*it)->getLeft();
 			if (*lhs == *loc) {
 				found = true;
@@ -4370,20 +4409,79 @@ void ReturnStatement::updateReturns() {
 			}
 		}
 		if (!found) {
-			Assign* as = new Assign(loc->clone(), (*ll)->clone());
-			oldDefs.append(as);
+			ImplicitAssign* as = new ImplicitAssign(loc->clone());
+			oldMods.append(as);
 		}
 	}
 
-	// Mostly the old definitions will be in the correct order, and inserting will be fastest near the start of the
-	// new list. So read the old definitions in reverse order
-	for (it = oldDefs.end(); it != oldDefs.begin(); ) {
+	// Mostly the old modifications will be in the correct order, and inserting will be fastest near the start of the
+	// new list. So read the old modifications in reverse order
+	for (it = oldMods.end(); it != oldMods.begin(); ) {
 		--it;										// Becuase we are using a forwards iterator backwards
 		// Make sure the LHS is still in the collector
 		Assign* as = (Assign*)*it;
 		Exp* lhs = as->getLeft();
 		if (!col.existsNS(lhs))
 			continue;						// Not in collector: delete it (don't copy it)
+		if (proc->filterReturns(lhs))
+			continue;						// Filtered out: delete it
+	
+		// Insert as, in order, into the existing set of modifications
+		StatementList::iterator nn;
+		bool inserted = false;
+		for (nn = modifieds.begin(); nn != modifieds.end(); ++nn) {
+			if (sig->returnCompare(*as, *(Assign*)*nn)) {		// If the new assignment is less than the current one
+				nn = modifieds.insert(nn, as);					// then insert before this position
+				inserted = true;
+				break;
+			}
+		}
+		if (!inserted)
+			modifieds.insert(modifieds.end(), as);	// In case larger than all existing elements
+	}
+}
+
+// Update the returns, in case the signature and hence ordering and filtering has changed, or the locations in the
+// modifieds list
+void ReturnStatement::updateReturns() {
+	Signature* sig = proc->getSignature();
+	int sp = sig->getStackRegister();
+	StatementList oldRets(returns);					// Copy the old returns
+	returns.clear();
+	// For each location in the modifieds, make sure that there is an assignment in the old returns, which will
+	// be filtered and sorted to become the new returns
+	// Ick... O(N*M) (N existing returns, M modifieds locations)
+	StatementList::iterator dd, it;
+	for (dd = modifieds.begin(); dd != modifieds.end(); ++dd) {
+		bool found = false;
+		Exp* loc = ((Assignment*)*dd)->getLeft();
+		if (proc->filterReturns(loc))
+			continue;									// Filtered out
+		// Special case for the stack pointer: it has to be a modified (otherwise, the changes will bypass the calls),
+		// but it is not wanted as a return
+		if (loc->isRegN(sp)) continue;
+		for (it = oldRets.begin(); it != oldRets.end(); it++) {
+			Exp* lhs = ((Assign*)*it)->getLeft();
+			if (*lhs == *loc) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			Assign* as = new Assign(loc->clone(), loc->clone());
+			oldRets.append(as);
+		}
+	}
+
+	// Mostly the old returns will be in the correct order, and inserting will be fastest near the start of the
+	// new list. So read the old returns in reverse order
+	for (it = oldRets.end(); it != oldRets.begin(); ) {
+		--it;										// Becuase we are using a forwards iterator backwards
+		// Make sure the LHS is still in the modifieds
+		Assign* as = (Assign*)*it;
+		Exp* lhs = as->getLeft();
+		if (!modifieds.existsOnLeft(lhs))
+			continue;						// Not in modifieds: delete it (don't copy it)
 		if (proc->filterReturns(lhs))
 			continue;						// Filtered out: delete it
 #if 0
@@ -4393,22 +4491,22 @@ void ReturnStatement::updateReturns() {
 			continue;						// Filter out the preserveds
 #endif
 			
-		// Insert as, in order, into the existing set of definitions
+		// Insert as, in order, into the existing set of returns
 		StatementList::iterator nn;
 		bool inserted = false;
-		for (nn = defs.begin(); nn != defs.end(); ++nn) {
-			if (sig->returnCompare(*as, *(Assign*)*nn)) {	// If the new assignment is less than the current one
-				nn = defs.insert(nn, as);					// then insert before this position
+		for (nn = returns.begin(); nn != returns.end(); ++nn) {
+			if (sig->returnCompare(*as, *(Assign*)*nn)) {		// If the new assignment is less than the current one
+				nn = returns.insert(nn, as);					// then insert before this position
 				inserted = true;
 				break;
 			}
 		}
 		if (!inserted)
-			defs.insert(defs.end(), as);	// In case larger than all existing elements
+			returns.insert(returns.end(), as);	// In case larger than all existing elements
 	}
 }
 
-// Set the defines to the set of locations defined by the callee, or if no callee, to all variables live at this call
+// Set the defines to the set of locations modified by the callee, or if no callee, to all variables live at this call
 void CallStatement::updateDefines() {
 	Signature* sig;
 	if (procDest)
@@ -4418,22 +4516,22 @@ void CallStatement::updateDefines() {
 		// Else just use the enclosing proc's signature
 		sig = proc->getSignature();
 
-	// Move the definitions to a temporary list
+	// Move the defines to a temporary list
 	StatementList oldDefines(defines);					// Copy the old defines
 	StatementList::iterator it;
 	defines.clear();
 
-	if (calleeReturn) {
-		ReturnStatement::iterator rr;
-		for (rr = calleeReturn->begin(); rr != calleeReturn->end(); ++rr) {
-			Assign* as = (Assign*)*rr;
-			Exp* loc = as->getLeft();
+	// FIXME: Don't I have to handle the case where this is a call to a library function?
+	if (procDest && calleeReturn) {
+		StatementList::iterator mm;
+		StatementList& modifieds = ((UserProc*)procDest)->getModifieds();
+		for (mm = modifieds.begin(); mm != modifieds.end(); ++mm) {
+			ImplicitAssign* ias = (ImplicitAssign*)*mm;
+			Exp* loc = ias->getLeft();
 			if (proc->filterReturns(loc))
 				continue;
-			if (!oldDefines.existsOnLeft(loc)) {
-				ImplicitAssign* as = new ImplicitAssign(loc->clone());
-				oldDefines.append(as);
-			}
+			if (!oldDefines.existsOnLeft(loc))
+				oldDefines.append(ias->clone());
 		}
 	} else {
 		// Ensure that everything in the UseCollector has an entry in oldDefines
@@ -4507,7 +4605,7 @@ ArgSourceProvider::ArgSourceProvider(CallStatement* call) : call(call) {
 		i = 0;
 	} else if (call->getCalleeReturn() != NULL) {
 		src = SRC_CALLEE;
-		calleeParams = ((UserProc*)procDest)->getParameters();
+		calleeParams = &((UserProc*)procDest)->getParameters();
 		pp = calleeParams->begin();
 	} else {
 		src = SRC_COL;
@@ -4648,29 +4746,6 @@ void CallStatement::updateArguments() {
 	}
 }
 
-// Copy the given reaching definitions to the return statement, at depth d
-void ReturnStatement::copyReachingDefs(int d) {
-	Collector::iterator it;
-	for (it = col.begin(); it != col.end(); it++) {
-		if ((*it)->getMemDepth() == d) {
-			col.insert(*it);
-		}
-	}
-	updateReturns();
-}
-
-// Intersect with the given location set
-void ReturnStatement::intersectWithLive(LocationSet& sset) {
-	iterator rr;
-	for (rr = defs.begin(); rr != defs.end(); ) {
-		Assign* a = (Assign*)*rr;
-		if (!sset.exists(a->getLeft()))
-			rr = defs.erase(rr);
-		else
-			rr++;
-	}
-}
-
 #if 0		// localiseExp() is the same thing
 // Convert an expression like m[sp+4] in the callee context to m[sp{-} - 32] (in the context of the call)
 Exp* CallStatement::fromCalleeContext(Exp* e) {
@@ -4729,9 +4804,10 @@ Type* Assignment::getType() {
 		return type;
 }
 
+// A temporary HACK for getting rid of the %CF in returns
 void ReturnStatement::specialProcessing() {
 	iterator it;
-	for (it = defs.begin(); it != defs.end(); it++) {
+	for (it = returns.begin(); it != returns.end(); it++) {
 		Exp* lhs = ((Assign*)*it)->getLeft();
 		if (lhs->getOper() == opCF) {
 			Exp* rhs = ((Assign*)*it)->getRight();
@@ -4739,7 +4815,7 @@ void ReturnStatement::specialProcessing() {
 					!((RefExp*)rhs)->isImplicitDef() &&
 					((RefExp*)rhs)->getSubExp1()->getOper() == opCF) {
 				// We have a non SUBFLAGS definition reaching the exit; just delete the return of %CF
-				defs.erase(it);
+				returns.erase(it);
 				return;
 			}
 		}
@@ -4806,14 +4882,7 @@ Exp* CallStatement::bypassRef(RefExp* r, bool& ch) {
 	return proven;
 }
 
-StatementList* ReturnStatement::getCleanReturns() {
-	StatementList* ret = new StatementList;
-	StatementList::iterator rr;
-	Exp* rsp = Location::regOf(Signature::getStackRegister(proc->getProg()));
-	for (rr = defs.begin(); rr != defs.end(); ++rr) {
-		Exp* lhs = ((Assign*)*rr)->getLeft();
-		if (!(*lhs == *rsp))
-			ret->append(*rr);
-	}
-	return ret;
+void ReturnStatement::removeModified(Exp* loc) {
+	modifieds.removeDefOf(loc);
+	returns.removeDefOf(loc);
 }

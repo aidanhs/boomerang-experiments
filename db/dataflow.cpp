@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.19 $
+ * $Revision: 1.43.2.20 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -554,4 +554,13 @@ void UseCollector::fromSSAform(igraph& ig, Statement* def) {
 		locs.remove(*it);
 	for (it = inserts.begin(); it != inserts.end(); ++it)
 		locs.insert(*it);
+}
+
+bool UseCollector::operator==(UseCollector& other) {
+	if (other.initialised != initialised) return false;
+	iterator it1, it2;
+	if (other.locs.size() != locs.size()) return false;
+	for (it1 = locs.begin(), it2 = other.locs.begin(); it1 != locs.end(); ++it1, ++it2)
+		if (!(**it1 == **it2)) return false;
+	return true;
 }

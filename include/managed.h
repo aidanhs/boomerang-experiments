@@ -97,6 +97,7 @@ virtual				~StatementList() {}
 		void		append(StatementList& sl);			// Append whole StatementList
 		void		append(StatementSet& sl);			// Append whole StatementSet
 		bool		remove(Statement* s);				// Removal; rets false if not found
+		void		removeDefOf(Exp* loc);				// Remove definitions of loc
 		// This one is needed where you remove in the middle of a loop
 		// Use like this: it = mystatementlist.erase(it);
 		iterator	erase(iterator it) {return slist.erase(it);}

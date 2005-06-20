@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.17 $
+ * $Revision: 1.39.2.18 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -180,11 +180,6 @@ public:
 					DefCollector() { }
 
 		/*
-		 * Clone
-		 */
-		DefCollector* clone();
-
-		/*
 		 * Update the locations with the current set of reaching definitions
 		 */
 		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks);
@@ -217,6 +212,7 @@ public:
 						locs.remove(it);
 					}
 		void		fromSSAform(igraph& ig, Statement* def);	// Translate out of SSA form
+		bool		operator==(UseCollector& other);
 };
 
 

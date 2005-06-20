@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.13 $
+ * $Revision: 1.90.2.14 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -1168,10 +1168,10 @@ void CHLLCode::AddProcDec	(UserProc* proc, bool open) {
 			s << " ";
 	}
 	s << proc->getName() << "(";
-	StatementList* parameters = proc->getParameters();
+	StatementList& parameters = proc->getParameters();
 	StatementList::iterator pp;
 	bool first = true;
-	for (pp = parameters->begin(); pp != parameters->end(); ++pp) {
+	for (pp = parameters.begin(); pp != parameters.end(); ++pp) {
 		if (first)
 			first = false;
 		else

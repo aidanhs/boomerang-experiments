@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.24 $
+ * $Revision: 1.76.2.25 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -963,12 +963,14 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call, actually a list of Assign statements (location := expr)
 		StatementList arguments;
 
-		// The list of defines for this call, also a list of ImplicitAssigns (used to be called returns)
-		// Note that not necessarily all of the defines end up being declared as results
+		// The list of defines for this call, a list of ImplicitAssigns (used to be called returns)
+		// Essentially a localised copy of the modifies of the callee.  Note that not necessarily all of the defines end
+		//  up being declared as results
 		StatementList defines;
 
-		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement
-		// For an unanalysed indirect call, this will be NULL
+		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement.
+		// For an unanalysed indirect call, or a call whose callee is not yet sufficiently decompiled due to recursion,
+		// this will be NULL
 		Proc*		procDest;
 
 		// The signature for this call. NOTE: this used to be stored in the Proc, but this does not make sense when
@@ -1113,6 +1115,7 @@ virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, 
 		DefCollector*	getDefCollector() {return &defCol;}			// Return pointer to the def collector object
 		UseCollector*	getUseCollector() {return &useCol;}			// Return pointer to the use collector object
 		void		useBeforeDefine(Exp* x) {useCol.insert(x);}		// Add x to the UseCollector for this call
+		void		removeLiveness(Exp* e) {useCol.remove(e);}		// Remove e from the UseCollector
 //		Exp*		fromCalleeContext(Exp* e);			// Convert e from callee to caller (this) context
 		StatementList*	getDefines() {return &defines;}	// Get list of locations defined by this call
 		// Process this call for ellipsis parameters. If found, in a printf/scanf call, truncate the number of
@@ -1141,30 +1144,43 @@ friend	class		XMLProgParser;
  *==========================================================*/
 class ReturnStatement : public Statement {
 protected:
-		// A list of assignments of locations to expressions. A list is used to facilitate ordering. (A set would
-		// be ideal, but the ordering depends at runtime on the signature)
-		StatementList defs;
-
 		// Native address of the (only) return instruction. Needed for branching to this only return statement
 		ADDRESS		retAddr;
 
-		// A DefCollector object to collect the reaching definitions
+		/**
+		 * The progression of return information is as follows:
+		 * First, reaching definitions are collected in the DefCollector col. These are not sorted or filtered.
+		 * Second, some of those definitions make it to the modifieds list, which is sorted and filtered. These are
+		 * the locations that are modified by the enclosing procedure. As locations are proved to be preserved (with NO
+		 * modification, not even sp = sp+4), they are removed from this list. Defines in calls to the enclosing
+		 * procedure are based on this list.
+		 * Third, the modifications are initially copied to the returns list (also sorted and filtered, but the returns
+		 * have RHS where the modifieds don't). Locations not live at any caller are removed from the returns, but not
+		 * from the modifieds.
+		 */
+		/// A DefCollector object to collect the reaching definitions
 		DefCollector col;
 
-		// number of bytes that this return pops
-		unsigned	nBytesPopped;
+		/// A list of implicit assignments that represents the locations modified by the enclosing procedure
+		StatementList modifieds;
 
-public:
+		/// A list of assignments of locations to expressions. A list is used to facilitate ordering. (A set would
+		/// be ideal, but the ordering depends at runtime on the signature)
+		StatementList returns;
+
 public:
 					ReturnStatement();
 virtual				~ReturnStatement();
 
 typedef	StatementList::iterator iterator;
-		iterator	begin() {return defs.begin();}
-		iterator	end() {return defs.end();}
-		StatementList& getReturns() {return defs;}
-		unsigned	getNumReturns() { return defs.size(); }
-		void		updateReturns();
+		iterator	begin()				{return returns.begin();}
+		iterator	end()				{return returns.end();}
+		iterator	erase(iterator it)	{return returns.erase(it);}
+		StatementList& getModifieds()	{return modifieds;}
+		StatementList& getReturns()		{return returns;}
+		unsigned	getNumReturns()		{return returns.size(); }
+		void		updateModifieds();		// Update modifieds from the collector
+		void		updateReturns();		// Update returns from the modifieds
 
 virtual void		print(std::ostream& os = std::cout);
 
@@ -1174,8 +1190,7 @@ virtual bool		search(Exp*, Exp*&);
 		// Replace all instances of "search" with "replace".
 virtual bool		searchAndReplace(Exp* search, Exp* replace);
 	
-		// Searches for all instances of a given subexpression within this
-		// expression and adds them to a given list in reverse nesting order.	 
+		// Searches for all instances of a given subexpression within this statement and adds them to a given list
 virtual bool		searchAll(Exp* search, std::list<Exp*> &result);
 
 		// returns true if this statement uses the given expression
@@ -1185,7 +1200,8 @@ virtual bool		doReplaceRef(Exp* from, Exp* to);
 
 virtual void		getDefinitions(LocationSet &defs);
 
-		void		removeReturn(Exp* loc);
+		void		removeModified(Exp* loc);			// Remove from modifieds AND from returns
+		void		removeReturn(Exp* loc);				// Remove from returns only
 		void		addReturn(Assignment* a);
 
 		Type*		getTypeFor(Exp* e);
@@ -1214,10 +1230,6 @@ virtual bool		accept(StmtPartModifier* visitor);
 
 virtual bool		definesLoc(Exp* loc);					// True if this Statement defines loc
 
-		// The following two are currently unused, but something will need this information soon
-		int			getNumBytesPopped() { return nBytesPopped; }
-		void		setNumBytesPopped(int n) { nBytesPopped = n; }
-
 		// code generation
 virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
@@ -1230,14 +1242,8 @@ virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 		ADDRESS		getRetAddr() {return retAddr;}
 		void		setRetAddr(ADDRESS r) {retAddr = r;}
 
-		// Copy reaching definitions (only depth d) to the set of locations being returned
-		void		copyReachingDefs(int d);
-
 		// Find definition for e (in the collector)
 		RefExp*		findDefFor(Exp* e) {return col.findDefFor(e);}
-
-		// Intersect with a LocationSet; used for final global trim of returns
-		void		intersectWithLive(LocationSet& sset);
 
 virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 

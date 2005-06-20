@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.21 $
+/* $Revision: 1.115.2.22 $
 */
 
 #ifndef _PROC_H_
@@ -380,11 +380,13 @@ private:
 		UseCollector col;
 
 		/**
-		 * The list of parameters, ordered and filtered
+		 * The list of parameters, ordered and filtered.
 		 * Note that a LocationList could be used, but then there would be nowhere to store the types (for DFA based TA)
 		 * The RHS is just ignored; the list is of ImplicitAssigns
 		 */
 		StatementList parameters;
+
+		// The modifieds for the procedure are now stored in the return statement
 
 		/**
 		 * DataFlow object. Holds information relevant to transforming to and from SSA form.
@@ -584,10 +586,13 @@ typedef std::map<Statement*, int> RefCounter;
 		void		regReplaceList(std::list<Exp**>& li);
 
 		// For the final pass of removing returns that are never used
-typedef	std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
-		void		 countUsedReturns(ReturnCounter& rc);
-		bool		 removeUnusedReturns(ReturnCounter& rc);
-		void		 doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc);
+//typedef	std::map<UserProc*, std::set<Exp*, lessExpStar> > ReturnCounter;
+		void		removeUnusedReturns(std::set<UserProc*>& removeRetSet);
+		// Update parameters and call livenesses to take into account the changes causes by removing a return from this
+		// procedure, or a callee's parameter (which affects this procedure's arguments, which are also uses).
+		void		updateForUseChange(std::set<UserProc*>& removeRetSet);
+		//void		 countUsedReturns(ReturnCounter& rc);
+		//void		 doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc);
 
 		// Insert actual arguments to match formals
 		void		insertArguments(StatementSet& rs);
@@ -622,7 +627,8 @@ virtual	void		removeReturn(Exp *e);
 
 		void		getDefinitions(LocationSet &defs);
 		void		addImplicitAssigns();
-		StatementList* getParameters() { return &parameters; }
+		StatementList& getParameters() { return parameters; }
+		StatementList& getModifieds() { return theReturnStatement->getModifieds(); }
 
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);

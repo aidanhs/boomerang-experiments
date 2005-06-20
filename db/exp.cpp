@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.17 $
+ * $Revision: 1.172.2.18 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -679,7 +679,7 @@ void Const::print(std::ostream& os) {
 			break;
 		case opFltConst:
 			char buf[64];
-			sprintf(buf, "%g", u.d);
+			sprintf(buf, "%.4f", u.d);		// FIXME: needs an intelligent printer
 			os << buf;
 			break;
 		case opStrConst:

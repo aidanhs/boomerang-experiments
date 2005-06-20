@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.33 $
+ * $Revision: 1.238.2.34 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1123,7 +1123,8 @@ void UserProc::initialDecompile() {
 
 		// Seed the return statement with reaching definitions
 		if (theReturnStatement)
-			theReturnStatement->copyReachingDefs(depth);		// Everything including new arguments reaching ret
+			theReturnStatement->updateModifieds();		// Everything including new arguments reaching the exit
+			theReturnStatement->updateReturns();
 
 		if (status != PROC_INCYCLE || depth == 0) {
 			// This gets called so much... it would be great to be able to "repair" the names...
@@ -1196,9 +1197,7 @@ void UserProc::initialDecompile() {
 				doRenameBlockVars(depth, true);
 		}
 
-		// recognising locals early prevents them from becoming returns
-		// But with indirect calls in a loop, the propagation is not yet complete
-		// mapExpressionsToLocals(depth == maxDepth);
+#if 1	// FIXME: Check if this is needed any more. At least fib seems to need it at present.
 		if (!Boomerang::get()->noChangeSignatures) {
 			// addNewReturns(depth);
 			for (int i=0; i < 3; i++) {		// FIXME: should be iterate until no change
@@ -1207,7 +1206,6 @@ void UserProc::initialDecompile() {
 				if (status != PROC_INCYCLE || depth == 0)
 					doRenameBlockVars(depth, true);
 				findPreserveds();
-				theReturnStatement->updateReturns();
 				updateReturnTypes();
 				updateCallDefines();		// Returns have uses which affect call defines (if childless)
 				fixCallAndPhiRefs();
@@ -1221,6 +1219,7 @@ void UserProc::initialDecompile() {
 				LOG << "=== end debug print SSA for " << getName() << " at depth " << depth << " ===\n\n";
 			}
 		}
+#endif
 
 		printXML();
 		// Print if requested
@@ -1826,12 +1825,18 @@ void UserProc::findPreserveds() {
 	if (VERBOSE)
 		LOG << "finding preserveds for " << getName() << "\n";
 
-	// prove preservation for all definitions reaching the exit
-	DefCollector* defCol = theReturnStatement->getCollector();
-	Collector::iterator rd;
-	for (rd = defCol->begin(); rd != defCol->end(); ++rd) {
-		Exp* base = ((RefExp*)*rd)->getSubExp1();
-		Exp* equation = new Binary(opEquals, base, base);
+	if (theReturnStatement == NULL) {
+		if (DEBUG_PROOF)
+			LOG << "can't find preservations as there is no return statement!\n";
+		return;
+	}
+
+	// prove preservation for all modifieds in the return statement
+	ReturnStatement::iterator mm;
+	StatementList& modifieds = theReturnStatement->getModifieds();
+	for (mm = modifieds.begin(); mm != modifieds.end(); ++mm) {
+		Exp* lhs = ((Assignment*)*mm)->getLeft();
+		Exp* equation = new Binary(opEquals, lhs, lhs);
 		if (DEBUG_PROOF)
 			LOG << "attempting to prove " << equation << " is preserved by " << getName() << "\n";
 		if (prove(equation)) {
@@ -1846,67 +1851,14 @@ void UserProc::findPreserveds() {
 		LOG << "### end proven for procedure " << getName() << "\n\n";
 	}
 
-#if 0
-	if (stdsp) {
-		// I've been removing sp from the return set as it makes the output look better, but this only works for
-		// recursive procs (because no other proc calls them and fixCallBypass can replace refs to the call with a valid
-		// expression). Not removing sp will make basically every procedure that doesn't preserve sp return it, and take
-		// it as a parameter.  Maybe a later pass can get rid of this.	Trent 22/8/2003
-		// We handle this now by doing a final pass which removes any unused returns of a procedure.  So r28 will remain
-		// in the returns set of every procedure in the program until such time as this final pass is made, and then
-		// they will be removed.	 Trent 22/9/2003
-		// Instead, what we can do is replace r28 in the return statement of this procedure with what we've proven it to
-		// be.
-		//removeReturn(regsp);
-		// also check for any locals that slipped into the returns
-		Unary *regsp = Location::regOf(sp);
-		for (int i = 0; i < signature->getNumReturns(); i++) {
-			Exp *e = signature->getReturnExp(i);
-			if (signature->isStackLocal(prog, e))
-				removes.insert(e);
-			else if (*e == *regsp) {
-				assert(theReturnStatement);
-				Exp *e = getProven(regsp)->clone();
-				// Make sure that the regsp in this expression is subscripted with a proper implicit assignment.
-				// Note that findPreserveds() is sometimes called before and after implicit assignments are created,
-				// hence call findTHEimplicitAssign()
-				// NOTE: This assumes simple functions of regsp, e.g. regsp + K, not involving other locations that
-				// need to be subscripted
-				e = e->clone();			// So don't subscript the proven equation in the Proc
-				e = e->expSubscriptVar(regsp, cfg->findTheImplicitAssign(regsp));
-
-				if (!(*e == *theReturnStatement->getReturnExp(i))) {
-					if (VERBOSE)
-						LOG << "replacing in return statement " << theReturnStatement->getReturnExp(i) << " with " <<
-							e << "\n";
-					theReturnStatement->setReturnExp(i, e);
-				}
-			}
-		}
-//#else	// Assume that sp doesn't need special processing, so just remove any locals
-		if (theReturnStatement) {
-			ReturnStatement::iterator rr;
-			for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ++rr) {
-				Exp* loc = ((Assignment*)*rr)->getLeft();
-				if (signature->isStackLocal(prog, loc)) {
-					if (VERBOSE)
-						LOG << "removing local " << loc << " from theReturnStatement\n";
-					theReturnStatement->removeReturn(loc);
-				}
-			}
-		}
+	// Remove the preserved locations from the modifieds and the returns
+	for (std::set<Exp*, lessExpStar>::iterator pp = proven.begin(); pp != proven.end(); ++pp) {
+		Exp* lhs = ((Binary*)*pp)->getSubExp1();
+		Exp* rhs = ((Binary*)*pp)->getSubExp2();
+		// Has to be of the form loc = loc, not say loc+4, otherwise the bypass logic won't see the add of 4
+		if (!(*lhs == *rhs)) continue;
+		theReturnStatement->removeModified(lhs);
 	}
-	if (!signature->isFullSignature()) {
-		if (stdret)
-			removeReturn(new Terminal(opPC));
-		for (std::set<Exp*>::iterator it = removes.begin(); it != removes.end(); it++) {
-			// removes are of the form r29{9} = r29{-}
-			removeReturn(((Binary*)*it)->getSubExp1());
-		}
-	}
-#endif
-
-	//removeRedundantPhis();
 }
 
 void UserProc::updateReturnTypes()
@@ -4030,7 +3982,7 @@ void UserProc::countUsedReturns(ReturnCounter& rc) {
 }
 #endif
 
-
+#if 0
 bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
 	std::set<Exp*, lessExpStar> removes;	// Else iterators confused
 	std::set<Exp*, lessExpStar>& useSet = rc[this];
@@ -4062,6 +4014,7 @@ bool UserProc::removeUnusedReturns(ReturnCounter& rc) {
 	}
 	return removedOne;
 }
+#endif
 
 void Proc::addCallers(std::set<UserProc*>& callers) {
 	std::set<CallStatement*>::iterator it;
@@ -4509,8 +4462,9 @@ bool UserProc::filterReturns(Exp* e) {
 	if (isPreserved(e))
 		return true;			// Don't keep preserved locations
 	switch (e->getOper()) {
-		case opPC:	return true;
-		case opTemp: return true;
+		case opPC:	return true;			// Ignore %pc
+		case opDefineAll: return true;		// Ignore <all>
+		case opTemp: return true;			// Ignore all temps (should be local to one instruction)
 		// Would like to handle at least %ZF, %CF one day. For now, filter them out
 		case opZF: case opCF: case opFlags:
 			return true;
@@ -4557,6 +4511,8 @@ bool UserProc::filterReturns(Exp* e) {
 			// filter out all mem-ofs
 			return true;
 		}
+		case opGlobal:
+			return true;				// Never return in globals
 		default:
 			return false;
 	}
@@ -4587,6 +4543,8 @@ bool UserProc::filterParams(Exp* e) {
 			}
 			return false;				// Might be some weird memory expression that is not a local
 		}
+		case opGlobal:
+			return true;				// Never use globals as argument locations (could appear on RHS of args)
 		default:
 			return false;
 	}
@@ -4808,3 +4766,127 @@ bool UserProc::isLocalOrParam(Exp* e) {
 	return right->isIntConst();
 }
 
+// Remove unused returns for this procedure, based on the equation returns = modifieds isect union(live at c) for all
+// c calling this procedure.
+// The intersection operation will only remove locations. Removing returns can have three effects for each component y
+// used by that return (e.g. if return r24 := r25{10} + r26{20} is removed, statements 10 and 20 will be affected and
+// y will take the values r25{10} and r26{20}):
+// 1) a statement s defining a return becomes unused if the only use of its definition was y
+// 2) a call statement c defining y will no longer have y live if the return was the only use of y. This could cause a
+//	change to the returns of c's destination, so removeUnusedReturns has to be called for c's destination proc (if not
+//	already scheduled).
+// 3) if y is a parameter (i.e. y is of the form loc{-}), then the signature of this procedure changes, and all callers
+//	have to have their arguments trimmed, and a similar process has to be applied to all those caller's removed
+//	arguments as is applied here to the removed returns.
+void UserProc::removeUnusedReturns(std::set<UserProc*>& removeRetSet) {
+	if (theReturnStatement == NULL)
+		return;
+	if (DEBUG_UNUSED)
+		LOG << "%%% removing unused returns for " << getName() << " %%%\n";
+	LocationSet unionOfCallerLiveLocs;
+	if (strcmp(getName(), "main") == 0)
+		// Just insert one return for main. Note: at present, the first parameter is still the stack pointer
+		unionOfCallerLiveLocs.insert(signature->getReturnExp(1));
+	else {
+		// For each caller
+		std::set<CallStatement*>& callers = getCallers();
+		std::set<CallStatement*>::iterator cc;
+		for (cc = callers.begin(); cc != callers.end(); ++cc) {
+			// Union in the set of locations live at this call
+			UseCollector* useCol = (*cc)->getUseCollector();
+			unionOfCallerLiveLocs.makeUnion(useCol->getLocSet());
+		}
+	}
+	// Intersect with the given location set
+	bool removedSome = false;
+	ReturnStatement::iterator rr;
+	for (rr = theReturnStatement->begin(); rr != theReturnStatement->end(); ) {
+		Assign* a = (Assign*)*rr;
+		if (!unionOfCallerLiveLocs.exists(a->getLeft())) {
+			if (DEBUG_UNUSED)
+				LOG << "%%%  removing unused return " << a << " from proc " << getName() << "\n";
+			Exp* rhs = a->getRight();
+			if (rhs->isSubscript()) {
+				CallStatement* call = (CallStatement*)((RefExp*)rhs)->getDef();
+				if (call && call->isCall()) {
+					// Remove the liveness for rhs at this call; when dataflow is redone, it may not come back, in which
+					// case we have more work to do
+					Exp* base = ((RefExp*)rhs)->getSubExp1();
+					call->removeLiveness(base);
+				}
+			}
+			rr = theReturnStatement->erase(rr);
+			removedSome = true;
+		}
+		else
+			rr++;
+	}
+
+	if (DEBUG_UNUSED) {
+		std::ostringstream ost;
+		unionOfCallerLiveLocs.print(ost);
+		LOG << "%%%  union of caller live locations for " << getName() << ": " << ost.str().c_str() << "\n";
+		LOG << "%%%  final returns for " << getName() << ": " << theReturnStatement->getReturns().prints() << "\n";
+	}
+
+	// Now update myself, especially because the call livenesses are possibly incorrect (so it's pointless removing
+	// unused returns for children, since the liveness that this depends on is possibly incorrect).
+	updateForUseChange(removeRetSet);
+}
+
+// See comments above for removeUnusedReturns(). Need to save the old parameters and call livenesses, redo the dataflow
+// and removal of unused statements, recalculate the parameters and call livenesses, and if either or both of these are
+// changed, recurse to parents or children respectively.
+void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
+	// We need to remember the parameters, and all the livenesses for all the calls, to see if these are changed
+	// by removing returns
+	if (DEBUG_UNUSED)
+		LOG << "%%% updating " << getName() << " for changes to uses (returns or arguments)\n";
+	StatementList oldParameters(parameters);
+	std::map<CallStatement*, UseCollector> callLiveness;
+	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
+	BB_IT it;
+	for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
+		CallStatement* c = (CallStatement*) bb->getLastStmt(rrit, srit);
+		if (!c->isCall()) continue;
+		UserProc* dest = (UserProc*)c->getDestProc();
+		if (dest->isLib()) continue;			// Not interested in calls to lib procs
+		callLiveness[c].makeCloneOf(*c->getUseCollector());
+	}
+	removeUnusedStatements();				// Also redoes parameters
+	// Have to redo dataflow to get the liveness at the calls correct
+	if (DEBUG_UNUSED)
+		LOG << "%%% updating dataflow because at least some returns or arguments were removed for " << getName() <<
+			"\n";
+	updateBlockVars();
+	// Have the parameters changed? If so, then all callers will need to update their arguments, and do similar
+	// analysis to the removal of returns
+	if (parameters.size() != oldParameters.size()) {
+		if (DEBUG_UNUSED)
+			LOG << "%%%  parameters changed for " << getName() << "\n";
+		std::set<CallStatement*>& callers = getCallers();
+		std::set<CallStatement*>::iterator cc;
+		std::set<UserProc*> callerProcs;
+		std::set<UserProc*>::iterator pp;
+		for (cc = callers.begin(); cc != callers.end(); ++cc) {
+			(*cc)->updateDefines();
+			// To prevent duplication, insert into this set, but do the updates immediately
+			callerProcs.insert((*cc)->getProc());
+		}
+		for (pp == callerProcs.begin(); pp != callerProcs.end(); ++pp)
+			(*pp)->updateForUseChange(removeRetSet);
+	}
+	// Check if the liveness of any calls has changed
+	std::map<CallStatement*, UseCollector>::iterator ll;
+	for (ll = callLiveness.begin(); ll != callLiveness.end(); ++ll) {
+		CallStatement* call = ll->first;
+		UseCollector& oldLiveness = ll->second;
+		UseCollector& newLiveness = *call->getUseCollector();
+		if (!(newLiveness == oldLiveness)) {
+			if (DEBUG_UNUSED)
+				LOG << "%%%  liveness for call to " << call->getDestProc()->getName() << " in " << getName() <<
+					" changed\n";
+			removeRetSet.insert((UserProc*)call->getDestProc());
+		}
+	}
+}

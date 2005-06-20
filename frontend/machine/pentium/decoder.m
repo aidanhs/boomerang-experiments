@@ -13,7 +13,7 @@
  *				etc. Ordinary instructions are processed in decoder_low.m
  *============================================================================*/ 
 /*
- * $Revision: 1.33.2.1 $
+ * $Revision: 1.33.2.2 $
  *
  * 26 Apr 02 - Mike: Changes for boomerang
  * 18 Nov 02 - Mike: Mods for MOV.Ed.Iv^od etc. Also suppressed warning re name
@@ -477,14 +477,12 @@ DecodeResult& PentiumDecoder::decodeInstruction (ADDRESS pc, int delta)
 	| RET.far.Iw(i16) =>
 		stmts = instantiate(pc,	 "RET.far.Iw", DIS_I16);
 		ReturnStatement *ret = new ReturnStatement;
-		ret->setNumBytesPopped(DIS_I16->getAddr());
 		result.rtl = new RTL(pc, stmts);
 		result.rtl->appendStmt(ret);
 
 	| RET.Iw(i16) =>
 		stmts = instantiate(pc,	 "RET.Iw", DIS_I16);
 		ReturnStatement *ret = new ReturnStatement;
-		ret->setNumBytesPopped(DIS_I16->getAddr());
 		result.rtl = new RTL(pc, stmts);
 		result.rtl->appendStmt(ret);
 

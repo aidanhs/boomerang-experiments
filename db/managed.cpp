@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.10 $
+ * $Revision: 1.15.2.11 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  */
 
@@ -536,8 +536,21 @@ void StatementList::makeCloneOf(StatementList& o) {
 // Return true if loc appears on the left of any statements in this list
 // Note: statements in this list are assumed to be assignments
 bool StatementList::existsOnLeft(Exp* loc) {
-	for (iterator it = slist.begin(); it != slist.end(); it++)
+	for (iterator it = slist.begin(); it != slist.end(); it++) {
 		if (*((Assignment*)*it)->getLeft() == *loc)
 			return true;
+	}
 	return false;
 }
+
+// Remove the first definition where loc appears on the left
+// Note: statements in this list are assumed to be assignments
+void StatementList::removeDefOf(Exp* loc) {
+	for (iterator it = slist.begin(); it != slist.end(); it++) {
+		if (*((Assignment*)*it)->getLeft() == *loc) {
+			erase(it);
+			return;
+		}
+	}
+}
+
