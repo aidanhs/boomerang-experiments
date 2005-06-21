@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.34 $
+ * $Revision: 1.238.2.35 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3252,6 +3252,7 @@ void UserProc::countRefs(RefCounter& refCounts) {
 }
 
 // Note: call the below after translating from SSA form
+// FIXME: this can be done before transforming out of SSA form now, surely...
 void UserProc::removeUnusedLocals() {
 	if (VERBOSE)
 		LOG << "removing unused locals (final) for " << getName() << "\n";
@@ -4840,8 +4841,12 @@ void UserProc::removeUnusedReturns(std::set<UserProc*>& removeRetSet) {
 void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
 	// We need to remember the parameters, and all the livenesses for all the calls, to see if these are changed
 	// by removing returns
-	if (DEBUG_UNUSED)
+	if (DEBUG_UNUSED) {
 		LOG << "%%% updating " << getName() << " for changes to uses (returns or arguments)\n";
+		LOG << "%%% updating dataflow:\n";
+	}
+
+	// Save the old parameters and call liveness
 	StatementList oldParameters(parameters);
 	std::map<CallStatement*, UseCollector> callLiveness;
 	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
@@ -4853,14 +4858,15 @@ void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
 		if (dest->isLib()) continue;			// Not interested in calls to lib procs
 		callLiveness[c].makeCloneOf(*c->getUseCollector());
 	}
-	removeUnusedStatements();				// Also redoes parameters
+
 	// Have to redo dataflow to get the liveness at the calls correct
-	if (DEBUG_UNUSED)
-		LOG << "%%% updating dataflow because at least some returns or arguments were removed for " << getName() <<
-			"\n";
 	updateBlockVars();
+
+	removeUnusedStatements();				// Also redoes parameters
+
 	// Have the parameters changed? If so, then all callers will need to update their arguments, and do similar
 	// analysis to the removal of returns
+	findFinalParameters();
 	if (parameters.size() != oldParameters.size()) {
 		if (DEBUG_UNUSED)
 			LOG << "%%%  parameters changed for " << getName() << "\n";
@@ -4873,7 +4879,7 @@ void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
 			// To prevent duplication, insert into this set, but do the updates immediately
 			callerProcs.insert((*cc)->getProc());
 		}
-		for (pp == callerProcs.begin(); pp != callerProcs.end(); ++pp)
+		for (pp = callerProcs.begin(); pp != callerProcs.end(); ++pp)
 			(*pp)->updateForUseChange(removeRetSet);
 	}
 	// Check if the liveness of any calls has changed

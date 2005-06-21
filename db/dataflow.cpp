@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.20 $
+ * $Revision: 1.43.2.21 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -304,7 +304,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				for (pp = pa->begin(); pp != pa->end(); ++pp) {
 					Statement* def = pp->def;
 					if (def && def->isCall())
-{ if (phiLeft->isSubscript())
+{ if (phiLeft->isRegN(8))
   std::cerr << "HACK1!\n";
 						((CallStatement*)def)->useBeforeDefine(phiLeft->clone());
 }
@@ -319,18 +319,20 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				if (x->getMemDepth() != memDepth) continue;
 				Statement* def = NULL;
 				if (x->isSubscript()) {					// Already subscripted?
-					// No renaming required, but this might be a new use from a return, possibly requiring an update
-					// to a call's UseCollector
-					Exp* base = ((RefExp*)x)->getSubExp1();	
-					if (!STACKS_EMPTY(base)) {
-						def = Stacks[base].top();
-						if (def->isCall())
-							// Calls have UseCollectors for locations that are used before definition at the call
-{ if (base->isSubscript())
+					// No renaming required, but redo the usage analysis, in case this is a new return
+					// Update use information in calls, and in the proc (for parameters)
+					Exp* base = ((RefExp*)x)->getSubExp1();
+					def = ((RefExp*)x)->getDef();
+					if (def && def->isCall()) {
+						// Calls have UseCollectors for locations that are used before definition at the call
+if (base->isRegN(8))
   std::cerr << "HACK2!\n";
-							((CallStatement*)def)->useBeforeDefine(base->clone());
-}
+						((CallStatement*)def)->useBeforeDefine(base->clone());
+						continue;
 					}
+					// Update use collector in the proc (for parameters)
+					if (def == NULL)
+						proc->useBeforeDefine(base->clone());
 					continue;							// Don't re-rename the renamed variable
 				}
 				// Else x is not subscripted yet
@@ -350,7 +352,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					def = Stacks[x].top();
 				if (def && def->isCall())
 					// Calls have UseCollectors for locations that are used before definition at the call
-{ if (x->isSubscript())
+{ if (x->isRegN(8))
   std::cerr << "HACK3!\n";
 					((CallStatement*)def)->useBeforeDefine(x->clone());
 }

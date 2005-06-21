@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.22 $
+/* $Revision: 1.115.2.23 $
 */
 
 #ifndef _PROC_H_
@@ -538,7 +538,6 @@ virtual				~UserProc();
 //		void		addNewReturns(int depth);
 		void		updateArguments();			// Update the arguments in calls
 		void		updateCallDefines();		// Update the defines in calls
-		void		updateParameters();			// Update the parameters for this proc
 		// Trim parameters. If depth not given or == -1, perform at all depths
 		void		trimParameters(int depth = -1);
 		void		processFloatConstants();
