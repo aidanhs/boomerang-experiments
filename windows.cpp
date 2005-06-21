@@ -820,8 +820,7 @@ LRESULT CALLBACK TabEdit(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch(LOWORD(wParam)) {
 			case ID_STMT_PROPAGATE_TO:
-				StatementSet exclude;
-				stmt->propagateTo(-1, exclude);
+				stmt->propagateTo(-1);
 				stmt->getProc()->updateBlockVars();
 				updateCodeView();
 				break;

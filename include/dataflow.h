@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.39.2.18 $
+ * $Revision: 1.39.2.19 $
  * 15 Mar 05 - Mike: Separated from cfg.h
  */
 
@@ -106,11 +106,90 @@ public:
 
 };
 
+/*	*	*	*	*	*	*\
+*						 *
+*	C o l l e c t o r s  *
+*						 *
+\*	*	*	*	*	*	*/
+
 /**
- * Collector class. Common code and data for Def and Use Collectors.
+ * DefCollector class. This class collects all definitions that reach the statement that contains this collector.
  */
-class Collector {
-protected:
+class DefCollector {
+		/*
+		 * True if initialised. When not initialised, callees should not subscript parameters inserted into the
+		 * associated CallStatement
+		 */
+		bool		initialised;
+		/**
+		 * The set of definitions.
+		 */
+		AssignSet	defs;
+public:
+		/**
+		 * Constructor
+		 */
+					DefCollector() : initialised(false) {}
+
+		/**
+		 * makeCloneOf(): clone the given Collector into this one
+		 */
+		void		makeCloneOf(DefCollector& other);
+
+		/*
+		 * Return true if initialised
+		 */
+		bool		isInitialised() {return initialised;}
+
+		/*
+		 * Clear the location set
+		 */
+		void		clear() {defs.clear(); initialised = false;}
+
+		/*
+		 * Insert a new member (make sure none exists yet)
+		 */
+		void		insert(Assign* a);
+		/*
+		 * Print the collected locations to stream os
+		 */
+		void		print(std::ostream& os);
+
+		/*
+		 * Print to string or stdout (for debugging)
+		 */
+		char*		prints();
+		void		dump();
+
+		/*
+		 * begin() and end() so we can iterate through the locations
+		 */
+		typedef AssignSet::iterator iterator;
+		iterator	begin() {return defs.begin();}
+		iterator	end()	 {return defs.end();}
+		bool		existsOnLeft(Exp* e) {return defs.definesLoc(e);}
+
+		/*
+		 * Update the definitions with the current set of reaching definitions
+		 */
+		void		updateDefs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks);
+
+		/**
+		 * Find the definition for a location. If not found, return NULL
+		 */
+		Exp*		findDefFor(Exp* e);
+
+		/**
+		 * Search and replace all occurrences
+		 */
+		void		searchReplaceAll(Exp* from, Exp* to, bool& change);
+};		// class DefCollector
+
+/**
+ * UseCollector class. This class collects all uses (live variables) that will be defined by the statement that 
+ * contains this collector (or the UserProc that contains it).
+ */
+class UseCollector {
 		/*
 		 * True if initialised. When not initialised, callees should not subscript parameters inserted into the
 		 * associated CallStatement
@@ -119,19 +198,17 @@ protected:
 		/**
 		 * The set of locations. Use lessExpStar to compare properly
 		 */
-// FIXME: Consider: should DefLocations not be a set at all? The subscript makes the loookup capability of the set
-// pretty much useless...
 		LocationSet	locs;
 public:
 		/**
 		 * Constructor
 		 */
-					Collector() : initialised(false) {}
+					UseCollector() : initialised(false) {}
 
 		/**
 		 * makeCloneOf(): clone the given Collector into this one
 		 */
-		void		makeCloneOf(Collector& other);
+		void		makeCloneOf(UseCollector& other);
 
 		/*
 		 * Return true if initialised
@@ -153,9 +230,10 @@ public:
 		void		print(std::ostream& os);
 
 		/*
-		 * Print to string (for debugging)
+		 * Print to string or stderr (for debugging)
 		 */
 		char*		prints();
+		void		dump();
 
 		/*
 		 * begin() and end() so we can iterate through the locations
@@ -167,53 +245,20 @@ public:
 		bool		existsNS(Exp* e){return locs.findNS(e) != NULL;}	// No Subscripts version
 		Exp*		findNS(Exp* e)	{return locs.findNS(e);}			// Find the expression (no subscripts)
 		LocationSet& getLocSet() {return locs;}
-};
-
-/**
- * DefCollector class. This class collects all definitions that reach the statement that contains this collector.
- */
-class DefCollector : public Collector{
-public:
-		/*
-		 * Constructor
-		 */
-					DefCollector() { }
-
-		/*
-		 * Update the locations with the current set of reaching definitions
-		 */
-		void		updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks);
-
-		/**
-		 * Find the definition for a location. If not found, return NULL
-		 */
-		RefExp*		findDefFor(Exp* e);
-
-		/**
-		 * Search and replace all occurrences
-		 */
-		void		searchReplaceAll(Exp* from, Exp* to, bool& change);
-};
-
-/**
- * UseCollector class. This class collects all uses (live variables) that will be defined by the statement that 
- * contains this collector.
- */
-class UseCollector : public Collector {
 public:
 		/*
 		 * Add a new use from Statement u
 		 */
 		void		updateLocs(Statement* u);
-		void		remove(Exp* loc) {				// Remove the given location
+		void		remove(Exp* loc) {							// Remove the given location
 						locs.remove(loc);
 					}
-		void		remove(iterator it) {			// Remove the current location
+		void		remove(iterator it) {						// Remove the current location
 						locs.remove(it);
 					}
 		void		fromSSAform(igraph& ig, Statement* def);	// Translate out of SSA form
 		bool		operator==(UseCollector& other);
-};
+};		// class UseCollector
 
 
 #endif	// _DATAFLOW_H_

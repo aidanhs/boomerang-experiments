@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.25 $
+ * $Revision: 1.76.2.26 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -248,7 +248,7 @@ virtual bool		searchAndReplace(Exp *search, Exp *replace) = 0;
 virtual void		fromSSAform(igraph& ig) = 0;
 
 		// Propagate to this statement
-		bool		propagateTo(int memDepth, StatementSet& exclude, int toDepth = -1, bool limit = true);
+		bool		propagateTo(int memDepth, int toDepth = -1, bool limit = true);
 
 		// code generation
 virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) = 0;
@@ -281,7 +281,8 @@ virtual	void		regReplace(UserProc* proc) = 0;
 //	//	//	//	//	//	//	//	//	//
 
 		// Adds (inserts) all locations (registers or memory etc) used by this statement
-		void		addUsedLocs(LocationSet& used, bool final = false);
+		// Set cc to true to count the uses in collectors
+		void		addUsedLocs(LocationSet& used, bool cc = false);
 		// Bypass calls and perform propagation to this statement
 		void		bypassAndPropagate();
 
@@ -513,7 +514,6 @@ virtual void		genConstraints(LocationSet& cons);
 		// Replace registers with locals
 virtual	void		regReplace(UserProc* proc);
 
-protected:
 virtual bool		doReplaceRef(Exp* from, Exp* to);
 	friend class XMLProgParser;
 };	// class Assign
@@ -1108,7 +1108,7 @@ virtual void		simplify();
 virtual void		fromSSAform(igraph& ig);
 		
 		// Insert actual arguments to match formal parameters
-		void		insertArguments(StatementSet& rs);
+		//void		insertArguments(StatementSet& rs);
 
 virtual	Type*		getTypeFor(Exp* e);					// Get the type defined by this Statement for this location
 virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, defined in this statement
@@ -1243,7 +1243,7 @@ virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 		void		setRetAddr(ADDRESS r) {retAddr = r;}
 
 		// Find definition for e (in the collector)
-		RefExp*		findDefFor(Exp* e) {return col.findDefFor(e);}
+		Exp*		findDefFor(Exp* e) {return col.findDefFor(e);}
 
 virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
 

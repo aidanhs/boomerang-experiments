@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.23 $
+/* $Revision: 1.115.2.24 $
 */
 
 #ifndef _PROC_H_
@@ -592,9 +592,6 @@ typedef std::map<Statement*, int> RefCounter;
 		void		updateForUseChange(std::set<UserProc*>& removeRetSet);
 		//void		 countUsedReturns(ReturnCounter& rc);
 		//void		 doCountReturns(Statement* def, ReturnCounter& rc, Exp* loc);
-
-		// Insert actual arguments to match formals
-		void		insertArguments(StatementSet& rs);
 
 		// returns true if the prover is working right now
 		bool		canProveNow();

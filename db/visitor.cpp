@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.16 $
+ * $Revision: 1.23.2.17 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -374,56 +374,28 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
 	StatementList& arguments = s->getArguments();
 	for (it = arguments.begin(); it != arguments.end(); it++)
 		(*it)->accept(this);
-#if 0
-	if (!final) {
-		// Ignore the implicit arguments when final
-		int n = s->getNumImplicitArguments();
-		for (int i=0; i < n; i++)
-			s->getImplicitArgumentExp(i)->accept(ev);
+	if (countCol) {
+		DefCollector::iterator dd;
+		DefCollector* col = s->getDefCollector();
+		for (dd = col->begin(); dd != col->end(); ++dd)
+			(*dd)->accept(this);
 	}
-#endif
-	// For the final pass, also only consider the first return
-#if 0
-	int n = s->getNumReturns();
-	if (final) {
-		if (n != 0) {
-			Exp* r = NULL;
-			for (int i = 0; r == NULL && i < n; i++)
-				r = s->getReturnExp(i);			
-			// If of form m[x] then x is used
-			if (r && r->isMemOf()) {
-				Exp* x = ((Location*)r)->getSubExp1();
-				x->accept(ev);
-			}
-		}
-	} else {
-		// Otherwise, consider all returns. If of form m[x] then x is used
-		for (int i=0; i < n; i++) {
-			Exp* r = s->getReturnExp(i);
-			if (r && r->isMemOf()) {
-				Exp* x = ((Location*)r)->getSubExp1();
-				x->accept(ev);
-			}
-		} 
-	}
-#endif
 	override = true;			// Don't do the normal accept logic
 	return true;				// Continue the recursion
 }
 
 bool UsedLocsVisitor::visit(ReturnStatement* s, bool& override) {
 	// For the final pass, only consider the first return
-	int n = s->getNumReturns();
 	ReturnStatement::iterator rr;
-	if (final) {
-		if (n != 0) {
-			// Visit the first return
-			(*s->begin())->accept(this);
-		}
-	} else {
-		// Otherwise, consider all returns. If of form m[x] then x is used
-		for (rr = s->begin(); rr != s->end(); ++rr)
-			(*rr)->accept(this);
+	for (rr = s->begin(); rr != s->end(); ++rr)
+		(*rr)->accept(this);
+	// Also consider the reaching definitions to be uses, so when they are the only non-empty component of this
+	// ReturnStatement, they can get propagated to.
+	if (countCol) { 					// But we need to ignore these "uses" unless propagating
+		DefCollector::iterator dd;
+		DefCollector* col = s->getCollector();
+		for (dd = col->begin(); dd != col->end(); ++dd)
+			(*dd)->accept(this);
 	}
 
 	// Insert a phantom use of "everything" here, so that we can find out if any childless calls define something that

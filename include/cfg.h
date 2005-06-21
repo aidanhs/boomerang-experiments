@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.4 $
+ * $Revision: 1.69.2.5 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -902,11 +902,6 @@ public:
 		/* Simplify all the expressions in the CFG
 		 */
 		void simplify();
-
-		/*
-		 * Insert actual arguments to match formal parameters
-		 */
-		void insertArguments(StatementSet& rs);
 
 		/*
 		 * Change the BB enclosing stmt to be CALL, not COMPCALL

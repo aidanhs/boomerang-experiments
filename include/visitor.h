@@ -9,7 +9,7 @@
  *			   and also to make exp.cpp and statement.cpp a little less huge
  *============================================================================*/
 /*
- * $Revision: 1.13.2.9 $
+ * $Revision: 1.13.2.10 $
  *
  * We have Visitor and Modifier classes separate. Visitors are more suited
  *	 for searching: they have the capability of stopping the recursion,
@@ -336,12 +336,9 @@ virtual bool		visit(Terminal* e);
 };
 
 class UsedLocsVisitor : public StmtExpVisitor {
+		bool		countCol;					// True to count uses in collectors
 public:
-		// The bool final is for ignoring those parts of expressions that are not to be considered for the final pass
-		// just before code generation. For example, implicit parameters and returns in CallStatements are ignored
-		// (not considered used).
-		bool		final;
-					UsedLocsVisitor(ExpVisitor* v, bool f = false) : StmtExpVisitor(v) {final = f;}
+					UsedLocsVisitor(ExpVisitor* v, bool cc) : StmtExpVisitor(v), countCol(cc) {}
 virtual				~UsedLocsVisitor() {}
 		// Needs special attention because the lhs of an assignment isn't used (except where it's m[blah], when blah is used)
 virtual bool		visit(		   Assign *stmt, bool& override);

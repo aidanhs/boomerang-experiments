@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.21 $
+ * $Revision: 1.43.2.22 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -304,10 +304,7 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 				for (pp = pa->begin(); pp != pa->end(); ++pp) {
 					Statement* def = pp->def;
 					if (def && def->isCall())
-{ if (phiLeft->isRegN(8))
-  std::cerr << "HACK1!\n";
 						((CallStatement*)def)->useBeforeDefine(phiLeft->clone());
-}
 				}
 			}
 			else
@@ -325,8 +322,6 @@ void DataFlow::renameBlockVars(UserProc* proc, int n, int memDepth, bool clearSt
 					def = ((RefExp*)x)->getDef();
 					if (def && def->isCall()) {
 						// Calls have UseCollectors for locations that are used before definition at the call
-if (base->isRegN(8))
-  std::cerr << "HACK2!\n";
 						((CallStatement*)def)->useBeforeDefine(base->clone());
 						continue;
 					}
@@ -352,10 +347,7 @@ if (base->isRegN(8))
 					def = Stacks[x].top();
 				if (def && def->isCall())
 					// Calls have UseCollectors for locations that are used before definition at the call
-{ if (x->isRegN(8))
-  std::cerr << "HACK3!\n";
 					((CallStatement*)def)->useBeforeDefine(x->clone());
-}
 				// Replace the use of x with x{def} in S
 				if (S->isPhi()) {
 					Exp* phiLeft = ((PhiAssign*)S)->getLeft();
@@ -373,7 +365,7 @@ if (base->isRegN(8))
 				col = ((CallStatement*)S)->getDefCollector();
 			else
 				col = ((ReturnStatement*)S)->getCollector();
-			col->updateLocs(Stacks);
+			col->updateDefs(Stacks);
 		}
 
 		// For each definition of some variable a in S
@@ -473,59 +465,6 @@ if (base->isRegN(8))
 	}
 }
 
-
-void DefCollector::updateLocs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks) {
-	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator it;
-	for (it = Stacks.begin(); it != Stacks.end(); it++) {
-		if (it->second.size() == 0)
-			continue;					// This variable's definition doesn't reach here
-		RefExp* re = new RefExp(it->first->clone(), it->second.top());
-		locs.insert(re);
-	}
-	initialised = true;
-}
-
-// Find the definition for e that reaches this Collector. If none reaches here, return NULL
-RefExp* DefCollector::findDefFor(Exp* e) {
-	RefExp re(e, (Statement*)-1);		// Wrap in a definition with a wild definition
-	LocationSet::iterator it = locs.find(&re);
-	if (it == locs.end())
-		return NULL;					// Not explicitly defined here
-	return (RefExp*)*it;
-}
-
-void Collector::print(std::ostream& os) {
-	LocationSet::iterator it;
-	for (it=locs.begin(); it != locs.end(); ) {
-		os << *it;
-		it++;
-		if (it != locs.end())
-			os << ", ";
-	}
-}
-
-char* Collector::prints() {
-	std::ostringstream ost;
-	print(ost);
-	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
-	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
-	return debug_buffer;
-}
-
-void Collector::makeCloneOf(Collector& other) {
-	initialised = other.initialised;
-	locs.clear();
-	for (iterator it = other.begin(); it != other.end(); ++it)
-		locs.insert((*it)->clone());
-}
-
-void DefCollector::searchReplaceAll(Exp* from, Exp* to, bool& change) {
-	LocationSet::iterator it;
-	change = false;
-	for (it=locs.begin(); it != locs.end(); ++it)
-		(*it)->searchReplaceAll(from, to, change);
-}
-
 void DataFlow::dumpStacks() {
 	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator zz;
 	for (zz = Stacks.begin(); zz != Stacks.end(); zz++) {
@@ -536,6 +475,105 @@ void DataFlow::dumpStacks() {
 		}
 		std::cerr << "]\n";
 	}
+}
+
+
+void DefCollector::updateDefs(std::map<Exp*, std::stack<Statement*>, lessExpStar>& Stacks) {
+	std::map<Exp*, std::stack<Statement*>, lessExpStar>::iterator it;
+	for (it = Stacks.begin(); it != Stacks.end(); it++) {
+		if (it->second.size() == 0)
+			continue;					// This variable's definition doesn't reach here
+		RefExp* re = new RefExp(it->first->clone(), it->second.top());
+		Assign* as = new Assign(it->first->clone(), re);
+		insert(as);
+	}
+	initialised = true;
+}
+
+// Find the definition for e that reaches this Collector. If none reaches here, return NULL
+Exp* DefCollector::findDefFor(Exp* e) {
+	iterator it;
+	for (it = defs.begin(); it != defs.end(); ++it) {
+		Exp* lhs = (*it)->getLeft();
+		if (*lhs == *e)
+			return (*it)->getRight();
+	}
+	return NULL;					// Not explicitly defined here
+}
+
+void UseCollector::print(std::ostream& os) {
+	LocationSet::iterator it;
+	bool first = true;
+	for (it=locs.begin(); it != locs.end(); ++it) {
+		if (first)
+			first = false;
+		else
+			os << ",  ";
+		os << *it;
+	}
+}
+
+#define DEFCOL_COLS 3
+void DefCollector::print(std::ostream& os) {
+	iterator it;
+	int col = DEFCOL_COLS-1;
+	for (it=defs.begin(); it != defs.end(); ++it) {
+		if (++col != DEFCOL_COLS)
+			os << ",   ";
+		else {
+			col = 0;
+			os << "\n                ";
+		}
+		os << (*it)->getLeft() << "=" << (*it)->getRight();
+	}
+}
+
+char* UseCollector::prints() {
+	std::ostringstream ost;
+	print(ost);
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
+	return debug_buffer;
+}
+
+char* DefCollector::prints() {
+	std::ostringstream ost;
+	print(ost);
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
+	return debug_buffer;
+}
+
+void UseCollector::dump() {
+	std::ostringstream ost;
+	print(ost);
+	std::cerr << ost.str();
+}
+
+void DefCollector::dump() {
+	std::ostringstream ost;
+	print(ost);
+	std::cerr << ost.str();
+}
+
+void UseCollector::makeCloneOf(UseCollector& other) {
+	initialised = other.initialised;
+	locs.clear();
+	for (iterator it = other.begin(); it != other.end(); ++it)
+		locs.insert((*it)->clone());
+}
+
+void DefCollector::makeCloneOf(DefCollector& other) {
+	initialised = other.initialised;
+	defs.clear();
+	for (iterator it = other.begin(); it != other.end(); ++it)
+		defs.insert((Assign*)(*it)->clone());
+}
+
+void DefCollector::searchReplaceAll(Exp* from, Exp* to, bool& change) {
+	iterator it;
+	for (it=defs.begin(); it != defs.end(); ++it)
+		(*it)->searchAndReplace(from, to);
 }
 
 // Called from CallStatement::fromSSAform
@@ -565,4 +603,21 @@ bool UseCollector::operator==(UseCollector& other) {
 	for (it1 = locs.begin(), it2 = other.locs.begin(); it1 != locs.end(); ++it1, ++it2)
 		if (!(**it1 == **it2)) return false;
 	return true;
+}
+
+#if 0
+bool DefCollector::existsOnLeft(Exp* e) {
+	for (iterator it = defs.begin(); it != defs.end(); ++it) {
+		Exp* lhs = (*it)->getLeft();
+		if (*lhs == *e)
+			return true;
+	}
+	return false;
+}
+#endif
+
+void DefCollector::insert(Assign* a) {
+	Exp* l = a->getLeft();
+	if (existsOnLeft(l)) return;
+	defs.insert(a);
 }

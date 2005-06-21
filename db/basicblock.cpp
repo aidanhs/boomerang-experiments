@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.93.2.5 $
+ * $Revision: 1.93.2.6 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1929,9 +1929,8 @@ bool BasicBlock::decodeIndirectJmp(UserProc* proc) {
 		// Note: some programs can have the case expression not propagated, because of Mike's heuristic to
 		// "not propagate too much". Example: argc = m[argc * 4 + K] would not be propagated. So do the
 		// propagation again with the "limit" flag set to flase
-		StatementSet exclude;
 		Exp* e = lastStmt->getDest();
-		lastStmt->propagateTo(-1, exclude, e->getMemDepth(), false);
+		lastStmt->propagateTo(-1, e->getMemDepth(), false);
 		e = lastStmt->getDest();
 		int n = sizeof(hlForms) / sizeof(Exp*);
 		char form = 0;

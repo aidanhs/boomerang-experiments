@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.30 $
+ * $Revision: 1.148.2.31 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -228,7 +228,7 @@ if (ret)
 // example where it would matter.
 
 // Return true if an indirect call statement is converted to direct
-bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bool limit /* = true */) {
+bool Statement::propagateTo(int memDepth, int toDepth, bool limit /* = true */) {
 #if 0		// If don't propagate into flag assigns, some converting to locals doesn't happen, and errors occur
 	// don't propagate to flag assigns
 	if (isFlagAssgn())
@@ -251,88 +251,76 @@ bool Statement::propagateTo(int memDepth, StatementSet& exclude, int toDepth, bo
 	// can substitute b{4} into this, but not a. Can't do c either, since there is no definition (it's a parameter).
 	do {
 		LocationSet exps;
-		addUsedLocs(exps);
+		addUsedLocs(exps, true);		// True to also add uses from collectors
 		LocationSet::iterator ll;
 		change = false;
 		// Example: m[r24{10}] := r25{20} + m[r26{30}]
 		// exps has r24{10}, r25{30}, m[r26{30}], r26{30}
 		for (ll = exps.begin(); ll != exps.end(); ll++) {
-			Exp* m = *ll;
-			if (toDepth != -1 && m->getMemDepth() != toDepth)
+			Exp* e = *ll;
+			if (toDepth != -1 && e->getMemDepth() != toDepth)
 				continue;
+			if (!e->isSubscript()) continue;
+			// Can propagate TO this (if memory depths are suitable)
+			if (((RefExp*)e)->isImplicitDef())
+				// Can't propagate statement "0" (implicit assignments)
+				continue;
+			Statement* def = ((RefExp*)e)->getDef();
+			if (def == this)
+				// Don't propagate to self! Can happen with %pc's
+				continue;
+			if (def->isNullStatement())
+				// Don't propagate a null statement! Can happen with %pc's
+				// (this would have no effect, and would infinitely loop)
+				continue;
+			if (!def->isAssign()) continue;		// Only propagate ordinary assignments (MVE: Check!)
 #if 0
-			LocationSet refs;
-			m->addUsedLocs(refs);
-			LocationSet::iterator rl;
-			for (rl = refs.begin(); rl != refs.end(); rl++) {	// }
-				Exp* e = *rl;
-#else
-				{Exp* e = m;				// Was getting components of the components!
-#endif
-				if (!e->isSubscript()) continue;
-				// Can propagate TO this (if memory depths are suitable)
-				if (((RefExp*)e)->isImplicitDef())
-					// Can't propagate statement "0" (implicit assignments)
-					continue;
-				Statement* def = ((RefExp*)e)->getDef();
-				if (def == this)
-					// Don't propagate to self! Can happen with %pc's
-					continue;
-				if (def->isNullStatement())
-					// Don't propagate a null statement! Can happen with %pc's
-					// (this would have no effect, and would infinitely loop)
-					continue;
-				// Don't propagate from statements in the exclude list
-				if (exclude.exists(def)) continue;
-				if (!def->isAssign()) continue;		// Only propagate ordinary assignments (MVE: Check!)
-#if 0
-				if (def->isPhi())
-					// Don't propagate phi statements!
-					continue;
-				if (def->isCall())
-					continue;
-				if (def->isBool())
-					continue;
+			if (def->isPhi())
+				// Don't propagate phi statements!
+				continue;
+			if (def->isCall())
+				continue;
+			if (def->isBool())
+				continue;
 #endif
 #if 1	// Sorry, I don't believe prop into branches is wrong... MVE.  By not propagating into branches, we get memory
 		// locations not converted to locals, for example (e.g. test/source/csp.c)
 		 
-				Assign* adef = (Assign*)def;
-				if (isBranch()) {
-					Exp* defRight = adef->getRight();
-					// Propagating to a branch often doesn't give good results, unless propagating flags
-					// Special case for Pentium: allow prop of
-					// r12 := SETFFLAGS(...) (fflags stored via register AH)
-					if (!hasSetFlags(defRight))
-						// Allow propagation of constants
-						if (defRight->isIntConst() || defRight->isFltConst())
-							if (VERBOSE) LOG << "Allowing prop. into branch (1) of " << def << "\n";
-							else
-								;
-						// ?? Also allow any assignments to temps or assignment of anything to anything subscripted.
-						// Trent: was the latter meant to be anything NOT subscripted?
-						else if (defRight->getOper() != opSubscript && !adef->getLeft()->isTemp())
-							continue;
+			Assign* adef = (Assign*)def;
+			if (isBranch()) {
+				Exp* defRight = adef->getRight();
+				// Propagating to a branch often doesn't give good results, unless propagating flags
+				// Special case for Pentium: allow prop of
+				// r12 := SETFFLAGS(...) (fflags stored via register AH)
+				if (!hasSetFlags(defRight))
+					// Allow propagation of constants
+					if (defRight->isIntConst() || defRight->isFltConst())
+						if (VERBOSE) LOG << "Allowing prop. into branch (1) of " << def << "\n";
 						else
-							if (VERBOSE) LOG << "Allowing prop. into branch (2) of " << def << "\n";
-				}
-#endif
-				if (adef->getLeft()->getType() && adef->getLeft()->getType()->isArray()) {
-					// Assigning to an array, don't propagate
-					continue;
-				}
-				if (limit && ! (*adef->getLeft() == *regSp)) {
-					// Try to prevent too much propagation, e.g. fromSSA, sumarray
-					LocationSet used;
-					adef->addUsedLocs(used);
-					RefExp left(adef->getLeft(), (Statement*)-1);
-					RefExp *right = dynamic_cast<RefExp*>(adef->getRight());
-					if (used.exists(&left) && !(right && *right->getSubExp1() == *left.getSubExp1()))
-						// We have something like eax = eax + 1
+							;
+					// ?? Also allow any assignments to temps or assignment of anything to anything subscripted.
+					// Trent: was the latter meant to be anything NOT subscripted?
+					else if (defRight->getOper() != opSubscript && !adef->getLeft()->isTemp())
 						continue;
-				}
-				change = doPropagateTo(memDepth, adef, convert);
+					else
+						if (VERBOSE) LOG << "Allowing prop. into branch (2) of " << def << "\n";
 			}
+#endif
+			if (adef->getLeft()->getType() && adef->getLeft()->getType()->isArray()) {
+				// Assigning to an array, don't propagate
+				continue;
+			}
+			if (limit && ! (*adef->getLeft() == *regSp)) {
+				// Try to prevent too much propagation, e.g. fromSSA, sumarray
+				LocationSet used;
+				adef->addUsedLocs(used);
+				RefExp left(adef->getLeft(), (Statement*)-1);
+				RefExp *right = dynamic_cast<RefExp*>(adef->getRight());
+				if (used.exists(&left) && !(right && *right->getSubExp1() == *left.getSubExp1()))
+					// We have something like eax = eax + 1
+					continue;
+			}
+			change = doPropagateTo(memDepth, adef, convert);
 		}
 	} while (change && ++changes < 20);
 	// Simplify is very costly, especially for calls. I hope that doing one simplify at the end will not affect any
@@ -367,7 +355,7 @@ bool Statement::doPropagateTo(int memDepth, Assign* def, bool& convert) {
 	if (VERBOSE) {
 		LOG << "	 result " << this << "\n\n";
 	}
-	return true;
+	return true;		// FIXME! Should be true if changed. Need a visitor
 }
 
 #if 0
@@ -2043,24 +2031,6 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 	}
 	unsigned int i;
 
-#if 0		// Don't want to substitute into defines... they have no RHS anyway
-	for (i = 0; i < defines.size(); i++) {
-		if (returns[i].e && returns[i].e->getOper() == opMemOf) {
-			Exp *e = findDefFor(returns[i].e->getSubExp1());
-			if (e)
-				returns[i].e->refSubExp1() = e->clone();
-			returns[i].e->refSubExp1() = returns[i].e->getSubExp1()->searchReplaceAll(from, to, change);
-			// Simplify is very expensive, especially if it happens to reference a phi statement (attempts proofs)
-			if (change) {
-				returns[i].e = returns[i].e->simplifyArith()->simplify();
-				if (0 & VERBOSE)
-					LOG << "doReplaceRef: updated return[" << i << "] with " << returns[i].e << "\n";
-
-			}
-		}
-	}
-#endif
-
 	StatementList::iterator ss;
 	for (ss = arguments.begin(), i=0; ss != arguments.end(); ++ss, ++i) {
 		// Propagate into the RIGHT hand side of arguments
@@ -2079,27 +2049,8 @@ bool CallStatement::doReplaceRef(Exp* from, Exp* to) {
 			if (change) al->simplifyArith()->simplify();
 		}
 	}
-#if 0
-	for (i = 0; i < implicitArguments.size(); i++) {
-		// Don't replace the implicit argument if it matches whole expression.
-		// A large part of the use of these is to allow fixCallBypass to change a definition of a location
-		// (say sp) by what the function does with it (maybe replaces it with sp+4). If you substitute sp{K}
-		// with say sp{K-3}+4, then it won't do its job with fixCallBypass.
-		if (!(*implicitArguments[i] == *from)) {
-			implicitArguments[i] = implicitArguments[i]->searchReplaceAll(from, to, change);
-			if (change) {
-				implicitArguments[i] = implicitArguments[i]->simplifyArith()->simplify();
-				if (0 & VERBOSE)
-					LOG << "doReplaceRef: updated implicitArguments[" << i << "] with " << implicitArguments[i] << "\n";
-			}
-		}
-	}
-#endif
 
-	// I believed I wanted to propagate into the DefCollector... but then you don't recognise e.g. the stack pointer
-	// Best to leave the collector as r28{36}, and just go to the RHS of statement 36 for the definition in terms of
-	// r28{-}
-	// defCol.searchReplaceAll(from, to, change);
+	defCol.searchReplaceAll(from, to, change);
 	return convertIndirect;
 }
 
@@ -2169,33 +2120,6 @@ void CallStatement::fromSSAform(igraph& ig) {
 	useCol.fromSSAform(ig, this);
 }
 
-
-// Insert actual arguments to match the formal parameters
-// This is called very late, after all propagation
-void CallStatement::insertArguments(StatementSet& rs) {
-	// FIXME: Fix this, or delete the whole function
-#if 0
-	if (procDest == NULL) return;
-	if (procDest->isLib()) return;
-	Signature* sig = procDest->getSignature();
-	int num = sig->getNumParams();
-	//arguments.resize(num, NULL);
-	// Get the set of definitions that reach this call
-	StatementSet rd;
-	getBB()->getReachInAt(this, rd, 2);
-	StatementSet empty;
-	for (int i=0; i<num; i++) {
-		Exp* loc = sig->getArgumentExp(i)->clone();
-		// Needs to be subscripted with everything that reaches the parameters
-		// FIXME: need to be sensible about memory depths
-		loc->updateRefs(rd, 0, rs);
-		propagateTo(0, empty);
-		loc->updateRefs(rd, 1, rs);
-		propagateTo(1, empty);
-		arguments.push_back(loc);
-	}
-#endif
-}
 
 // Processes each argument of a CallStatement, and the RHS of an Assign. Ad-hoc type analysis only.
 Exp *processConstant(Exp *e, Type *t, Prog *prog, UserProc* proc) {
@@ -2733,6 +2657,9 @@ bool ReturnStatement::doReplaceRef(Exp* from, Exp* to) {
 	ReturnStatement::iterator rr;
 	for (rr = begin(); rr != end(); ++rr)
 		change |= (*rr)->doReplaceRef(from, to);
+	// Ugh - even though we can lookup assignments based on the LHS, it is quite possible to have assignments such
+	// as a := b+c, which need changing if from happened to be b or c
+	col.searchReplaceAll(from, to, change);
 	return change;
 }
  
@@ -3389,7 +3316,7 @@ bool Assign::doReplaceRef(Exp* from, Exp* to) {
 		Exp* baseFrom = ((RefExp*)from)->getSubExp1();
 		if (baseFrom->isFlags()) {
 			Assign* def = (Assign*)((RefExp*)from)->getDef();
-assert(def->isAssign());
+			assert(def->isAssign());
 			Exp* defRhs = def->getRight();
 			assert(defRhs->isFlagCall());
 			char* str = ((Const*)((Binary*)defRhs)->getSubExp1())->getStr();
@@ -3414,13 +3341,15 @@ assert(def->isAssign());
 			}
 		}
 	}
+#if 0
 	if (!changeright && !changeleft) {
 		if (VERBOSE) {
-			// I used to be hardline about this and assert fault, but now I do such weird propagation orders that this 
-			// can happen.	It does however mean that some dataflow information is wrong somewhere.	- trent
+			// This can happen all too frequently now with CallStatements and ReturnStatements containing multiple
+			// assignments
 			LOG << "could not change " << from << " to " << to << " in " << this << " !!\n";
 		}
 	}
+#endif
 	if (changeright) {
 		// simplify the expression
 		rhs = rhs->simplifyArith()->simplify();
@@ -3786,6 +3715,10 @@ bool ReturnStatement::accept(StmtExpVisitor* v) {
 	if (!v->visit(this, override))
 		return false;
 	if (override) return true;
+	DefCollector::iterator dd;
+	for (dd = col.begin(); dd != col.end(); ++dd)
+		if (!(*dd)->accept(v))
+			return false;
 	ReturnStatement::iterator rr;
 	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
 		if (!(*rr)->accept(v))
@@ -3892,6 +3825,10 @@ bool CallStatement::accept(StmtModifier* v) {
 bool ReturnStatement::accept(StmtModifier* v) {
 	bool recur;
 	v->visit(this, recur);
+	DefCollector::iterator dd;
+	for (dd = col.begin(); dd != col.end(); ++dd)
+		if (!(*dd)->accept(v))
+			return false;
 	ReturnStatement::iterator rr;
 	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
 		if (!(*rr)->accept(v))
@@ -4040,9 +3977,9 @@ void Statement::bypassAndPropagate() {
 
 // Find the locations used by expressions in this Statement.
 // Use the StmtExpVisitor and UsedLocsFinder visitor classes
-void Statement::addUsedLocs(LocationSet& used, bool final /* = false */) {
+void Statement::addUsedLocs(LocationSet& used, bool cc) {
 	UsedLocsFinder ulf(used);
-	UsedLocsVisitor ulv(&ulf, final);
+	UsedLocsVisitor ulv(&ulf, cc);
 	accept(&ulv);
 }
 
@@ -4376,14 +4313,12 @@ void ReturnStatement::print(std::ostream& os) {
 #endif
 }
 
-#if 0
 // A helper class for comparing Assignment*'s sensibly
 bool lessAssignment::operator()(const Assignment* x, const Assignment* y) const {
 	Assignment* xx = const_cast<Assignment*>(x);
 	Assignment* yy = const_cast<Assignment*>(y);
 	return (*xx->getLeft() < *yy->getLeft());		// Compare the LHS expressions
 }
-#endif
 
 // Update the modifieds, in case the signature and hence ordering and filtering has changed, or the locations in the
 // collector have changed. Does NOT remove preserveds.
@@ -4394,22 +4329,22 @@ void ReturnStatement::updateModifieds() {
 	// For each location in the collector, make sure that there is an assignment in the old modifieds, which will
 	// be filtered and sorted to become the new modifieds
 	// Ick... O(N*M) (N existing modifeds, M collected locations)
-	LocationSet::iterator ll;
+	DefCollector::iterator ll;
 	StatementList::iterator it;
 	for (ll = col.begin(); ll != col.end(); ++ll) {
 		bool found = false;
-		Exp* loc = ((RefExp*)*ll)->getSubExp1();		// Remove subscript
-		if (proc->filterReturns(loc))
+		Exp* colLhs = ((Assign*)*ll)->getLeft();
+		if (proc->filterReturns(colLhs))
 			continue;									// Filtered out
 		for (it = oldMods.begin(); it != oldMods.end(); it++) {
 			Exp* lhs = ((Assign*)*it)->getLeft();
-			if (*lhs == *loc) {
+			if (*lhs == *colLhs) {
 				found = true;
 				break;
 			}
 		}
 		if (!found) {
-			ImplicitAssign* as = new ImplicitAssign(loc->clone());
+			ImplicitAssign* as = new ImplicitAssign(colLhs->clone());
 			oldMods.append(as);
 		}
 	}
@@ -4421,7 +4356,7 @@ void ReturnStatement::updateModifieds() {
 		// Make sure the LHS is still in the collector
 		Assign* as = (Assign*)*it;
 		Exp* lhs = as->getLeft();
-		if (!col.existsNS(lhs))
+		if (!col.existsOnLeft(lhs))
 			continue;						// Not in collector: delete it (don't copy it)
 		if (proc->filterReturns(lhs))
 			continue;						// Filtered out: delete it
@@ -4591,9 +4526,10 @@ enum Src {SRC_LIB, SRC_CALLEE, SRC_COL};
 		DefCollector* defCol;
 public:
 					ArgSourceProvider(CallStatement* call);
-		Exp*		nextArgLoc();
-		Type*		curType(Exp* e);
-		bool		exists(Exp* loc);
+		Exp*		nextArgLoc();		// Get the next location (not subscripted)
+		Type*		curType(Exp* e);	// Get the current location's type
+		bool		exists(Exp* loc);	// True if the given location (not subscripted) exists as a source
+		Exp*		localise(Exp* e);	// Localise to this call if necessary
 };
 
 ArgSourceProvider::ArgSourceProvider(CallStatement* call) : call(call) {
@@ -4633,12 +4569,21 @@ Exp* ArgSourceProvider::nextArgLoc() {
 			return s;
 		case SRC_COL:
 			if (cc == defCol->end()) return NULL;
-			// Note that unlike the above two cases, the collector has the propagated but not call-bypassed location.
-			// It seems a pity to throw away the propagated value, but it needs bypassing anyway.
-			// So just discard the subscript.
-			return ((RefExp*)*cc++)->getSubExp1();
+			// Give the location, i.e. the left hand side of the assignment
+			return ((Assign*)*cc++)->getLeft();
 	}
 	return NULL;		// Suppress warning
+}
+
+Exp* ArgSourceProvider::localise(Exp* e) {
+	if (src == SRC_COL) {
+		// Provide the RHS of the current assignment
+		Exp* ret = ((Assign*)*--cc)->getRight();
+		++cc;
+		return ret;
+	}
+	// Else just use the call to localise
+	return call->localiseExp(e->clone());
 }
 
 Type* ArgSourceProvider::curType(Exp* e) {
@@ -4652,7 +4597,7 @@ Type* ArgSourceProvider::curType(Exp* e) {
 		}
 		case SRC_COL: {
 			Statement* def = ((RefExp*)*--cc)->getDef();
-			cc++;
+			++cc;
 			return def->getTypeFor(e);
 		}
 	}
@@ -4684,7 +4629,7 @@ bool ArgSourceProvider::exists(Exp* e) {
 			}
 			return false;
 		case SRC_COL:
-			return defCol->existsNS(e);
+			return defCol->existsOnLeft(e);
 	}
 	return false;			// Suppress warning
 }
@@ -4715,7 +4660,7 @@ void CallStatement::updateArguments() {
 		if (proc->filterParams(loc))
 			continue;
 		if (!oldArguments.existsOnLeft(loc)) {
-			Exp* rhs = localiseExp(loc->clone());
+			Exp* rhs = asp.localise(loc->clone());
 			Assign* as = new Assign(asp.curType(loc), loc->clone(), rhs);
 			oldArguments.append(as);
 		}

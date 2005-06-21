@@ -11,6 +11,7 @@
  * FILE:	   managed.h
  * OVERVIEW:   Definition of "managed" classes such as StatementSet, which feature makeUnion etc
  * CLASSES:		StatementSet
+ *				AssignSet
  *				StatementList
  *				StatementVec
  *				LocationSet
@@ -38,9 +39,8 @@ class Cfg;
 class LocationSet;
 
 // A class to implement sets of statements
-// We may choose to implement these very differently one day
 class StatementSet {
-		std::set<Statement*> sset;			// For now, use use standard sets
+		std::set<Statement*> sset;							// For now, use use standard sets
 
 public:
 typedef std::set<Statement*>::iterator iterator;
@@ -52,8 +52,6 @@ virtual				~StatementSet() {}
 		bool		isSubSetOf(StatementSet& other);	// Subset relation
 
 		unsigned	size() {return sset.size();}		// Number of elements
-		//Statement* getFirst(StmtSetIter& it);	  		// Get the first Statement
-		//Statement* getNext (StmtSetIter& it);	  		// Get next
 		iterator	begin()	{return sset.begin();}
 		iterator	end()	{return sset.end();}
 		
@@ -72,8 +70,46 @@ virtual				~StatementSet() {}
 		void		printNums(std::ostream& os);			// Print statements as numbers
 		char*		prints();								// Print to string (for debug)
 		void		dump();									// Print to standard error for debugging
-		//bool	isLast(StmtSetIter& it);					// returns true if it is at end
 };		// class StatementSet
+
+// As above, but the Statements are known to be Assigns, and are sorted sensibly
+class AssignSet {
+		std::set<Assign*, lessAssignment> aset;			// For now, use use standard sets
+
+public:
+typedef std::set<Assign*, lessAssignment>::iterator iterator;
+typedef std::set<Assign*, lessAssignment>::iterator const_iterator;
+
+virtual				~AssignSet() {}
+		void		makeUnion(AssignSet& other);		// Set union
+		void		makeDiff (AssignSet& other);		// Set difference
+		void		makeIsect(AssignSet& other);		// Set intersection
+		bool		isSubSetOf(AssignSet& other);		// Subset relation
+
+		unsigned	size() {return aset.size();}		// Number of elements
+		//Statement* getFirst(StmtSetIter& it);	  		// Get the first Statement
+		//Statement* getNext (StmtSetIter& it);	  		// Get next
+		iterator	begin()	{return aset.begin();}
+		iterator	end()	{return aset.end();}
+		
+		void		insert(Assign* a) {aset.insert(a);}		// Insertion
+		bool		remove(Assign* a);						// Removal; rets false if not found
+		bool		removeIfDefines(Exp* given);			// Remove if given exp is defined
+		bool		removeIfDefines(AssignSet& given);		// Remove if any given is def'd
+		bool		exists(Assign* s);						// Search; returns false if !found
+		bool		definesLoc(Exp* loc);					// Search; returns true if any assignment defines loc
+		Assign*		lookupLoc(Exp* loc);					// Search for loc on LHS, return ptr to Assign if found
+
+		void		clear() {aset.clear();}					// Clear the set
+		bool		operator==(const AssignSet& o) const	// Compare if equal
+						{ return aset == o.aset;}
+		bool		operator<(const AssignSet& o) const;	// Compare if less
+		void		print(std::ostream& os);				// Print to os
+		void		printNums(std::ostream& os);			// Print statements as numbers
+		char*		prints();								// Print to string (for debug)
+		void		dump();									// Print to standard error for debugging
+		//bool	isLast(StmtSetIter& it);					// returns true if it is at end
+};		// class AssignSet
 
 class StatementList {
 		std::list<Statement*> slist;		  				// For now, use use standard list

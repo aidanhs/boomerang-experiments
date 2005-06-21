@@ -14,7 +14,7 @@
  * OVERVIEW:	interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.73.2.2 $
+ * $Revision: 1.73.2.3 $
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -129,9 +129,6 @@ public:
 
 		// Analyse any decoded procedures
 		void		analyse();
-
-		// Insert arguments. Assumes all procedures have their formal parameters recovered
-		void		insertArguments(StatementSet& rs);
 
 		// Recover return locations
 		void		recoverReturnLocs();

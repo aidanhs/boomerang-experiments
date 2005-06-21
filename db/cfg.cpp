@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.95.2.2 $
+ * $Revision: 1.95.2.3 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 19 Jul 04 - Mike: Changed initialisation of BBs to not rely on out edges
  */
@@ -1934,19 +1934,6 @@ void Cfg::generateDotFile(std::ofstream& of) {
 		}
 	}
 #endif
-}
-
-void Cfg::insertArguments(StatementSet& rs) {
-	BB_IT it;
-	for (it = m_listBB.begin(); it != m_listBB.end(); it++) {
-		if ((*it)->getType() == CALL) {
-			// There should be a CallStatement in the last RTL
-			CallStatement* call = (CallStatement*)
-			  (*it)->m_pRtls->back()->getHlStmt();
-			assert(call->getKind() == STMT_CALL);
-			call->insertArguments(rs);
-		}
-	}
 }
 
 

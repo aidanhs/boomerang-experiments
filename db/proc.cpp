@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.35 $
+ * $Revision: 1.238.2.36 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -3112,7 +3112,6 @@ bool UserProc::propagateStatements(int memDepth, int toDepth) {
 	StatementList stmts;
 	getStatements(stmts);
 	// propagate any statements that can be
-	StatementSet empty;
 	StatementList::iterator it;
 	bool convertedIndirect = false;
 	bool limitPropagations = !Boomerang::get()->noLimitPropagations;
@@ -3122,7 +3121,7 @@ bool UserProc::propagateStatements(int memDepth, int toDepth) {
 		// We can propagate to ReturnStatements now, and "return 0"
 		// if (s->isReturn()) continue;
         // LOG << s << "\n";
-		convertedIndirect |= s->propagateTo(memDepth, empty, toDepth, limitPropagations);
+		convertedIndirect |= s->propagateTo(memDepth, toDepth, limitPropagations);
 	}
 	simplify();
 	propagateToCollector(memDepth);
@@ -3224,12 +3223,7 @@ void UserProc::countRefs(RefCounter& refCounts) {
 		if (DEBUG_UNUSED)
 			LOG << "counting references in " << s << "\n";
 		LocationSet refs;
-#define IGNORE_IMPLICITS 0
-#if IGNORE_IMPLICITS
-		s->addUsedLocs(refs, true);
-#else
-		s->addUsedLocs(refs);
-#endif
+		s->addUsedLocs(refs, false);			// Ignore uses in collectors
 		LocationSet::iterator rr;
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			if (((Exp*)*rr)->isSubscript()) {
@@ -3264,7 +3258,7 @@ void UserProc::removeUnusedLocals() {
 	for (ss = stmts.begin(); ss != stmts.end(); ss++) {
 		Statement* s = *ss;
 		LocationSet refs;
-		s->addUsedLocs(refs, true);
+		s->addUsedLocs(refs);
 		LocationSet::iterator rr;
 		for (rr = refs.begin(); rr != refs.end(); rr++) {
 			Exp* r = *rr;
@@ -3399,7 +3393,7 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 				// that use a definition, not the total number of refs
 				StatementSet stmtsRefdByUnused;
 				LocationSet components;
-				s->addUsedLocs(components);
+				s->addUsedLocs(components, false);		// Second parameter false to ignore uses in collectors
 				LocationSet::iterator cc;
 				for (cc = components.begin(); cc != components.end(); cc++) {
 					if ((*cc)->isSubscript()) {
@@ -3599,9 +3593,11 @@ void UserProc::fromSSAform() {
 	}
 }
 
+#if 0
 void UserProc::insertArguments(StatementSet& rs) {
 	cfg->insertArguments(rs);
 }
+#endif
 
 bool inProve = false;
 
@@ -3651,9 +3647,9 @@ bool UserProc::prove(Exp *query)
 		bool gotDef = false;
 		// replace expression from return set with expression in the collector of the return 
 		if (theReturnStatement) {
-			RefExp* ref = theReturnStatement->findDefFor(query->getSubExp1());
-			if (ref) {
-				query->refSubExp1() = ref;
+			Exp* def = theReturnStatement->findDefFor(query->getSubExp1());
+			if (def) {
+				query->refSubExp1() = def;
 				gotDef = true;
 			}
 		}
@@ -4661,7 +4657,7 @@ void UserProc::fixCallAndPhiRefs() {
 	}
 
 	// Also do xxx in m[xxx] in the use collector
-	Collector::iterator cc;
+	UseCollector::iterator cc;
 	for (cc = col.begin(); cc != col.end(); ++cc) {
 		if (!(*cc)->isMemOf()) continue;
 		Exp* addr = ((Location*)*cc)->getSubExp1();
@@ -4691,7 +4687,7 @@ void UserProc::markAsNonChildless(CycleSet* cs) {
 
 // Propagate into xxx of m[xxx] in the UseCollector (locations live at the entry of this proc)
 void UserProc::propagateToCollector(int depth) {
-	Collector::iterator it;
+	UseCollector::iterator it;
 	for (it = col.begin(); it != col.end(); ++it) {
 		if (!(*it)->isMemOf()) continue;
 		Exp* addr = ((Location*)*it)->getSubExp1();
@@ -4727,7 +4723,7 @@ void UserProc::initialParameters() {
 	if (VERBOSE)
 		LOG << "### initial parameters for " << getName() << "\n";
 	parameters.clear();
-	Collector::iterator cc;
+	UseCollector::iterator cc;
 	for (cc = col.begin(); cc != col.end(); ++cc)
 		parameters.append(new ImplicitAssign((*cc)->clone()));
 	if (VERBOSE) {

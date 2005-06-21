@@ -9,13 +9,13 @@
 
 /*==============================================================================
  * FILE:	   managed.cpp
- * OVERVIEW:   Implementation of "managed" classes such as StatementSet, which
- *				feature makeUnion etc
+ * OVERVIEW:   Implementation of "managed" classes such as StatementSet, which feature makeUnion etc
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.11 $
+ * $Revision: 1.15.2.12 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
+ * 21 Jun 05 - Mike: Added AssignSet
  */
 
 #include <sstream>
@@ -30,6 +30,11 @@ extern char debug_buffer[];		// For prints functions
 
 std::ostream& operator<<(std::ostream& os, StatementSet* ss) {
 	ss->print(os);
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, AssignSet* as) {
+	as->print(os);
 	return os;
 }
 
@@ -175,6 +180,155 @@ bool StatementSet::operator<(const StatementSet& o) const {
 	if (sset.size() > o.sset.size()) return false;
 	std::set<Statement*>::const_iterator it1, it2;
 	for (it1 = sset.begin(), it2 = o.sset.begin(); it1 != sset.end();
+	  it1++, it2++) {
+		if (*it1 < *it2) return true;
+		if (*it1 > *it2) return false;
+	}
+	return false;
+}
+
+//
+// AssignSet methods
+//
+
+// Make this set the union of itself and other
+void AssignSet::makeUnion(AssignSet& other) {
+	iterator it;
+	for (it = other.aset.begin(); it != other.aset.end(); it++) {
+		aset.insert(*it);
+	}
+}
+
+// Make this set the difference of itself and other
+void AssignSet::makeDiff(AssignSet& other) {
+	iterator it;
+	for (it = other.aset.begin(); it != other.aset.end(); it++) {
+		aset.erase(*it);
+	}
+}
+
+
+// Make this set the intersection of itself and other
+void AssignSet::makeIsect(AssignSet& other) {
+	iterator it, ff;
+	for (it = aset.begin(); it != aset.end(); it++) {
+		ff = other.aset.find(*it);
+		if (ff == other.aset.end())
+			// Not in both sets
+			aset.erase(it);
+	}
+}
+
+// Check for the subset relation, i.e. are all my elements also in the set
+// other. Effectively (this intersect other) == this
+bool AssignSet::isSubSetOf(AssignSet& other) {
+	iterator it, ff;
+	for (it = aset.begin(); it != aset.end(); it++) {
+		ff = other.aset.find(*it);
+		if (ff == other.aset.end())
+			return false;
+	}
+	return true;
+}
+
+
+// Remove this Assign. Return false if it was not found
+bool AssignSet::remove(Assign* a) {
+	if (aset.find(a) != aset.end()) {
+		aset.erase(a);
+		return true;
+	}
+	return false;
+}
+
+// Search for a in this Assign set. Return true if found
+bool AssignSet::exists(Assign* a) {
+	iterator it = aset.find(a);
+	return (it != aset.end());
+}
+
+// Find a definition for loc in this Assign set. Return true if found
+bool AssignSet::definesLoc(Exp* loc) {
+	Assign* as = new Assign(loc, new Terminal(opWild));
+	iterator ff = aset.find(as);
+	return ff != aset.end();
+}
+
+// Find a definition for loc on the LHS in this Assign set. If found, return pointer to the Assign with that LHS
+Assign* AssignSet::lookupLoc(Exp* loc) {
+	Assign* as = new Assign(loc, new Terminal(opWild));
+	iterator ff = aset.find(as);
+	if (ff == aset.end()) return NULL;
+	return *ff;
+}
+
+#if 0
+// Remove if defines the given expression
+bool AssignSet::removeIfDefines(Exp* given) {
+	bool found = false;
+	for (iterator it = aset.begin(); it != aset.end(); it++) {
+		if ((*it)->defines(given)) {
+			// Erase this Statement
+			aset.erase(it);
+			found = true;
+		}
+	}
+	return found;
+}
+
+// As above, but given a whole statement set
+bool AssignSet::removeIfDefines(AssignSet& given) {
+	bool found = false;
+	for (iterator it = given.aset.begin(); it != given.aset.end(); it++) {
+		Exp* givenLeft = (*it)->getLeft();
+		if (givenLeft)
+			found |= removeIfDefines(givenLeft);
+	}
+	return found;
+}
+#endif
+
+// Print to a string, for debugging
+char* AssignSet::prints() {
+	std::ostringstream ost;
+	iterator it;
+	for (it = aset.begin(); it != aset.end(); it++) {
+		if (it != aset.begin()) ost << ",\t";
+		ost << *it;
+	}
+	ost << "\n";
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
+	return debug_buffer;
+}
+
+void AssignSet::print(std::ostream& os) {
+	iterator it;
+	for (it = aset.begin(); it != aset.end(); it++) {
+		if (it != aset.begin()) os << ",\t";
+		os << *it;
+	}
+	os << "\n";
+}
+
+// Print just the numbers to stream os
+void AssignSet::printNums(std::ostream& os) {
+	os << std::dec;
+	for (iterator it = aset.begin(); it != aset.end(); ) {
+		if (*it)
+			(*it)->printNum(os);
+		else
+			os << "-";				// Special case for NULL definition
+		if (++it != aset.end())
+			os << " ";
+	}
+}
+
+bool AssignSet::operator<(const AssignSet& o) const {
+	if (aset.size() < o.aset.size()) return true;
+	if (aset.size() > o.aset.size()) return false;
+	const_iterator it1, it2;
+	for (it1 = aset.begin(), it2 = o.aset.begin(); it1 != aset.end();
 	  it1++, it2++) {
 		if (*it1 < *it2) return true;
 		if (*it1 > *it2) return false;

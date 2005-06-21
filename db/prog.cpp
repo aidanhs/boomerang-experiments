@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.10 $
+ * $Revision: 1.126.2.11 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -921,15 +921,6 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 	}
 	return NULL;
 #endif
-}
-
-void Prog::insertArguments(StatementSet& rs) {
-	PROGMAP::iterator pp;
-	for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
-		UserProc* proc = (UserProc*)pp->second;
-		if (proc->isLib()) continue;
-		proc->insertArguments(rs);
-	}
 }
 
 void Prog::decodeExtraEntrypoint(ADDRESS a) { 
