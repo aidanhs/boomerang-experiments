@@ -6,7 +6,7 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.9 $
+ * $Revision: 1.53.2.10 $
  *
  * 12 Jul 02 - Trent: Created
  */
@@ -240,6 +240,7 @@ static	StatementList& getStdRetStmt(Prog* prog);
 		// get anything that can be proven as a result of the signature
 virtual Exp			*getProven(Exp *left) { return NULL; }
 virtual	bool		isPreserved(Exp* e) { return false; }		// Return whether e is preserved by this proc
+virtual	void		setLibraryDefines(StatementList* defs) {}	// Set the locations defined by library calls
 
 		// Return true if this is a known machine (e.g. SparcSignature as opposed to Signature)
 virtual bool		isPromoted() { return false; }

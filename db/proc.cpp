@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.36 $
+ * $Revision: 1.238.2.37 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1335,9 +1335,9 @@ void UserProc::removeUnusedStatements() {
 
 		printXML();
 		if (VERBOSE && !Boomerang::get()->noRemoveNull) {
-			LOG << "--- after removing unused and null statements depth " << depth << " ---\n";
+			LOG << "--- after removing unused and null statements depth " << depth << " for " << getName() << " ---\n";
 			printToLog();
-			LOG << "=== end after removing unused statements ===\n\n";
+			LOG << "=== end after removing unused statements for " << getName() << " ===\n\n";
 		}
 		Boomerang::get()->alert_decompile_afterRemoveStmts(this, depth);
 	}
@@ -1603,6 +1603,7 @@ void UserProc::doRenameBlockVars(int depth, bool clearStacks) {
 
 void UserProc::updateBlockVars()
 {
+	clearUses();										// Experimental
 	//int depth = findMaxDepth() + 1;					// FIXME: why +1?
 	int depth = maxDepth;
 	for (int i = 0; i <= depth; i++) {
@@ -3266,14 +3267,15 @@ void UserProc::removeUnusedLocals() {
 			//	r = ((RefExp*)r)->getSubExp1();
 			char* sym = findLocal(r);				// Look up raw expressions in the symbolMap, and check in symbols
 			// Must be a real symbol, and not defined in this statement, unless it is a return statement (in which case
-			// it is used outside this procedure). Consider local7 = local7+1 and return local7 = local7+1, where in
-			// both cases, local7 is not used elsewhere outside this procedure. With the assign, it can be deleted,
-			// but with the return statement, it can't.
-			if (sym && (s->isReturn() || !s->definesLoc(r))) {
-			// Must be a real symbol, and not defined in this statement
-				std::string name(sym);				// (e.g. consider local7 = local7 & 0xFB, and never used elsewhere)
+			// it is used outside this procedure), or a call statement. Consider local7 = local7+1 and
+			// return local7 = local7+1 and local7 = call(local7+1), where in all cases, local7 is not used elsewhere
+			// outside this procedure. With the assign, it can be deleted, but with the return or call statements, it
+			// can't.
+			if (sym && (s->isReturn() || s->isCall() || !s->definesLoc(r))) {
+				std::string name(sym);
 				usedLocals.insert(name);
-				if (VERBOSE) LOG << "counted local " << sym << " in " << s << "\n";
+				if (DEBUG_UNUSED)
+					LOG << "counted local " << sym << " in " << s << "\n";
 			}
 		}
 	}
@@ -3334,7 +3336,7 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 	StatementList stmts;
 	getStatements(stmts);
 	bool change;
-	do {
+	do {								// FIXME: check if this is ever needed
 		change = false;
 		StatementList::iterator ll = stmts.begin();
 		while (ll != stmts.end()) {
@@ -3418,6 +3420,7 @@ void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
 			ll++;
 		}
 	} while (change);
+	updateBlockVars();					// Recaluclate at least the liveness
 }
 
 //
@@ -4400,7 +4403,8 @@ void UserProc::updateArguments() {
 	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
 	for (it = cfg->begin(); it != cfg->end(); ++it) {
 		CallStatement* c = (CallStatement*) (*it)->getLastStmt(rrit, srit);
-		if (!c->isCall()) continue;
+		// Note: we may have removed some statements, so there may no longer be a last statement!
+		if (c == NULL || !c->isCall()) continue;
 		c->updateArguments();
 		//c->bypassAndPropagate();
 		if (VERBOSE) {
@@ -4849,7 +4853,8 @@ void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
 	BB_IT it;
 	for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
 		CallStatement* c = (CallStatement*) bb->getLastStmt(rrit, srit);
-		if (!c->isCall()) continue;
+		// Note: we may have removed some statements, so there may no longer be a last statement!
+		if (c == NULL || !c->isCall()) continue;
 		UserProc* dest = (UserProc*)c->getDestProc();
 		if (dest->isLib()) continue;			// Not interested in calls to lib procs
 		callLiveness[c].makeCloneOf(*c->getUseCollector());
@@ -4890,5 +4895,19 @@ void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
 					" changed\n";
 			removeRetSet.insert((UserProc*)call->getDestProc());
 		}
+	}
+}
+
+void UserProc::clearUses() {
+	if (VERBOSE)
+		LOG << "### clearing usage for " << getName() << " ###\n";
+	col.clear();
+	BB_IT it;
+	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
+	for (it = cfg->begin(); it != cfg->end(); ++it) {
+		CallStatement* c = (CallStatement*) (*it)->getLastStmt(rrit, srit);
+		// Note: we may have removed some statements, so there may no longer be a last statement!
+		if (c == NULL || !c->isCall()) continue;
+		c->clearUseCollector();
 	}
 }

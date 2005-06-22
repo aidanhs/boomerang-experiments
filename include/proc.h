@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.24 $
+/* $Revision: 1.115.2.25 $
 */
 
 #ifndef _PROC_H_
@@ -567,6 +567,7 @@ typedef std::map<Statement*, int> RefCounter;
 		// Propagate statemtents; return true if an indirect call is converted to direct
 		bool		propagateStatements(int memDepth, int toDepth = -1);
 		void		propagateToCollector(int depth);
+		void		clearUses();					// Clear the useCollectors (in this proc, and all calls)
 		int			findMaxDepth();					// Find max memory nesting depth
 
 		void		toSSAform(int memDepth, StatementSet& rs);

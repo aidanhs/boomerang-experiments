@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.10 $
+ * $Revision: 1.98.2.11 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -87,6 +87,7 @@ namespace CallingConvention {
 		virtual int	 		getStackRegister() {return 28; }
 		virtual Exp			*getProven(Exp *left);
 		virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
+		virtual void		setLibraryDefines(StatementList* defs);	// Set list of locations def'd by library calls
  
 		virtual bool		isPromoted() {
 								return true; }
@@ -102,7 +103,6 @@ namespace CallingConvention {
 							Win32TcSignature(Signature &old);
 		virtual Exp			*getArgumentExp(int n);
 		virtual Exp			*getProven(Exp* left);
-		virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
 		virtual Signature	*clone();
 		virtual platform	getPlatform() { return PLAT_PENTIUM; }
 		virtual callconv	getConvention() { return CONV_THISCALL; }
@@ -128,6 +128,7 @@ namespace CallingConvention {
 			virtual int			getStackRegister() {return 28; }
 			virtual Exp			*getProven(Exp *left);
 			virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
+			virtual void		setLibraryDefines(StatementList* defs);	// Set list of locations def'd by library calls
 			virtual bool		isPromoted() { return true; }
 			virtual platform	getPlatform() { return PLAT_PENTIUM; }
 			virtual callconv	getConvention() { return CONV_C; }
@@ -153,6 +154,7 @@ namespace CallingConvention {
 			virtual int			getStackRegister() {return 14; }
 			virtual Exp			*getProven(Exp *left);
 			virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
+			virtual void		setLibraryDefines(StatementList* defs);	// Set list of locations def'd by library calls
 			// Stack offsets can be negative (inherited) or positive:
 			virtual bool		isLocalOffsetPositive() {return true;}
 			virtual bool		isPromoted() { return true; }
@@ -184,6 +186,7 @@ namespace CallingConvention {
 			virtual int			getStackRegister() {return 1; }
             virtual Exp			*getProven(Exp *left);
 			virtual	bool		isPreserved(Exp* e);		// Return whether e is preserved by this proc
+			virtual void		setLibraryDefines(StatementList* defs);	// Set list of locations def'd by library calls
             virtual bool		isLocalOffsetPositive() {return true;}
             //virtual	bool	isAddrOfStackLocal(Prog* prog, Exp* e);
 		};
@@ -413,6 +416,24 @@ bool CallingConvention::Win32Signature::isPreserved(Exp* e) {
 	return false;
 }
 
+// Return a list of locations defined by library calls
+void CallingConvention::Win32Signature::setLibraryDefines(StatementList* defs) {
+	if (defs->size()) return;				// Do only once
+	Location* r24 = Location::regOf(24);		// eax
+	if (returns.size() > 1) {					// Ugh - note the stack pointer is the first return still
+		Type* ty = returns[1]->type;
+		if (ty->isFloat()) {
+			Location* r32 = Location::regOf(32);			// Top of FP stack
+			r32->setType(ty);
+		} else
+			r24->setType(ty);									// All others return in r24 (check!)
+	}
+	defs->append(new ImplicitAssign(r24));						// eax
+	defs->append(new ImplicitAssign(Location::regOf(25)));		// ecx
+	defs->append(new ImplicitAssign(Location::regOf(26)));		// edx
+	defs->append(new ImplicitAssign(Location::regOf(28)));		// esp
+}
+
 Exp *CallingConvention::Win32TcSignature::getProven(Exp *left)
 {
 	if (left->isRegOfK()) {
@@ -429,10 +450,6 @@ Exp *CallingConvention::Win32TcSignature::getProven(Exp *left)
 	}
 	// Else same as for standard Win32 signature
 	return Win32Signature::getProven(left);
-}
-
-bool CallingConvention::Win32TcSignature::isPreserved(Exp* e) {
-	return Win32Signature::isPreserved(e);
 }
 
 
@@ -595,6 +612,24 @@ bool CallingConvention::StdC::PentiumSignature::isPreserved(Exp* e) {
 	return false;
 }
 
+// Return a list of locations defined by library calls
+void CallingConvention::StdC::PentiumSignature::setLibraryDefines(StatementList* defs) {
+	if (defs->size()) return;					// Do only once
+	Location* r24 = Location::regOf(24);		// eax
+	if (returns.size() > 1) {					// Ugh - note the stack pointer is the first return still
+		Type* ty = returns[1]->type;
+		if (ty->isFloat()) {
+			Location* r32 = Location::regOf(32);			// Top of FP stack
+			r32->setType(ty);
+		} else
+			r24->setType(ty);									// All others return in r24 (check!)
+	}
+	defs->append(new ImplicitAssign(r24));						// eax
+	defs->append(new ImplicitAssign(Location::regOf(25)));		// ecx
+	defs->append(new ImplicitAssign(Location::regOf(26)));		// edx
+	defs->append(new ImplicitAssign(Location::regOf(28)));		// esp
+}
+
 CallingConvention::StdC::PPCSignature::PPCSignature(const char *nam) : Signature(nam) {
 	Signature::addReturn(Location::regOf(1));
 	// Signature::addImplicitParameter(new PointerType(new IntegerType()), "r1",
@@ -679,6 +714,13 @@ bool CallingConvention::StdC::PPCSignature::isPreserved(Exp* e) {
 		return r == 1;
 	}
 	return false;
+}
+
+// Return a list of locations defined by library calls
+void CallingConvention::StdC::PPCSignature::setLibraryDefines(StatementList* defs) {
+	if (defs->size()) return;				// Do only once
+	for (int r=3; r <= 12; ++r)
+		defs->append(new ImplicitAssign(Location::regOf(r)));	// Registers 3-12 are volatile (caller save)
 }
 
 /*
@@ -851,6 +893,13 @@ bool CallingConvention::StdC::SparcSignature::isPreserved(Exp* e) {
 		}
 	}
 	return false; 
+}
+
+// Return a list of locations defined by library calls
+void CallingConvention::StdC::SparcSignature::setLibraryDefines(StatementList* defs) {
+	if (defs->size()) return;				// Do only once
+	for (int r=8; r <= 15; ++r)
+		defs->append(new ImplicitAssign(Location::regOf(r)));	// o0-o7 (r8-r15) modified
 }
 
 

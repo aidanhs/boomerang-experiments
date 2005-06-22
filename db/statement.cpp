@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.31 $
+ * $Revision: 1.148.2.32 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1627,35 +1627,19 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 	os << std::setw(4) << std::dec << number << " ";
  
 	// Define(s), if any
-	if (procDest && procDest->isLib()) {
-		Signature* sig = procDest->getSignature();
-		int n = sig->getNumReturns();
-		if (n) {
-			if (n > 1+1) os << "{";				// Note: sp is always first return (ugh)
-			for (int i=1; i < n; i++) {
-				if (i != 0+1)
-					os << ", ";
-				os << sig->getReturnType(i) << " " << sig->getReturnExp(i);
-			}
-			if (n > 1+1)
-				os << "}";
-			os << " := ";
+	if (defines.size()) {
+		if (defines.size() > 1) os << "{";
+		StatementList::iterator rr;
+		bool first = true;
+		for (rr = defines.begin(); rr != defines.end(); ++rr) {
+			if (first)
+				first = false;
+			else
+				os << ", ";
+			os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
 		}
-	} else {
-		if (defines.size()) {
-			if (defines.size() > 1) os << "{";
-			StatementList::iterator rr;
-			bool first = true;
-			for (rr = defines.begin(); rr != defines.end(); ++rr) {
-				if (first)
-					first = false;
-				else
-					os << ", ";
-				os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
-			}
-			if (defines.size() > 1) os << "}";
-			os << " := ";
-		}
+		if (defines.size() > 1) os << "}";
+		os << " := ";
 	}
 
 	os << "CALL ";
@@ -1827,19 +1811,10 @@ bool CallStatement::isDefinition() {
 
 void CallStatement::getDefinitions(LocationSet &defs) {
 	// FIXME: may need to update defines first...
-	if (procDest && procDest->isLib()) {
-		// Get returns from the signature
-		Signature* sig = procDest->getSignature();
-		int n = sig->getNumReturns();
-		for (int i=1; i < n; i++)					// Skip first return = stack pointer
-			defs.insert(sig->getReturnExp(i));
-		return;
-	}
-	if (calleeReturn) {
-		StatementList::iterator ss;
-		for (ss = defines.begin(); ss != defines.end(); ++ss)
-			(*ss)->getDefinitions(defs);
-	} else
+	StatementList::iterator dd;
+	for (dd = defines.begin(); dd != defines.end(); ++dd)
+		defs.insert(((Assignment*)*dd)->getLeft());
+	if (isChildless())
 		defs.insert(new Terminal(opDefineAll));	// Childless call defines everything
 }
 
@@ -2487,14 +2462,18 @@ bool CallStatement::ellipsisProcessing(Prog* prog) {
 }
 
 // Make an assign suitable for use as an argument from a callee context expression
-Assign* CallStatement::makeArgAssign(Exp* e) {
+Assign* CallStatement::makeArgAssign(Type* ty, Exp* e) {
 	Exp* lhs = e->clone();
-	if (lhs->isMemOf()) {
-		Exp*& addr = ((Location*)lhs)->refSubExp1();
-		addr = localiseExp(addr);
+	localiseComp(lhs);			// Localise the components of lhs (if needed)
+	Exp* rhs = localiseExp(e->clone());
+	if (ADHOC_TYPE_ANALYSIS) {
+		if (lhs->isLocation()) ((Location*)lhs)->setType(ty);
+		Exp* base = rhs;
+		if (rhs->isSubscript())
+			base = ((RefExp*)rhs)->getSubExp1();
+		if (base->isLocation()) ((Location*)base)->setType(ty);
 	}
-	Exp* rhs = localiseExp(e);
-	return new Assign(lhs, rhs);
+	return new Assign(ty, lhs, rhs);
 }
 
 // Helper function for the above
@@ -2505,7 +2484,7 @@ void CallStatement::addSigParam(Type* ty, bool isScanf) {
 	if (VERBOSE)
 		LOG << "  ellipsisProcessing: adding parameter " << paramExp << " of type " << ty->getCtype() << "\n";
 	if (arguments.size() < (unsigned)signature->getNumParams()) {
-		Assign* as = makeArgAssign(paramExp);
+		Assign* as = makeArgAssign(ty, paramExp);
 		arguments.append(as);
 	}
 }
@@ -4456,8 +4435,9 @@ void CallStatement::updateDefines() {
 	StatementList::iterator it;
 	defines.clear();
 
-	// FIXME: Don't I have to handle the case where this is a call to a library function?
-	if (procDest && calleeReturn) {
+	if (procDest && procDest->isLib()) {
+		sig->setLibraryDefines(&defines);				// Set the locations defined
+	} else if (procDest && calleeReturn) {
 		StatementList::iterator mm;
 		StatementList& modifieds = ((UserProc*)procDest)->getModifieds();
 		for (mm = modifieds.begin(); mm != modifieds.end(); ++mm) {

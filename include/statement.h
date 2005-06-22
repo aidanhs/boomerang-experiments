@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.26 $
+ * $Revision: 1.76.2.27 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -1031,6 +1031,7 @@ virtual bool		accept(StmtPartModifier* visitor);
 		// Do the call bypass logic e.g. r28{20} -> r28{17} + 4 (where 20 is this CallStatement)
 		// Set ch if changed (bypassed)
 		Exp*		bypassRef(RefExp* r, bool& ch);
+		void		clearUseCollector() {useCol.clear();}
 		void		addArgument(Exp *e, UserProc* proc);
 		Exp*		findDefFor(Exp* e);			// Find the reaching definition for expression e
 		Exp*		getArgumentExp(int i);
@@ -1124,7 +1125,7 @@ virtual void		setTypeFor(Exp* e, Type* ty);		// Set the type for this location, 
 private:
 		// Private helper functions for the above
 		void		addSigParam(Type* ty, bool isScanf);
-		Assign*		makeArgAssign(Exp* e);	
+		Assign*		makeArgAssign(Type* ty, Exp* e);	
 
 protected:
 virtual bool		doReplaceRef(Exp* from, Exp* to);
