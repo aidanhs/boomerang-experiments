@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.32 $
+ * $Revision: 1.148.2.33 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -4257,7 +4257,7 @@ void ReturnStatement::setTypeFor(Exp*e, Type* ty) {
 	for (rr = returns.begin(); rr != returns.end(); rr++) {
 		if (*((Assignment*)*rr)->getLeft() == *e) {
 			((Assignment*)*rr)->setType(ty);
-			break;
+			return;
 		}
 	}
 	assert(0);
@@ -4437,6 +4437,7 @@ void CallStatement::updateDefines() {
 
 	if (procDest && procDest->isLib()) {
 		sig->setLibraryDefines(&defines);				// Set the locations defined
+		return;
 	} else if (procDest && calleeReturn) {
 		StatementList::iterator mm;
 		StatementList& modifieds = ((UserProc*)procDest)->getModifieds();
