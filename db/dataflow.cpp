@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.43.2.22 $
+ * $Revision: 1.43.2.23 $
  * 15 Mar 05 - Mike: Separated from cfg.cpp
  */
 
@@ -513,18 +513,27 @@ void UseCollector::print(std::ostream& os) {
 	}
 }
 
-#define DEFCOL_COLS 3
+#define DEFCOL_COLS 120
 void DefCollector::print(std::ostream& os) {
 	iterator it;
-	int col = DEFCOL_COLS-1;
+	unsigned col = 36;
+	bool first = true;
 	for (it=defs.begin(); it != defs.end(); ++it) {
-		if (++col != DEFCOL_COLS)
-			os << ",   ";
-		else {
-			col = 0;
+		std::ostringstream ost;
+		ost << (*it)->getLeft() << "=" << (*it)->getRight();
+		unsigned len = ost.str().length();
+		if (first)
+			first = false;
+		else if (col+4+len >= DEFCOL_COLS) {		// 4 for a comma and three spaces
+			if (col != DEFCOL_COLS-1) os << ",";	// Comma at end of line
 			os << "\n                ";
+			col = 16;
+		} else {
+			os << ",   ";
+			col += 4;
 		}
-		os << (*it)->getLeft() << "=" << (*it)->getRight();
+		os << ost.str().c_str();
+		col += len;
 	}
 }
 

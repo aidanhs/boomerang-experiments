@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.37 $
+ * $Revision: 1.238.2.38 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -554,7 +554,7 @@ void UserProc::generateCode(HLLCode *hll) {
 	assert(getEntryBB());
 
 	cfg->structure();
-	replaceExpressionsWithGlobals();
+	replaceExpressionsWithGlobals();		// FIXME: why here?
 	if (!Boomerang::get()->noLocals) {
 //		  while (nameStackLocations())
 //			  replaceExpressionsWithSymbols();
@@ -655,11 +655,6 @@ void UserProc::initStatements() {
 			if (call) {
 				call->setSigArguments();
 			}
-#if 0
-			ReturnStatement *ret = dynamic_cast<ReturnStatement*>(s);
-			if (ret)
-				ret->setSigArguments();
-#endif
 		}
 	}
 }
@@ -1156,7 +1151,7 @@ void UserProc::initialDecompile() {
 		}
 		//fixCallAndPhiRefs();				// FIXME: needed? If so, document why
 		// recognising globals early prevents them from becoming parameters
-		if (depth == maxDepth)		// Else Sparc problems... MVE
+		if (depth == maxDepth)		// Else Sparc problems... MVE FIXME: Exactly why?
 			replaceExpressionsWithGlobals();
 #if 0 	// No: recovering parameters must be late: after removal of unused statements, so don't get phantom parameters
 		// from preserveds. Note that some preserveds could be prarameters.
@@ -4181,13 +4176,14 @@ void UserProc::castConst(int num, Type* ty) {
 
 // Process calls with ellipsis parameters. Return true if any signature parameter types added.
 bool UserProc::ellipsisProcessing() {
-	StatementList stmts;
-	getStatements(stmts);
-	StatementList::iterator it;
+	BB_IT it;
+	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
 	bool ch = false;
-	for (it = stmts.begin(); it != stmts.end(); it++) {
-		CallStatement* call = dynamic_cast<CallStatement*>(*it);
-		if (call) ch |= call->ellipsisProcessing(prog);
+	for (it = cfg->begin(); it != cfg->end(); ++it) {
+		CallStatement* c = (CallStatement*) (*it)->getLastStmt(rrit, srit);
+		// Note: we may have removed some statements, so there may no longer be a last statement!
+		if (c == NULL || !c->isCall()) continue;
+		ch |= c->ellipsisProcessing(prog);
 	}
 	return ch;
 }

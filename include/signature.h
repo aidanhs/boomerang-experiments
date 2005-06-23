@@ -6,9 +6,15 @@
  * OVERVIEW:   Provides the definition for the signature classes.
  *============================================================================*/
 /*
- * $Revision: 1.53.2.10 $
+ * $Revision: 1.53.2.11 $
  *
  * 12 Jul 02 - Trent: Created
+ *
+ * Trent had the idea of "promoting" to signatures with known behaviour (e.g. conforms to ABI). However, it seems more
+ *	general to only assume ABI behaviour for library functions, and derive the signature information from child
+ *	procedures in all user procedures. At present, this promotion is basically disabled (promotion always succeeds,
+ *	but not much is assumed by the process of promotion). The role of the Signautre classes is still being considered.
+ *	- MVE Jun 2005.
  */
 
 #ifndef __SIGNATURE_H_
@@ -202,17 +208,17 @@ virtual int			findImplicitParam(Exp *e);
 
 		// any signature can be promoted to a higher level signature, if available
 virtual Signature *promote(UserProc *p);
-	void print(std::ostream &out);
-	void prints();			// For debugging
-	void printToLog();
+		void		print(std::ostream &out);
+		char*		prints();			// For debugging
+		void		printToLog();
 
-	// Special for Mike: find the location that conventionally holds the first outgoing (actual) parameter
-	// MVE: Use the below now
-	Exp* getFirstArgLoc(Prog* prog);
+		// Special for Mike: find the location that conventionally holds the first outgoing (actual) parameter
+		// MVE: Use the below now
+		Exp*		getFirstArgLoc(Prog* prog);
 
-	// This is like getParamLoc, except that it works before Signature::analyse is called.  It is used only to order
-	// parameters correctly, for the common case where the proc will end up using a standard calling convention
-	Exp* getEarlyParamExp(int n, Prog* prog);
+		// This is like getParamLoc, except that it works before Signature::analyse is called.  It is used only to order
+		// parameters correctly, for the common case where the proc will end up using a standard calling convention
+		Exp*		getEarlyParamExp(int n, Prog* prog);
 
 		// Get a wildcard to find stack locations
 virtual Exp			*getStackWildcard() { return NULL; }

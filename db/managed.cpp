@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.15.2.12 $
+ * $Revision: 1.15.2.13 $
  * 26 Aug 03 - Mike: Split off from statement.cpp
  * 21 Jun 05 - Mike: Added AssignSet
  */
@@ -706,5 +706,13 @@ void StatementList::removeDefOf(Exp* loc) {
 			return;
 		}
 	}
+}
+
+// Find the first Assignment with loc on the LHS
+Assignment* StatementList::findOnLeft(Exp* loc) {
+    for (iterator it = slist.begin(); it != slist.end(); it++)
+        if (*((Assignment*)*it)->getLeft() == *loc)
+            return (Assignment*)*it;
+    return NULL;
 }
 

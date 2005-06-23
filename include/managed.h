@@ -145,6 +145,7 @@ virtual				~StatementList() {}
 		void		clear() { slist.clear(); }
 		void		makeCloneOf(StatementList& o);		// Make this a clone of o
 		bool		existsOnLeft(Exp* loc);				// True if loc exists on the LHS of any Assignment in this list
+		Assignment*	findOnLeft(Exp* loc);				// Return the first stmt with loc on the LHS
 };		// class StatementList
 
 class StatementVec {

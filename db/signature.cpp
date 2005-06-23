@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.98.2.11 $
+ * $Revision: 1.98.2.12 $
  * 
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
@@ -44,6 +44,8 @@
 #if defined(_MSC_VER) && _MSC_VER <= 1100
 #include "rtl.h"
 #endif
+
+extern char debug_buffer[];				// For prints()
 
 char* Signature::platformName(platform plat) {
 	switch (plat) {
@@ -1101,10 +1103,9 @@ Exp *Signature::getParamExp(int n) {
 }
 
 Type *Signature::getParamType(int n) {
-	static IntegerType def;
 	//assert(n < (int)params.size() || ellipsis);
-// With recursion, parameters not set yet. Hack for now:
-	if (n >= (int)params.size()) return &def;
+	// With recursion, parameters not set yet. Hack for now:
+	if (n >= (int)params.size()) return NULL;
 	return params[n]->getType();
 }
 
@@ -1326,8 +1327,12 @@ void Signature::print(std::ostream &out)
 	out << " }" << std::endl;
 }
 
-void Signature::prints() {
-	print(std::cerr);
+char* Signature::prints() {
+	std::ostringstream ost;
+	print(ost);
+	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
+	return debug_buffer;
 }
 
 void Signature::printToLog()

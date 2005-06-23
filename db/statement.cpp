@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.33 $
+ * $Revision: 1.148.2.34 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1474,10 +1474,13 @@ void CallStatement::setArguments(StatementList& args) {
 	arguments.append(args);
 	StatementList::iterator ll;
 	for (ll = arguments.begin(); ll != arguments.end(); ++ll) {
+		((Assign*)*ll)->setProc(proc);
+#if 0		// For ad-hoc TA: (not even correct now)
 		Location *l = dynamic_cast<Location*>(*ll);
 		if (l) {
 			l->setProc(proc);
 		}
+#endif
 	}
 }
 
@@ -1510,6 +1513,7 @@ void CallStatement::setSigArguments() {
 			l->setProc(proc);		// Needed?
 		}
 		Assign* as = new Assign(signature->getParamType(i), e->clone(), e->clone());
+		as->setProc(proc);
 		as->setNumber(number);		// So fromSSAform will work later
 		arguments.append(as);
 	}
@@ -1520,6 +1524,7 @@ void CallStatement::setSigArguments() {
 			Exp* e = signature->getArgumentExp(arguments.size())->clone();
 			Assign* as = new Assign(new VoidType, e->clone(), e->clone());
 			arguments.append(as);
+			as->setProc(proc);
 		}
 	}
 #endif
@@ -1947,6 +1952,7 @@ bool CallStatement::convertToDirect() {
 		for (unsigned i = 0; i < sig->getNumParams(); i++) {
 			Exp* a = sig->getParamExp(i);
 			Assign* as = new Assign(new VoidType(), a->clone(), a->clone());
+			as->setProc(proc);
 			arguments.append(as);
 		}
 std::cerr << "Step 3a: arguments now: "; StatementList::iterator xx; for (xx = arguments.begin(); xx != arguments.end(); ++xx) {((Assignment*)*xx)->printCompact(std::cerr); std::cerr << ", ";} std::cerr << "\n";
@@ -2061,6 +2067,7 @@ void CallStatement::setNumArguments(int n) {
 	for (int i = oldSize; i < n; i++) {
 		Exp* a = procDest->getSignature()->getArgumentExp(i);
 		Assign* as = new Assign(new VoidType(), a->clone(), a->clone());
+		as->setProc(proc);
 		arguments.append(as);
 	}
 }
@@ -2473,7 +2480,14 @@ Assign* CallStatement::makeArgAssign(Type* ty, Exp* e) {
 			base = ((RefExp*)rhs)->getSubExp1();
 		if (base->isLocation()) ((Location*)base)->setType(ty);
 	}
-	return new Assign(ty, lhs, rhs);
+	Assign* as = new Assign(ty, lhs, rhs);
+	as->setProc(proc);
+	// It may need implicit converting (e.g. sp{-} -> sp{0})
+	Cfg* cfg = proc->getCFG();
+	ImplicitConverter ic(cfg);
+	StmtImplicitConverter sm(&ic, cfg);
+	as->accept(&sm);
+	return as;
 }
 
 // Helper function for the above
@@ -2875,10 +2889,6 @@ Assignment::~Assignment() {}
 Assign::Assign(Exp* lhs, Exp* rhs, Exp* guard)
   : Assignment(lhs), rhs(rhs), guard(guard) {
 	kind = STMT_ASSIGN;
-	// MVE: Can go soon:
-	if (lhs->getOper() == opTypedExp) { 
-		type = ((TypedExp*)lhs)->getType(); 
-	} 
 }
 
 Assign::Assign(Type* ty, Exp* lhs, Exp* rhs, Exp* guard)
@@ -3611,7 +3621,7 @@ bool Assign::accept(StmtExpVisitor* v) {
 	bool ret = v->visit(this, override);
 	if (override)
 		// The visitor has overridden this functionality.  This is needed for example in UsedLocFinder, where the lhs of
-		// an assignment is not used (but it it's m[blah], then blah is used)
+		// an assignment is not used (but if it's m[blah], then blah is used)
 		return ret;
 	if (ret && lhs) ret = lhs->accept(v->ev);
 	if (ret && rhs) ret = rhs->accept(v->ev);
@@ -3804,10 +3814,12 @@ bool CallStatement::accept(StmtModifier* v) {
 bool ReturnStatement::accept(StmtModifier* v) {
 	bool recur;
 	v->visit(this, recur);
-	DefCollector::iterator dd;
-	for (dd = col.begin(); dd != col.end(); ++dd)
-		if (!(*dd)->accept(v))
-			return false;
+	if (!v->ignoreCollector()) {
+		DefCollector::iterator dd;
+		for (dd = col.begin(); dd != col.end(); ++dd)
+			if (!(*dd)->accept(v))
+				return false;
+	}
 	ReturnStatement::iterator rr;
 	for (rr = modifieds.begin(); rr != modifieds.end(); ++rr)
 		if (!(*rr)->accept(v))
@@ -4263,6 +4275,7 @@ void ReturnStatement::setTypeFor(Exp*e, Type* ty) {
 	assert(0);
 }
 
+#define RETSTMT_COLS 120
 void ReturnStatement::print(std::ostream& os) {
 	os << std::setw(4) << std::dec << number << " ";
 	os << "RET";
@@ -4278,12 +4291,27 @@ void ReturnStatement::print(std::ostream& os) {
 	}
 	os << "\n              Modifieds: ";
 	first = true;
+	unsigned column = 25;
 	for (it = modifieds.begin(); it != modifieds.end(); ++it) {
+		std::ostringstream ost;
+		Assign* as = (Assign*)*it;
+		Type* ty = as->getType();
+		if (ty)
+			ost << "*" << ty << "* ";
+		os << as->getLeft();
+		unsigned len = ost.str().length();
 		if (first)
 			first = false;
-		else
-			os << ", ";
-		os << ((Assignment*)*it)->getLeft();
+		else if (column + 3 + len > RETSTMT_COLS) {		// 3 for comma and 2 spaces
+			if (column != RETSTMT_COLS-1) os << ",";	// Comma at end of line
+			os << "\n                ";
+			column = 16;
+		} else {
+			os << ",  ";
+			column += 3;
+		}
+		os << ost.str().c_str();
+		column += len;
 	}
 #if 1
 	// Collected reaching definitions
@@ -4312,7 +4340,8 @@ void ReturnStatement::updateModifieds() {
 	StatementList::iterator it;
 	for (ll = col.begin(); ll != col.end(); ++ll) {
 		bool found = false;
-		Exp* colLhs = ((Assign*)*ll)->getLeft();
+		Assign* as = (Assign*)*ll;
+		Exp* colLhs = as->getLeft();
 		if (proc->filterReturns(colLhs))
 			continue;									// Filtered out
 		for (it = oldMods.begin(); it != oldMods.end(); it++) {
@@ -4323,8 +4352,7 @@ void ReturnStatement::updateModifieds() {
 			}
 		}
 		if (!found) {
-			ImplicitAssign* as = new ImplicitAssign(colLhs->clone());
-			oldMods.append(as);
+			oldMods.append(as->clone());
 		}
 	}
 
@@ -4458,6 +4486,7 @@ void CallStatement::updateDefines() {
 				continue;									// Filtered out
 			if (!oldDefines.existsOnLeft(loc)) {
 				ImplicitAssign* as = new ImplicitAssign(loc->clone());
+				as->setProc(proc);
 				oldDefines.append(as);
 			}
 		}
@@ -4500,7 +4529,7 @@ enum Src {SRC_LIB, SRC_CALLEE, SRC_COL};
 		Src			src;
 		CallStatement* call;
 		int			i, n;				// For SRC_LIB
-		Signature*	destSig;
+		Signature*	callSig;
 		StatementList::iterator pp;		// For SRC_CALLEE
 		StatementList* calleeParams;
 		DefCollector::iterator cc;		// For SRC_COL
@@ -4517,8 +4546,8 @@ ArgSourceProvider::ArgSourceProvider(CallStatement* call) : call(call) {
 	Proc* procDest = call->getDestProc();
 	if (procDest && procDest->isLib()) {
 		src = SRC_LIB;
-		destSig = procDest->getSignature();
-		n = destSig->getNumParams();
+		callSig = call->getSignature();
+		n = callSig->getNumParams();
 		i = 0;
 	} else if (call->getCalleeReturn() != NULL) {
 		src = SRC_CALLEE;
@@ -4537,7 +4566,7 @@ Exp* ArgSourceProvider::nextArgLoc() {
 	switch(src) {
 		case SRC_LIB:
 			if (i == n) return NULL;
-			s = destSig->getParamExp(i++)->clone();
+			s = callSig->getParamExp(i++)->clone();
 			s->removeSubscripts(allZero);		// e.g. m[sp{-} + 4] -> m[sp + 4]
 			call->localiseComp(s);
 			return s;
@@ -4570,16 +4599,17 @@ Exp* ArgSourceProvider::localise(Exp* e) {
 Type* ArgSourceProvider::curType(Exp* e) {
 	switch(src) {
 		case SRC_LIB:
-			return destSig->getParamType(i-1);
+			return callSig->getParamType(i-1);
 		case SRC_CALLEE: {
 			Type* ty = ((Assignment*)*--pp)->getType();
 			pp++;
 			return ty;
 		}
 		case SRC_COL: {
-			Statement* def = ((RefExp*)*--cc)->getDef();
+			// Mostly, there won't be a type here, I would think...
+			Type* ty = (*--cc)->getType();
 			++cc;
-			return def->getTypeFor(e);
+			return ty;
 		}
 	}
 	return NULL;		// Suppress warning
@@ -4589,11 +4619,11 @@ bool ArgSourceProvider::exists(Exp* e) {
 	bool allZero;
 	switch (src) {
 		case SRC_LIB:
-			if (destSig->hasEllipsis())
+			if (callSig->hasEllipsis())
 				// FIXME: for now, just don't check
 				return true;
 			for (i=0; i < n; i++) {
-				Exp* sigParam = destSig->getParamExp(i)->clone();
+				Exp* sigParam = callSig->getParamExp(i)->clone();
 				sigParam->removeSubscripts(allZero);
 				call->localiseComp(sigParam);
 				if (*sigParam == *e)
@@ -4643,6 +4673,7 @@ void CallStatement::updateArguments() {
 		if (!oldArguments.existsOnLeft(loc)) {
 			Exp* rhs = asp.localise(loc->clone());
 			Assign* as = new Assign(asp.curType(loc), loc->clone(), rhs);
+			as->setProc(proc);
 			oldArguments.append(as);
 		}
 	}
@@ -4812,3 +4843,4 @@ void ReturnStatement::removeModified(Exp* loc) {
 	modifieds.removeDefOf(loc);
 	returns.removeDefOf(loc);
 }
+

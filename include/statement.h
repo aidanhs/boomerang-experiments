@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.27 $
+ * $Revision: 1.76.2.28 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -268,7 +268,7 @@ virtual void		fixSuccessor() {}
 virtual void		genConstraints(LocationSet& cons) {}
 
 		// Data flow based type analysis
-virtual	void		dfaTypeAnalysis(bool& ch, UserProc* proc) {}	// Use the type information in this Statement
+virtual	void		dfaTypeAnalysis(bool& ch) {}			// Use the type information in this Statement
 		Type*		meetWithFor(Type* ty, Exp* e, bool& ch);// Meet the type associated with e with ty
 
 		// Replace registers with locals (FIXME: use visitor?)
@@ -309,8 +309,8 @@ virtual	void		regReplace(UserProc* proc) = 0;
 		// Cast the constant num to type ty. If a change was made, return true
 		bool		castConst(int num, Type* ty);
 
-		// Convert expressions to locals
-		void		dfaConvertLocals();
+		// Map expressions to locals
+		void		dfaMapLocals();
 
 		// End Statement visitation functions
 
@@ -421,7 +421,7 @@ virtual void		simplifyAddr();
 virtual void		genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
-		void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+		void		dfaTypeAnalysis(bool& ch);
 
 		// Replace registers with locals
 virtual	void		regReplace(UserProc* proc);
@@ -509,7 +509,7 @@ virtual void		fixSuccessor();
 virtual void		genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
-		void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+		void		dfaTypeAnalysis(bool& ch);
 
 		// Replace registers with locals
 virtual	void		regReplace(UserProc* proc);
@@ -589,7 +589,7 @@ virtual void		fromSSAform(igraph& ig);
 virtual void		genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
-		void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+		void		dfaTypeAnalysis(bool& ch);
 
 //
 //	Phi specific functions
@@ -720,7 +720,7 @@ virtual void		fromSSAform(igraph& ig);
 		// a hack for the SETS macro
 		void		setLeftFromList(std::list<Statement*>* stmts);
 
-virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+virtual void		dfaTypeAnalysis(bool& ch);
 
 		friend class XMLProgParser;
 };	// class BoolAssign
@@ -880,7 +880,7 @@ virtual void		fromSSAform(igraph& ig);
 virtual void		genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
-		void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+		void		dfaTypeAnalysis(bool& ch);
 
 		// Replace registers with locals
 virtual	void		regReplace(UserProc* proc);
@@ -963,9 +963,9 @@ class CallStatement: public GotoStatement {
 		// The list of arguments passed by this call, actually a list of Assign statements (location := expr)
 		StatementList arguments;
 
-		// The list of defines for this call, a list of ImplicitAssigns (used to be called returns)
-		// Essentially a localised copy of the modifies of the callee.  Note that not necessarily all of the defines end
-		//  up being declared as results
+		// The list of defines for this call, a list of ImplicitAssigns (used to be called returns).
+		// Essentially a localised copy of the modifies of the callee, so the callee could be deleted. Stores types and
+		// locations.  Note that not necessarily all of the defines end up being declared as results.
 		StatementList defines;
 
 		// Destination of call. In the case of an analysed indirect call, this will be ONE target's return statement.
@@ -1074,7 +1074,7 @@ virtual bool		searchAll(Exp* search, std::list<Exp*> &result);
 virtual void		genConstraints(LocationSet& cons);
 
 		// Data flow based type analysis
-		void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+		void		dfaTypeAnalysis(bool& ch);
 
 		// Replace registers with locals
 virtual	void		regReplace(UserProc* proc);
@@ -1162,7 +1162,8 @@ protected:
 		/// A DefCollector object to collect the reaching definitions
 		DefCollector col;
 
-		/// A list of implicit assignments that represents the locations modified by the enclosing procedure
+		/// A list of assignments that represents the locations modified by the enclosing procedure
+		/// These transmit type information to callers
 		StatementList modifieds;
 
 		/// A list of assignments of locations to expressions. A list is used to facilitate ordering. (A set would
@@ -1246,7 +1247,7 @@ virtual void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 		// Find definition for e (in the collector)
 		Exp*		findDefFor(Exp* e) {return col.findDefFor(e);}
 
-virtual void		dfaTypeAnalysis(bool& ch, UserProc* proc);
+virtual void		dfaTypeAnalysis(bool& ch);
 
 		// From SSA form
 virtual void		fromSSAform(igraph& igm);

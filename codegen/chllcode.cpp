@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.14 $
+ * $Revision: 1.90.2.15 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -604,9 +604,12 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 		case opTypedExp:
 			if (u->getSubExp1()->getOper() == opTypedExp &&
 					*((TypedExp*)u)->getType() == *((TypedExp*)u->getSubExp1())->getType()) {
+				// We have (type)(type)x: recurse with type(x)
 				appendExp(str, u->getSubExp1(), curPrec);
 			} else if (u->getSubExp1()->getOper() == opMemOf) {
+				// We have (tt)m[x]
 				PointerType *pty = dynamic_cast<PointerType*>(u->getSubExp1()->getSubExp1()->getType());
+				// pty = T(x)
 				Type *tt = ((TypedExp*)u)->getType();
 				if (pty != NULL && (*pty->getPointsTo() == *tt ||
 						(tt->isSize() && pty->getPointsTo()->getSize() == tt->getSize())))
@@ -617,11 +620,25 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 					str << "*)";
 				}
 				openParen(str, curPrec, PREC_UNARY);
-				appendExp(str, u->getSubExp1()->getSubExp1(), PREC_UNARY);
+				// Emit x
+				appendExp(str, ((Location*)((TypedExp*)u)->getSubExp1())->getSubExp1(), PREC_UNARY);
 				closeParen(str, curPrec, PREC_UNARY);
 			} else {
+				// Check for (tt)b where tt is a pointer; could be &local
+				Type* tt = ((TypedExp*)u)->getType();
+				Exp* b = u->getSubExp1();
+				if (dynamic_cast<PointerType*>(tt)) {
+					char* sym = m_proc->lookupSym(b);
+					if (sym) {
+						openParen(str, curPrec, PREC_UNARY);
+						str << "&" << sym;
+						closeParen(str, curPrec, PREC_UNARY);
+						break;
+					}
+				}
+				// Otherwise, fall back to (tt)b
 				str << "(";
-				appendType(str, ((TypedExp*)u)->getType());
+				appendType(str, tt);
 				str << ")";
 				openParen(str, curPrec, PREC_UNARY);
 				appendExp(str, u->getSubExp1(), PREC_UNARY);

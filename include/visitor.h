@@ -1,42 +1,42 @@
 /*
- * Copyright (C) 2004, Mike Van Emmerik and Trent Waddington
+ * Copyright (C) 2004-2005, Mike Van Emmerik and Trent Waddington
  */
 /*==============================================================================
  * FILE:	   visitor.h
- * OVERVIEW:   Provides the definition for the various visitor and modifier
- *			   classes. These classes sometimes are associated with Statement
- *			   and Exp classes, so they are here to avoid #include problems,
- *			   and also to make exp.cpp and statement.cpp a little less huge
+ * OVERVIEW:   Provides the definition for the various visitor and modifier classes.
+ *				These classes sometimes are associated with Statement and Exp classes, so they are here to avoid
+ *				#include problems, to make exp.cpp and statement.cpp a little less huge.
+ *				The main advantage is that they are quick and easy to implement (once you get used to them), and it
+ *				avoids having to declare methods in every Statement or Exp subclass
+ * TOP LEVEL
+ * CLASSES:		ExpVisitor (visit expressions)
+ *				StmtVisitor (visit statements)
+ *				StmtExpVisitor (visit expressions in statements)
+ *				ExpModifier (modify expressions)
+ *				StmtModifier (modify expressions in statements)
+ *				StmtPartModifier (as above specialised for propagation)
  *============================================================================*/
 /*
- * $Revision: 1.13.2.10 $
- *
- * We have Visitor and Modifier classes separate. Visitors are more suited
- *	 for searching: they have the capability of stopping the recursion,
- *	 but can't change the class of a top level expression. Modifiers always
- *	 recurse to the end, and the ExpModifiers' visit function returns an Exp*
- *	 so that the top level expression can change class (e.g. RefExp to Binary).
- * The accept() functions (in the target classes) are always the same for all
- *	 visitors; they encapsulate where the visitable parts of a Statement or
- *	 expression are.
- * The visit() functions contain the logic of the search/modify/whatever.
- *	 Often only a few visitor functions have to do anything. Unfortunately,
- *	 the visit functions are members of the Visitor (or Modifier) classes, and
- *	 so have to use public functions of the target classes.
+ * $Revision: 1.13.2.11 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
- */
-
-/*
- * The ExpVisitor class is used to iterate over all subexpressions in an expression. 
- * It contains methods for each kind of subexpression found and can be used to eliminate switch statements.
+ *
+ * There are separate Visitor and Modifier classes. Visitors are more suited for searching: they have the capability of
+ * stopping the recursion, but can't change the class of a top level expression. Visitors can also override (prevent)
+ * the usual recursing to child objects. Modifiers always recurse to the end, and the ExpModifiers' visit function
+ * returns an Exp* so that the top level expression can change class (e.g. RefExp to Binary).
+ * The accept() functions (in the target classes) are always the same for all visitors; they encapsulate where the
+ *	visitable parts of a Statement or expression are.
+ * The visit() functions contain the logic of the search/modify/whatever.  Often only a few visitor functions have to do
+ *	anything. Unfortunately, the visit functions are members of the Visitor (or Modifier) classes, and so have to use
+ *	public functions of the target classes.
  */
 
 #ifndef __VISITOR_H__
 #define __VISITOR_H__
 
 #ifndef NULL
-#define NULL 0		// Often defined in stdio.h
+#define NULL 0				// Often defined in stdio.h
 #endif
 
 #include "exp.h"			// Needs to know class hierarchy, e.g. so that can convert Unary* to Exp* in return of
@@ -63,11 +63,15 @@ typedef BasicBlock* PBB;
 
 class LocationSet;
 
+/*
+ * The ExpVisitor class is used to iterate over all subexpressions in an expression. 
+ */
+
 class ExpVisitor {
 
 public:
 	ExpVisitor() { }
-	virtual ~ExpVisitor() { }
+virtual 		~ExpVisitor() { }
 
 	// visitor functions,
 	// return false to abandon iterating through the expression (terminate the search)
@@ -118,15 +122,13 @@ public:
 virtual bool		visit(Const* e);
 virtual bool		visit(Location* e, bool& override);
 virtual bool		visit(Binary* b,	bool& override);
-	// All other virtual functions inherit from ExpVisitor: return true
+		// All other virtual functions inherit from ExpVisitor: return true
 };
 
 /*
- * The ExpModifier class is used to iterate over all subexpressions in
- * an expression. It contains methods for each kind of subexpression found
- * in an and can be used to eliminate switch statements.
- * It is a little more expensive to use than ExpVisitor, but can make changes
- * to the expression
+ * The ExpModifier class is used to iterate over all subexpressions in an expression. It contains methods for each kind
+ * of subexpression found in an and can be used to eliminate switch statements.
+ * It is a little more expensive to use than ExpVisitor, but can make changes to the expression
  */
 class ExpModifier {
 protected:
@@ -172,7 +174,7 @@ virtual Exp*		postVisit(TypeVal	*e)	{return e;}
 class StmtVisitor {
 public:
 	StmtVisitor() { }
-	virtual ~StmtVisitor() { }
+virtual				~StmtVisitor() { }
 
 	// visitor functions, 
 	// returns true to continue iterating the container
@@ -205,11 +207,11 @@ virtual bool		visit(ReturnStatement *stmt);
 virtual bool		visit(BranchStatement *stmt);
 };
 
-// StmtExpVisitor is a visitor of statements, and of expressions within
-// those expressions. The visiting of expressions is done by an ExpVisitor.
+// StmtExpVisitor is a visitor of statements, and of expressions within those expressions. The visiting of expressions
+// (after the current node) is done by an ExpVisitor (i.e. this is a preorder traversal).
 class StmtExpVisitor {
 public:
-	ExpVisitor*	 ev;
+		ExpVisitor*	ev;
 					StmtExpVisitor(ExpVisitor* v) {
 						ev = v;}
 virtual				~StmtExpVisitor() {}
@@ -226,17 +228,20 @@ virtual bool		visit(ReturnStatement *stmt, bool& override) {override = false; re
 
 // StmtModifier is a class that visits all statements in an RTL, and for all expressions in the various types of
 // statements, makes a modification. The modification is as a result of an ExpModifier; there is a pointer to such an
-// ExpModifier in a StmtModifier
+// ExpModifier in a StmtModifier.
 // Even the top level of the LHS of assignments are changed. This is useful e.g. when modifiying locations to locals
 // as a result of converting from SSA form, e.g. eax := ebx -> local1 := local2
 // Classes that derive from StmtModifier inherit the code (in the accept member functions) to modify all the expressions
 // in the various types of statement.
 // Because there is nothing specialised about a StmtModifier, it is not an abstract class (can be instantiated).
 class StmtModifier {
+protected:
+		bool		ignoreCol;
 public:
-	ExpModifier* mod;			// The expression modifier object
-					StmtModifier(ExpModifier* em) {mod = em;}	// Constructor
-	virtual			~StmtModifier() {}
+		ExpModifier* mod;			// The expression modifier object
+					StmtModifier(ExpModifier* em, bool ic = false) : ignoreCol(ic), mod(em) {}	// Constructor
+virtual				~StmtModifier() {}
+		bool		ignoreCollector() {return ignoreCol;}
 	// This class' visitor functions don't return anything. Maybe we'll need return values at a later stage.
 virtual void		visit(Assign *s,			bool& recur) {recur = true;}
 virtual void		visit(PhiAssign *s,			bool& recur) {recur = true;}
@@ -250,13 +255,13 @@ virtual void		visit(ReturnStatement *s,	bool& recur) {recur = true;}
 };
 
 // As above, but specialised for propagating to. The top level of the lhs of assignment-like statements (including
-// arguments in calls) is not modified. So for example eax := ebx -> eax := local2. In m[xxx] := rhs, the rhs and
+// arguments in calls) is not modified. So for example eax := ebx -> eax := local2, but in m[xxx] := rhs, the rhs and
 // xxx are modified, but not the m[xxx]
 class StmtPartModifier {
 public:
 	ExpModifier* mod;			// The expression modifier object
 					StmtPartModifier(ExpModifier* em) {mod = em;}	// Constructor
-	virtual			~StmtPartModifier() {}
+virtual				~StmtPartModifier() {}
 	// This class' visitor functions don't return anything. Maybe we'll need return values at a later stage.
 virtual void		visit(Assign *s,			bool& recur) {recur = true;}
 virtual void		visit(PhiAssign *s,			bool& recur) {recur = true;}
@@ -411,7 +416,9 @@ public:
 					StmtConstFinder(ConstFinder* v) : StmtExpVisitor(v) {}
 };
 
-class DfaLocalConverter : public ExpModifier {
+// This class is an ExpModifier because although most of the time it merely maps expressions to locals, in one case,
+// where sp-K is found with a pointer type, we want to replace it with a[m[sp-K]] so the back end emits it as &localX.
+class DfaLocalMapper : public ExpModifier {
 		Type*		parentType;
 		UserProc* 	proc;
 		Prog*		prog;
@@ -419,7 +426,7 @@ class DfaLocalConverter : public ExpModifier {
 public:
 		bool		change;		// True if changed this statement
 
-					DfaLocalConverter(UserProc* proc);
+					DfaLocalMapper(UserProc* proc);
 		void		setType(Type* ty) {parentType = ty;}
 		//Type*	getType() {return parentType;}
 
@@ -428,9 +435,9 @@ public:
 		Exp*		preVisit(Binary* e, bool& recur);
 };
 
-class StmtDfaLocalConverter : public StmtModifier {
+class StmtDfaLocalMapper : public StmtModifier {
 public:
-					StmtDfaLocalConverter(ExpModifier* em) : StmtModifier(em) {}
+					StmtDfaLocalMapper(ExpModifier* em, bool ic = false) : StmtModifier(em, ic) {}
 
 virtual void		visit(		   Assign *s, bool& recur);
 virtual void		visit(	    PhiAssign *s, bool& recur);
@@ -441,7 +448,7 @@ virtual void		visit(BranchStatement *s, bool& recur);
 virtual void		visit(ReturnStatement *s, bool& recur);
 };
 
-// Convert any exp{0} with null definition so that the definition points instead to an implicit assignment
+// Convert any exp{-} (with null definition) so that the definition points instead to an implicit assignment (exp{0})
 class ImplicitConverter : public ExpModifier {
 		Cfg*		cfg;
 public:
@@ -452,7 +459,9 @@ public:
 class StmtImplicitConverter : public StmtModifier {
 		Cfg*		cfg;
 public:
-					StmtImplicitConverter(ImplicitConverter* ic, Cfg* cfg) : StmtModifier(ic), cfg(cfg) { }
+					StmtImplicitConverter(ImplicitConverter* ic, Cfg* cfg)
+						: StmtModifier(ic, true),			// True to ignore collectors (don't generate new implicits
+						cfg(cfg) { }						//  for locations only referenced by collectors)
 virtual void		visit(	    PhiAssign *s, bool& recur);
 };
 

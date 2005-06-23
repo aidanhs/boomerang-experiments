@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.18 $
+ * $Revision: 1.172.2.19 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -675,7 +675,10 @@ void Const::print(std::ostream& os) {
 	setLexBegin(os.tellp());
 	switch (op) {
 		case opIntConst:
-			os << std::dec << u.i;
+			if (u.i < -1000 || u.i > 1000)
+				os << "0x" << std::hex << u.i << std::dec;
+			else
+				os << std::dec << u.i;
 			break;
 		case opFltConst:
 			char buf[64];
