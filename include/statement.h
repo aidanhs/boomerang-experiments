@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.76.2.28 $
+ * $Revision: 1.76.2.29 $
  * 25 Nov 02 - Trent: appropriated for use by new dataflow.
  * 3 July 02 - Trent: created.
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy)
@@ -615,10 +615,8 @@ protected:
 		friend class XMLProgParser;
 };		// class PhiAssign
 
-// An implicit assignment has only a left hand side. It is a placeholder for
-// storing the types of parameters and globals
-// That way, you can always find the type of a subscripted variable by
-// looking in its defining Assignment
+// An implicit assignment has only a left hand side. It is a placeholder for storing the types of parameters and
+// globals.  That way, you can always find the type of a subscripted variable by looking in its defining Assignment
 class ImplicitAssign : public Assignment {
 public:
 		// Constructor, subexpression

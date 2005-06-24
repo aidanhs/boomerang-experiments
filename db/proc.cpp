@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.38 $
+ * $Revision: 1.238.2.39 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1414,7 +1414,7 @@ void UserProc::finalDecompile() {
 	}
 #endif
 
-	processConstants();
+	//processConstants();
 	//sortParameters();
 
 //	if (DFA_TYPE_ANALYSIS)
@@ -2393,6 +2393,7 @@ void UserProc::replaceExpressionsWithGlobals() {
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		if ((*it)->isCall()) {
 			CallStatement *call = (CallStatement*)*it;
+			// This loop seems to only look for the address of globals in a parameter (?!)
 			for (int i = 0; i < call->getNumArguments(); i++) {
 				Type *ty = call->getArgumentType(i);
 				Exp *e = call->getArgumentExp(i);
@@ -2419,12 +2420,14 @@ void UserProc::replaceExpressionsWithGlobals() {
 						Exp *ne;
 						if (r) {
 							Location *g = Location::global(strdup(gloName), this);
+							// &global + r
 							ne = new Binary(opPlus,
 								new Unary(opAddrOf, g),
 								new Const(r));
 						} else {
 							prog->setGlobalType((char*)gloName, pty);
 							Location *g = Location::global(strdup(gloName), this);
+							// &global
 							ne = new Unary(opAddrOf, g);
 						}
 						call->setArgumentExp(i, ne);
@@ -4341,6 +4344,7 @@ void UserProc::addImplicitAssigns() {
 	StmtImplicitConverter sm(&ic, cfg);
 	for (it = stmts.begin(); it != stmts.end(); it++)
 		(*it)->accept(&sm);
+	cfg->setImplicitsDone();
 }
 
 char* UserProc::lookupSym(Exp* e) {

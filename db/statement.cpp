@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.34 $
+ * $Revision: 1.148.2.35 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -2484,9 +2484,11 @@ Assign* CallStatement::makeArgAssign(Type* ty, Exp* e) {
 	as->setProc(proc);
 	// It may need implicit converting (e.g. sp{-} -> sp{0})
 	Cfg* cfg = proc->getCFG();
-	ImplicitConverter ic(cfg);
-	StmtImplicitConverter sm(&ic, cfg);
-	as->accept(&sm);
+	if (cfg->implicitsDone()) {
+		ImplicitConverter ic(cfg);
+		StmtImplicitConverter sm(&ic, cfg);
+		as->accept(&sm);
+	}
 	return as;
 }
 
@@ -2589,23 +2591,6 @@ void ReturnStatement::fromSSAform(igraph& ig) {
 	for (rr = begin(); rr != end(); ++rr)
 		(*rr)->fromSSAform(ig);
 }
-
-#if 0
-void ReturnStatement::print(std::ostream& os /*= cout*/) {
-	os << std::setw(4) << std::dec << number << " ";
-	// os << "*" << type << "* ";
-	os << "RET ";
-	std::set<Assignment*, lessExpStar>::iterator it;
-	for (it = defines.begin(); it != defines.end(); it++) {
-		if (it+1 != defines.end())
-			os << ", ";
-		(*it)->printCompact(os);
-	}
-	// Collected reaching definitions
-	os << "\t\tReaching definitions: ";
-	col.print(os);
-}
-#endif
 
 bool ReturnStatement::search(Exp* search, Exp*& result) {
 	result = NULL;
@@ -2902,7 +2887,9 @@ Assign::Assign(Assign& o) : Assignment(lhs->clone()) {
 	if (o.type)	 type  = o.type->clone();  else type  = NULL;
 	if (o.guard) guard = o.guard->clone(); else guard = NULL;
 }
-ImplicitAssign::ImplicitAssign(ImplicitAssign& o) : Assignment(lhs->clone()) {kind = STMT_IMPASSIGN;}
+ImplicitAssign::ImplicitAssign(ImplicitAssign& o) : Assignment(lhs->clone()) {
+	kind = STMT_IMPASSIGN;
+}
 // The first virtual function (here the destructor) can't be in statement.h file for gcc
 ImplicitAssign::~ImplicitAssign() { }
 
@@ -4281,24 +4268,35 @@ void ReturnStatement::print(std::ostream& os) {
 	os << "RET";
 	iterator it;
 	bool first = true;
+	unsigned column = 19;
 	for (it = returns.begin(); it != returns.end(); ++it) {
+		std::ostringstream ost;
+		((Assignment*)*it)->printCompact(ost);
+		unsigned len = ost.str().length();
 		if (first) {
 			first = false;
 			os << " ";
-		} else
-			os << ", ";
-		((Assignment*)*it)->printCompact(os);
+		} else if (column + 4 + len > RETSTMT_COLS) {	// 4 for command 3 spaces
+			if (column != RETSTMT_COLS-1) os << ",";	// Comma at end of line
+			os << "\n                ";
+			column = 16;
+		} else {
+			os << ",   ";
+			column += 4;
+		}
+		os << ost.str().c_str();
+		column += len;
 	}
 	os << "\n              Modifieds: ";
 	first = true;
-	unsigned column = 25;
+	column = 25;
 	for (it = modifieds.begin(); it != modifieds.end(); ++it) {
 		std::ostringstream ost;
 		Assign* as = (Assign*)*it;
 		Type* ty = as->getType();
 		if (ty)
 			ost << "*" << ty << "* ";
-		os << as->getLeft();
+		ost << as->getLeft();
 		unsigned len = ost.str().length();
 		if (first)
 			first = false;
