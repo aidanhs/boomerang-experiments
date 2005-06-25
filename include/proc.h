@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.25 $
+/* $Revision: 1.115.2.26 $
 */
 
 #ifndef _PROC_H_
@@ -302,8 +302,9 @@ enum ProcStatus {
 	PROC_VISITED,		// Has been visited on the way down in decompile()
 	PROC_INCYCLE,		// Is involved in cycles, has not completed initial decompilation as yet
 	PROC_PREPRES,		// Has had enough propagation etc to perform preservation analysis
-	PROC_PRESERVES,		// Has had preservation analysis done
-	PROC_INITIAL,		// Has had initial decompiling only (some callees were involved in recursion)
+	PROC_PRESERVEDS,	// Has had preservation analysis done
+	PROC_INITDONE,		// Has completed everything except the global analyses
+	PROC_MID,			// Has had middle decompiling only (some callees were involved in recursion)
 	PROC_FINAL			// Has had final decompilation
 	// , PROC_RETURNS	// Has had returns intersected with all caller's defines
 };
@@ -394,7 +395,7 @@ private:
 		DataFlow	df;
 
 		/*
-		 * Current statement number. Makes it easier to split initialiseDecompile from initialDecompile.
+		 * Current statement number. Makes it easier to split initialiseDecompile from following procs
 		 */
 		int			stmtNumber;
 
@@ -487,20 +488,20 @@ virtual				~UserProc();
 		void		initialiseDecompile();
 		/// Prepare for preservation analysis only
 		void		prePresDecompile();
-		/// Initial decompile: to SSA, propagate, initial params and returns
-		void		initialDecompile();
+		/// Middle decompile: propagate, bypass, preserveds
+		void		middleDecompile();
 		/// Analyse the whole group of procedures for conditional preserveds, and update till no change
 		/// Also finalise the whole group
 		void		recursionGroupAnalysis(CycleSet* cycleSet);
 		/// Remove unused statements
-		void		removeUnusedStatements();
-		/// Final decompile: final parameters, type analysis (unless ad-hoc), process constants
-		void		finalDecompile();
+		void		remUnusedStmtEtc();
+		/// Global type analysis (for this procedure)
+		void		typeAnalysis();
 		// Split the set of cycle-associated procs into individual subcycles
 		//void		findSubCycles(CycleList& path, CycleSet& cs, CycleSetSet& sset);
 		// The inductive preservation analysis.
 		bool		inductivePreservation(UserProc* topOfCycle);
-		// Mark calls involved in the recursion cycle as non childless (each child has had initialDecompile called on
+		// Mark calls involved in the recursion cycle as non childless (each child has had middleDecompile called on
 		// it now)
 		void		markAsNonChildless(CycleSet* cs);
 		// Update the defines and arguments in calls
@@ -561,7 +562,7 @@ public:
 		bool		removeDeadStatements();
 typedef std::map<Statement*, int> RefCounter;
 		void		countRefs(RefCounter& refCounts);
-		void		removeUnusedStatements(RefCounter& refCounts, int depth);
+		void		remUnusedStmtEtc(RefCounter& refCounts, int depth);
 		void		removeUnusedLocals();
 		bool		propagateAndRemoveStatements();
 		// Propagate statemtents; return true if an indirect call is converted to direct

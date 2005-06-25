@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.8 $
+ * $Revision: 1.30.2.9 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -1113,6 +1113,7 @@ DfaLocalMapper::DfaLocalMapper(UserProc* proc) : parentType(NULL), proc(proc) {
 
 Exp* DfaLocalMapper::preVisit(Location* e, bool& recur) {
 	// Check if this is an appropriate pattern for local variables	
+	recur = true;
 	if (e->isMemOf()) {
 		if (sig->isStackLocal(proc->getProg(), e)) {
 			change = true;			// We've made a mapping
@@ -1122,16 +1123,17 @@ Exp* DfaLocalMapper::preVisit(Location* e, bool& recur) {
 			if (ret->isMemOf())
 				parentType = new PointerType(parentType);
 			recur = false;			// Don't dig inside m[x] to make m[a[m[x]]] !
-			return e;				// Map, don't modify
+			// Map, don't modify, so don't set e to ret. We want to fall through here to set the parent type, so that
+			// we are consistent and fix the pointer up always in the postVisit function.
 		}
 		// When we recurse into the m[...], the type will be changed
 		parentType = new PointerType(parentType);
 	}
-	recur = true;
 	return e;
 }
 Exp* DfaLocalMapper::postVisit(Location* e) {
 	if (e->isMemOf()) {
+		// We should have set the type to be a pointer in preVisit; undo that change now
 		PointerType* pt = parentType->asPointer();
 		assert(pt);
 		parentType = pt->getPointsTo();

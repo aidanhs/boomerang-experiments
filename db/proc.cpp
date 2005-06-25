@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.39 $
+ * $Revision: 1.238.2.40 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -794,14 +794,13 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
  * in the current recursion group (and have to be analysed together). The union of these sets for all child procedures
  * becomes the return set for the current procedure. However, if (after all children have been processed: important!)
  * this set contains the current procedure, we have the maximal set of vertex-disjoint cycles, we can do the recursion
- * group analysis and return an empty set. At the end of the recursion group analysis, the whole group can be completed
- * by calling finalDecompile, which does everything from removing unused statements, transforming from SSA form,
- * generating code, and possibly deleting the memory.
+ * group analysis and return an empty set. At the end of the recursion group analysis, the whole group is complete,
+ * ready for the global analyses. 
  cycleSet* decompile(CycleList path)	// path initially empty
 	ret = new CycleSet
 	append this to path
 	for each child c called by this proc
-		if c has already been visited
+		if c has already been visited but not finished
 			// have new cycle
 			if c is in path
 			  insert every proc from c to the end of path into ret
@@ -815,12 +814,11 @@ void UserProc::insertStatementAfter(Statement* s, Statement* a) {
 			set return statement in call to that of c
 	if (ret empty)
 		prePresDecompile()
-		initialDecompile()
+		middleDecompile()
 		removeUnusedStatments()		// Not involved in recursion
-		finalDecompile()
 	else
 		prePresDecompile()
-		initialDecompile()			// involved in recursion
+		middleDecompile()			// involved in recursion
 		find first element f in path that is also in ret
 		if (f == this)
 			recursionGroupAnalysis(ret)
@@ -863,8 +861,8 @@ CycleSet* UserProc::decompile(CycleList* path) {
 					call->setCalleeReturn(c->getTheReturnStatement());
 					continue;
 				}
-				// if c has already been visited (i.e. we have a new cycle)
-				if (c->status >= PROC_VISITED && c->status < PROC_FINAL) {
+				// if c has already been visited but not done (apart from global analyses, i.e. we have a new cycle)
+				if (c->status >= PROC_VISITED && c->status < PROC_INITDONE) {
 					// if c is in path
 					CycleList::iterator pi;
 					bool inPath = false;
@@ -912,7 +910,7 @@ CycleSet* UserProc::decompile(CycleList* path) {
 					CycleSet* ret1 = c->decompile(path);
 					// Union ret1 into ret
 					ret->insert(ret1->begin(), ret1->end());
-					// Child has at least done initialDecompile(), possibly more
+					// Child has at least done middleDecompile(), possibly more
 					call->setCalleeReturn(c->getTheReturnStatement());
 					if (ret->size() > 0)
 						status = PROC_INCYCLE;
@@ -924,13 +922,12 @@ CycleSet* UserProc::decompile(CycleList* path) {
 	// if (ret->size() == 0)
 		// can now schedule this proc for complete decompilation
 	initialiseDecompile();				// Sort the CFG, number statements, etc
-	prePresDecompile();					// First part of what was initialDecompile()
-	initialDecompile();					// Every proc gets at least this done
+	prePresDecompile();					// First part of what was middleDecompile()
+	middleDecompile();					// Every proc gets at least this done
 
 	// if ret is empty, i.e. no child involved in recursion
 	if (ret->size() == 0) {
-		removeUnusedStatements();	// Do the whole works
-		finalDecompile();
+		remUnusedStmtEtc();	// Do the whole works
 		status = PROC_FINAL;
 	} else {
 		// this proc's children, and hence this proc, is/are involved in recursion
@@ -942,7 +939,7 @@ CycleSet* UserProc::decompile(CycleList* path) {
 				break;
 		if (*f == this) {
 			// When threads are implemented, we can queue this group of procs for group analysis
-			recursionGroupAnalysis(ret);// Includes removeUnusedStatements and finalDecompile on all procs in ret
+			recursionGroupAnalysis(ret);// Includes remUnusedStmtEtc on all procs in ret
 			ret->clear();
 		}
 	}
@@ -1063,7 +1060,7 @@ void UserProc::prePresDecompile() {
 	status = PROC_PREPRES;			// Now we are ready for preservation
 }
 
-void UserProc::initialDecompile() {
+void UserProc::middleDecompile() {
 	findSpPreservation();
 	// Oops - the idea of splitting the sp from the rest of the preservations was to allow correct naming of locals
 	// so you are alias conservative. But of course some locals are ebp based, and so these will never be correct
@@ -1075,7 +1072,7 @@ void UserProc::initialDecompile() {
 		printToLog();
 		LOG << "=== end after preservation, bypass and propagation ===\n";
 	}
-	status = PROC_PRESERVES;		// Preservation done
+	status = PROC_PRESERVEDS;		// Preservation done
 
 	if (!Boomerang::get()->noPromote)
 		// We want functions other than main to be promoted. Needed before mapExpressionsToLocals
@@ -1274,7 +1271,7 @@ void UserProc::initialDecompile() {
 			" because indirect jumps or calls have been removed\n\n";
 		//assignProcsToCalls();			// Surely this should be done at decode time!
 		prePresDecompile();
-		initialDecompile();	 			// Restart decompiling this proc
+		middleDecompile();	 			// Restart decompiling this proc
 		return;
 	}
 
@@ -1298,6 +1295,7 @@ void UserProc::initialDecompile() {
 	}
 	if (VERBOSE)
 		LOG << "===== end initial decompile for " << getName() << " =====\n\n";
+	status = PROC_INITDONE;
 }
 
 /*	*	*	*	*	*	*	*	*	*	*	*	*	*
@@ -1306,7 +1304,7 @@ void UserProc::initialDecompile() {
  *													*
  *	*	*	*	*	*	*	*	*	*	*	*	*	*/
 
-void UserProc::removeUnusedStatements() {
+void UserProc::remUnusedStmtEtc() {
 
 	if (VERBOSE)
 		LOG << "=== remove unused statements for " << getName() << " ===\n";
@@ -1322,7 +1320,7 @@ void UserProc::removeUnusedStatements() {
 		countRefs(refCounts);
 		// Now remove any that have no used
 		if (!Boomerang::get()->noRemoveNull)
-			removeUnusedStatements(refCounts, depth);
+			remUnusedStmtEtc(refCounts, depth);
 
 		// Remove null statements
 		if (!Boomerang::get()->noRemoveNull)
@@ -1362,6 +1360,7 @@ void UserProc::removeUnusedStatements() {
 	}
 }
 
+#if 0
 /*	*	*	*	*	*	*	*	*	*	*	*
  *											*
  *		D e c o m p i l e   p r o p e r		*
@@ -1429,6 +1428,7 @@ void UserProc::finalDecompile() {
 		LOG << "=== end final decompile for " << getName() << "\n";
 	Boomerang::get()->alert_end_decompile(this);
 }
+#endif
 
 
 void UserProc::recursionGroupAnalysis(CycleSet* cs) {
@@ -1440,8 +1440,6 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 			remove unused statements
 		for each proc in cs
 			update parameters and returns, redoing call bypass, until no change
-		for each proc p cs
-			call finalDecompile on p
 	*/
 	if (VERBOSE) {
 		LOG << "recursion group analysis for ";
@@ -1468,21 +1466,9 @@ void UserProc::recursionGroupAnalysis(CycleSet* cs) {
 	// while no change
 for (int i=0; i < 2; i++) {
 	for (p = cs->begin(); p != cs->end(); ++p) {
-		(*p)->removeUnusedStatements();				// Also does final parameters and arguments at present
+		(*p)->remUnusedStmtEtc();				// Also does final parameters and arguments at present
 	}
 }
-
-	if (VERBOSE) {
-		LOG << "group finalisation for ";
-		CycleSet::iterator csi;
-		for (csi = cs->begin(); csi != cs->end(); ++csi)
-			LOG << (*csi)->getName() << ", ";
-		LOG << "\n";
-	}
-	for (p = cs->begin(); p != cs->end(); ++p) {
-		(*p)->finalDecompile();
-	}
-
 
 }
 
@@ -3330,7 +3316,7 @@ void UserProc::removeUnusedLocals() {
 }
 
 // Note: if depth < 0, consider all depths
-void UserProc::removeUnusedStatements(RefCounter& refCounts, int depth) {
+void UserProc::remUnusedStmtEtc(RefCounter& refCounts, int depth) {
 	StatementList stmts;
 	getStatements(stmts);
 	bool change;
@@ -4863,7 +4849,7 @@ void UserProc::updateForUseChange(std::set<UserProc*>& removeRetSet) {
 	// Have to redo dataflow to get the liveness at the calls correct
 	updateBlockVars();
 
-	removeUnusedStatements();				// Also redoes parameters
+	remUnusedStmtEtc();				// Also redoes parameters
 
 	// Have the parameters changed? If so, then all callers will need to update their arguments, and do similar
 	// analysis to the removal of returns
@@ -4910,4 +4896,42 @@ void UserProc::clearUses() {
 		if (c == NULL || !c->isCall()) continue;
 		c->clearUseCollector();
 	}
+}
+
+void UserProc::typeAnalysis() {
+	if (VERBOSE)
+		LOG << "### type analysis for " << getName() << " ###\n";
+
+	// Data flow based type analysis
+	// Want to be after all propagation, but before converting expressions to locals etc
+	if (DFA_TYPE_ANALYSIS) {
+		if (VERBOSE || DEBUG_TA)
+			LOG << "--- start data flow based type analysis for " << getName() << " ---\n";
+
+		// Now we need to add the implicit assignments. Doing this earlier is extremely problematic, because
+		// of all the m[...] that change their sorting order as their arguments get subscripted or propagated into
+		addImplicitAssigns();
+
+		bool first = true;
+		do {
+			if (!first)
+				propagateAtDepth(maxDepth);		// HACK: Can sometimes be needed, if call was indirect
+												// FIXME: Check if still needed
+			first = false;
+			dfaTypeAnalysis();
+		} while (ellipsisProcessing());
+		if (VERBOSE || DEBUG_TA)
+			LOG << "=== end type analysis for " << getName() << " ===\n";
+	}
+
+	else if (CON_TYPE_ANALYSIS) {
+		// FIXME: if we want to do comparison
+	}
+
+	printXML();
+
+	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
+	if (VERBOSE)
+		LOG << "=== end final decompile for " << getName() << "\n";
+	Boomerang::get()->alert_end_decompile(this);
 }

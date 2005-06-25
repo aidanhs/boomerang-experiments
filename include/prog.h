@@ -14,7 +14,7 @@
  * OVERVIEW:	interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.73.2.3 $
+ * $Revision: 1.73.2.4 $
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -139,7 +139,7 @@ public:
 		// Initialise and number all statements globally
 		void		initStatements();
 
-		// Do decompilation
+		// Do the main non-global decompilation steps
 		void		decompile();
 
 		// All that used to be done in UserProc::decompile, but now done globally: propagation, recalc DFA, remove null
@@ -155,6 +155,9 @@ public:
 
 		// Process constants
 		void		processConstants();
+
+		// Type analysis
+		void		globalTypeAnalysis();
 
 		// Remove unused return locations
 		void		removeUnusedReturns();

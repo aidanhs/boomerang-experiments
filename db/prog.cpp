@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.11 $
+ * $Revision: 1.126.2.12 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -974,6 +974,14 @@ void Prog::decompile() {
 		}
 	}
 
+	// Type analysis, if requested
+	if (Boomerang::get()->conTypeAnalysis && Boomerang::get()->dfaTypeAnalysis) {
+		std::cerr << "can't use two types of type analysis at once!\n";
+		Boomerang::get()->conTypeAnalysis = false;
+	}
+	globalTypeAnalysis();
+
+
 	if (!Boomerang::get()->noDecompile) {
 		if (!Boomerang::get()->noRemoveReturns) {
 			// A final pass to remove returns not used by any caller
@@ -989,18 +997,6 @@ void Prog::decompile() {
 			proc->printXML();
 		}
 	}
-
-	// Type analysis, if requested
-	if (Boomerang::get()->conTypeAnalysis && Boomerang::get()->dfaTypeAnalysis) {
-		std::cerr << "can't use two types of type analysis at once!\n";
-		Boomerang::get()->conTypeAnalysis = false;
-	}
-	if (Boomerang::get()->conTypeAnalysis)
-		conTypeAnalysis();
-	// DFA type analysis performed somewhat earlier now (in decompile())
-	//if (Boomerang::get()->dfaTypeAnalysis)
-	//	dfaTypeAnalysis();
-
 
 	if (VERBOSE)
 		LOG << "transforming from SSA\n";
@@ -1229,19 +1225,17 @@ void Prog::conTypeAnalysis() {
 		LOG << "=== end type analysis ===\n";
 }
 
-void Prog::dfaTypeAnalysis() {
+void Prog::globalTypeAnalysis() {
 	if (VERBOSE || DEBUG_TA)
-		LOG << "=== start data-flow-based type analysis ===\n";
+		LOG << "### start data-flow-based type analysis ###\n";
 	std::list<Proc*>::iterator pp;
 	for (pp = m_procs.begin(); pp != m_procs.end(); pp++) {
 		UserProc* proc = (UserProc*)(*pp);
 		if (proc->isLib()) continue;
-		do
-			proc->dfaTypeAnalysis();
-		while (proc->ellipsisProcessing());
+		proc->typeAnalysis();
 	}
 	if (VERBOSE || DEBUG_TA)
-		LOG << "=== end type analysis ===\n";
+		LOG << "### end type analysis ###\n";
 }
 
 
@@ -1478,8 +1472,6 @@ void Global::meetType(Type* ty) {
 	bool ch;
 	type = type->meetWith(ty, ch);
 }
-
-
 
 
 class ClusterMemo : public Memo {
