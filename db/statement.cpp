@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.35 $
+ * $Revision: 1.148.2.36 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1641,7 +1641,7 @@ void CallStatement::print(std::ostream& os /*= cout*/) {
 				first = false;
 			else
 				os << ", ";
-			os << ((Assignment*)*rr)->getType() << " " << ((Assignment*)*rr)->getLeft();
+			os << "*" << ((Assignment*)*rr)->getType() << "* " << ((Assignment*)*rr)->getLeft();
 		}
 		if (defines.size() > 1) os << "}";
 		os << " := ";
@@ -1815,12 +1815,13 @@ bool CallStatement::isDefinition() {
 }
 
 void CallStatement::getDefinitions(LocationSet &defs) {
-	// FIXME: may need to update defines first...
 	StatementList::iterator dd;
 	for (dd = defines.begin(); dd != defines.end(); ++dd)
 		defs.insert(((Assignment*)*dd)->getLeft());
+	// Childless calls are supposed to define everything. In practice they don't really define things like %pc, so we
+	// need some extra logic in getTypeFor()
 	if (isChildless())
-		defs.insert(new Terminal(opDefineAll));	// Childless call defines everything
+		defs.insert(new Terminal(opDefineAll));
 }
 
 bool CallStatement::convertToDirect() {
@@ -2186,17 +2187,36 @@ void Assignment::setTypeFor(Exp* e, Type* ty) {
 
 // Scan the returns for e. If found, return the type associated with that return
 Type* CallStatement::getTypeFor(Exp* e) {
+	// The defines "cache" what the destination proc is defining
+	Assignment* as = defines.findOnLeft(e);
+	if (as != NULL)
+		return as->getType();
+	// See if it is in our reaching definitions
+	Exp* ref = defCol.findDefFor(e);
+	if (ref == NULL || !ref->isSubscript()) return NULL;
+	Statement* def = ((RefExp*)ref)->getDef();
+	if (def == NULL) return NULL;
+	return def->getTypeFor(e);
+#if 0
 	if (procDest && procDest->isLib()) {
 		Signature* sig = procDest->getSignature();
 		return sig->getTypeFor(e);
 	}
 	if (calleeReturn == NULL) return NULL;
 	return calleeReturn->getTypeFor(e);
+#endif
 }
 
 void CallStatement::setTypeFor(Exp* e, Type* ty) {
-	assert(calleeReturn);
-	calleeReturn->setTypeFor(e, ty);
+	Assignment* as = defines.findOnLeft(e);
+	if (as != NULL)
+		return as->setType(ty);
+	// See if it is in our reaching definitions
+	Exp* ref = defCol.findDefFor(e);
+	if (ref == NULL || !ref->isSubscript()) return;
+	Statement* def = ((RefExp*)ref)->getDef();
+	if (def == NULL) return;
+	def->setTypeFor(e, ty);
 }
 
 
@@ -4259,7 +4279,6 @@ void ReturnStatement::setTypeFor(Exp*e, Type* ty) {
 			return;
 		}
 	}
-	assert(0);
 }
 
 #define RETSTMT_COLS 120
@@ -4350,6 +4369,7 @@ void ReturnStatement::updateModifieds() {
 			}
 		}
 		if (!found) {
+			as->setProc(proc);							// Comes from the Collector
 			oldMods.append(as->clone());
 		}
 	}
@@ -4409,6 +4429,7 @@ void ReturnStatement::updateReturns() {
 		}
 		if (!found) {
 			Assign* as = new Assign(loc->clone(), loc->clone());
+			as->setProc(proc);
 			oldRets.append(as);
 		}
 	}

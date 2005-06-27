@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.40 $
+ * $Revision: 1.238.2.41 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -929,6 +929,7 @@ CycleSet* UserProc::decompile(CycleList* path) {
 	if (ret->size() == 0) {
 		remUnusedStmtEtc();	// Do the whole works
 		status = PROC_FINAL;
+		Boomerang::get()->alert_end_decompile(this);
 	} else {
 		// this proc's children, and hence this proc, is/are involved in recursion
 		// Note if only the children are involved in recursion, ret is cleared (see below)
@@ -1077,7 +1078,8 @@ void UserProc::middleDecompile() {
 	if (!Boomerang::get()->noPromote)
 		// We want functions other than main to be promoted. Needed before mapExpressionsToLocals
 		promoteSignature();
-	mapExpressionsToLocals();
+	// The problem with doing locals too early is that the symbol map ends up with some {-} and some {0}
+	//mapExpressionsToLocals();
 	
 	// Now is the time to allow propagate m[...]
 	//status = PROC_VISITED;
@@ -1281,7 +1283,7 @@ void UserProc::middleDecompile() {
 	if (!Boomerang::get()->noParameterNames) {
 		for (int i = maxDepth; i >= 0; i--) {
 			//replaceExpressionsWithParameters(df, i);
-			mapExpressionsToLocals(true);
+			//mapExpressionsToLocals(true);
 			// doRenameBlockVars(i, true); 			// MVE: is this really needed?
 		}
 		findPreserveds();		// FIXME: is this necessary here?
@@ -1311,6 +1313,11 @@ void UserProc::remUnusedStmtEtc() {
 	// A temporary hack to remove %CF = %CF{7} when 7 isn't a SUBFLAGS
 	if (theReturnStatement)
 		theReturnStatement->specialProcessing();
+
+	// Perform type analysis. If we are relying (as we are at present) on TA to perform ellipsis processing,
+	// do an initial TA pass now. Ellipsis processing often reveals additional uses (e.g. additional parameters
+	// to printf/scanf), and removing unused statements is unsafe without full use information
+	typeAnalysis();
 
 	// Only remove unused statements after decompiling as much as possible of the proc
 	for (int depth = 0; depth <= maxDepth; depth++) {
@@ -1469,6 +1476,10 @@ for (int i=0; i < 2; i++) {
 		(*p)->remUnusedStmtEtc();				// Also does final parameters and arguments at present
 	}
 }
+	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
+	if (VERBOSE)
+		LOG << "=== end recursion group analysis ===\n";
+	Boomerang::get()->alert_end_decompile(this);
 
 }
 
@@ -3325,18 +3336,6 @@ void UserProc::remUnusedStmtEtc(RefCounter& refCounts, int depth) {
 		StatementList::iterator ll = stmts.begin();
 		while (ll != stmts.end()) {
 			Statement* s = *ll;
-#if 0			// No need to do this any more!
-			if (s->isCall() && refCounts[s] == 0) {
-				if (VERBOSE)
-					LOG << "clearing return set of unused call " << s << "\n";
-				CallStatement *call = (CallStatement*)s;
-				for (int i = 0; i < call->getNumReturns(); i++)
-					if (call->getReturnExp(i) && (depth < 0 || call->getReturnExp(i)->getMemDepth() <= depth))
-						call->ignoreReturn(i);
-				ll++;
-				continue;
-			}
-#endif
 			if (!s->isAssignment()) {
 				// Never delete a statement other than an assignment (e.g. nothing "uses" a Jcond)
 				ll++;
@@ -4928,10 +4927,11 @@ void UserProc::typeAnalysis() {
 		// FIXME: if we want to do comparison
 	}
 
+	else {
+		// Need to map the locals somewhere; usually TA does this
+		mapExpressionsToLocals();
+	}
+
 	printXML();
 
-	status = PROC_FINAL;		// Now fully decompiled (apart from one final pass, and transforming out of SSA form)
-	if (VERBOSE)
-		LOG << "=== end final decompile for " << getName() << "\n";
-	Boomerang::get()->alert_end_decompile(this);
 }

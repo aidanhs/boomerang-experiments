@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.9 $
+ * $Revision: 1.30.2.10 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -553,30 +553,24 @@ Type* Type::createUnion(Type* other, bool& ch) {
 
 void CallStatement::dfaTypeAnalysis(bool& ch) {
 	// Iterate through the arguments
-	if (signature) {				// In case an indirect call and VFT analysis failed
-		int n = signature->getNumParams();
-		int i=0;
-		StatementList::iterator aa = arguments.begin();
-		while (i < n) {
-			Assign* as = (Assign*)*aa++;
-			Exp* e = as->getRight();
-			// FIXME: do I want to use signature types here?
-			Type* t = signature->getParamType(i++);
-			e->descendType(t, ch, proc);
-			// The below will ascendi type, set type, and descend type
-			as->dfaTypeAnalysis(ch);
-		}
-		// The destination is a pointer to a function with this function's signature (if any)
-		if (pDest) {
-			pDest->descendType(new FuncType(signature), ch, proc);
-		}
+	StatementList::iterator aa;
+	for (aa = arguments.begin(); aa != arguments.end(); ++aa) {
+		// The below will ascend type, meet type with that of arg, and descend type. Note that the type of the assign
+		// will already be that of the signature, if this is a library call, from updateArguments()
+		((Assign*)*aa)->dfaTypeAnalysis(ch);
 	}
+	// The destination is a pointer to a function with this function's signature (if any)
+	if (pDest)
+		pDest->descendType(new FuncType(signature), ch, proc);
 }
 
 void ReturnStatement::dfaTypeAnalysis(bool& ch) {
-	StatementList::iterator mm;
+	StatementList::iterator mm, rr;
 	for (mm = modifieds.begin(); mm != modifieds.end(); ++mm) {
-
+		((Assign*)*mm)->dfaTypeAnalysis(ch);
+	}
+	for (rr = returns.begin(); rr != returns.end(); ++rr) {
+		((Assign*)*rr)->dfaTypeAnalysis(ch);
 	}
 }
 
@@ -773,10 +767,10 @@ Type* Binary::ascendType() {
 
 // Constants and subscripted locations are at the leaves of the expression tree. Just return their stored types.
 Type* RefExp::ascendType() {
-if (def == NULL) {
- std::cerr << "Warning! Null reference in " << this << "\n";
- return new VoidType;
-}
+	if (def == NULL) {
+ 		std::cerr << "Warning! Null reference in " << this << "\n";
+		return new VoidType;
+	}
 	return def->getTypeFor(subExp1);
 }
 Type* Const::ascendType() {
@@ -1194,6 +1188,7 @@ bool IntegerType::isCompatibleWith(Type* other) {
 	if (other->isInteger()) return true;
 	if (other->isChar()) return true;
 	if (other->isUnion()) return other->isCompatibleWith(this);
+	if (other->isSize() && ((SizeType*)other)->getSize() == size) return true;
 	// I am compatible with an array of myself:
 	if (other->isArray()) return isCompatibleWith(((ArrayType*)other)->getBaseType());
 	return false;
@@ -1204,6 +1199,7 @@ bool FloatType::isCompatibleWith(Type* other) {
 	if (other->isFloat()) return true;
 	if (other->isUnion()) return other->isCompatibleWith(this);
 	if (other->isArray()) return isCompatibleWith(((ArrayType*)other)->getBaseType());
+	if (other->isSize() && ((SizeType*)other)->getSize() == size) return true;
 	return false;
 }
 
@@ -1221,6 +1217,7 @@ bool BooleanType::isCompatibleWith(Type* other) {
 	if (other->isVoid()) return true;
 	if (other->isBoolean()) return true;
 	if (other->isUnion()) return other->isCompatibleWith(this);
+	if (other->isSize() && ((SizeType*)other)->getSize() == 1) return true;
 	return false;
 }
 
@@ -1228,13 +1225,14 @@ bool FuncType::isCompatibleWith(Type* other) {
 	if (other->isVoid()) return true;
 	if (*this == *other) return true;		// MVE: should not compare names!
 	if (other->isUnion()) return other->isCompatibleWith(this);
+	if (other->isSize() && ((SizeType*)other)->getSize() == STD_SIZE) return true;
 	return false;
 }
 
 bool PointerType::isCompatibleWith(Type* other) {
 	if (other->isVoid()) return true;
 	if (other->isUnion()) return other->isCompatibleWith(this);
-	if (other->isSize() && other->getSize() == STD_SIZE) return true;
+	if (other->isSize() && ((SizeType*)other)->getSize() == STD_SIZE) return true;
 	if (!other->isPointer()) return false;
 	return points_to->isCompatibleWith(other->asPointer()->points_to);
 }
