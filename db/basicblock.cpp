@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.93.2.6 $
+ * $Revision: 1.93.2.7 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -77,7 +77,6 @@ BasicBlock::BasicBlock()
 		m_iNumInEdges(0),
 		m_iNumOutEdges(0),
 		m_iTraversed(false),
-		m_returnVal(NULL),
 // From Doug's code
 ord(-1), revOrd(-1), inEdgesVisited(0), numForwardInEdges(-1), traversed(UNTRAVERSED), hllLabel(false), indentLevel(0),
 immPDom(NULL), loopHead(NULL), caseHead(NULL), condFollow(NULL), loopFollow(NULL), latchNode(NULL), sType(Seq), 
@@ -107,7 +106,6 @@ BasicBlock::~BasicBlock() {
 		delete m_pRtls;
 		m_pRtls = NULL;
 	}
-	if (m_returnVal) delete m_returnVal;
 }
 
 
@@ -134,7 +132,6 @@ BasicBlock::BasicBlock(const BasicBlock& bb)
 		m_iNumInEdges(bb.m_iNumInEdges),
 		m_iNumOutEdges(bb.m_iNumOutEdges),
 		m_iTraversed(false),
-		m_returnVal(bb.m_returnVal),
 // From Doug's code
 ord(bb.ord), revOrd(bb.revOrd), inEdgesVisited(bb.inEdgesVisited), numForwardInEdges(bb.numForwardInEdges),
 traversed(bb.traversed), hllLabel(bb.hllLabel), indentLevel(bb.indentLevel), immPDom(bb.immPDom), loopHead(bb.loopHead),
@@ -167,7 +164,6 @@ BasicBlock::BasicBlock(std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges)
 		m_iNumInEdges(0),
 		m_iNumOutEdges(iNumOutEdges),
 		m_iTraversed(false),
-		m_returnVal(NULL),
 // From Doug's code
 ord(-1), revOrd(-1), inEdgesVisited(0), numForwardInEdges(-1), traversed(UNTRAVERSED), hllLabel(false), indentLevel(0),
 immPDom(NULL), loopHead(NULL), caseHead(NULL), condFollow(NULL), loopFollow(NULL), latchNode(NULL), sType(Seq),
@@ -223,11 +219,6 @@ void BasicBlock::setRTLs(std::list<RTL*>* rtls) {
 	m_pRtls = rtls;
 
 	// Used to set the link between the last instruction (a call) and this BB if this is a call BB
-}
-
-void BasicBlock::setReturnVal(Exp *e) {
-	if (m_returnVal) delete m_returnVal; 
-	m_returnVal = e; 
 }
 
 /*==============================================================================
@@ -291,6 +282,10 @@ char* BasicBlock::prints() {
 	strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
 	debug_buffer[DEBUG_BUFSIZE-1] = '\0';
 	return debug_buffer; 
+}
+
+void BasicBlock::dump() {
+	print(std::cerr);
 }
 
 /*==============================================================================
@@ -625,11 +620,11 @@ ADDRESS BasicBlock::getCallDest() {
 	if (m_pRtls->size() == 0)
 		return (ADDRESS)-1;
 	RTL* lastRtl = m_pRtls->back();
-	std::list<Statement*>::reverse_iterator it;
+	RTL::reverse_iterator rit;
 	std::list<Statement*>& sl = lastRtl->getList();
-	for (it = sl.rbegin(); it != sl.rend(); it++) {
-		if ((*it)->getKind() == STMT_CALL)
-			return ((CallStatement*)(*it))->getFixedDest();
+	for (rit = sl.rbegin(); rit != sl.rend(); rit++) {
+		if ((*rit)->getKind() == STMT_CALL)
+			return ((CallStatement*)(*rit))->getFixedDest();
 	}
 	return (ADDRESS)-1;
 }
@@ -640,7 +635,7 @@ Proc *BasicBlock::getCallDestProc() {
 	if (m_pRtls->size() == 0)
 		return 0;
 	RTL* lastRtl = m_pRtls->back();
-	std::list<Statement*>::reverse_iterator it;
+	RTL::reverse_iterator it;
 	std::list<Statement*>& sl = lastRtl->getList();
 	for (it = sl.rbegin(); it != sl.rend(); it++) {
 		if ((*it)->getKind() == STMT_CALL)
@@ -754,7 +749,7 @@ void BasicBlock::setCond(Exp *e) {
 	RTL *last = m_pRtls->back();
 	// it should contain a BranchStatement
 	std::list<Statement*>& sl = last->getList();
-	std::list<Statement*>::reverse_iterator it;
+	RTL::reverse_iterator it;
 	assert(sl.size());
 	for (it = sl.rbegin(); it != sl.rend(); it++) {
 		if ((*it)->getKind() == STMT_BRANCH) {
@@ -1938,7 +1933,7 @@ bool BasicBlock::decodeIndirectJmp(UserProc* proc) {
 			if (*e *= *hlForms[i]) {		// *= compare ignores subscripts
 				form = chForms[i];
 				if (DEBUG_SWITCH)
-					LOG << "Indirect jump matches form " << form << "\n";
+					LOG << "indirect jump matches form " << form << "\n";
 				break;
 			}
 		}
@@ -2070,8 +2065,8 @@ std::cerr << "From statement " << lastStmt << " get e = " << e << ", K1 = " << K
 
 /*==============================================================================
  * FUNCTION:	processSwitch
- * OVERVIEW:	Called when a switch has been identified. Visits the
- *					destinations of the switch, adds out edges to the BB, etc
+ * OVERVIEW:	Called when a switch has been identified. Visits the destinations of the switch, adds out edges to the
+ *				BB, etc
  * PARAMETERS:	proc - Pointer to the UserProc object for this code
  *				swi - Pointer to the SWITCH_INFO struct
  * RETURNS:		<nothing>
@@ -2085,7 +2080,7 @@ void BasicBlock::processSwitch(UserProc* proc, SWITCH_INFO* swi) {
 	SWITCH_INFO* si = lastStmt->getSwitchInfo();
 
 	if (Boomerang::get()->debugSwitch) {
-		LOG << "Found switch statement type " << si->chForm << " with table at 0x" << si->uTable << ", ";
+		LOG << "found switch statement type " << si->chForm << " with table at 0x" << si->uTable << ", ";
 		if (si->iNumTable)
 			LOG << si->iNumTable << " entries, ";
 		LOG << "lo= " << si->iLower << ", hi= " << si->iUpper << "\n";
@@ -2115,8 +2110,7 @@ void BasicBlock::processSwitch(UserProc* proc, SWITCH_INFO* swi) {
 	Prog* prog = proc->getProg();
 	Cfg* cfg = proc->getCFG();
 	for (int i=0; i < iNum; i++) {
-		// Get the destination address from the
-		// switch table.
+		// Get the destination address from the switch table.
 		if (si->chForm == 'H') {
 			int iValue = prog->readNative4(si->uTable + i*2);
 			if (iValue == -1) continue;
@@ -2134,6 +2128,7 @@ void BasicBlock::processSwitch(UserProc* proc, SWITCH_INFO* swi) {
 		if (uSwitch < prog->getLimitTextHigh()) {
 			//tq.visit(cfg, uSwitch, this);
 			cfg->addOutEdge(this, uSwitch, true);
+			// Decode the newly discovered switch code arms
 			prog->decodeFragment(proc, uSwitch);
 		} else {
 			LOG << "switch table entry branches to past end of text section " << uSwitch << "\n";

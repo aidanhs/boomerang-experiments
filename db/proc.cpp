@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.41 $
+ * $Revision: 1.238.2.42 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -32,27 +32,23 @@
  * Dependencies.
  *============================================================================*/
 
+#include "proc.h"
 #include <types.h>
 #include <sstream>
 #include <algorithm>		// For find()
 #include "type.h"
 #include "cluster.h"
 #include "statement.h"
-#include "exp.h"
-#include "cfg.h"
 #include "register.h"
 #include "rtl.h"
-#include "proc.h"
 #include "prog.h"
 #include "BinaryFile.h"
 #include "frontend.h"
 #include "util.h"
 #include "signature.h"
-#include "hllcode.h"
 #include "boomerang.h"
 #include "constraint.h"
 #include "visitor.h"
-#include "dataflow.h"
 
 typedef std::map<Statement*, int> RefCounter;
 
@@ -525,8 +521,7 @@ PBB UserProc::getEntryBB() {
 void UserProc::setEntryBB() {
 	std::list<PBB>::iterator bbit;
 	PBB pBB = cfg->getFirstBB(bbit);		// Get an iterator to the first BB
-	// Usually, but not always, this will be the first BB, or at least in the
-	// first few
+	// Usually, but not always, this will be the first BB, or at least in the first few
 	while (pBB && address != pBB->getLowAddr()) {
 		pBB = cfg->getNextBB(bbit);
 	}
@@ -689,7 +684,7 @@ void UserProc::getStatements(StatementList &stmts) {
 		if (rtls) {
 			for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end(); rit++) {
 				RTL *rtl = *rit;
-				for (std::list<Statement*>::iterator it = rtl->getList().begin(); it != rtl->getList().end(); it++) {
+				for (RTL::iterator it = rtl->getList().begin(); it != rtl->getList().end(); it++) {
 					if ((*it)->getBB() == NULL)
 						(*it)->setBB(bb);
 					if ((*it)->getProc() == NULL)
@@ -731,7 +726,7 @@ void UserProc::removeStatement(Statement *stmt) {
 	std::list<RTL*> *rtls = bb->getRTLs();
 	for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end(); rit++) {
 		std::list<Statement*>& stmts = (*rit)->getList();
-		for (std::list<Statement*>::iterator it = stmts.begin(); it != stmts.end(); it++) {
+		for (RTL::iterator it = stmts.begin(); it != stmts.end(); it++) {
 			if (*it == stmt) {
 				stmts.erase(it);
 				return;
@@ -1241,12 +1236,11 @@ void UserProc::middleDecompile() {
 			}
 			// If you have an indirect to direct call conversion, some propagations that were blocked by
 			// the indirect call might now succeed, and may be needed to prevent alias problems
-			if (VERBOSE && convert)
-				LOG << "\nabout to restart propagations and dataflow at depth " << depth <<
-					" due to conversion of indirect to direct call(s)\n\n";
 			if (convert) {
-				depth = 0;		// Start again from depth 0
-				// FIXME: is this needed?
+				if (VERBOSE)
+					LOG << "\nabout to restart propagations and dataflow at depth " << depth <<
+						" due to conversion of indirect to direct call(s)\n\n";
+				depth = 0;			// Start again from depth 0
 				doRenameBlockVars(0, true); 			// Initial dataflow level 0
 				LOG << "\nafter rename (2) of " << getName() << ":\n";
 				printToLog();
@@ -1267,11 +1261,19 @@ void UserProc::middleDecompile() {
 
 	// Check for indirect jumps or calls not already removed by propagation of constants
 	if (cfg->decodeIndirectJmp(this)) {
-		// There was at least one indirect jump or call found and decoded. That means that most of what has been
-		// done to this function so far is invalid. So redo everything. Very expensive!!
+		// There was at least one indirect jump or call found and decoded. That means that most of what has been done
+		// to this function so far is invalid. So redo everything. Very expensive!!
 		LOG << "=== about to restart decompilation of " << getName() <<
-			" because indirect jumps or calls have been removed\n\n";
-		//assignProcsToCalls();			// Surely this should be done at decode time!
+			" because indirect jumps or calls have been analysed\n\n";
+		// First copy any new indirect jumps or calls that were decoded this time around. Just copy them all, the map
+		// will prevent duplicates
+		copyDecodedICTs();
+		// Now, decode from scratch
+		theReturnStatement = NULL;
+		cfg->clear();
+		std::ofstream os;
+		prog->reDecode(this);
+		initialiseDecompile();
 		prePresDecompile();
 		middleDecompile();	 			// Restart decompiling this proc
 		return;
@@ -4933,5 +4935,22 @@ void UserProc::typeAnalysis() {
 	}
 
 	printXML();
+}
 
+#define GC_DEBUG 1
+#include "gc.h"
+// Copy the RTLs for the already decoded Indirect Control Transfer instructions
+RTL* globalRtl = 0;
+void UserProc::copyDecodedICTs() {
+	BB_IT it;
+	BasicBlock::rtlrit rrit; StatementList::reverse_iterator srit;
+	for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
+		Statement* last = bb->getLastStmt(rrit, srit);
+		if (!last->isHL_ICT()) continue;
+		RTL* rtl = bb->getLastRtl();
+globalRtl = rtl;
+		if (DEBUG_SWITCH)
+			LOG << "Saving high level switch statement " << rtl << "\n";
+		prog->addDecodedRtl(bb->getHiAddr(), rtl);
+	}
 }

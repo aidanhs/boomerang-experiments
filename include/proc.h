@@ -15,7 +15,7 @@
  *				procedure such as parameters and locals.
  *============================================================================*/
 
-/* $Revision: 1.115.2.26 $
+/* $Revision: 1.115.2.27 $
 */
 
 #ifndef _PROC_H_
@@ -760,6 +760,9 @@ virtual void		printCallGraphXML(std::ostream &os, int depth,
 		// Add a location to the UseCollector; this means this location is used before defined, and hence is an
 		// *initial* parameter. Note that final parameters don't use this information; it's only for handling recursion.
 		void		useBeforeDefine(Exp* loc) {col.insert(loc);}
+
+		// Copy the decoded indirect control transfer instructions' RTLs to the front end's map
+		void		copyDecodedICTs();
  
 private:
 		// We ensure that there is only one return statement now. See code in frontend/frontend.cpp handling case

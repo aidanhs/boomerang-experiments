@@ -15,11 +15,16 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.1.2.1 $
+ * $Revision: 1.1.2.2 $
+ *
  * 28 Jun 05 - Mike: Split off from cfg.h
  */
 
+#include "managed.h"			// For LocationSet etc
+
 class Location;
+class HLLCode;
+class SWITCH_INFO;
 
 /*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*\
 *															 *

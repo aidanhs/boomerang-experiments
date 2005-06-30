@@ -17,7 +17,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.89.2.4 $
+ * $Revision: 1.89.2.5 $
  * 08 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
  * 16 May 02 - Mike: Moved getMainEntry point here from prog
  * 09 Jul 02 - Mike: Fixed machine check for elf files (was checking endianness rather than machine type)
@@ -31,6 +31,7 @@
 #pragma warning(disable:4786)
 #endif
 
+#include "frontend.h"
 #include <queue>
 #include <stdarg.h>			// For varargs
 #include <sstream>
@@ -45,7 +46,6 @@
 #include "register.h"
 #include "rtl.h"
 #include "BinaryFile.h"
-#include "frontend.h"
 #include "decoder.h"
 #include "sparcfrontend.h"
 #include "pentiumfrontend.h"
@@ -74,7 +74,7 @@ FrontEnd* FrontEnd::instantiate(BinaryFile *pBF, Prog* prog) {
 		case MACHINE_PPC:
 			return new PPCFrontEnd(pBF, prog);
 		default:
-			LOG << "Machine architecture not supported\n";
+			std::cerr << "Machine architecture not supported!\n";
 	}
 	return NULL;
 }
@@ -236,6 +236,8 @@ void FrontEnd::decodeOnly(Prog *prog, ADDRESS a) {
 
 
 void FrontEnd::decodeFragment(UserProc* proc, ADDRESS a) {
+	if (Boomerang::get()->traceDecoder)
+		LOG << "decoding fragment at 0x" << a << "\n";
 	std::ofstream os;
 	processProc(a, proc, os, true);
 }
@@ -359,23 +361,6 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 		bool spec /* = false */) {
 	PBB pBB;					// Pointer to the current basic block
 
-#if 0
-	// if (!frag && !pProc->getSignature()->isPromoted()) {	// }
-	if (!frag) {
-		if (VERBOSE)
-			LOG << "adding default params and returns for " << pProc->getName() << "\n";
-		std::vector<Exp*>::iterator it;
-#if 0
-		std::vector<Exp*> &params = getDefaultParams();
-		for (it = params.begin(); it != params.end(); it++)
-			pProc->getSignature()->addImplicitParameter((*it)->clone());
-#endif
-		std::vector<Exp*> &returns = getDefaultReturns();
-		for (it = returns.begin(); it != returns.end(); it++)
-			pProc->getSignature()->addReturn((*it)->clone());
-	}
-#endif
-	
 	// We have a set of CallStatement pointers. These may be disregarded if this is a speculative decode
 	// that fails (i.e. an illegal instruction is found). If not, this set will be used to add to the set of calls
 	// to be analysed in the cfg, and also to call newProc()
@@ -404,7 +389,6 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 	ADDRESS lastAddr = uAddr;
 
 	while ((uAddr = targetQueue.nextAddress(pCfg)) != NO_ADDRESS) {
-
 		// The list of RTLs for the current basic block
 		std::list<RTL*>* BB_rtls = new std::list<RTL*>();
 
@@ -452,7 +436,14 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 			Boomerang::get()->alert_decode(uAddr, inst.numBytes);
 			nTotalBytes += inst.numBytes;			
 	
-			if (pRtl == 0) {
+			// Check if this is an already decoded jump instruction (from a previous pass with propagation etc)
+			// If so, we throw away the just decoded RTL (but we still may have needed to calculate the number
+			// of bytes.. ick.)
+			std::map<ADDRESS, RTL*>::iterator ff = previouslyDecoded.find(uAddr);
+			if (ff != previouslyDecoded.end())
+				pRtl = ff->second;
+
+			if (pRtl == NULL) {
 				// This can happen if an instruction is "cancelled", e.g. call to __main in a hppa program
 				// Just ignore the whole instruction
 				if (inst.numBytes > 0)
@@ -485,13 +476,13 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 				s->simplify();
 				GotoStatement* stmt_jump = static_cast<GotoStatement*>(s);
 
-                if (s->getKind() == STMT_GOTO && stmt_jump->getFixedDest() != NO_ADDRESS &&
-                    	pBF->IsDynamicLinkedProc(stmt_jump->getFixedDest())) {
-                    s = *ss = new CallStatement();
-                    CallStatement *call = static_cast<CallStatement*>(s);
-                    call->setDest(stmt_jump->getFixedDest());
-                    call->setReturnAfterCall(true);
-                }
+				if (s->getKind() == STMT_GOTO && stmt_jump->getFixedDest() != NO_ADDRESS &&
+						pBF->IsDynamicLinkedProc(stmt_jump->getFixedDest())) {
+					s = *ss = new CallStatement();
+					CallStatement *call = static_cast<CallStatement*>(s);
+					call->setDest(stmt_jump->getFixedDest());
+					call->setReturnAfterCall(true);
+				}
 
 				switch (s->getKind())
 				{
@@ -528,10 +519,20 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 				}
 
 				case STMT_CASE: {
-					// MVE: check if this can happen any more
-					if (stmt_jump->getDest()->getOper() == opMemOf &&
-							stmt_jump->getDest()->getSubExp1()->getOper() == opIntConst && 
-							pBF->IsDynamicLinkedProcPointer(((Const*)stmt_jump->getDest()->getSubExp1())->getAddr())) {
+					Exp* pDest = stmt_jump->getDest();
+					if (pDest == NULL) {				// Happens if already analysed (now redecoding)
+						SWITCH_INFO* psi = ((CaseStatement*)stmt_jump)->getSwitchInfo();
+						BB_rtls->push_back(pRtl);
+						pBB = pCfg->newBB(BB_rtls, NWAY, 0);	// processSwitch will update num outedges
+						pBB->processSwitch(pProc, psi);	// decode arms, set out edges, etc
+						sequentialDecode = false;		// Don't decode after the jump
+						BB_rtls = NULL;					// New RTLList for next BB
+						break;							// Just leave it alone
+					}
+					// FIXME: check if this can happen any more
+					if (pDest && pDest->getOper() == opMemOf &&
+							pDest->getSubExp1()->getOper() == opIntConst && 
+							pBF->IsDynamicLinkedProcPointer(((Const*)pDest->getSubExp1())->getAddr())) {
 						// jump to a library function
 						// replace with a call ret
 						std::string func = pBF->GetDynamicProcName(
@@ -568,8 +569,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 						break;
 					}
 					BB_rtls->push_back(pRtl);
-					// We create the BB as a COMPJUMP type, then change
-					// to an NWAY if it turns out to be a switch stmt
+					// We create the BB as a COMPJUMP type, then change to an NWAY if it turns out to be a switch stmt
 					pBB = pCfg->newBB(BB_rtls, COMPJUMP, 0);
 					LOG << "COMPUTED JUMP at " << uAddr << "\n";
 					sequentialDecode = false;
@@ -583,14 +583,12 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 					BB_rtls->push_back(pRtl);
 					pBB = pCfg->newBB(BB_rtls, TWOWAY, 2);
 
-					// Stop decoding sequentially if the basic block already
-					// existed otherwise complete the basic block
+					// Stop decoding sequentially if the basic block already existed otherwise complete the basic block
 					if (pBB == 0)
 						sequentialDecode = false;
 					else {
 
-						// Add the out edge if it is to a destination within the
-						// procedure
+						// Add the out edge if it is to a destination within the procedure
 						if (uDest < pBF->getLimitTextHigh()) {
 							targetQueue.visit(pCfg, uDest, pBB);
 							pCfg->addOutEdge(pBB, uDest, true);
@@ -604,8 +602,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 						pCfg->addOutEdge(pBB, uAddr + inst.numBytes); 
 					}
 
-					// Create the list of RTLs for the next basic block and
-					// continue with the next instruction.
+					// Create the list of RTLs for the next basic block and continue with the next instruction.
 					BB_rtls = NULL;
 					break;
 				}
@@ -820,7 +817,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 	//if (w)
 	//	  w->alert_done(pProc, initAddr, lastAddr, nTotalBytes);
 
-	// Add the callees to the set of CallStatements to process for CSR, and also to the Prog object
+	// Add the callees to the set of CallStatements, and also to the Prog object
 	std::list<CallStatement*>::iterator it;
 	for (it = callList.begin(); it != callList.end(); it++) {
 		ADDRESS dest = (*it)->getFixedDest();
@@ -887,11 +884,11 @@ void TargetQueue::visit(Cfg* pCfg, ADDRESS uNewAddr, PBB& pNewBB) {
 /*==============================================================================
  * FUNCTION:	TargetQueue::initial
  * OVERVIEW:	Seed the queue with an initial address
+ * NOTE:		Can be some targets already in the queue now
  * PARAMETERS:	uAddr: Native address to seed the queue with
  * RETURNS:		<nothing>
  *============================================================================*/
 void TargetQueue::initial(ADDRESS uAddr) {
-	assert(targets.empty());			// Ensure no residue from previous procedures
 	targets.push(uAddr);
 }
 
@@ -911,13 +908,23 @@ ADDRESS TargetQueue::nextAddress(Cfg* cfg) {
 		if (Boomerang::get()->traceDecoder)
 			LOG << "<" << address << "\t";
 
-		// If no label there at all, or if there is a BB, it's incomplete,
-		// then we can parse this address next
+		// If no label there at all, or if there is a BB, it's incomplete, then we can parse this address next
 		if (!cfg->existsBB(address) || cfg->isIncomplete(address))
 			return address;
 	}
 	return NO_ADDRESS;
 }
+
+void TargetQueue::dump() {
+	std::queue<ADDRESS> copy(targets);
+	while (!copy.empty()) {
+		ADDRESS a = copy.front();
+		copy.pop();
+		std::cerr << std::hex << a << ", ";
+	}
+	std::cerr << std::dec << "\n";
+}
+
 
 /*==============================================================================
  * FUNCTION:	  decodeRtl

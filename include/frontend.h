@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001, The University of Queensland
+ * Copyright (C) 1998-2005, The University of Queensland
  * Copyright (C) 2000-2001, Sun Microsystems, Inc  
  * Copyright (C) 2002, Trent Waddington
  *
@@ -12,16 +12,15 @@
 
 /*==============================================================================
  * FILE:		frontend.h
- * OVERVIEW:	This file contains the definition for the FrontEnd class,
- *				which implements the source indendent parts of the front end
- *				of UQBT: decoding machine instructions into a control flow
- *				graph populated with low and high level RTLs.
- *				Also has some prototypes and structs for switch.cc
+ * OVERVIEW:	This file contains the definition for the FrontEnd class, which implements the source indendent parts of
+ *				the front end: decoding machine instructions into a control flow graph populated with low and high level
+ *			    RTLs.
  *============================================================================*/
 
-/* $Revision: 1.29.2.1 $
+/* $Revision: 1.29.2.2 $
  *
  * 17 Apr 02 - Mike: Mods to adapt UQBT code to boomerang
+ * 28 Jun 05 - Mike: Added a map of previously decoded indirect jumps and calls needed when restarting the cfg
  */
 
 
@@ -34,6 +33,7 @@
 #include <fstream>
 #include "types.h"
 #include "sigenum.h"   // For enums platform and cc
+#include "BinaryFile.h"
 
 class UserProc;
 class Proc;
@@ -62,14 +62,13 @@ enum INSTTYPE {
 
 // Put the target queue logic into this small class
 class TargetQueue {
-	std::queue<ADDRESS>	 targets;
+		std::queue<ADDRESS> targets;
 
 public:
 
 /*
  * FUNCTION:	visit
- * OVERVIEW:	Visit a destination as a label, i.e. check whether we need to
- *				queue it as a new BB to create later.
+ * OVERVIEW:	Visit a destination as a label, i.e. check whether we need to queue it as a new BB to create later.
  *				Note: at present, it is important to visit an address BEFORE an out edge is added to that address.
  *				This is because adding an out edge enters the address into the Cfg's BB map, and it looks like the
  *				BB has already been visited, and it gets overlooked. It would be better to have a scheme whereby
@@ -77,14 +76,14 @@ public:
  * PARAMETERS:	pCfg - the enclosing CFG
  *				uNewAddr - the address to be checked
  *				pNewBB - set to the lower part of the BB if the address already exists as a non explicit label
- *					(BB has to be split)
+ *				(i.e. the BB has to be split)
  * RETURNS:		<nothing>
  */
 	void visit(Cfg* pCfg, ADDRESS uNewAddr, PBB& pNewBB);
 /*
  * Provide an initial address (can call several times if there are several entry points)
  */
-	void initial(ADDRESS uAddr);
+		void		initial(ADDRESS uAddr);
 
 
 /*
@@ -93,7 +92,12 @@ public:
  * PARAMETERS:	  cfg - the enclosing CFG
  * RETURNS:		  The next address to process, or 0 if none (queue is empty)
  */
-	ADDRESS nextAddress(Cfg* cfg);
+		ADDRESS		nextAddress(Cfg* cfg);
+
+/*
+ * Print (for debugging)
+ */
+		void		dump();
 
 };	// class TargetQueue
 
@@ -107,11 +111,14 @@ protected:
 		NJMCDecoder	*decoder;		// The decoder
 		BinaryFile	*pBF;			// The binary file
 		Prog*		prog;			// The Prog object
-		// Public map from function name (string) to signature.
-		std::map<std::string, Signature*> librarySignatures;
-		std::map<ADDRESS, std::string> refHints;
 		// The queue of addresses still to be processed
 		TargetQueue	targetQueue;
+		// Public map from function name (string) to signature.
+		std::map<std::string, Signature*> librarySignatures;
+		// Map from address to meaningful name
+		std::map<ADDRESS, std::string> refHints;
+		// Map from address to previously decoded RTLs for decoded indirect control transfer instructions
+		std::map<ADDRESS, RTL*> previouslyDecoded;
 public:
 		/*
 		 * Constructor. Takes some parameters to save passing these around a lot
@@ -236,6 +243,14 @@ static	void		closeInstance(void* dlHandle);
 		 *					ReturnStatement as the last statement)
 		 */
 		PBB			createReturnBlock(UserProc* pProc, std::list<RTL*>* BB_rtls, RTL* pRtl);
+
+		/*
+		 * Add an RTL to the map from native address to previously-decoded-RTLs. Used to restore case statements and
+		 * decoded indirect call statements in a new decode following analysis of such instructions. The CFG is
+		 * incomplete in these cases, and needs to be restarted from scratch
+		 */
+		void		addDecodedRtl(ADDRESS a, RTL* rtl) {
+						previouslyDecoded[a] = rtl; }
 
 };	// class FrontEnd
 

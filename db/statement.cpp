@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.36 $
+ * $Revision: 1.148.2.37 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -145,7 +145,7 @@ bool Statement::calcMayAlias(Exp *e1, Exp *e2, int size) {
 
 /*==============================================================================
  * FUNCTION:		operator<<
- * OVERVIEW:		Output operator for Statement* etc
+ * OVERVIEW:		Output operator for Statement*
  *					Just makes it easier to use e.g. std::cerr << myStmtStar
  * PARAMETERS:		os: output stream to send to
  *					p: ptr to Statement to print to the stream
@@ -1170,8 +1170,7 @@ bool CaseStatement::searchAndReplace(Exp* search, Exp* replace) {
  * FUNCTION:		CaseStatement::searchAll
  * OVERVIEW:		Find all instances of the search expression
  * PARAMETERS:		search - a location to search for
- *					result - a list which will have any matching exprs
- *							 appended to it
+ *					result - a list which will have any matching exprs appended to it
  * NOTES:			search can't easily be made const
  * RETURNS:			true if there were any matches
  *============================================================================*/

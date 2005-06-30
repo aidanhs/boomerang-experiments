@@ -14,7 +14,7 @@
  * OVERVIEW:	interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.73.2.4 $
+ * $Revision: 1.73.2.5 $
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -120,6 +120,9 @@ public:
 		void		decodeExtraEntrypoint(ADDRESS a); 
 
 		void		decodeFragment(UserProc* proc, ADDRESS a) { pFE->decodeFragment(proc, a); }
+
+		// Re-decode this proc from scratch
+		void		reDecode(UserProc* proc);
 
 		// Well form all the procedures/cfgs in this program
 		bool		wellForm();
@@ -267,8 +270,13 @@ public:
 		Cluster		*findCluster(const char *name) { return m_rootCluster->find(name); }
 		bool		clusterUsed(Cluster *c);
 
+		// Add the given RTL to the front end's map from address to aldready-decoded-RTL
+		void		addDecodedRtl(ADDRESS a, RTL* rtl) {
+						pFE->addDecodedRtl(a, rtl); }
+
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);
+
 
 protected:
 		BinaryFile*	pBF;					// Pointer to the BinaryFile object for the program

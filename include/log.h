@@ -8,6 +8,7 @@
 class Statement;
 class Exp;
 class LocationSet;
+class RTL;
 
 class Log 
 {
@@ -16,6 +17,7 @@ public:
 	virtual Log &operator<<(const char *str) = 0;
 	virtual Log &operator<<(Statement *s);
 	virtual Log &operator<<(Exp *e);
+	virtual Log &operator<<(RTL *r);
 	virtual Log &operator<<(int i);
 	virtual Log &operator<<(char c);
 	virtual Log &operator<<(double d);

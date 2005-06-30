@@ -14,7 +14,7 @@
  * OVERVIEW:   This file contains the machine independent
  *			   decoding functionality.
  *
- * $Revision: 1.19.2.2 $
+ * $Revision: 1.19.2.3 $
  *============================================================================*/ 
 /*
  * 27 Apr 02 - Mike: Mods for boomerang
@@ -245,8 +245,8 @@ void NJMCDecoder::unconditionalJump(const char* name, int size, ADDRESS relocd, 
  *					result: ref to decoder result object
  * RETURNS:			<none>
  *============================================================================*/
-void NJMCDecoder::computedJump(const char* name, int size, Exp* dest, ADDRESS pc,
-		std::list<Statement*>* stmts, DecodeResult& result) {
+void NJMCDecoder::computedJump(const char* name, int size, Exp* dest, ADDRESS pc, std::list<Statement*>* stmts,
+		DecodeResult& result) {
 	result.rtl = new RTL(pc, stmts);
 	result.numBytes = size;
 	GotoStatement* jump = new GotoStatement();

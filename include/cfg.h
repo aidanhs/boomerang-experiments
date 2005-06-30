@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2001, The University of Queensland
+ * Copyright (C) 1997-2005, The University of Queensland
  * Copyright (C) 2001, Sun Microsystems, Inc
  * Copyright (C) 2002, Trent Waddington
  *
@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.69.2.6 $
+ * $Revision: 1.69.2.7 $
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
@@ -32,10 +32,11 @@
 #include <map>
 #include <iostream>
 #include <string>
-//#include <stack>
+
 #include "types.h"
 #include "exp.h"		// For LocationSet
 #include "exphelp.h"	// For lessExpStar
+#include "basicblock.h"	// For the BB nodes
 #include "dataflow.h"	// For embedded class DataFlow
 
 #define DEBUG_LIVENESS	(Boomerang::get()->debugLiveness)
@@ -63,494 +64,13 @@ struct SWITCH_INFO;
 #define BELSE 1
 
 
-// an enumerated type for the class of stucture determined for a node
-enum structType { 
-	Loop,	   // Header of a loop only
-	Cond,	   // Header of a conditional only (if-then-else or switch)
-	LoopCond,  // Header of a loop and a conditional
-	Seq		   // sequential statement (default)
-};
-
-// an type for the class of unstructured conditional jumps
-enum unstructType {
-	Structured,
-	JumpInOutLoop,
-	JumpIntoCase
-};
-
-
-// an enumerated type for the type of conditional headers
-enum condType {
-	IfThen,		// conditional with only a then clause
-	IfThenElse, // conditional with a then and an else clause
-	IfElse,		// conditional with only an else clause
-	Case		// nway conditional header (case statement)
-};
-
-// an enumerated type for the type of loop headers
-enum loopType {
-	PreTested,	   // Header of a while loop
-	PostTested,	   // Header of a repeat loop
-	Endless		   // Header of an endless loop
-};
-
-// Depth-first traversal constants.
-enum travType {
-	UNTRAVERSED,   // Initial value
-	DFS_TAG,	   // Remove redundant nodes pass
-	DFS_LNUM,	   // DFS loop stamping pass
-	DFS_RNUM,	   // DFS reverse loop stamping pass
-	DFS_CASE,	   // DFS case head tagging traversal
-	DFS_PDOM,	   // DFS post dominator ordering
-	DFS_CODEGEN	   // Code generating pass
-};
-
-// Kinds of basic block nodes
-// reordering these will break the save files - trent
-enum BBTYPE {
-	ONEWAY,					 // unconditional branch
-	TWOWAY,					 // conditional branch
-	NWAY,					 // case branch
-	CALL,					 // procedure call
-	RET,					 // return
-	FALL,					 // fall-through node
-	COMPJUMP,				 // computed jump
-	COMPCALL,				 // computed call
-	INVALID					 // invalid instruction
-};
-
-enum SBBTYPE {
-	NONE,					 // not structured
-	PRETESTLOOP,			 // header of a loop
-	POSTTESTLOOP,
-	ENDLESSLOOP,
-	JUMPINOUTLOOP,			 // an unstructured jump in or out of a loop
-	JUMPINTOCASE,			 // an unstructured jump into a case statement
-	IFGOTO,					 // unstructured conditional
-	IFTHEN,					 // conditional with then clause
-	IFTHENELSE,				 // conditional with then and else clauses
-	IFELSE,					 // conditional with else clause only
-	CASE					 // case statement (switch)
-};
-
-typedef std::list<PBB>::iterator BB_IT;
-
-/*==============================================================================
- * BasicBlock class. <more comments>
- *============================================================================*/
-class BasicBlock {
-		/*
-		 * Objects of class Cfg can access the internals of a BasicBlock object.
-		 */
-		friend class Cfg;
-
-public:
-		/*
-		 * Constructor.
-		 */
-					BasicBlock();
-
-		/*
-		 * Destructor.
-		 */
-					~BasicBlock();
-
-		/*
-		 * Copy constructor.
-		 */
-					BasicBlock(const BasicBlock& bb);
-
-		/*
-		 * Return the type of the basic block.
-		 */
-		BBTYPE		getType();
-
-		/*
-		 * Check if this BB has a label. If so, return the numeric value of
-		 * the label (nonzero integer). If not, returns zero.
-		 * See also Cfg::setLabel()
-		 */
-		int			getLabel();
-
-		std::string &getLabelStr() { return m_labelStr; }
-		void		setLabelStr(std::string &s) { m_labelStr = s; }
-		bool		isLabelNeeded() { return m_labelneeded; }
-		void		setLabelNeeded(bool b) { m_labelneeded = b; }
-
-		/*
-		 * Return whether this BB has been traversed or not
-		 */
-		bool		isTraversed();
-
-		/*
-		 * Set the traversed flag
-		 */
-		void		setTraversed(bool bTraversed);
-
-		/*
-		 * Print the BB. For -R and for debugging
-		 * Don't use = std::cout, because gdb doesn't know about std::
-		 */
-		void		print(std::ostream& os);
-		void		printToLog();
-		char*		prints();						// For debugging
-
-		/*
-		 * Set the type of the basic block.
-		 */
-		void		updateType(BBTYPE bbType, int iNumOutEdges);
-
-		/*
-		 * Set the "jump reqd" bit. This means that this is an orphan BB (it is generated, not part of the original
-		 * program), and that the "fall through" out edge (m_OutEdges[1]) has to be implemented as a jump. The back end
-		 * needs to take heed of this bit
-		 */
-		void		setJumpReqd();
-
-		/*
-		 * Check if jump is required (see above).
-		 */
-		bool		isJumpReqd();
-
-		/*
-		 * Get the address associated with the BB
-		 * Note that this is not always the same as getting the address of the first RTL (e.g. if the first RTL is a
-		 * delay instruction of a DCTI instruction; then the address of this RTL will be 0)
-		 */
-		ADDRESS		getLowAddr();
-		ADDRESS		getHiAddr();
-
-		/*
-		 * Get ptr to the list of RTLs.
-		 */
-		std::list<RTL*>* getRTLs();
-
-		/*
-		 * Get the set of in edges.
-		 */
-		std::vector<PBB>& getInEdges();
-
-		int			getNumInEdges() { return m_iNumInEdges; }
-
-		/*
-		 * Get the set of out edges.
-		 */
-		std::vector<PBB>& getOutEdges();
-
-		/*
-		 * Set an in edge to a new value; same number of in edges as before
-		 */
-		void		setInEdge(int i, PBB newIn);
-
-		/*
-		 * Set an out edge to a new value; same number of out edges as before
-		 */
-		void		setOutEdge(int i, PBB newInEdge);
-
-		/*
-		 * Get the n-th out edge or 0 if it does not exist
-		 */
-		PBB			getOutEdge(unsigned int i);
-
-		int			getNumOutEdges() { return m_iNumOutEdges; }
-
-		/*
-		 * Get the index of my in-edges is BB pred
-		 */
-		int			whichPred(PBB pred);
-
-		/*
-		 * Add an in-edge
-		 */
-		void		addInEdge(PBB newInEdge);
-		void		deleteEdge(PBB edge);
-
-		/*
-		 * Delete an in-edge
-		 */
-		void		deleteInEdge(std::vector<PBB>::iterator& it);
-		void		deleteInEdge(PBB edge);
-
-		/*
-		 * If this is a call BB, find the fixed destination (if any).  Returns -1 otherwise
-		 */
-		ADDRESS		getCallDest();
-		Proc		*getCallDestProc();
-
-		/*
-		 * Traverse this node and recurse on its children in a depth first manner.
-		 * Records the times at which this node was first visited and last visited.
-		 * Returns the number of nodes traversed.
-		 */
-		unsigned	DFTOrder(int& first, int& last);
-
-		/*
-		 * Traverse this node and recurse on its parents in a reverse depth first manner.
-		 * Records the times at which this node was first visited and last visited.
-		 * Returns the number of nodes traversed.
-		 */
-		unsigned	RevDFTOrder(int& first, int& last);
-
-		/*
-		 * Static comparison function that returns true if the first BB has an address less than the second BB.
-		 */
-static bool			lessAddress(PBB bb1, PBB bb2);
-
-		/*
-		 * Static comparison function that returns true if the first BB has an DFT first number less than the second BB.
-		 */
-static bool			lessFirstDFT(PBB bb1, PBB bb2);
-
-		/*
-		 * Static comparison function that returns true if the first BB has an DFT last less than the second BB.
-		 */
-static bool			lessLastDFT(PBB bb1, PBB bb2);
-
-		/*
-		 * Resets the DFA sets of this BB.
-		 */
-		void		resetDFASets();
-
-		/* get the condition */
-		Exp			*getCond();
-
-		/* set the condition */
-		void		setCond(Exp *e);
-
-		/* Get the destination expression, if any */
-		Exp*		getDest();
-
-		/* Check if there is a jump if equals relation */
-		bool		isJmpZ(PBB dest);
-
-		/* get the loop body */
-		BasicBlock	*getLoopBody();
-
-		/* Simplify all the expressions in this BB
-		 */
-		void		simplify();
-
-
-		/*
-		 *	given an address, returns the outedge which corresponds to that address or 0 if there was no such outedge
-		 */
-
-		PBB			getCorrectOutEdge(ADDRESS a);
-		
-		/*
-		 * Depth first traversal of all bbs, numbering as we go and as we come back, forward and reverse passes.
-		 * Use Cfg::establishDFTOrder() and CFG::establishRevDFTOrder to create these values.
-		 */
-		int			m_DFTfirst;		   // depth-first traversal first visit
-		int			m_DFTlast;		   // depth-first traversal last visit
-		int			m_DFTrevfirst;	   // reverse depth-first traversal first visit
-		int			m_DFTrevlast;	   // reverse depth-first traversal last visit
-
-private:
-		/*
-		 * Constructor. Called by Cfg::NewBB.
-		 */
-					BasicBlock(std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges);
-
-		/*
-		 * Sets the RTLs for this BB. This is the only place that
-		 * the RTLs for a block must be set as we need to add the back
-		 * link for a call instruction to its enclosing BB.
-		 */
-		void		setRTLs(std::list<RTL*>* rtls);
-
-public:
-
-		// code generation
-		void		generateBodyCode(HLLCode &hll, bool dup = false);
-
-/* high level structuring */
-		SBBTYPE		m_structType;	// structured type of this node
-		SBBTYPE		m_loopCondType; // type of conditional to treat this loop header as (if any)
-		PBB			m_loopHead;		// head of the most nested enclosing loop
-		PBB			m_caseHead;		// head of the most nested enclosing case
-		PBB			m_condFollow;	// follow of a conditional header
-		PBB			m_loopFollow;	// follow of a loop header
-		PBB			m_latchNode;	// latch node of a loop header	
-
-protected:
-/* general basic block information */
-		BBTYPE		m_nodeType;		// type of basic block
-		std::list<RTL*>* m_pRtls;	// Ptr to list of RTLs
-		int			m_iLabelNum;	// Nonzero if start of BB needs label
-		std::string	m_labelStr;		// string label of this bb.
-		bool		m_labelneeded;
-		bool		m_bIncomplete;	// True if not yet complete
-		bool		m_bJumpReqd;	// True if jump required for "fall through"
-
-/* in-edges and out-edges */
-		std::vector<PBB> m_InEdges;	// Vector of in-edges
-		std::vector<PBB> m_OutEdges;// Vector of out-edges
-		int			m_iNumInEdges;	// We need these two because GCC doesn't
-		int			m_iNumOutEdges;	// support resize() of vectors!
-
-/* for traversal */
-		bool		m_iTraversed;	// traversal marker
-
-/* Liveness */
-		LocationSet	liveIn;			// Set of locations live at BB start
-
-public:
-
-		bool		isPostCall();
-static void			doAvail(StatementSet& s, PBB inEdge);
-		Proc*		getDestProc();
-
-		/**
-		 * Get first/next statement this BB
-		 * Somewhat intricate because of the post call semantics; these funcs
-		 * save a lot of duplicated, easily-bugged code
-		 */
-		typedef std::list<RTL*>::iterator rtlit;
-		typedef std::list<RTL*>::reverse_iterator rtlrit;
-		typedef std::list<Exp*>::iterator elit;
-		Statement*	getFirstStmt(rtlit& rit, StatementList::iterator& sit);
-		Statement*	getNextStmt(rtlit& rit, StatementList::iterator& sit);
-		Statement*	getLastStmt(rtlrit& rit, StatementList::reverse_iterator& sit);
-		Statement*	getPrevStmt(rtlrit& rit, StatementList::reverse_iterator& sit);
-
-		/**
-		 * Get the statement number for the first BB as a character array.
-		 * If not possible (e.g. because the BB has no statements), return
-		 * a unique string (e.g. bb8048c10)
-		 */
-		char*		getStmtNumber();
-
-		/* set the return value */
-		void		setReturnVal(Exp *e);
-		Exp			*getReturnVal() { return m_returnVal; }
-
-protected:
-		// ?? What is this? Needed?
-		Exp*		m_returnVal;
-
-		/* Control flow analysis stuff, lifted from Doug Simon's honours thesis.
-		 */
-		int			ord;	 // node's position within the ordering structure
-		int			revOrd;	 // position within ordering structure for the reverse graph
-		int			inEdgesVisited; // counts the number of in edges visited during a DFS
-		int			numForwardInEdges; // inedges to this node that aren't back edges
-		int			loopStamps[2], revLoopStamps[2]; // used for structuring analysis
-		travType	traversed; // traversal flag for the numerous DFS's
-		bool		hllLabel; // emit a label for this node when generating HL code?
-		char*		labelStr; // the high level label for this node (if needed)
-		int			indentLevel; // the indentation level of this node in the final code
-
-		// analysis information
-		PBB			immPDom; // immediate post dominator
-		PBB			loopHead; // head of the most nested enclosing loop
-		PBB			caseHead; // head of the most nested enclosing case
-		PBB			condFollow; // follow of a conditional header
-		PBB			loopFollow; // follow of a loop header
-		PBB			latchNode; // latching node of a loop header
-
-		// Structured type of the node
-		structType	sType; // the structuring class (Loop, Cond , etc)
-		unstructType usType; // the restructured type of a conditional header
-		loopType	lType; // the loop type of a loop header
-		condType	cType; // the conditional type of a conditional header
-
-		void		setLoopStamps(int &time, std::vector<PBB> &order);
-		void		setRevLoopStamps(int &time);
-		void		setRevOrder(std::vector<PBB> &order);
-
-		void		setLoopHead(PBB head) { loopHead = head; }
-		PBB			getLoopHead() { return loopHead; }
-		void		setLatchNode(PBB latch) { latchNode = latch; }
-		bool		isLatchNode() { return loopHead && loopHead->latchNode == this; }
-		PBB			getLatchNode() { return latchNode; }
-		PBB			getCaseHead() { return caseHead; }
-		void		setCaseHead(PBB head, PBB follow);
-
-		structType	getStructType() { return sType; }
-		void		setStructType(structType s);
-
-		unstructType getUnstructType();
-		void		setUnstructType(unstructType us);
-
-		loopType	getLoopType();
-		void		setLoopType(loopType l);
-
-		condType	getCondType();
-		void		setCondType(condType l);
-
-		void		setLoopFollow(PBB other) { loopFollow = other; }
-		PBB			getLoopFollow() { return loopFollow; }
-
-		void		setCondFollow(PBB other) { condFollow = other; }
-		PBB			getCondFollow() { return condFollow; }
-
-		// establish if this bb has a back edge to the given destination
-		bool		hasBackEdgeTo(BasicBlock *dest);
-
-		// establish if this bb has any back edges leading FROM it
-		bool 		hasBackEdge() {
-						for (unsigned int i = 0; i < m_OutEdges.size(); i++)
-							if (hasBackEdgeTo(m_OutEdges[i])) 
-								return true;
-						return false;
-					}
-
-		// establish if this bb is an ancestor of another BB
-		bool		isAncestorOf(BasicBlock *other);
-
-		bool		inLoop(PBB header, PBB latch);
-
-		bool		isIn(std::list<PBB> &set, PBB bb) {
-						for (std::list<PBB>::iterator it = set.begin(); it != set.end(); it++)
-							if (*it == bb) return true;
-						return false;
-					}
-
-		char*		indent(int indLevel, int extra = 0);
-		bool		allParentsGenerated();
-		void		emitGotoAndLabel(HLLCode *hll, int indLevel, PBB dest);
-		void		WriteBB(HLLCode *hll, int indLevel);
-
-public:
-		void		generateCode(HLLCode *hll, int indLevel, PBB latch, std::list<PBB> &followSet, std::list<PBB> &gotoSet);
-		// For prepending phi functions
-		void		prependStmt(Statement* s, UserProc* proc);
-
-		// Liveness
-		bool		calcLiveness(igraph& ig, UserProc* proc);
-		void		getLiveOut(LocationSet& live, LocationSet& phiLocs);
-
-		// Find indirect jumps and calls
-		bool		decodeIndirectJmp(UserProc* proc);
-		void		processSwitch(UserProc* proc, SWITCH_INFO* swi);
-		int			findNumCases();
-
-		/*
-		 * Change the BB enclosing stmt to be CALL, not COMPCALL
-		 */
-		bool		undoComputedBB(Statement* stmt);
-
-protected:
-		friend class XMLProgParser;
-		void		addOutEdge(PBB bb) { m_OutEdges.push_back(bb); }
-		void		addRTL(RTL *rtl) {
-						if (m_pRtls == NULL) 
-							m_pRtls = new std::list<RTL*>;
-						m_pRtls->push_back(rtl);
-					}
-		void		addLiveIn(Location *e) { liveIn.insert(e); }
-
-};		// class BasicBlock
-
 
 		// A type for the ADDRESS to BB map
 typedef std::map<ADDRESS, PBB, std::less<ADDRESS> >	  MAPBB;
 
 /*==============================================================================
- * Control Flow Graph class. Contains all the BasicBlock objects for a procedure.
- * These BBs contain all the RTLs for the procedure, so by traversing the Cfg,
- * one traverses the whole procedure.
+ * Control Flow Graph class. Contains all the BasicBlock objects for a procedure.  These BBs contain all the RTLs for
+ * the procedure, so by traversing the Cfg, one traverses the whole procedure.
  *============================================================================*/
 class Cfg {
 		/*
@@ -572,7 +92,7 @@ class Cfg {
 		/*
 		 * The ADDRESS to PBB map.
 		 */
-		MAPBB m_mapBB;
+		MAPBB		m_mapBB;
 
 		/*
 		 * The entry and exit BBs.
@@ -583,7 +103,7 @@ class Cfg {
 		/*
 		 * True if well formed.
 		 */
-		bool m_bWellFormed, structured;
+		bool		m_bWellFormed, structured;
 
 		/*
 		 * Set of the call instructions in this procedure.
@@ -609,17 +129,17 @@ public:
 		/*
 		 * Constructor.
 		 */
-		Cfg();
+					Cfg();
 
 		/*
 		 * Destructor.
 		 */
-		~Cfg();
+					~Cfg();
 
 		/*
 		 * Set the pointer to the owning UserProc object
 		 */
-		void setProc(UserProc* proc);
+		void		setProc(UserProc* proc);
 
 		/*
 		 * clear this CFG of all basic blocks, ready for decode
@@ -634,7 +154,7 @@ public:
 		/*
 		 * Equality operator.
 		 */
-		const Cfg& operator=(const Cfg& other); /* Copy constructor */
+		const Cfg&	operator=(const Cfg& other); /* Copy constructor */
 
 		/*
 		 * Checks to see if the address associated with pRtls is already in the map as an incomplete BB; if so, it is
@@ -648,55 +168,55 @@ public:
 		 * Returns NULL if not successful, or if there already exists a completed BB at this address (this can happen
 		 * with certain kinds of forward branches).
 		 */
-		PBB newBB ( std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges);
+		PBB			newBB ( std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges);
 
 		/*
 		 * Allocates space for a new, incomplete BB, and the given address is added to the map. This BB will have to be
 		 * completed before calling WellFormCfg. This function will commonly be called via AddOutEdge()
 		 */
-		PBB newIncompleteBB(ADDRESS addr);
+		PBB			newIncompleteBB(ADDRESS addr);
 
 		/*
 		 * Remove the incomplete BB at uAddr, if any. Was used when dealing with the SKIP instruction, but no longer.
 		 */
-		void removeIncBB(ADDRESS uAddr);
+		void		removeIncBB(ADDRESS uAddr);
 
 		/*
 		 * Adds an out-edge to the basic block pBB by filling in the first slot that is empty.	Note: an address is
 		 * given here; the out edge will be filled in as a pointer to a BB. An incomplete BB will be created if
 		 * required. If bSetLabel is true, the destination BB will have its "label required" bit set.
 		 */
-		void addOutEdge(PBB pBB, ADDRESS adr, bool bSetLabel = false);
+		void		addOutEdge(PBB pBB, ADDRESS adr, bool bSetLabel = false);
 
 		/*
 		 * Adds an out-edge to the basic block pBB by filling in the first slot that is empty.	Note: a pointer to a BB
 		 * is given here.
 		 */
-		void addOutEdge(PBB pBB, PBB pDestBB, bool bSetLabel = false);
+		void		addOutEdge(PBB pBB, PBB pDestBB, bool bSetLabel = false);
 
 		/*
 		 * Add a label for the given basicblock. The label number must be a non-zero integer
 		 */
-		void setLabel(PBB pBB);
+		void		setLabel(PBB pBB);
 
 		/*
 		 * Gets a pointer to the first BB this cfg. Also initialises `it' so that calling GetNextBB will return the
 		 * second BB, etc.  Also, *it is the first BB.  Returns 0 if there are no BBs this CFG.
 		 */
-		PBB getFirstBB(BB_IT& it);
+		PBB			getFirstBB(BB_IT& it);
 
 		/*
 		 * Gets a pointer to the next BB this cfg. `it' must be from a call to GetFirstBB(), or from a subsequent call
 		 * to GetNextBB().  Also, *it is the current BB.  Returns 0 if there are no more BBs this CFG.
 		 */
-		PBB getNextBB(BB_IT& it);
+		PBB			getNextBB(BB_IT& it);
 
 		/*
 		 * An alternative to the above is to use begin() and end():
 		 */
-		typedef BB_IT iterator;
-		iterator begin() {return m_listBB.begin();}
-		iterator end()	 {return m_listBB.end();}
+		typedef		BB_IT iterator;
+		iterator	begin() {return m_listBB.begin();}
+		iterator	end()	 {return m_listBB.end();}
 
 
 		/*
@@ -708,47 +228,47 @@ public:
 		 * of the split BB.
 		 * Returns true if the native address is that of an explicit or non explicit label, false otherwise.
 		 */ 
-		bool label ( ADDRESS uNativeAddr, PBB& pNewBB );
+		bool		label ( ADDRESS uNativeAddr, PBB& pNewBB );
 
 		/*
 		 * Checks whether the given native address is in the map. If not, returns false. If so, returns true if it is
 		 * incomplete.  Otherwise, returns false.
 		 */
-		bool isIncomplete ( ADDRESS uNativeAddr );
+		bool		isIncomplete ( ADDRESS uNativeAddr );
 
 		/*
 		 * Just checks to see if there exists a BB starting with this native address. If not, the address is NOT added
 		 * to the map of labels to BBs.
 		 */
-		bool existsBB ( ADDRESS uNativeAddr );
+		bool		existsBB ( ADDRESS uNativeAddr );
 
 		/*
 		 * Sorts the BBs in the CFG according to the low address of each BB.  Useful because it makes printouts easier,
 		 * if they used iterators to traverse the list of BBs.
 		 */
-		void sortByAddress ();
+		void		sortByAddress ();
 
 		/*
 		 * Sorts the BBs in the CFG by their first DFT numbers.
 		 */
-		void sortByFirstDFT();
+		void		sortByFirstDFT();
 
 		/*
 		 * Sorts the BBs in the CFG by their last DFT numbers.
 		 */
-		void sortByLastDFT();
+		void		sortByLastDFT();
 
 		/*
 		 * Updates m_vectorBB to m_listBB
 		 */
-		void updateVectorBB();
+		void		updateVectorBB();
 
 		/*
 		 * Transforms the input machine-dependent cfg, which has ADDRESS labels for each out-edge, into a machine-
 		 * independent cfg graph (i.e. a well-formed graph) which has references to basic blocks for each out-edge.
 		 * Returns false if not successful.
 		 */
-		bool wellFormCfg ( );
+		bool		wellFormCfg ( );
 
 		/*
 		 * Given two basic blocks that belong to a well-formed graph, merges the second block onto the first one and
@@ -757,7 +277,7 @@ public:
 		 * these edges correspond to each other.  
 		 * Returns true if the blocks are merged.
 		 */
-		bool mergeBBs ( PBB pb1, PBB pb2 );
+		bool		mergeBBs ( PBB pb1, PBB pb2 );
 	 
 
 		/*
@@ -768,7 +288,7 @@ public:
 		 *  by the previous optimizations.  
 		 * Returns false if not successful.
 		 */
-		bool compressCfg ( );
+		bool		compressCfg ( );
 
 
 		/*
@@ -778,34 +298,34 @@ public:
 		 * The return value indicates if all nodes where ordered. This will not be the case for incomplete CFGs (e.g.
 		 * switch table not completely recognised) or where there are nodes unreachable from the entry node.
 		 */
-		bool establishDFTOrder();
+		bool		establishDFTOrder();
 
 		/*
 		 * Performs establishDFTOrder on the inverse of the graph (ie, flips the graph)
 		 */
-		bool establishRevDFTOrder();
+		bool		establishRevDFTOrder();
 
 		/*
 		 * Given a pointer to a basic block, return an index (e.g. 0 for the first basic block, 1 for the next, ... n-1
 		 * for the last BB.
 		 */
-		int pbbToIndex (PBB pBB);
+		int			pbbToIndex (PBB pBB);
 
 		/*
 		 * Reset all the traversed flags.
 		 * To make this a useful public function, we need access to the traversed flag with other public functions.
 		*/
-		void unTraverse ( );
+		void		unTraverse ( );
 
 		/*
 		 * Return true if the CFG is well formed.
 		 */
-		bool isWellFormed ( );
+		bool		isWellFormed ( );
 
 		/*
 		 * Return true if there is a BB at the address given whose first RTL is an orphan, i.e. GetAddress() returns 0.
 		 */
-		bool isOrphan ( ADDRESS uAddr);
+		bool		isOrphan ( ADDRESS uAddr);
 
 		/*
 		 * This is called where a two-way branch is deleted, thereby joining a two-way BB with it's successor.
@@ -813,17 +333,17 @@ public:
 		 * The joined BB becomes the type of the successor.
 		 * Returns true if succeeds.
 		 */
-		bool joinBB( PBB pb1, PBB pb2);
+		bool		joinBB( PBB pb1, PBB pb2);
 
 		/*
 		 * Resets the DFA sets of all the BBs.
 		 */
-		void resetDFASets();
+		void		resetDFASets();
 
 		/*
 		 * Add a call to the set of calls within this procedure.
 		 */
-		void addCall(CallStatement* call);
+		void		addCall(CallStatement* call);
 
 		/*
 		 * Get the set of calls within this procedure.
@@ -833,44 +353,44 @@ public:
 		/*
 		 * Replace all instances of search with replace.  Can be type sensitive if reqd
 		 */
-		void searchAndReplace(Exp* search, Exp* replace);
-		bool searchAll(Exp* search, std::list<Exp*> &result);
+		void		searchAndReplace(Exp* search, Exp* replace);
+		bool		searchAll(Exp* search, std::list<Exp*> &result);
 
 		/*
 		 * Set the return value for this CFG (assumes there is only one exit bb)
 		 */
-		void setReturnVal(Exp *e);
-		Exp *getReturnVal();
+		void		setReturnVal(Exp *e);
+		Exp			*getReturnVal();
 
 		/*
 		 * Structures the control flow graph
 		 */
-		void structure();
+		void		structure();
 
 		/*
 		 * Resolves goto/branch destinations to statements
 		 * Good to do this late, as removing statements doesn't update this information.
 		 */
-		void resolveGotos();
+		void		resolveGotos();
 
 		/*
 		 * Virtual Function Call analysis
 		 */
-		void virtualFunctionCalls(Prog* prog);
+		void		virtualFunctionCalls(Prog* prog);
 
 		std::vector<PBB> m_vectorBB; // faster access
 
 		/* return a bb given an address */
-		PBB bbForAddr(ADDRESS addr) { return m_mapBB[addr]; }
+		PBB			bbForAddr(ADDRESS addr) { return m_mapBB[addr]; }
 
 		/* Simplify all the expressions in the CFG
 		 */
-		void simplify();
+		void		simplify();
 
 		/*
 		 * Change the BB enclosing stmt to be CALL, not COMPCALL
 		 */
-		void undoComputedBB(Statement* stmt);
+		void		undoComputedBB(Statement* stmt);
 
 private:
 
@@ -883,68 +403,68 @@ private:
 		 * BB to not overlap the existing one.
 		 * Returns a pointer to the "bottom" (new) part of the BB.
 		 */
-		PBB splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB = 0, bool bDelRtls = false);
+		PBB			splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB = 0, bool bDelRtls = false);
 
 		/*
 		 * Completes the merge of pb1 and pb2 by adjusting out edges. No checks are made that the merge is valid
 		 * (hence this is a private function) Deletes pb1 if bDelete is true
 		 */
-		void completeMerge(PBB pb1, PBB pb2, bool bDelete);
+		void		completeMerge(PBB pb1, PBB pb2, bool bDelete);
 
 		/*
 		 * checkEntryBB: emit error message if this pointer is null
 		 */
-		bool checkEntryBB();
+		bool		checkEntryBB();
 
 public:
 		/*
 		 * Split the given BB at the RTL given, and turn it into the BranchStatement given. Sort out all the in and out
 		 * edges.
 		 */
-		PBB splitForBranch(PBB pBB, RTL* rtl, BranchStatement* br1,
-		  BranchStatement* br2, BB_IT& it);
+		PBB			splitForBranch(PBB pBB, RTL* rtl, BranchStatement* br1, BranchStatement* br2, BB_IT& it);
 
 		/*
 		 * Control flow analysis stuff, lifted from Doug Simon's honours thesis.
 		 */
-		void setTimeStamps();
-		PBB commonPDom(PBB curImmPDom, PBB succImmPDom);
-		void findImmedPDom();
-		void structConds();
-		void structLoops();
-		void checkConds();
-		void determineLoopType(PBB header, bool* &loopNodes);
-		void findLoopFollow(PBB header, bool* &loopNodes);
-		void tagNodesInLoop(PBB header, bool* &loopNodes);
+		void		setTimeStamps();
+		PBB			commonPDom(PBB curImmPDom, PBB succImmPDom);
+		void		findImmedPDom();
+		void		structConds();
+		void		structLoops();
+		void		checkConds();
+		void		determineLoopType(PBB header, bool* &loopNodes);
+		void		findLoopFollow(PBB header, bool* &loopNodes);
+		void		tagNodesInLoop(PBB header, bool* &loopNodes);
 
-		void removeUnneededLabels(HLLCode *hll);
-		void generateDotFile(std::ofstream& of);
+		void		removeUnneededLabels(HLLCode *hll);
+		void		generateDotFile(std::ofstream& of);
 
 
 		/*
 		 * Get the entry-point or exit BB
 		 */
-		PBB getEntryBB() { return entryBB;}
-		PBB getExitBB()	 { return exitBB;}
+		PBB			getEntryBB() { return entryBB;}
+		PBB			getExitBB()	 { return exitBB;}
 
 		/*
 		 * Set the entry-point BB (and exit BB as well)
 		 */
-		void setEntryBB(PBB bb);
-		void setExitBB(PBB bb);
+		void		setEntryBB(PBB bb);
+		void		setExitBB(PBB bb);
 
-		PBB findRetNode();
+		PBB			findRetNode();
 
 		/*
 		 * Set an additional new out edge to a given value
 		 */
-		void addNewOutEdge(PBB fromBB, PBB newOutEdge);
+		void		addNewOutEdge(PBB fromBB, PBB newOutEdge);
 
 		/*
 		 * print this cfg, mainly for debugging
 		 */
-		void print(std::ostream &out);
-		void printToLog();
+		void		print(std::ostream &out);
+		void		printToLog();
+		void		dump();				// Dump to std::cerr
 
 		/*
 		 * Check for indirect jumps and calls. If any found, decode the extra code and return true

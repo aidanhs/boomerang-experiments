@@ -13,7 +13,7 @@
  *			   SparcDecoder class.
  *============================================================================*/
 
-/* $Revision: 1.20.2.1 $
+/* $Revision: 1.20.2.2 $
  *
  * 26 Apr 02 - Mike: Mods for boomerang
  * 19 May 02 - Mike: Added many (int) casts: variables from toolkit are unsgnd
@@ -34,10 +34,10 @@
 #include "signature.h"
 #endif
 
+#include "decoder.h"
 #include "exp.h"
 #include "prog.h"
 #include "proc.h"
-#include "decoder.h"
 #include "sparcdecoder.h"
 #include "rtl.h"
 #include "BinaryFile.h"		// For SymbolByAddress()
@@ -77,8 +77,7 @@ void SparcDecoder::unused(int x)
  *				   name - instruction name (e.g. "BNE,a")
  * RETURNS:		   Pointer to newly created RTL, or NULL if invalid
  *============================================================================*/
-RTL* SparcDecoder::createBranchRtl(ADDRESS pc, std::list<Statement*>* stmts,
-  const char* name) {
+RTL* SparcDecoder::createBranchRtl(ADDRESS pc, std::list<Statement*>* stmts, const char* name) {
 	RTL* res = new RTL(pc, stmts);
 	BranchStatement* br = new BranchStatement();
 	res->appendStmt(br);

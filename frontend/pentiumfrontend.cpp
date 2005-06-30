@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.51.2.2 $
+ * $Revision: 1.51.2.3 $
  * 21 Oct 98 - Mike: converted from frontsparc.cc
  * 21 May 02 - Mike: Mods for boomerang
  * 27 Nov 02 - Mike: Fixed a bug in the floating point fixup code, which was screwing up registers in flag calls
@@ -170,10 +170,10 @@ bool PentiumFrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream 
 		return false;
 
 	// Need a post-cfg pass to remove the FPUSH and FPOP instructions, and to transform various code after floating
-	//  point compares to generate floating point branches.
+	// point compares to generate floating point branches.
 	// processFloatCode() will recurse to process its out-edge BBs (if not already processed)
 	Cfg* pCfg = pProc->getCFG();
-	pCfg->unTraverse();
+	pCfg->unTraverse();			// Reset all the "traversed" flags (needed soon)
 	// This will get done twice; no harm
 	pProc->setEntryBB();
 

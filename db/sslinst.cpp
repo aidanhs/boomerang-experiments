@@ -18,7 +18,7 @@
  *============================================================================*/
  
 /*
- * $Revision: 1.27.2.1 $
+ * $Revision: 1.27.2.2 $
  *
  * 27 Apr 02 - Mike: Mods for boomerang
  * 17 Jul 02 - Mike: readSSLFile resets internal state as well
@@ -98,16 +98,13 @@ void TableEntry::setRTL(RTL& r) {
 
 /*==============================================================================
  * FUNCTION:		TableEntry::operator=
- * OVERVIEW:		Sets the contents of this object with a deepcopy from
- *					another TableEntry object. Note that this is different from
- *					the semantics of operator= for an RTL which only does a
- *					shallow copy!
+ * OVERVIEW:		Sets the contents of this object with a deepcopy from another TableEntry object.  Note that this is
+ *					different from the semantics of operator= for an RTL which only does a shallow copy!
  * PARAMETERS:		other - the object to copy
  * RETURNS:			a reference to this object
  *============================================================================*/
 const TableEntry& TableEntry::operator=(const TableEntry& other) {
-	for (std::list<std::string>::const_iterator it = other.params.begin(); 
-		 it != other.params.end(); it++)
+	for (std::list<std::string>::const_iterator it = other.params.begin(); it != other.params.end(); it++)
 		params.push_back(*it);
 	rtl = *(new RTL(other.rtl));
 	return *this;
@@ -123,9 +120,8 @@ const TableEntry& TableEntry::operator=(const TableEntry& other) {
 int TableEntry::appendRTL(std::list<std::string>& p, RTL& r) {
 	bool match = (p.size() == params.size());
 	std::list<std::string>::iterator a, b;
-	for (a = params.begin(), b = p.begin();
-	  match && (a != params.end()) && (b != p.end());
-	  match = (*a == *b), a++, b++)
+	for (a = params.begin(), b = p.begin(); match && (a != params.end()) && (b != p.end());
+			match = (*a == *b), a++, b++)
 		;
 	if (match) {
 		rtl.appendRTL(r);
@@ -169,11 +165,9 @@ RTLInstDict::~RTLInstDict()
 
 /*==============================================================================
  * FUNCTION:		RTLInstDict::readSSLFile
- * OVERVIEW:		Read and parse the SSL file, and initialise the expanded
- *					instruction dictionary (this object). This also reads and
- *					sets up the register map and flag functions.
- * PARAMETERS:		SSLFileName - the name of the file containing the SSL
- *					  specification.
+ * OVERVIEW:		Read and parse the SSL file, and initialise the expanded instruction dictionary (this object).
+ *					This also reads and sets up the register map and flag functions.
+ * PARAMETERS:		SSLFileName - the name of the file containing the SSL specification.
  * RETURNS:			the file was successfully read
  *============================================================================*/
 bool RTLInstDict::readSSLFile(const std::string& SSLFileName)
@@ -252,8 +246,7 @@ void RTLInstDict::print(std::ostream& os /*= std::cout*/)
 		// print the parameters
 		std::list<std::string>& params = (*p).second.params;
 		int i = params.size();
-		for (std::list<std::string>::iterator s = params.begin();
-		  s != params.end(); s++,i--)
+		for (std::list<std::string>::iterator s = params.begin(); s != params.end(); s++,i--)
 			os << *s << (i != 1 ? "," : "");
 		os << "\n";
 	
@@ -304,8 +297,7 @@ void RTLInstDict::fixupParams( )
 	}
 }
 
-void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcParams,
-  bool& haveCount, int mark )
+void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcParams, bool& haveCount, int mark )
 {
 	ParamEntry &param = DetParamMap[s];
 
@@ -336,14 +328,13 @@ void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcPar
 		}
 
 		if (funcParams.size() != sub.funcParams.size() ) {
-			std::cerr << "Error in SSL File: Variant operand " << s <<
-				" does not have a fixed number of functional parameters:\n" <<
-				"Expected " << funcParams.size() << ", but branch " << *it << " has " << sub.funcParams.size() << ".\n";
+			std::cerr << "Error in SSL File: Variant operand " << s << " does not have a fixed number of functional "
+				"parameters:\n" << "Expected " << funcParams.size() << ", but branch " << *it << " has " <<
+				sub.funcParams.size() << ".\n";
 		} else if (funcParams != sub.funcParams && sub.asgn != NULL ) {
 			/* Rename so all the parameter names match */
 			std::list<std::string>::iterator i,j;
-			for( i = funcParams.begin(), j = sub.funcParams.begin();
-			  i != funcParams.end(); i++, j++ ) {
+			for( i = funcParams.begin(), j = sub.funcParams.begin(); i != funcParams.end(); i++, j++ ) {
 				Exp* match = Location::param(j->c_str());
 				Exp* replace = Location::param(i->c_str());
 				sub.asgn->searchAndReplace( match, replace );
@@ -436,16 +427,15 @@ if (0) {
 
 /*==============================================================================
  * FUNCTION:		 RTLInstDict::instantiateRTL
- * OVERVIEW:		 Returns an instance of a register transfer list for
- *					 the parameterized rtlist with the given formals replaced
- *					 with the actuals given as the third parameter.
+ * OVERVIEW:		 Returns an instance of a register transfer list for the parameterized rtlist with the given formals
+ *					 replaced with the actuals given as the third parameter.
  * PARAMETERS:		 rtl - a register transfer list
  *					 params - a list of formal parameters
  *					 actuals - the actual parameter values
  * RETURNS:			 the instantiated list of Exps
  *============================================================================*/
-std::list<Statement*>* RTLInstDict::instantiateRTL(RTL& rtl, ADDRESS natPC,
-		std::list<std::string>& params, std::vector<Exp*>& actuals) {
+std::list<Statement*>* RTLInstDict::instantiateRTL(RTL& rtl, ADDRESS natPC, std::list<std::string>& params,
+		std::vector<Exp*>& actuals) {
 	assert(params.size() == actuals.size());
 
 	// Get a deep copy of the template RTL
@@ -472,8 +462,9 @@ std::list<Statement*>* RTLInstDict::instantiateRTL(RTL& rtl, ADDRESS natPC,
 	transformPostVars( newList, true );
 
 	// Perform simplifications, e.g. *1 in Pentium addressing modes
-	for (ss = newList->begin(); ss != newList->end(); ss++)
+	for (ss = newList->begin(); ss != newList->end(); ss++) {
 		(*ss)->simplify();
+	}
 
 	return newList;
 }
@@ -492,18 +483,14 @@ public:
 };
 
 /*
- * Transform an RTL to eliminate any uses of post-variables. Note that
- * the algorithm used expects to deal with simple expressions as post
- * vars, ie r[22], m[r[1]], generally things which aren't parameterized
- * at a higher level. This is ok for the translator (we do substitution
- * first anyway), but may miss some optimizations for the emulator.
- * For the emulaor, if parameters are detected within a postvar,
- * we just force the temporary, which is always safe to do.
- * (The parameter optimise is set to false for the emulator to achieve this).
+ * Transform an RTL to eliminate any uses of post-variables. Note that the algorithm used expects to deal with simple
+ * expressions as post vars, ie r[22], m[r[1]], generally things which aren't parameterized at a higher level. This is
+ * ok for the translator (we do substitution first anyway), but may miss some optimizations for the emulator.
+ * For the emulator, if parameters are detected within a postvar, we just force the temporary, which is always safe to
+ * do.  (The parameter optimise is set to false for the emulator to achieve this).
  */
 
-std::list<Statement*>* RTLInstDict::transformPostVars(
-  std::list<Statement*>* rts, bool optimise ) {
+std::list<Statement*>* RTLInstDict::transformPostVars(std::list<Statement*>* rts, bool optimise) {
 	std::list<Statement*>::iterator rt;
 
 	// Map from var (could be any expression really) to details

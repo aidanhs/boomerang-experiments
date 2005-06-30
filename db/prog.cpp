@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.12 $
+ * $Revision: 1.126.2.13 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -1472,6 +1472,14 @@ void Global::meetType(Type* ty) {
 	bool ch;
 	type = type->meetWith(ty, ch);
 }
+
+void Prog::reDecode(UserProc* proc) {
+	std::ofstream os;
+	pFE->processProc(proc->getNativeAddress(), proc, os);
+}
+
+
+
 
 
 class ClusterMemo : public Memo {

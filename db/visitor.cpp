@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.17 $
+ * $Revision: 1.23.2.18 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -603,6 +603,7 @@ Exp* Localiser::preVisit(RefExp* e, bool& recur) {
 }
 
 Exp* Localiser::preVisit(Location* e, bool& recur) {
+	recur = true;
 	int d = e->getMemDepth();
 	if (d <= depth)				// Don't recurse if depth already too low, or equal
 		recur = false;
