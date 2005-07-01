@@ -125,8 +125,7 @@ BasicBlock* SparcFrontEnd::optimise_CallReturn(CallStatement* call, RTL* rtl, RT
 		return returnBB;
 	}
 	else
-		// May want to put code here that checks whether or not the delay
-		// instruction redefines %o7
+		// May want to put code here that checks whether or not the delay instruction redefines %o7
 		return NULL;
 }
 
