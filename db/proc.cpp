@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.43 $
+ * $Revision: 1.238.2.44 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1111,9 +1111,10 @@ void UserProc::middleDecompile() {
 		doRenameBlockVars(depth, false);						// E.g. for new arguments
 
 		// Seed the return statement with reaching definitions
-		if (theReturnStatement)
+		if (theReturnStatement) {
 			theReturnStatement->updateModifieds();		// Everything including new arguments reaching the exit
 			theReturnStatement->updateReturns();
+		}
 
 		if (status != PROC_INCYCLE || depth == 0) {
 			// This gets called so much... it would be great to be able to "repair" the names...
