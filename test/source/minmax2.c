@@ -7,7 +7,7 @@
  * (C) 2001 The University of Queensland, BT group
  *============================================================================*/
 /*
-    $Revision: 1.1 $
+    $Revision: 1.1.8.1 $
     Compile with:
     % cc -xO4 -xinline= -o test/sparc/minmax2 test/source/minmax2.c
 
@@ -33,7 +33,7 @@
         10840:  81 c7 e0 08        ret     
         10844:  91 e8 20 00        restore      %g0, 0, %o0
 
-    For pentum, the Sun compiler doesn't (at present) generate terribly
+    For penitum, the Sun compiler doesn't (at present) generate terribly
     interesting code, but the test is retained for completeness.
 
 05 Apr 01 - Mike: Created
