@@ -7,7 +7,7 @@
  *			   classes.
  *============================================================================*/
 /*
- * $Revision: 1.23.2.18 $
+ * $Revision: 1.23.2.19 $
  *
  * 14 Jun 04 - Mike: Created, from work started by Trent in 2003
  */
@@ -294,10 +294,14 @@ bool UsedLocsFinder::visit(RefExp* e, bool& override) {
 	used->insert(e);		 // This location is used
 	// However, e's subexpression is NOT used ...
 	override = true;
-	// ... unless that is a m[x], in which case x (not m[x]) is used
+	// ... unless that is a m[x], array[x] or .x, in which case x (not m[x]/array[x]/refd.x) is used
 	Exp* refd = e->getSubExp1();
 	if (refd->isMemOf()) {
-		Exp* x = refd->getSubExp1();
+		Exp* x = ((Location*)refd)->getSubExp1();
+		x->accept(this);
+	}
+	else if (refd->isArrayIndex() || refd->isMemberOf()) {
+		Exp* x = ((Binary*)refd)->getSubExp2();
 		x->accept(this);
 	}
 	return true;
@@ -311,7 +315,7 @@ bool UsedLocsVisitor::visit(Assign* s, bool& override) {
 	if (lhs->isMemOf() || lhs->isRegOf()) {
 		Exp* child = ((Location*)lhs)->getSubExp1();	// m[xxx] uses xxx
 		child->accept(ev);
-	} else if (lhs->getOper() == opArraySubscript || lhs->getOper() == opMemberAccess) {
+	} else if (lhs->getOper() == opArrayIndex || lhs->getOper() == opMemberAccess) {
 		Exp* subExp1 = ((Binary*)lhs)->getSubExp1();	// array(base, index) and member(base, offset)?? use
 		subExp1->accept(ev);							// base and index
 		Exp* subExp2 = ((Binary*)lhs)->getSubExp2();
@@ -333,7 +337,7 @@ bool UsedLocsVisitor::visit(PhiAssign* s, bool& override) {
 	if (lhs->isMemOf()) {
 		Exp* child = ((Location*)lhs)->getSubExp1();
 		child->accept(ev);
-	} else if (lhs->getOper() == opArraySubscript || lhs->getOper() == opMemberAccess) {
+	} else if (lhs->getOper() == opArrayIndex || lhs->getOper() == opMemberAccess) {
 		Exp* subExp1 = ((Binary*)lhs)->getSubExp1();
 		subExp1->accept(ev);
 		Exp* subExp2 = ((Binary*)lhs)->getSubExp2();
@@ -356,7 +360,7 @@ bool UsedLocsVisitor::visit(ImplicitAssign* s, bool& override) {
 	if (lhs->isMemOf()) {
 		Exp* child = ((Location*)lhs)->getSubExp1();
 		child->accept(ev);
-	} else if (lhs->getOper() == opArraySubscript || lhs->getOper() == opMemberAccess) {
+	} else if (lhs->getOper() == opArrayIndex || lhs->getOper() == opMemberAccess) {
 		Exp* subExp1 = ((Binary*)lhs)->getSubExp1();
 		subExp1->accept(ev);
 		Exp* subExp2 = ((Binary*)lhs)->getSubExp2();
@@ -414,7 +418,7 @@ bool UsedLocsVisitor::visit(BoolAssign* s, bool& override) {
 	if (lhs && lhs->isMemOf()) {	// If dest is of form m[x]...
 		Exp* x = ((Location*)lhs)->getSubExp1();
 		x->accept(ev);					// ... then x is used
-	} else if (lhs->getOper() == opArraySubscript || lhs->getOper() == opMemberAccess) {
+	} else if (lhs->getOper() == opArrayIndex || lhs->getOper() == opMemberAccess) {
 		Exp* subExp1 = ((Binary*)lhs)->getSubExp1();
 		subExp1->accept(ev);
 		Exp* subExp2 = ((Binary*)lhs)->getSubExp2();

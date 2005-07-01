@@ -6,7 +6,7 @@
  * OVERVIEW:   Implementation of the Exp and related classes.
  *============================================================================*/
 /*
- * $Revision: 1.172.2.19 $
+ * $Revision: 1.172.2.20 $
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added copy constructors; was crashing under Linux
  * 08 Apr 02 - Mike: Added Terminal subclass
@@ -151,11 +151,8 @@ RefExp::RefExp(Exp* e, Statement* d) : Unary(opSubscript, e), def(d) {
 
 TypeVal::TypeVal(Type* ty) : Terminal(opTypeVal), val(ty) { }
 
-Location::Location(OPER op, Exp *exp, UserProc *proc) : Unary(op, exp), 
-														proc(proc), ty(NULL)
-{
-	assert(op == opRegOf || op == opMemOf || op == opLocal ||
-		   op == opGlobal || op == opParam || op == opTemp);
+Location::Location(OPER op, Exp *exp, UserProc *proc) : Unary(op, exp), proc(proc), ty(NULL) {
+	assert(op == opRegOf || op == opMemOf || op == opLocal || op == opGlobal || op == opParam || op == opTemp);
 	if (proc == NULL) {
 		// eep.. this almost always causes problems
 		Exp *e = exp;
@@ -768,7 +765,7 @@ void Binary::print(std::ostream& os) {
 			((Const*)p2)->printNoQuotes(os);
 			return;
 
-		case opArraySubscript:
+		case opArrayIndex:
 			p1->print(os);
 			os << "[";
 			p2->print(os);
@@ -1952,7 +1949,7 @@ Exp* Unary::polySimplify(bool& bMod) {
 			int basesz = ((PointerType*)ty)->getPointsTo()->getSize();
 			if (basesz && (basesz % 8) == 0 && (n % (basesz / 8)) == 0) {
 				bMod = true;
-				return new Binary(opArraySubscript,
+				return new Binary(opArrayIndex,
 					subExp1->getSubExp1()->clone(),
 					new Const(n / (basesz / 8)));
 			}
@@ -1968,7 +1965,7 @@ Exp* Unary::polySimplify(bool& bMod) {
 			int basesz = ((PointerType*)ty)->getPointsTo()->getSize();
 			if (basesz == n * 8) {
 				bMod = true;
-				return new Binary(opArraySubscript,
+				return new Binary(opArrayIndex,
 					subExp1->getSubExp1()->clone(),
 					subExp1->getSubExp2()->getSubExp1()->clone());
 			}
@@ -2473,7 +2470,7 @@ Exp* Binary::polySimplify(bool& bMod) {
 			if (x->getOper() != opIntConst || ((Const*)x)->getInt() >= b || a->getBaseType()->isArray()) {
 				res = new Binary(opPlus, 
 					new Unary(opAddrOf, 
-						new Binary(opArraySubscript, 
+						new Binary(opArrayIndex, 
 							Location::memOf(l->clone()), 
 							new Binary(opDiv, x->clone(), new Const(b)))),
 					new Binary(opMod, x->clone(), new Const(b)));
@@ -3439,7 +3436,7 @@ Type *Unary::getType() {
 
 Type *Binary::getType() {
 	switch(op) {
-		case opArraySubscript:
+		case opArrayIndex:
 			if (subExp1->getType()) {
 				Type *sty = subExp1->getType();
 				if (!sty->resolvesToArray() && !sty->resolvesToPointer()) {

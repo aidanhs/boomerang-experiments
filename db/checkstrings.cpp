@@ -1,5 +1,5 @@
 // To use, remove the binary, then "make checkstrings"
-// Could say "all is well" when not, if some operators are deleted and the
+// Could say "all seems correct" when not, if some operators are deleted and the
 // same number added
 
 #include <stdio.h>
@@ -9,7 +9,7 @@
 
 int main() {
 	if (sizeof(operStrings)/sizeof(char*) == opNumOf) {
-		printf("All is correct\n");
+		printf("All seems correct\n");
 		return 0;
 	}
 	if ((strcmp(operStrings[opFPlusd],	"opFPlusd") != 0)) {

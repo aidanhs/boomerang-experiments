@@ -20,7 +20,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.238.2.42 $
+ * $Revision: 1.238.2.43 $
  *
  * 14 Mar 02 - Mike: Fixed a problem caused with 16-bit pushes in richards2
  * 20 Apr 02 - Mike: Mods for boomerang
@@ -1311,7 +1311,7 @@ void UserProc::middleDecompile() {
 void UserProc::remUnusedStmtEtc() {
 
 	if (VERBOSE)
-		LOG << "=== remove unused statements for " << getName() << " ===\n";
+		LOG << "--- remove unused statements for " << getName() << " ---\n";
 	// A temporary hack to remove %CF = %CF{7} when 7 isn't a SUBFLAGS
 	if (theReturnStatement)
 		theReturnStatement->specialProcessing();
@@ -2472,7 +2472,7 @@ void UserProc::replaceExpressionsWithGlobals() {
 						ty = prog->getGlobalType((char*)gloName);
 						Location *g = Location::global(strdup(gloName), this);
 						if (ty && ty->isArray()) 
-							ne = new Binary(opArraySubscript, g, new Const(0));
+							ne = new Binary(opArrayIndex, g, new Const(0));
 						else 
 							ne = g;
 					}
@@ -2515,7 +2515,7 @@ void UserProc::replaceExpressionsWithGlobals() {
 							Type *ty = prog->getGlobalType((char*)gloName);
 							Unary *g = Location::global(strdup(gloName), this);
 							if (ty && ty->isArray() && ty->getSize() > 0) 
-								ne = new Binary(opArraySubscript,
+								ne = new Binary(opArrayIndex,
 									g,
 									new Const(0));
 							else 
@@ -2573,7 +2573,7 @@ void UserProc::replaceExpressionsWithGlobals() {
 
 							if (ty && ty->isArray() && ty->asArray()->getBaseType()->getSize() == stride*8) {
 								LOG << "setting new exp to array ref\n";
-								ne = new Binary(opArraySubscript,
+								ne = new Binary(opArrayIndex,
 									g, 
 									memof->getSubExp1()->getSubExp1()->getSubExp1() ->clone());
 								LOG << "set to " << ne << "\n";
@@ -3215,9 +3215,13 @@ void UserProc::countRefs(RefCounter& refCounts) {
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Statement* s = *it;
 		if (s->isPhi()) {
+			// FIXME: is this needed now?
 			((PhiAssign*)s)->simplifyRefs();
 			s->simplify();
 		}
+		// Don't count uses in implicit statements. There is no RHS of course, but you can still have x from m[x] on the
+		// LHS and so on, and these are not real uses
+		if (s->isImplicit()) continue;
 		if (DEBUG_UNUSED)
 			LOG << "counting references in " << s << "\n";
 		LocationSet refs;
@@ -3369,15 +3373,15 @@ void UserProc::remUnusedStmtEtc(RefCounter& refCounts, int depth) {
 				continue;
 			}
 #endif
-			if (asLeft->getOper() == opMemberAccess || asLeft->getOper() == opArraySubscript) {
+			if (asLeft->getOper() == opMemberAccess || asLeft->getOper() == opArrayIndex) {
 				// can't say with these
 				ll++;
 				continue;
 			}
 			if (refCounts.find(s) == refCounts.end() || refCounts[s] == 0) {	// Care not to insert unnecessarily
 				// First adjust the counts, due to statements only referenced by statements that are themselves unused.
-				// Need to be careful not to count two refs as two; refCounts is a count of the number of statements
-				// that use a definition, not the total number of refs
+				// Need to be careful not to count two refs to the same def as two; refCounts is a count of the number
+				// of statements that use a definition, not the total number of refs
 				StatementSet stmtsRefdByUnused;
 				LocationSet components;
 				s->addUsedLocs(components, false);		// Second parameter false to ignore uses in collectors
@@ -3391,8 +3395,8 @@ void UserProc::remUnusedStmtEtc(RefCounter& refCounts, int depth) {
 				for (dd = stmtsRefdByUnused.begin(); dd != stmtsRefdByUnused.end(); dd++) {
 					if (*dd == NULL) continue;
 					if (DEBUG_UNUSED)
-						LOG << "decrementing ref count of " << (*dd)->getNumber() << " because "
-							<< s->getNumber() << " is unused\n";
+						LOG << "decrementing ref count of " << (*dd)->getNumber() << " because " << s->getNumber() <<
+							" is unused\n";
 					refCounts[*dd]--;
 				}
 				if (DEBUG_UNUSED)

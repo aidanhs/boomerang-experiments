@@ -14,7 +14,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.148.2.37 $
+ * $Revision: 1.148.2.38 $
  * 03 Jul 02 - Trent: Created
  * 09 Jan 03 - Mike: Untabbed, reformatted
  * 03 Feb 03 - Mike: cached dataflow (uses and usedBy) (since reversed)
@@ -1543,21 +1543,6 @@ void CallStatement::setSigArguments() {
 	// FIXME: anything needed here?
 }
 
-#if 0
-/*==============================================================================
- * FUNCTION:	  CallStatement::getReturnLoc
- * OVERVIEW:	  Return the location that will be used to hold the value returned by this call.
- * PARAMETERS:	  <none>
- * RETURNS:		  ptr to the location that will be used to hold the return value
- *============================================================================*/
-Exp* CallStatement::getReturnLoc() {
-	if (defines.size() == 1)
-		return returns[0];
-	return NULL;
-}
-
-#endif
-
 bool CallStatement::search(Exp* search, Exp*& result) {
 	bool found = GotoStatement::search(search, result);
 	if (found) return true;
@@ -1570,15 +1555,6 @@ bool CallStatement::search(Exp* search, Exp*& result) {
 		if ((*ss)->search(search, result))
 			return true;
 	}
-#if 0
-	for (i = 0; i < implicitArguments.size(); i++) {
-		if (*implicitArguments[i] == *search) {
-			result = implicitArguments[i];
-			return true;
-		}
-		if (implicitArguments[i]->search(search, result)) return true;
-	}
-#endif
 	return false;
 }
 
@@ -1714,11 +1690,6 @@ Statement* CallStatement::clone() {
 		ret->arguments.append((*ss)->clone());
 	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		ret->defines.append((*ss)->clone());
-#if 0
-	n = implicitArguments.size();
-	for (i=0; i < n; i++)
-		ret->implicitArguments.push_back(implicitArguments[i]->clone());
-#endif
 	// Statement members
 	ret->pbb = pbb;
 	ret->proc = proc;
@@ -1777,12 +1748,6 @@ void CallStatement::simplify() {
 		(*ss)->simplify();
 	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		(*ss)->simplify();
-#if 0
-	for (i = 0; i < implicitArguments.size(); i++) {
-		implicitArguments[i] = implicitArguments[i]->simplifyArith()->simplify();
-	}
-#endif
-
 }
 
 bool GotoStatement::usesExp(Exp* e) {
@@ -1797,13 +1762,6 @@ bool CallStatement::usesExp(Exp *e) {
 		if ((*ss)->usesExp(e)) return true;
 	for (ss = defines.begin(); ss != defines.end(); ++ss)
 		if ((*ss)->usesExp(e)) return true;
-#if 0
-	for (i = 0; i < implicitArguments.size(); i++) {
-		if (implicitArguments[i]->search(e, where)) {
-			return true;
-		}
-	}
-#endif
 	return false;
 }
 
@@ -1830,7 +1788,7 @@ bool CallStatement::convertToDirect() {
 	Exp *e = pDest;
 	if (pDest->isSubscript())
 		e = ((RefExp*)e)->getSubExp1();
-	if (e->getOper() == opArraySubscript && 
+	if (e->getOper() == opArrayIndex && 
 			((Binary*)e)->getSubExp2()->isIntConst() &&
 			((Const*)(((Binary*)e)->getSubExp2()))->getInt() == 0)
 		e = ((Binary*)e)->getSubExp1();
@@ -1955,7 +1913,10 @@ bool CallStatement::convertToDirect() {
 			as->setProc(proc);
 			arguments.append(as);
 		}
-std::cerr << "Step 3a: arguments now: "; StatementList::iterator xx; for (xx = arguments.begin(); xx != arguments.end(); ++xx) {((Assignment*)*xx)->printCompact(std::cerr); std::cerr << ", ";} std::cerr << "\n";
+		// std::cerr << "Step 3a: arguments now: ";
+		// StatementList::iterator xx; for (xx = arguments.begin(); xx != arguments.end(); ++xx) {
+		//		((Assignment*)*xx)->printCompact(std::cerr); std::cerr << ", ";
+		// } std::cerr << "\n";
 #endif
 		// implicitArguments = newimpargs;
 		// assert((int)implicitArguments.size() == sig->getNumImplicitParams());
@@ -2317,18 +2278,6 @@ bool CallStatement::processConstants(Prog *prog) {
             e = e->getSubExp1()->getSubExp1()->getSubExp1();
 
 		((Assign*)*aa)->setRight(processConstant(e, t, prog, proc));
-#if 0
-		if (e->getOper() == opIntConst && arguments[i]->getOper() == opStrConst) {
-			for (std::vector<Exp*>::iterator it = implicitArguments.begin(); it != implicitArguments.end(); it++) {
-				if ((*it)->getOper() == opSubscript && (*it)->getSubExp1()->getOper() == opMemOf &&
-					(*it)->getSubExp1()->getSubExp1()->getOper() == opIntConst &&
-					((Const*)(*it)->getSubExp1()->getSubExp1())->getInt() == ((Const*)e)->getInt()) {
-					implicitArguments.erase(it);
-					break;
-				}
-			}
-		}
-#endif
 	}
 
 	return ellipsisProcessing(prog);
@@ -2338,30 +2287,6 @@ bool CallStatement::processConstants(Prog *prog) {
 // The second is to add parameter types to the signature.
 // If -Td is used, type analysis will be rerun with these changes.
 bool CallStatement::ellipsisProcessing(Prog* prog) {
-
-#if 0
-	// Hack to remove locals that really aren't used
-	if (getDestProc() && getDestProc()->isLib()) {
-		int sp = signature->getStackRegister(prog);
-		//ignoreReturn(Location::regOf(sp));
-		removeReturn(Location::regOf(sp));
-		unsigned int i;
-		for (i = 0; i < implicitArguments.size(); i++) {
-			// if (*getDestProc()->getSignature()->getImplicitParamExp(i) == *Location::regOf(sp)) { // }
-			if (*signature->getImplicitParamExp(i) == *Location::regOf(sp)) {
-				implicitArguments[i] = new Const(0);
-				break;
-			}
-		}
-		for (i = 0; i < implicitArguments.size(); i++) {
-			// if (*getDestProc()->getSignature()->getImplicitParamExp(i) == *Location::memOf(Location::regOf(sp))) {//}
-			if (*signature->getImplicitParamExp(i) == *Location::memOf(Location::regOf(sp))) {
-				implicitArguments[i] = new Const(0);
-				break;
-			}
-		}
-	}
-#endif
 
 	// if (getDestProc() == NULL || !getDestProc()->getSignature()->hasEllipsis())
 	if (getDestProc() == NULL || !signature->hasEllipsis())
@@ -2990,7 +2915,7 @@ void Assign::simplify() {
 						if (VERBOSE)
 							LOG << "doing complex pattern on " << this << " using " << a1 << " and " << a4 << "\n";
 						((Const*)a4->getRight()->getSubExp2())->setInt(1);
-						lhs = new Binary(opArraySubscript, 
+						lhs = new Binary(opArrayIndex, 
 							Location::memOf(a1->getRight()->clone(), proc), 
 							lhs->getSubExp1()->clone());
 						a1->setRight(new Const(0));
@@ -3096,7 +3021,7 @@ void Assign::simplify() {
 	}
 
 	if (lhs->getType() && lhs->getType()->isArray() && lhs->getType()->getSize() > 0) {
-		lhs = new Binary(opArraySubscript, lhs, new Const(0));
+		lhs = new Binary(opArrayIndex, lhs, new Const(0));
 	}
 }
 

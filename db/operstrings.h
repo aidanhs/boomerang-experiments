@@ -1,7 +1,8 @@
 // Strings for the OPER enum. Ugh! I wish C could print enums properly.
-// Only needed for the dotty file (a debugging nicety) so don't be
-// surprised if the strings become out of date.
-
+// Only needed for the dotty file (a debugging nicety), printx (for debugging), and a few other non critical places,
+// so don't be surprised if the strings become out of date.
+char* operStringsMinusOne[] = {"opWild"			// Hope this single element array coalesces with operStrings
+};												// Catches opWild, which has the value -1
 char* operStrings[] = {
 	"opPlus",				// Binary addition
 	"opMinus",				// Binary subtraction
@@ -93,7 +94,7 @@ char* operStrings[] = {
 	"opGlobal",				// Represents a global; takes a string
 	"opExpand",				// Expandable expression
 	"opMemberAccess",		// . and -> in C
-	"opArraySubscript",		// [] in C
+	"opArrayIndex",			// [] in C
 	"opTemp",				// Temp register name
 	"opSize",				// Size override
 	"opCastIntStar",		// Cast to int*

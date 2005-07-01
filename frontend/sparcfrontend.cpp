@@ -802,8 +802,6 @@ bool SparcFrontEnd::processProc(ADDRESS address, UserProc* proc, std::ofstream &
 
 			if (Boomerang::get()->traceDecoder)
 				LOG << "*" << address << "\t";
-if (address == 0x10a74)
- std::cerr << "HACK!\n";
 
 			// Check if this is an already decoded jump instruction (from a previous pass with propagation etc)
 			// If so, we don't need to decode this instruction

@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.126.2.13 $
+ * $Revision: 1.126.2.14 $
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -1018,7 +1018,19 @@ void Prog::removeUnusedGlobals() {
 	for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end(); it++) {
 		if ((*it)->isLib())	continue;
 		UserProc *u = (UserProc*)(*it);
-		u->searchAll(new Location(opGlobal, new Terminal(opWild), u), usedGlobals);
+		Exp* search = new Location(opGlobal, new Terminal(opWild), u);
+		// Search each statement in u, excepting implicit assignments (their uses don't count, since they don't really
+		// exist in the program representation)
+		StatementList stmts;
+		StatementList::iterator ss;
+		u->getStatements(stmts);
+		for (ss = stmts.begin(); ss != stmts.end(); ++ss) {
+			Statement* s = *ss;
+			if (s->isImplicit()) continue;			// Ignore the uses in ImplicitAssigns
+			bool found = s->searchAll(search, usedGlobals);
+			if (found && DEBUG_UNUSED)
+				LOG << " a global is used by stmt " << s->getNumber() << "\n";
+		}
 	}
 
 	// make a map to find a global by its name (could be a global var too)
@@ -1032,6 +1044,8 @@ void Prog::removeUnusedGlobals() {
     
     globals.clear();
 	for (std::list<Exp*>::iterator it = usedGlobals.begin(); it != usedGlobals.end(); it++) {
+		if (DEBUG_UNUSED)
+			LOG << " " << *it << " is used\n";
      	name = ((Const*)(*it)->getSubExp1())->getStr();
      	usedGlobal=namedGlobals[name];
      	if(usedGlobal) {

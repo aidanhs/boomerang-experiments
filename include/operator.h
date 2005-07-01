@@ -4,7 +4,7 @@
  *				denote what the top level operator is
  *============================================================================*/
 /*
- * $Revision: 1.25.6.2 $
+ * $Revision: 1.25.6.3 $
  *
  * 05 Apr 02 - Mike: Created
  * 12 Apr 02 - Mike: INDEX -> OPER
@@ -116,7 +116,7 @@ enum OPER
 	opGlobal,				// used to represent a global, takes a string
 	opExpand,				// Expandable expression
 	opMemberAccess,			// . and -> in C
-	opArraySubscript,		// [] in C
+	opArrayIndex,			// [] in C
 	opTemp,					// Temp register name
 	opSize,					// Size specifier
 	opCastIntStar,			// Cast to int*

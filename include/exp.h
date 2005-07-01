@@ -7,7 +7,7 @@
  *			   subclasses.
  *============================================================================*/
 /*
- * $Revision: 1.119.2.10 $
+ * $Revision: 1.119.2.11 $
  *
  * 05 Apr 02 - Mike: Created
  * 05 Apr 02 - Mike: Added clone(), copy constructors
@@ -160,6 +160,10 @@ virtual int getArity() {return 0;}		// Overridden for Unary, Binary, etc
 		bool		isMemOf() {return op == opMemOf;}
 		// True if this is an address of
 		bool		isAddrOf() {return op == opAddrOf;}
+		// True if this is an array expression
+		bool		isArrayIndex() {return op == opArrayIndex;}
+		// True if this is a struct member access
+		bool		isMemberOf() {return op == opMemberAccess;}
 		// True if this is a temporary. Note some old code still has r[tmp]
 		bool		isTemp();
 		// True if this is the anull Terminal (anulls next instruction)

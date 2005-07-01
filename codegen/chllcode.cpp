@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.90.2.15 $
+ * $Revision: 1.90.2.16 $
  * 20 Jun 02 - Trent: Quick and dirty implementation for debugging
  * 28 Jun 02 - Trent: Starting to look better
  * 22 May 03 - Mike: delete -> free() to keep valgrind happy
@@ -748,7 +748,7 @@ void CHLLCode::appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool u
 				str << ((Const*)b->getSubExp2())->getStr();
 			}
 			break;
-		case opArraySubscript:
+		case opArrayIndex:
 			openParen(str, curPrec, PREC_PRIM);
 			appendExp(str, b->getSubExp1(), PREC_PRIM);
 			closeParen(str, curPrec, PREC_PRIM);
@@ -1019,7 +1019,7 @@ void CHLLCode::AddAssignmentStatement(int indLevel, Assign *asgn) {
 	else if (lhs->getOper() == opGlobal &&
 			 ((Location*)lhs)->getType() && 
 			 ((Location*)lhs)->getType()->isArray())
-		appendExp(s, new Binary(opArraySubscript,
+		appendExp(s, new Binary(opArrayIndex,
 			lhs,
 			new Const(0)), PREC_ASSIGN);
 	else if (lhs->getOper() == opAt &&

@@ -13,7 +13,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.30.2.10 $
+ * $Revision: 1.30.2.11 $
  *
  * 24/Sep/04 - Mike: Created
  */
@@ -170,7 +170,7 @@ void UserProc::dfaTypeAnalysis() {
 							}
 							Location *g = Location::global(strdup(gloName), this);
 							if (ty && ty->isArray()) 
-								ne = new Binary(opArraySubscript, g, new Const(0));
+								ne = new Binary(opArrayIndex, g, new Const(0));
 							else 
 								ne = g;
 						}
@@ -191,7 +191,7 @@ void UserProc::dfaTypeAnalysis() {
 						ADDRESS K = (ADDRESS)constK->getInt();
 						Exp* idx = ((Binary*)*rr)->getSubExp1();
 						Exp* arr = new Unary(opAddrOf,
-							new Binary(opArraySubscript,
+							new Binary(opArrayIndex,
 								Location::global(prog->getGlobalName(K), this),
 								idx));
 						// Beware of changing expressions in implicit assignments... map can become invalid
@@ -237,7 +237,7 @@ void UserProc::dfaTypeAnalysis() {
 			ADDRESS K2 = (ADDRESS)((Const*)r)->getInt();
 			Exp* idx = ((Binary*)l)->getSubExp1();
 			// Replace with the array expression
-			Exp* arr = new Binary(opArraySubscript,
+			Exp* arr = new Binary(opArrayIndex,
 				Location::global(prog->getGlobalName(K2), this),
 				idx);
 			s->searchAndReplace(scaledArrayPat, arr);

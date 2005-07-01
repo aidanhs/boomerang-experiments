@@ -15,7 +15,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.93.2.7 $
+ * $Revision: 1.93.2.8 $
  * Dec 97 - created by Mike
  * 18 Apr 02 - Mike: Changes for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
@@ -1652,7 +1652,7 @@ int BasicBlock::whichPred(PBB pred) {
 // confuse with form 'A'):
 // Pattern: <base>{}[<index>]{} where <index> could be <var> - <Kmin>
 static Unary* forma = new RefExp(
-		new Binary(opArraySubscript,
+		new Binary(opArrayIndex,
 			new RefExp(
 				new Terminal(opWild),
 				(Statement*)-1),
@@ -1671,7 +1671,7 @@ static Location* formA	= Location::memOf(
 // Pattern: <base>{}[<index>]{} where <index> could be <var> - <Kmin>
 // NOT COMPLETED YET!
 static Unary* formo = new RefExp(
-		new Binary(opArraySubscript,
+		new Binary(opArrayIndex,
 			new RefExp(
 				new Terminal(opWild),
 				(Statement*)-1),
@@ -1718,7 +1718,7 @@ static char chForms[] = {  'a',	 'A',	'o',   'O',	  'R',	 'r'};
 
 // Vcall high level patterns
 // Pattern 0: global<wild>[0]
-static Binary* vfc_funcptr = new Binary(opArraySubscript,
+static Binary* vfc_funcptr = new Binary(opArrayIndex,
 	new Location(opGlobal,
 		new Terminal(opWildStrConst), NULL),
 	new Const(0));
