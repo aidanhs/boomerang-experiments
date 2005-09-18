@@ -10,7 +10,7 @@
 /** \file	boomerang.h
  * \brief	Interface for the boomerang singleton object
  *
- * $Revision: 1.65 $	// 1.61.2.2
+ * $Revision: 1.65.2.1 $	// 1.61.2.2
  * 04 Dec 2002: Trent: Created
  */
 
@@ -137,6 +137,11 @@ static Boomerang *get() {
 		void		persistToXML(Prog *prog);
 		/// Load a Prog from a XML file.
 		Prog		*loadFromXML(const char *fname);
+
+		// decode the already loaded prog
+		void decode(Prog *prog, const char *pname= NULL);
+		// only load the prog
+		Prog *load(const char *fname);
 
 		/// Special decoder for Objective-C.
 		void		objcDecode(std::map<std::string, ObjcModule> &modules, Prog *prog);

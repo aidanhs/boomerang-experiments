@@ -7,7 +7,7 @@ dnl File: configure.in
 dnl autoconf uses this file to create the configure script, which generates
 dnl the Makefiles and sets up various things.
 dnl
-dnl $Revision: 1.27 $
+dnl $Revision: 1.27.2.1 $
 dnl
 dnl 12 Apr 02 - Mike: Created
 dnl 15 Oct 02 - Sebastian Apel: checks for libelf, libcppunit and AC_PREREQ inserted
@@ -117,7 +117,18 @@ case $host in
 esac
 AC_MSG_RESULT( $UNDERSCORE_NEEDED )
 
-
+AC_LANG(C++)
+AC_MSG_CHECKING([for bfd 2.15])
+AC_COMPILE_IFELSE(
+	AC_LANG_PROGRAM([[#include <bfd.h>]],
+		[[coff_comdat_info *foo();]]),
+	,
+	AC_DEFINE(BFD_2_15, 1, [Defined if the BFD library is 2.15 or earlier]))
+	if test "${BFD_2_15}:" != :; then
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+	fi
 
 
 dnl Checks for elf library (no longer needed)
@@ -335,8 +346,9 @@ AC_SUBST(LIBDIR)
 AC_SUBST(HOST_GNU_LD)
 AC_SUBST(HOST_WINDOWS)
 AC_SUBST(HOST_OSX)
-AC_SUBST(UNDERSCORE_NEEDED)
 AC_SUBST(HOST_CYGWIN)
+AC_SUBST(UNDERSCORE_NEEDED)
+AC_SUBST(BFD_2_15)
 
 
 AC_CONFIG_FILES(          Makefile)

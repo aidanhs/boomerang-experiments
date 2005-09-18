@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.17 $
+ * $Revision: 1.17.2.1 $
  *
  * 05 Sep 00 - Mike: moved getCodeInfo here from translate2c.cc
  * 21 Sep 00 - Mike: getTempType handles tmph, tmpb now
@@ -270,3 +270,24 @@ char* escapeStr(char* str) {
 }
 
 
+#if WIN32
+#include "windows.h"
+#else
+#include <string.h>
+#endif
+#include <stdio.h>
+
+#ifndef strcmpi
+int strcmpi(const char* s1, const char* s2) {
+	int n1 = strlen(s1);
+	int n2 = strlen(s2);
+	for (int i=0; i < n1; ++i) {
+		if (i >= n2) return -1;
+		char c1 = toupper(*s1++);
+		char c2 = toupper(*s2++);
+		if (c1 < c2) return -1;
+		if (c1 > c2) return 1;
+	}
+	return 0;
+}
+#endif

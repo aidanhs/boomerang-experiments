@@ -6,7 +6,7 @@
  * OVERVIEW:   Command line processing for the Boomerang decompiler
  *============================================================================*/
 /*
- * $Revision: 1.125 $	// 1.115.2.5
+ * $Revision: 1.125.2.1 $	// 1.115.2.5
  *
  * 28 Jan 05 - G. Krol: Separated -h output into sections and neatened
 */
@@ -96,6 +96,9 @@ void Boomerang::helpcmd() {
 	std::cout << "                                       specified parent cluster.\n";
 	std::cout << "  add cluster <cluster> [parent]     : Adds a new cluster to the root/specified\n";
 	std::cout << "                                       cluster.\n";
+	std::cout << "  loadbinary <file>                  : Load the binary <file> only\n";
+	std::cout << "  matchsym <symbol file> [hint]      : matches specified symbol file against the\n";
+	std::cout << "                                       program\n";
 	std::cout << "  delete cluster <cluster>           : Deletes an empty cluster.\n";
 	std::cout << "  rename proc <proc> <newname>       : Renames the specified proc.\n";
 	std::cout << "  rename cluster <cluster> <newname> : Renames the specified cluster.\n";
@@ -229,21 +232,31 @@ int Boomerang::parseCmd(int argc, const char **argv)
 	static Prog *prog = NULL;
 	if (!strcmp(argv[0], "decode")) {
 		if (argc <= 1) {
-			std::cerr << "not enough arguments for cmd\n";
-			return 1;
-		}
-		const char *fname = argv[1];
-		Prog *p = loadAndDecode(fname);
-			if (p == NULL) {
-				std::cerr << "failed to load " << fname << "\n";
+//			std::cerr << "not enough arguments for cmd\n";
+//			return 1;
+			if (!prog) {
+				std::cerr << "no binary loaded\n";
 				return 1;
 			}
-		prog = p;
+			// decode the loaded binary
+			decode(prog);
+
+		} else {
+			const char *fname = argv[1];
+			Prog *p = loadAndDecode(fname);
+				if (p == NULL) {
+					std::cerr << "failed to load " << fname << "\n";
+					return 1;
+				}
+			prog = p;
+		}
 	} else if (!strcmp(argv[0], "load")) {
 		if (argc <= 1) {
 			std::cerr << "not enough arguments for cmd\n";
 			return 1;
 		}
+		// decode the loaded binary
+		decode(prog);
 		const char *fname = argv[1];
 		XMLProgParser *p = new XMLProgParser();
 		Prog *pr = p->parse(fname);
@@ -263,6 +276,35 @@ int Boomerang::parseCmd(int argc, const char **argv)
 		}
 		XMLProgParser *p = new XMLProgParser();
 		p->persistToXML(prog);
+
+	} else if (!strcmp(argv[0], "loadbinary")) {
+		if (argc <= 1) {
+			std::cerr << "not enough arguments for cmd\n";
+			return 1;
+		}
+		const char *fname = argv[1];
+		Prog *p = load(fname);
+		if (p == NULL) {
+			std::cerr << "failed to load " << fname << "\n";
+			return 1;
+		
+		}
+		prog = p;
+	} else if (!strcmp(argv[0], "matchsym")) {
+		if (prog == NULL) {
+			std::cerr << "need to load or decode before save!\n";
+			return 1;
+		}
+		if (argc <= 1) {
+			std::cerr << "not enough arguments for cmd\n";
+			return 1;
+		}
+		if(argc == 1)
+			prog->MatchSignatures(argv[1], NULL);
+		else
+			prog->MatchSignatures(argv[1], argv[2]);
+
+
 	} else if (!strcmp(argv[0], "decompile")) {
 		if (argc > 1) {
 			Proc *proc = prog->findProc(argv[1]);
@@ -857,67 +899,9 @@ void Boomerang::objcDecode(std::map<std::string, ObjcModule> &modules, Prog *pro
 
 Prog *Boomerang::loadAndDecode(const char *fname, const char *pname)
 {
-	std::cerr << "loading...\n";
-	Prog *prog = new Prog();
-	FrontEnd *fe = FrontEnd::Load(fname, prog);
-	if (fe == NULL) {
-		std::cerr << "failed.\n";
-		return NULL;
-	}
-	prog->setFrontEnd(fe);
-
-	// Add symbols from -s switch(es)
-	for (std::map<ADDRESS, std::string>::iterator it = symbols.begin();
-		 it != symbols.end(); it++) {
-		fe->AddSymbol((*it).first, (*it).second.c_str());
-	}
-	fe->readLibraryCatalog();		// Needed before readSymbolFile()
-
-	for (unsigned i = 0; i < symbolFiles.size(); i++) {
-		std::cerr << "reading symbol file " << symbolFiles[i].c_str() << "\n";
-		prog->readSymbolFile(symbolFiles[i].c_str());
-	}
-
-	std::map<std::string, ObjcModule> &objcmodules = fe->getBinaryFile()->getObjcModules();
-	if (objcmodules.size())
-		objcDecode(objcmodules, prog);
-
-	// Entry points from -e (and -E) switch(es)
-	for (unsigned i = 0; i < entrypoints.size(); i++) {
-		std::cerr<< "decoding specified entrypoint " << std::hex << entrypoints[i] << "\n";
-		prog->decodeEntryPoint(entrypoints[i]);
-	}
-
-	if (entrypoints.size() == 0) {		// no -e or -E given
-		if (decodeMain)
-			std::cerr << "decoding entry point...\n";
-		fe->decode(prog, decodeMain, pname);
-
-		if (!noDecodeChildren) {
-			// this causes any undecoded userprocs to be decoded
-			std::cerr << "decoding anything undecoded...\n";
-			fe->decode(prog, NO_ADDRESS);
-		}
-	}
-
-	prog->finishDecode();
-
-	Boomerang::get()->alert_end_decode();
-
-	std::cerr << "found " << std::dec << prog->getNumUserProcs() << " procs\n";
-
-	// GK: The analysis which was performed was not exactly very "analysing", and so it has been moved to
-	// prog::finishDecode, UserProc::assignProcsToCalls and UserProc::finalSimplify
-	//std::cerr << "analysing...\n";
- 	//prog->analyse();
-
-	if (generateSymbols) {
-		prog->printSymbolsToFile();
-	}
-	if (generateCallGraph) {
-		prog->printCallGraph();
-		prog->printCallGraphXML();
-	}
+	Prog *prog = load(fname);
+	if(prog)
+		decode(prog, pname);
 	return prog;
 }
 
@@ -1009,4 +993,77 @@ Prog *Boomerang::loadFromXML(const char *fname)
 }
 void Boomerang::logTail() {
 	logger->tail();
+}
+
+Prog *Boomerang::load(const char *fname)
+{
+	std::cerr << "loading...\n";
+	Prog *prog = new Prog();
+	FrontEnd *fe = FrontEnd::Load(fname, prog);
+	if (fe == NULL) {
+		std::cerr << "failed.\n";
+		return NULL;
+	}
+	prog->setFrontEnd(fe);
+
+	return prog;
+}
+
+void Boomerang::decode(Prog *prog, const char *pname)
+{
+	FrontEnd *fe = prog->getFrontEnd();
+
+	// Add symbols from -s switch(es)
+	for (std::map<ADDRESS, std::string>::iterator it = symbols.begin();
+		 it != symbols.end(); it++) {
+		fe->AddSymbol((*it).first, (*it).second.c_str());
+	}
+	fe->readLibraryCatalog();		// Needed before readSymbolFile()
+
+	for (unsigned i = 0; i < symbolFiles.size(); i++) {
+		std::cerr << "reading symbol file " << symbolFiles[i].c_str() << "\n";
+		prog->readSymbolFile(symbolFiles[i].c_str());
+	}
+
+	std::map<std::string, ObjcModule> &objcmodules = fe->getBinaryFile()->getObjcModules();
+	if (objcmodules.size())
+		objcDecode(objcmodules, prog);
+
+	// Entry points from -e (and -E) switch(es)
+	for (unsigned i = 0; i < entrypoints.size(); i++) {
+		std::cerr<< "decoding specified entrypoint " << std::hex << entrypoints[i] << "\n";
+		prog->decodeEntryPoint(entrypoints[i]);
+	}
+
+	if (entrypoints.size() == 0) {		// no -e or -E given
+		if (decodeMain)
+			std::cerr << "decoding entry point...\n";
+		fe->decode(prog, decodeMain, pname);
+
+		if (!noDecodeChildren) {
+			// this causes any undecoded userprocs to be decoded
+			std::cerr << "decoding anything undecoded...\n";
+			fe->decode(prog, NO_ADDRESS);
+		}
+	}
+
+	prog->finishDecode();
+
+	Boomerang::get()->alert_end_decode();
+
+	std::cerr << "found " << std::dec << prog->getNumUserProcs() << " procs\n";
+
+	// GK: The analysis which was performed was not exactly very "analysing", and so it has been moved to
+	// prog::finishDecode, UserProc::assignProcsToCalls and UserProc::finalSimplify
+	//std::cerr << "analysing...\n";
+ 	//prog->analyse();
+
+	if (generateSymbols) {
+		prog->printSymbols();
+	}
+	if (generateCallGraph) {
+		prog->printCallGraph();
+		prog->printCallGraphXML();
+	}
+
 }

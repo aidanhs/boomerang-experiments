@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.136 $	// 1.126.2.14
+ * $Revision: 1.136.2.1 $	// 1.126.2.14
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -60,6 +60,7 @@
 #include "config.h"
 #include "managed.h"
 #include "log.h"
+#include "SymbolMatcher.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1719,4 +1720,29 @@ void Memoisable::takeMemo()
 void Memoisable::restoreMemo(bool dec)
 {
 	restoreMemo(-1, dec);
+}
+
+void Prog::MatchSignatures(const char * sig_file, const char * hint)
+/**
+	Search for library signatures from sig_file and match them
+	'hint' is used to force usage of specified signature matching
+	module
+*/
+{
+	SymbolMatcher *sym_matcher;
+	if(hint)
+		sym_matcher = SymbolMatcherFactory::getInstanceFor(this, sig_file, hint);
+	else
+		sym_matcher = SymbolMatcherFactory::getInstanceFor(this, sig_file);
+
+	if(sym_matcher)
+		sym_matcher->MatchAll();
+	else
+		std::cerr << "No default symbol matcher module for " << sig_file << std::endl;
+
+}
+
+FrontEnd *	Prog::getFrontEnd()
+{
+	return pFE;
 }

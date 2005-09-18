@@ -14,7 +14,7 @@
  * OVERVIEW:	interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.79 $	// 1.73.2.5
+ * $Revision: 1.79.2.1 $	// 1.73.2.5
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -77,6 +77,7 @@ public:
 					~Prog();
 					Prog(const char* name);			// Constructor with name
 		void		setFrontEnd(FrontEnd* fe);
+		FrontEnd *	getFrontEnd();
 		void		setName(const char *name);		// Set the name of this program
 		Proc*		setNewProc(ADDRESS uNative);	// Set up new proc
 		// Return a pointer to a new proc
@@ -276,6 +277,11 @@ public:
 		void		addDecodedRtl(ADDRESS a, RTL* rtl) {
 						pFE->addDecodedRtl(a, rtl); }
 
+		// Search for library signatures from sig_file and match them
+		// 'hint' is used to force usage of specified signature matching
+		// module
+		void MatchSignatures(const char * sig_file, const char * hint);
+
 virtual Memo		*makeMemo(int mId);
 virtual void		readMemo(Memo *m, bool dec);
 
@@ -295,6 +301,7 @@ protected:
 		Cluster		*m_rootCluster;			// Root of the cluster tree
 
 		friend class XMLProgParser;
+		friend class SymbolMatcher;
 };	// class Prog
 
 #endif

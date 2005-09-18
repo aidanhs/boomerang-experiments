@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.102 $		// 1.91.2.10
+# $Revision: 1.102.2.1 $		// 1.91.2.10
 # 05 Jul 05 - Mike: Big merge with boomerang.pole branch
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
@@ -147,7 +147,10 @@ FRONT_OBJS = frontend/frontend.o frontend/njmcDecoder.o frontend/sparcdecoder.o 
 CODEGEN = codegen/chllcode.o codegen/syntax.o
 TYPEOBJS = type/constraint.o type/type.o type/dfa.o
 LOADER_OBJS = loader/BinaryFileFactory.o
-STATIC_OBJS = ${CODEGEN} ${UTIL_OBJS} ${DB_OBJS} ${TRANSFORM_OBJS} ${FRONT_OBJS} ${TYPEOBJS} ${LOADER_OBJS}
+SYMBOL_OBJS = symbols/BfdArchMatcher.o symbols/DynLibMatcher.o symbols/SymbolMatcher.o symbols/BytePattern.o \
+	symbols/SignatureGenerator.o symbols/BfdObjMatcher.o symbols/LibSigMatcher.o
+STATIC_OBJS = ${CODEGEN} ${UTIL_OBJS} ${DB_OBJS} ${TRANSFORM_OBJS} ${FRONT_OBJS} ${TYPEOBJS} ${LOADER_OBJS} \
+	${SYMBOL_OBJS}
 
 $(LOADERDLLS): lib
 	cd loader && make
@@ -160,7 +163,7 @@ frontend/machine/st20/st20.ssl: frontend/machine/st20/st20.ssl.m
 
 
 boomerang$(EXEEXT): driver.o ${STATIC_OBJS} $(LOADERDLLS) $(GENSSL)
-	$(CXX) -o $@ driver.o $(STATIC_OBJS) $(LOADERLIBS) $(RUNPATH) -Llib -lgc -lexpat $(LDL)
+	$(CXX) -o $@ driver.o $(STATIC_OBJS) $(LOADERLIBS) $(RUNPATH) -Llib -lgc -lexpat -lbfd -liberty $(LDL)
 
 bigtest$(EXEEXT): testAll.o ${STATIC_OBJS} ${TEST_OBJS} $(LOADERDLLS)
 	$(CXX) -o $@ testAll.o ${STATIC_OBJS} ${TEST_OBJS} $(LOADERLIBS) \
@@ -208,6 +211,13 @@ db/StatementTest.o:			EXTRA = -Ifrontend
 db/CfgTest.o:               EXTRA = -Ifrontend
 type/TypeTest.o:            EXTRA = -Ifrontend
 frontend/pentiumdecoder.o:	EXTRA = -fno-exceptions
+symbols/BfdArchMatcher.o:	EXTRA = -Isymbols
+symbols/BfdObjMatcher.o:	EXTRA = -Isymbols
+symbols/BytePattern.o:		EXTRA = -Isymbols
+symbols/DynLibMatcher.o:	EXTRA = -Isymbols
+symbols/LibSigMatcher.o:	EXTRA = -Isymbols
+symbols/SignatureGenerator.o: EXTRA=-Isymbols
+symbols/SymbolMatcher.o:	EXTRA = -Isymbols
 
 # Compile ordinary files
 $(STATIC_OBJS): %.o : %.cpp
@@ -317,3 +327,10 @@ include/statement.h: include/managed.h
 loader/BinaryFileFactory.o: include/BinaryFile.h loader/ElfBinaryFile.h loader/Win32BinaryFile.h \
 	loader/ExeBinaryFile.h loader/HpSomBinaryFile.h loader/PalmBinaryFile.h
 
+symbols/BfdArchMatcher.o: symbols/BfdArchMatcher.h
+symbols/BfdObjMatcher.o: symbols/BfdObjMatcher.h symbols/BytePattern.h
+symbols/BytePattern.o: symbols/BytePattern.h
+symbols/DynLibMatcher.o: symbols/DynLibMatcher.h
+symbols/LibSigMatcher.o: symbols/LibSigMatcher.h
+symbols/SignatureGenerator.o: symbols/SignatureGenerator.h
+symbols/SymbolMatcher.o: include/SymbolMatcher.h symbols/BfdObjMatcher.h symbols/BfdArchMatcher.h
