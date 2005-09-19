@@ -1,7 +1,7 @@
 #include "LibSigMatcher.h"
 
 LibSigMatcher::LibSigMatcher(Prog *prog)
-:SymbolMatcher(prog)
+:SymbolMatcher(prog, "X")
 {
 }
 

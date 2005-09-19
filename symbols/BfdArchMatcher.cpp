@@ -61,6 +61,7 @@ bool BfdArchMatcher::Next() {
 		ObjUnload();
 		return GetNextBFD();
 	}
+	return true;
 }
 
 bool BfdArchMatcher::GetNextBFD()

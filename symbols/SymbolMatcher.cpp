@@ -2,6 +2,24 @@
 #include "BfdObjMatcher.h"
 #include "BfdArchMatcher.h"
 
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+// just to be exported for using libid as a dynamically linked library
+extern "C" EXPORT SymbolMatcher *getInstanceFor(Prog *prog, const char *sSymbolContainer, const char *hint)
+{
+	if(hint)
+		return SymbolMatcherFactory::getInstanceFor(prog, sSymbolContainer, hint);
+	else
+		return SymbolMatcherFactory::getInstanceFor(prog, sSymbolContainer, hint);
+
+}
+
+
+
 SymbolMatcher * SymbolMatcherFactory::getInstanceFor(Prog *prog, const char *sSymbolContainer) {
 
 	SymbolMatcher *sm = NULL;
@@ -66,4 +84,5 @@ void SymbolMatcher::AddSymbol(ADDRESS addr, const char *name, Type *type)
 {
 	printf("Symbol added: %x -> %s\n", addr, name);
 	m_prog->pBF->AddSymbol(addr, name);
+
 }

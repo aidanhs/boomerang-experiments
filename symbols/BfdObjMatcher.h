@@ -3,7 +3,7 @@
 #include "bfd.h"
 
 // if BFD library version is less than 2.15
-#define BFD_2_15
+//#define BFD_2_15
 
 #ifdef BFD_2_15
 	#define COMDAT_INFO bfd_comdat_info 
