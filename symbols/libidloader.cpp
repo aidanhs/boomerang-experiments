@@ -32,11 +32,11 @@ SymbolMatcher * SymbolMatcherFactory_getInstanceFor(Prog *prog, const char *sSym
 	libName += ".so";
 #endif
 #endif
-	dlHandle = dlopen(libName.c_str(), RTLD_LAZY);
+	static void* dlHandle = dlopen(libName.c_str(), RTLD_LAZY);
 	if (dlHandle == NULL) {
 		fprintf( stderr, "Could not open dynamic loader library %s\n", libName.c_str());
 		fprintf( stderr, "%s\n", dlerror());
-		fclose(f);
+		//fclose(f);
 		return NULL;
 	}
 	// Use the handle to find the "construct" function
