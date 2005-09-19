@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "Prog.h"
+#include "prog.h"
 
 
 // early declaration

@@ -1,5 +1,5 @@
 #pragma once
-#include "Prog.h"
+#include "prog.h"
 #include <vector>
 
 struct WILD_SEGMENT {

@@ -1,4 +1,4 @@
-#include "BFDArchMatcher.h"
+#include "BfdArchMatcher.h"
 
 int strcmpi(const char* s1, const char* s2);            // See util/util.cpp
 
