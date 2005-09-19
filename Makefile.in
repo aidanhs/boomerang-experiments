@@ -5,7 +5,7 @@
 #
 ######################################################
 
-# $Revision: 1.102.2.1 $		// 1.91.2.10
+# $Revision: 1.102.2.2 $		// 1.91.2.10
 # 05 Jul 05 - Mike: Big merge with boomerang.pole branch
 # 03 Feb 05 - Mike: Removed analysis/ related files
 # 23 Nov 04 - Mike: Added PPC files
@@ -148,7 +148,7 @@ CODEGEN = codegen/chllcode.o codegen/syntax.o
 TYPEOBJS = type/constraint.o type/type.o type/dfa.o
 LOADER_OBJS = loader/BinaryFileFactory.o
 SYMBOL_OBJS = symbols/BfdArchMatcher.o symbols/DynLibMatcher.o symbols/SymbolMatcher.o symbols/BytePattern.o \
-	symbols/SignatureGenerator.o symbols/BfdObjMatcher.o symbols/LibSigMatcher.o
+	symbols/SignatureGenerator.o symbols/BfdObjMatcher.o symbols/LibSigMatcher.o symbols/libidloader.o
 STATIC_OBJS = ${CODEGEN} ${UTIL_OBJS} ${DB_OBJS} ${TRANSFORM_OBJS} ${FRONT_OBJS} ${TYPEOBJS} ${LOADER_OBJS} \
 	${SYMBOL_OBJS}
 
@@ -334,3 +334,4 @@ symbols/DynLibMatcher.o: symbols/DynLibMatcher.h
 symbols/LibSigMatcher.o: symbols/LibSigMatcher.h
 symbols/SignatureGenerator.o: symbols/SignatureGenerator.h
 symbols/SymbolMatcher.o: include/SymbolMatcher.h symbols/BfdObjMatcher.h symbols/BfdArchMatcher.h
+symbols/libidloader.o: include/SymbolMatcher.h
