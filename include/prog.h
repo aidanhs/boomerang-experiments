@@ -14,7 +14,7 @@
  * OVERVIEW:	interface for the program object.
  *============================================================================*/
 /*
- * $Revision: 1.79.2.1 $	// 1.73.2.5
+ * $Revision: 1.79.2.2 $	// 1.73.2.5
  * 16 Apr 01 - Mike: Mods for boomerang
  */
 
@@ -81,7 +81,7 @@ public:
 		void		setName(const char *name);		// Set the name of this program
 		Proc*		setNewProc(ADDRESS uNative);	// Set up new proc
 		// Return a pointer to a new proc
-		Proc*		newProc(const char* name, ADDRESS uNative, bool bLib = false);
+virtual	Proc*		newProc(const char* name, ADDRESS uNative, bool bLib = false);
 		void		remProc(UserProc* proc);		// Remove the given UserProc
 		char*		getName();						// Get the name of this program
 		const char *getPath() { return m_path.c_str(); }

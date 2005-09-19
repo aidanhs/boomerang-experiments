@@ -260,6 +260,9 @@
 				RelativePath="..\..\db\insnameelem.cpp">
 			</File>
 			<File
+				RelativePath="..\..\symbols\libidloader.cpp">
+			</File>
+			<File
 				RelativePath="..\..\log.cpp">
 			</File>
 			<File
@@ -527,6 +530,9 @@
 				RelativePath="..\..\include\hllcode.h">
 			</File>
 			<File
+				RelativePath="..\..\symbols\libidloader.h">
+			</File>
+			<File
 				RelativePath="..\..\include\log.h">
 			</File>
 			<File
@@ -579,9 +585,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\visitor.h">
-			</File>
-			<File
-				RelativePath="..\..\include\xmlprogparser.h">
 			</File>
 		</Filter>
 		<Filter

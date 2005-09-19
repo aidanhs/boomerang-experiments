@@ -3,18 +3,6 @@
 #include "Prog.h"
 
 
-#ifdef _WIN32
-#ifdef LIBID_EXPORTS
-#define IMPORT_SYMBOLMATCHER __declspec(dllexport)
-#else
-#define IMPORT_SYMBOLMATCHER __declspec(dllimport)
-#endif
-#else
-#define IMPORT_SYMBOLMATCHER
-#endif
-
-
-
 // early declaration
 class SymbolMatcher;
 
@@ -23,7 +11,7 @@ class SymbolMatcher;
 	used to find the compatible symbol matcher
 	class for a symbol container file
 	*/
-class IMPORT_SYMBOLMATCHER SymbolMatcherFactory
+class SymbolMatcherFactory
 {
 public:
 	/** Loads the compatible library matching class
@@ -56,27 +44,27 @@ struct SymbolInfo {
 class SymbolMatcher
 {
 public:
-	SymbolMatcher(Prog *prog, const char *sSymbolContainer);
-	~SymbolMatcher(void);
+			SymbolMatcher(Prog *prog, const char *sSymbolContainer);
+virtual		~SymbolMatcher(void);
 
 	/**
 		moves to the next symbol,
 		returns false if no more symbols or
 		on error
 	*/
-	virtual bool Next() = 0;
+virtual bool Next() = 0;
 
 	/**
 		returns true when there are no symbols
 		remaining, false otherwise
 	*/
-	virtual bool Finished() = 0;
+virtual bool Finished() = 0;
 
 	/**
 		Applies the current symbol
 		to the executable
 	*/
-	virtual bool Match() = 0;
+virtual bool Match() = 0;
 
 
 	//////////// From here optional methods
@@ -85,20 +73,20 @@ public:
 		returns total number of symbols in this symbol container
 		returns -1 if not supported
 	*/
-	virtual int Total();
+virtual int Total();
 
 	/**
 		returns information about current symbol
 		returns false if not supported, or called
 		when no symbol is loaded
 	*/
-	virtual bool GetSymbolInfo(SymbolInfo *symInfo);
+virtual bool GetSymbolInfo(SymbolInfo *symInfo);
 
 
 	/**
 		Applies all symbols in this symbol container
 	*/
-	virtual void MatchAll();
+virtual void MatchAll();
 
 
 protected:
@@ -106,7 +94,7 @@ protected:
 	/**
 		initializes the object
 	*/
-	virtual bool Init() = 0;
+virtual bool Init() = 0;
 
 	int GetTotalSections();
 	PSectionInfo GetSectionInfo(int index);
@@ -116,5 +104,9 @@ protected:
 	std::string m_sSymbolContainer;
 
 	// for Init()
-	friend SymbolMatcherFactory;
+	friend class SymbolMatcherFactory;
 };
+
+
+typedef SymbolMatcher *(*SYMMATCH_FACTORY)(Prog *prog, const char *sSymbolContainer, const char *hint);
+

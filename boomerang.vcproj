@@ -305,6 +305,12 @@
 				RelativePath=".\db\insnameelem.cpp">
 			</File>
 			<File
+				RelativePath=".\symbols\libidloader.cpp">
+			</File>
+			<File
+				RelativePath=".\symbols\libidloader.h">
+			</File>
+			<File
 				RelativePath=".\log.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">

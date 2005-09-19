@@ -16,7 +16,7 @@
  *============================================================================*/
 
 /*
- * $Revision: 1.136.2.1 $	// 1.126.2.14
+ * $Revision: 1.136.2.2 $	// 1.126.2.14
  *
  * 18 Apr 02 - Mike: Mods for boomerang
  * 26 Apr 02 - Mike: common.hs read relative to BOOMDIR
@@ -61,6 +61,7 @@
 #include "managed.h"
 #include "log.h"
 #include "SymbolMatcher.h"
+#include "../symbols/libidloader.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1730,10 +1731,8 @@ void Prog::MatchSignatures(const char * sig_file, const char * hint)
 */
 {
 	SymbolMatcher *sym_matcher;
-	if(hint)
-		sym_matcher = SymbolMatcherFactory::getInstanceFor(this, sig_file, hint);
-	else
-		sym_matcher = SymbolMatcherFactory::getInstanceFor(this, sig_file);
+
+	sym_matcher = SymbolMatcherFactory_getInstanceFor(this, sig_file, hint);
 
 	if(sym_matcher)
 		sym_matcher->MatchAll();
