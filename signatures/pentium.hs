@@ -1,1 +1,0 @@
-gcc_pent.h
