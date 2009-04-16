@@ -282,7 +282,8 @@ public:
     virtual bool		IsDynamicLinkedProcPointer(ADDRESS uNative);
     virtual ADDRESS		IsJumpToAnotherAddr(ADDRESS uNative);
     virtual const char*	GetDynamicProcName(ADDRESS uNative);
-    virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main") = 0;
+	/// Uses framework services to register all found entry points
+    virtual bool		GetEntryPoints(const char* pEntry = "main") = 0;
     virtual ADDRESS		GetMainEntryPoint() = 0;
 
     /*

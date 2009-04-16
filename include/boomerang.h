@@ -95,8 +95,8 @@ private:
     /// The path where all output files are created.
     std::string	outputPath;
     /// Takes care of the log messages.
-    Log			*logger;
-    /// The watchers which are interested in this decompilation.
+    Log			*	logger;
+	/// The watchers which are interested in this decompilation.
     std::set<Watcher*> watchers;
 
 
@@ -110,7 +110,6 @@ private:
     int			splitLine(char *line, char ***pargv);
     int			parseCmd(int argc, const char **argv);
     int			cmdLine();
-
 
     Boomerang();
     /// The destructor is virtual to force this object to be created on the heap (with \em new).

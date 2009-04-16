@@ -26,6 +26,7 @@
 #include <ctime>
 #include <cstring>
 #include <cstdlib>
+
 #ifdef _WIN32
 #include <direct.h>			// mkdir under Windows
 #else
@@ -36,6 +37,7 @@
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <windows.h>
 #endif
+#include "plugin_framework/PluginManager.h"
 #include "prog.h"
 #include "proc.h"
 #include "BinaryFile.h"
@@ -84,6 +86,7 @@ Boomerang::Boomerang() : logger(NULL), vFlag(false), printRtl(false),
 {
 	progPath = "./";
 	outputPath = "./output/";
+	PluginManager::getInstance().loadAll("loaders");
 }
 
 /**
