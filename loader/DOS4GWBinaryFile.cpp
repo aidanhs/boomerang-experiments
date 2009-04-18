@@ -56,12 +56,10 @@ void DOS4GWBinaryFile::Close() {
     UnLoad();
 }
 
-std::list<SectionInfo*>& DOS4GWBinaryFile::GetEntryPoints(
-    const char* pEntry) {
+bool DOS4GWBinaryFile::GetEntryPoints(const char* pEntry) {
     fprintf(stderr,"really don't know how to implement GetEntryPoints\n");
     exit(0);
-    static std::list<SectionInfo*> l;
-    return l;
+    return false;
 }
 
 ADDRESS DOS4GWBinaryFile::GetEntryPoint() {

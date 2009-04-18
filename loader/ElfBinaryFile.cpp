@@ -681,7 +681,7 @@ bool ElfBinaryFile::IsDynamicLinkedProc(ADDRESS uNative) {
 // Returns a list of pointers to SectionInfo structs representing entry points to the program
 // Item 0 is the main() function; items 1 and 2 are .init and .fini
 //
-std::list<SectionInfo*>& ElfBinaryFile::GetEntryPoints(
+bool  ElfBinaryFile::GetEntryPoints(
     const char* pEntry /* = "main" */) {
     SectionInfo* pSect = GetSectionInfoByName(".text");
     ADDRESS uMain = GetAddressByName(pEntry, true);
@@ -696,7 +696,7 @@ std::list<SectionInfo*>& ElfBinaryFile::GetEntryPoints(
     m_EntryPoint.push_back(pSect);
     pSect = GetSectionInfoByName(".fini");
     m_EntryPoint.push_back(pSect);
-    return m_EntryPoint;
+    return m_EntryPoint.size()>0;
 }
 
 

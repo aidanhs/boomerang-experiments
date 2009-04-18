@@ -45,7 +45,7 @@ ELSE(USE_GC)
 ENDIF(USE_GC)
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-
+SET(MAIN_INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include)
 ADD_SUBDIRECTORY(plugin_framework)
 ADD_SUBDIRECTORY(loader)
 ADD_SUBDIRECTORY(c)
@@ -62,13 +62,13 @@ ADD_LIBRARY(driver STATIC driver.cpp)
 SET(boomerang_SRCS
    boomerang.cpp
    log.cpp
-   loader/BinaryFileFactory.cpp
+#   loader/BinaryFileFactory.cpp
 )
 
 ADD_EXECUTABLE(boomerang ${boomerang_SRCS})
 TARGET_LINK_LIBRARIES(boomerang 
 	driver 
-	${BOOMERANG_LOADERS} 
+#	${BOOMERANG_LOADERS} 
 	${BOOMERANG_FRONTENDS} 
 	boomerang_db
 	boomerang_type_solvers

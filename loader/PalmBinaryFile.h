@@ -71,7 +71,7 @@ public:
 
 
     // Analysis functions
-    virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main");
+    virtual bool	GetEntryPoints(const char* pEntry = "main");
     virtual ADDRESS GetMainEntryPoint();
     virtual ADDRESS GetEntryPoint();
 

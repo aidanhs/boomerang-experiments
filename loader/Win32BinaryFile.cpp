@@ -133,12 +133,12 @@ void Win32BinaryFile::Close() {
     UnLoad();
 }
 
-std::list<SectionInfo*>& Win32BinaryFile::GetEntryPoints(
+bool Win32BinaryFile::GetEntryPoints(
     const char* pEntry) {
     fprintf(stderr,"really don't know how to implement GetEntryPoints\n");
     exit(0);
     static std::list<SectionInfo*> l;
-    return l;
+    return false;
 }
 
 ADDRESS Win32BinaryFile::GetEntryPoint() {

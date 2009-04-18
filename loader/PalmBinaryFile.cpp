@@ -268,14 +268,13 @@ void PalmBinaryFile::UnLoad() {
 }
 
 // This is provided for completeness only...
-std::list<SectionInfo*>& PalmBinaryFile::GetEntryPoints(const char* pEntry
-        /* = "main" */) {
+bool PalmBinaryFile::GetEntryPoints(const char* pEntry /* = "main" */) {
     std::list<SectionInfo*>* ret = new std::list<SectionInfo*>;
     SectionInfo* pSect = GetSectionInfoByName("code1");
     if (pSect == 0)
-        return *ret;               // Failed
+        return false;               // Failed
     ret->push_back(pSect);
-    return *ret;
+    return true;
 }
 
 ADDRESS PalmBinaryFile::GetEntryPoint() {

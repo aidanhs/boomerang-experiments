@@ -16,6 +16,8 @@ set(boomerang_db_sources
 	statement.cpp
 	table.cpp
 	visitor.cpp
+	section_info.cpp
+	${MAIN_INCLUDE_DIRECTORY}/db/section_info.h
 )
 # for ansi-c parser includes
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/c)

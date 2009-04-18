@@ -52,37 +52,7 @@
 #define IMPORT_BINARYFILE
 #endif
 
-// SectionInfo structure. GetSectionInfo returns a pointer to an array of
-// these structs. All information about the sections is contained in these
-// structures.
-
-struct IMPORT_BINARYFILE SectionInfo {
-    SectionInfo();		// Constructor
-    virtual		~SectionInfo();		// Quell a warning in gcc
-
-    // Windows's PE file sections can contain any combination of code, data and bss.
-    // As such, it can't be correctly described by SectionInfo, why we need to override
-    // the behaviour of (at least) the question "Is this address in BSS".
-    virtual bool isAddressBss(ADDRESS a) const {
-        return bBss != 0;
-    }
-
-    char*		pSectionName;		// Name of section
-    ADDRESS		uNativeAddr;		// Logical or native load address
-    ADDRESS		uHostAddr;			// Host or actual address of data
-    ADDRESS		uSectionSize;		// Size of section in bytes
-    ADDRESS		uSectionEntrySize;	// Size of one section entry (if applic)
-    unsigned	uType;				 // Type of section (format dependent)
-unsigned	bCode:
-    1;			// Set if section contains instructions
-unsigned	bData:
-    1;			// Set if section contains data
-unsigned	bBss:
-    1;				// Set if section is BSS (allocated only)
-unsigned	bReadOnly:
-    1;		// Set if this is a read only section
-};
-
+struct SectionInfo;
 typedef SectionInfo* PSectionInfo;
 
 // Objective-C stuff
@@ -191,10 +161,7 @@ public:
     PSectionInfo GetSectionInfoByAddr(ADDRESS uEntry) const;
 
     // returns true if the given address is in a read only section
-    virtual bool isReadOnly(ADDRESS uEntry) {
-        PSectionInfo p = GetSectionInfoByAddr(uEntry);
-        return p && p->bReadOnly;
-    }
+    virtual bool isReadOnly(ADDRESS uEntry);
     // returns true if the given address is in a "strings" section
     virtual bool isStringConstant(ADDRESS uEntry) {
         return false;

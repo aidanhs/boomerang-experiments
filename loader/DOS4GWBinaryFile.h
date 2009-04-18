@@ -147,7 +147,7 @@ public:
     virtual ADDRESS getImageBase();
     virtual size_t getImageSize();
 
-    virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main");
+    virtual bool GetEntryPoints(const char* pEntry = "main");
     virtual ADDRESS GetMainEntryPoint();
     virtual ADDRESS GetEntryPoint();
     DWord getDelta();

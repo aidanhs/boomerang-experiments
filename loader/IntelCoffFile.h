@@ -50,7 +50,7 @@ public:
     virtual size_t      getImageSize();
     virtual ADDRESS     GetMainEntryPoint();
     virtual ADDRESS     GetEntryPoint();
-    virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main");
+    virtual bool GetEntryPoints(const char* pEntry = "main");
 
     virtual const char* SymbolByAddress(ADDRESS uNative);
     // Lookup the name, return the address. If not found, return NO_ADDRESS

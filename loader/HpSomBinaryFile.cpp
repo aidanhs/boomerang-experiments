@@ -405,14 +405,13 @@ ADDRESS HpSomBinaryFile::GetEntryPoint() {
 }
 
 // This is provided for completeness only...
-std::list<SectionInfo*>& HpSomBinaryFile::GetEntryPoints(const char* pEntry
-        /* = "main" */) {
+bool HpSomBinaryFile::GetEntryPoints(const char* pEntry /* = "main" */) {
     std::list<SectionInfo*>* ret = new std::list<SectionInfo*>;
     SectionInfo* pSect = GetSectionInfoByName("code1");
     if (pSect == 0)
-        return *ret;               // Failed
+        return false;               // Failed
     ret->push_back(pSect);
-    return *ret;
+    return true;
 }
 
 
