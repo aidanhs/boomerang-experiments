@@ -1,10 +1,11 @@
-set(boomerang_db_sources
+SET(boomerang_db_SOURCES
 	basicblock.cpp
 	cfg.cpp
 	dataflow.cpp
 	exp.cpp
 	insnameelem.cpp
 	managed.cpp
+	project.cpp
 	proc.cpp
 	prog.cpp
 	register.cpp
@@ -18,8 +19,9 @@ set(boomerang_db_sources
 	visitor.cpp
 	section_info.cpp
 	${MAIN_INCLUDE_DIRECTORY}/db/section_info.h
+	${MAIN_INCLUDE_DIRECTORY}/db/project.h
 )
 # for ansi-c parser includes
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/c)
 
-ADD_LIBRARY(boomerang_db STATIC ${boomerang_db_sources})
+ADD_LIBRARY(boomerang_db STATIC ${boomerang_db_SOURCES})

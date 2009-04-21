@@ -33,6 +33,7 @@ SET(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.35.0 REQUIRED COMPONENTS filesystem )
 FIND_PACKAGE(Boost)
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
 IF(USE_GC)
@@ -55,33 +56,10 @@ ADD_SUBDIRECTORY(type)
 ADD_SUBDIRECTORY(transform)
 ADD_SUBDIRECTORY(util)
 ADD_SUBDIRECTORY(frontend)
-
+ADD_SUBDIRECTORY(platform)
 
 ADD_LIBRARY(driver STATIC driver.cpp)
 
-SET(boomerang_SRCS
-   boomerang.cpp
-   log.cpp
-#   loader/BinaryFileFactory.cpp
-)
-
-ADD_EXECUTABLE(boomerang ${boomerang_SRCS})
-TARGET_LINK_LIBRARIES(boomerang 
-	driver 
-#	${BOOMERANG_LOADERS} 
-	${BOOMERANG_FRONTENDS} 
-	boomerang_db
-	boomerang_type_solvers
-	boomerang_transform
-	boomerang_util
-	boomerang_DSLs
-	${BOOMERANG_CODE_GENERATORS}
-	${boomerang_libs}
-	${CMAKE_DL_LIBS}
-	plugin_framework
-)
-
-INSTALL(TARGETS boomerang DESTINATION bin)
 INSTALL(FILES  include/*.h DESTINATION include)
 
 # this is put at the end so that first cmake configure will assume USE_GC NO, 

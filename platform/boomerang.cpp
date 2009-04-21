@@ -86,7 +86,8 @@ Boomerang::Boomerang() : logger(NULL), vFlag(false), printRtl(false),
 {
 	progPath = "./";
 	outputPath = "./output/";
-	PluginManager::getInstance().loadAll("loaders");
+	LoaderServices::instance();
+	PluginManager::getInstance().loadAll("loaders",LoaderDispatch);
 }
 
 /**

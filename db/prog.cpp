@@ -68,7 +68,7 @@
 #include "config.h"
 #include "managed.h"
 #include "log.h"
-
+#include "db/section_info.h"
 #ifdef _WIN32
 #undef NO_ADDRESS
 #include <windows.h>
