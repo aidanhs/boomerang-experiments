@@ -50,6 +50,6 @@ struct SectionInfo {
 	unsigned	bReadOnly:1;		// Set if this is a read only section
 };
 
-typedef SectionInfo* PSectionInfo;
+//typedef struct SectionInfo* PSectionInfo;
 
 #endif		// #ifndef __BINARYFILE_H__

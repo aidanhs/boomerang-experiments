@@ -56,10 +56,9 @@ ADD_SUBDIRECTORY(transform)
 ADD_SUBDIRECTORY(util)
 ADD_SUBDIRECTORY(frontend)
 ADD_SUBDIRECTORY(platform)
+ADD_SUBDIRECTORY(ui)
 
-ADD_LIBRARY(driver STATIC driver.cpp)
-
-INSTALL(FILES  include/*.h DESTINATION include)
+INSTALL(FILES include/*.h DESTINATION include)
 
 # this is put at the end so that first cmake configure will assume USE_GC NO, 
 # and will not check for existence of Boehm GC
@@ -70,16 +69,14 @@ IF(BUILD_TESTING)
 	INCLUDE_DIRECTORIES(${CPPUNIT_INCLUDE_DIR})
 
 	ENABLE_TESTING()
-	
+
 	FILE(GLOB_RECURSE UnitTests_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*Test.cpp" )
 	FILE(GLOB_RECURSE UnitTests_INCLUDES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*Test.h" )
 
 	#hackishness
 	INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/frontend)
 	ADD_EXECUTABLE(UnitTester 
-		testAll.cpp 
-		boomerang.cpp
-		log.cpp
+		testsuite/testAll.cpp 
 		loader/microX86dis.c
 		loader/BinaryFileFactory.cpp 
 		loader/BinaryFileStub.cpp 
@@ -103,6 +100,7 @@ IF(BUILD_TESTING)
 		${boomerang_libs}
 		${CMAKE_DL_LIBS}
 		plugin_framework
+		boomerang_platform
 	)
 
 ENDIF(BUILD_TESTING)

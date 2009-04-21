@@ -22,6 +22,7 @@
 #define _PROG_H_
 
 #include <map>
+#include "db/section_info.h"
 #include "BinaryFile.h"
 #include "frontend.h"
 #include "type.h"
@@ -253,27 +254,13 @@ public:
     MACHINE		getMachine() {			// Get a code for the machine
         return pBF->GetMachine();    // e.g. MACHINE_SPARC
     }
-    const char*	symbolByAddress(ADDRESS dest) { // Get a symbol from an address
-        return pBF->SymbolByAddress(dest);
-    }
-    PSectionInfo getSectionInfoByAddr(ADDRESS a) {
-        return pBF->GetSectionInfoByAddr(a);
-    }
-    ADDRESS		getLimitTextLow() {
-        return pBF->getLimitTextLow();
-    }
-    ADDRESS		getLimitTextHigh() {
-        return pBF->getLimitTextHigh();
-    }
-    bool		isReadOnly(ADDRESS a) {
-        return pBF->isReadOnly(a);
-    }
-    bool        isStringConstant(ADDRESS a) {
-        return pBF->isStringConstant(a);
-    }
-    bool        isCFStringConstant(ADDRESS a) {
-        return pBF->isCFStringConstant(a);
-    }
+    const char*		symbolByAddress(ADDRESS dest); // Get a symbol from an address;
+    SectionInfo *	getSectionInfoByAddr(ADDRESS a);
+    ADDRESS			getLimitTextLow();
+    ADDRESS			getLimitTextHigh();
+    bool			isReadOnly(ADDRESS a);
+    bool			isStringConstant(ADDRESS a);
+    bool			isCFStringConstant(ADDRESS a);
     // Read 2, 4, or 8 bytes given a native address
     int			readNative1(ADDRESS a) {
         return pBF->readNative1(a);

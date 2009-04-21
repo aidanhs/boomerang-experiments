@@ -1,3 +1,5 @@
+INCLUDE_DIRECTORIES(${MAIN_INCLUDE_DIRECTORY}/platform/plugin_framework)
+
 SET(plugin_framework_SOURCES
     base.cpp
     DynamicLibrary.cpp

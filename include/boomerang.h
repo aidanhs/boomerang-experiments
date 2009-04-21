@@ -49,7 +49,7 @@ class Proc;
 class UserProc;
 class HLLCode;
 class ObjcModule;
-
+class Project;
 #define LOG Boomerang::get()->log()
 #define LOGTAIL Boomerang::get()->logTail()
 
@@ -122,7 +122,7 @@ public:
         if (!boomerang) boomerang = new Boomerang();
         return boomerang;
     }
-
+	Project *get_project();
     static	const char*		getVersionStr();
     Log			&log();
     void		setLogger(Log *l) {

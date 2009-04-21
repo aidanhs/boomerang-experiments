@@ -33,6 +33,7 @@
 
 #include <sstream>
 #include <cstring>
+#include "db/project.h"
 #include "types.h"
 #include "BinaryFile.h"
 #include "frontend.h"
@@ -485,9 +486,9 @@ void PentiumFrontEnd::emitSet(std::list<RTL*>* BB_rtls, std::list<RTL*>::iterato
  *============================================================================*/
 bool PentiumFrontEnd::helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl)
 {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 	if (dest == NO_ADDRESS) return false;
-
-	const char* p = pBF->SymbolByAddress(dest);
+	const char* p = stage_0->SymbolByAddress(dest);
 	if (p == NULL) return false;
 	std::string name(p);
 	// I believe that __xtol is for gcc, _ftol for earlier MSVC compilers, _ftol2 for MSVC V7
@@ -585,6 +586,7 @@ PentiumFrontEnd::~PentiumFrontEnd()
  * RETURNS:		Native pointer if found; NO_ADDRESS if not
  *============================================================================*/
 ADDRESS PentiumFrontEnd::getMainEntryPoint(bool& gotMain) {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 	gotMain = true;
 	ADDRESS start = pBF->GetMainEntryPoint();
 	if( start != NO_ADDRESS ) return start;
@@ -632,7 +634,7 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint(bool& gotMain) {
 					if (inst.rtl->getList().size()) {
 						CallStatement *toMain = dynamic_cast<CallStatement*>(inst.rtl->getList().back());
 						if (toMain && toMain->getFixedDest() != NO_ADDRESS) {
-							pBF->AddSymbol(toMain->getFixedDest(), "WinMain");
+							stage_0->AddSymbol(toMain->getFixedDest(), "WinMain");
 							gotMain = true;
 							return toMain->getFixedDest();
 						}
@@ -646,10 +648,10 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint(bool& gotMain) {
 				gotMain = true;
 				return cs->getFixedDest();
 			}
-			if (pBF->SymbolByAddress(dest) &&
-					strcmp(pBF->SymbolByAddress(dest), "__libc_start_main") == 0) {
+			if (stage_0->SymbolByAddress(dest) &&
+					strcmp(stage_0->SymbolByAddress(dest), "__libc_start_main") == 0) {
 				// This is a gcc 3 pattern. The first parameter will be a pointer to main.
-				// Assume it's the 5 byte push immediately preceeding this instruction
+				// Assume it's the 5 byte push immediately preceding this instruction
 				// Note: the RTL changed recently from esp = esp-4; m[esp] = K tp m[esp-4] = K; esp = esp-4
 				inst = decodeInstruction(addr-5);
 				assert(inst.valid);
@@ -673,7 +675,7 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint(bool& gotMain) {
 	} while (--instCount);
 
 	// Last chance check: look for _main (e.g. Borland programs)
-	ADDRESS umain = pBF->GetAddressByName("_main");
+	ADDRESS umain = stage_0->GetAddressByName("_main");
 	if (umain != NO_ADDRESS) return umain;
 
 	// Not ideal; we must return start

@@ -30,7 +30,7 @@
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
 #endif
-
+#include "db/project.h"
 #include "frontend.h"
 #include <queue>
 #include <cstdarg>			// For varargs
@@ -186,6 +186,7 @@ void FrontEnd::readLibraryCatalog() {
 
 std::vector<ADDRESS> FrontEnd::getEntryPoints()
 {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 	std::vector<ADDRESS> entrypoints;
 	bool gotMain = false;
 	ADDRESS a = getMainEntryPoint(gotMain);
@@ -204,7 +205,7 @@ std::vector<ADDRESS> FrontEnd::getEntryPoints()
 				strcpy(name, p);
 				name[strlen(name)-6] = 0;
 				strcat(name, "ModuleData");
-				ADDRESS a = pBF->GetAddressByName(name, true);
+				ADDRESS a = stage_0->GetAddressByName(name, true);
 				if (a != NO_ADDRESS) {
 					ADDRESS vers, setup, teardown;
 					vers = pBF->readNative4(a);
@@ -216,7 +217,7 @@ std::vector<ADDRESS> FrontEnd::getEntryPoints()
 						UserProc *proc = (UserProc*)prog->setNewProc(setup);
 						assert(proc);
 						Signature *sig = ty->asFunc()->getSignature()->clone();
-						const char *sym = pBF->SymbolByAddress(setup);
+						const char *sym = stage_0->SymbolByAddress(setup);
 						if (sym)
 							sig->setName(sym);
 						sig->setForced(true);
@@ -229,7 +230,7 @@ std::vector<ADDRESS> FrontEnd::getEntryPoints()
 						UserProc *proc = (UserProc*)prog->setNewProc(teardown);
 						assert(proc);
 						Signature *sig = ty->asFunc()->getSignature()->clone();
-						const char *sym = pBF->SymbolByAddress(teardown);
+						const char *sym = stage_0->SymbolByAddress(teardown);
 						if (sym)
 							sig->setName(sym);
 						sig->setForced(true);
@@ -241,10 +242,10 @@ std::vector<ADDRESS> FrontEnd::getEntryPoints()
 		}
 		// Linux kernel module
 		if (!strcmp(fname + strlen(fname) - 3, ".ko")) {
-			a = pBF->GetAddressByName("init_module");
+			a = stage_0->GetAddressByName("init_module");
 			if (a != NO_ADDRESS)
 				entrypoints.push_back(a);
-			a = pBF->GetAddressByName("cleanup_module");
+			a = stage_0->GetAddressByName("cleanup_module");
 			if (a != NO_ADDRESS)
 				entrypoints.push_back(a);
 		}
@@ -253,6 +254,7 @@ std::vector<ADDRESS> FrontEnd::getEntryPoints()
 }
 
 void FrontEnd::decode(Prog* prog, bool decodeMain, const char *pname) {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 	if (pname)
 		prog->setName(pname);
 
@@ -277,7 +279,7 @@ void FrontEnd::decode(Prog* prog, bool decodeMain, const char *pname) {
 
 	if (gotMain) {
 		static const char *mainName[] = { "main", "WinMain", "DriverEntry" };
-		const char *name = pBF->SymbolByAddress(a);
+		const char *name = stage_0->SymbolByAddress(a);
 		if (name == NULL)
 			name = mainName[0];
 		for (size_t i = 0; i < sizeof(mainName)/sizeof(char*); i++) {
@@ -372,7 +374,8 @@ void FrontEnd::decodeFragment(UserProc* proc, ADDRESS a) {
 }
 
 DecodeResult& FrontEnd::decodeInstruction(ADDRESS pc) {
-	if (pBF->GetSectionInfoByAddr(pc) == NULL) {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+	if (stage_0->GetSectionInfoByAddr(pc) == NULL) {
 		LOG << "ERROR: attempted to decode outside any known segment " << pc << "\n";
 		static DecodeResult invalid;
 		invalid.reset();
@@ -458,9 +461,9 @@ Signature *FrontEnd::getLibSignature(const char *name) {
  *					in the FrontEnd derived class, sometimes calling this function to do most of the work
  * RETURNS:		  true for a good decode (no illegal instructions)
  *============================================================================*/
-bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bool frag /* = false */,
-		bool spec /* = false */) {
+bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bool frag, bool spec) {
 	PBB pBB;					// Pointer to the current basic block
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 
 	// just in case you missed it
 	Boomerang::get()->alert_new(pProc);
@@ -869,7 +872,7 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 
  						// Check if this is the _exit or exit function. May prevent us from attempting to decode
 						// invalid instructions, and getting invalid stack height errors
-						const char* name = pBF->SymbolByAddress(uNewAddr);
+						const char* name = stage_0->SymbolByAddress(uNewAddr);
 						if (name == NULL && call->getDest()->isMemOf() && 
 											call->getDest()->getSubExp1()->isIntConst()) {
 							ADDRESS a = ((Const*)call->getDest()->getSubExp1())->getInt();
@@ -1198,4 +1201,10 @@ void FrontEnd::appendSyntheticReturn(PBB pCallBB, UserProc* pProc, RTL* pRtl) {
 	PBB pret = createReturnBlock(pProc, ret_rtls, new RTL(pRtl->getAddress()+1, stmt_list));
 	pret->addInEdge(pCallBB);
 	pCallBB->setOutEdge(0, pret);
+}
+
+void FrontEnd::AddSymbol( ADDRESS addr, const char *nam )
+{
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+	stage_0->AddSymbol(addr, nam);
 }

@@ -48,7 +48,8 @@
 #ifdef _WIN32
 #include <direct.h>					// For Windows mkdir()
 #endif
-
+#include "prog.h"
+#include "db/project.h"
 #include "type.h"
 #include "cluster.h"
 #include "types.h"
@@ -61,7 +62,6 @@
 #include "rtl.h"
 #include "BinaryFile.h"
 #include "frontend.h"
-#include "prog.h"
 #include "signature.h"
 #include "boomerang.h"
 #include "ansi-c-parser.h"
@@ -180,7 +180,9 @@ void Prog::generateDotFile() {
 
 }
 
-void Prog::generateCode(Cluster *cluster, UserProc *proc, bool intermixRTL) {
+void Prog::generateCode(Cluster *cluster, UserProc *proc, bool intermixRTL)
+{
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 	std::string basedir = m_rootCluster->makeDirs();
 	std::ofstream os;
 	if (cluster) {
@@ -197,7 +199,7 @@ void Prog::generateCode(Cluster *cluster, UserProc *proc, bool intermixRTL) {
 				for (int j = 0; sections[j]; j++) {
 					std::string str = ".";
 					str += sections[j];
-					PSectionInfo info = pBF->GetSectionInfoByName(str.c_str());
+					SectionInfo *info = stage_0->GetSectionInfoByName(str.c_str());
 					str = "start_";
 					str	+= sections[j];
 					code->AddGlobal(str.c_str(), new IntegerType(32, -1), new Const(info ? info->uNativeAddr : (unsigned int)-1));
@@ -499,7 +501,7 @@ Proc* Prog::setNewProc(ADDRESS uAddr) {
 	ADDRESS other = pBF->IsJumpToAnotherAddr(uAddr);
 	if (other != NO_ADDRESS)
 		uAddr = other;
-	const char* pName = pBF->SymbolByAddress(uAddr);
+	const char* pName = symbolByAddress(uAddr);
 	bool bLib = pBF->IsDynamicLinkedProc(uAddr) | pBF->IsStaticLinkedLibProc(uAddr);
 	if (pName == NULL) {
 		// No name. Give it a numbered name
@@ -876,9 +878,7 @@ const char *Prog::getGlobalName(ADDRESS uaddr)
 				(*it)->getAddress() + (*it)->getType()->getSize() / 8 > uaddr)
 			return (*it)->getName();
 	}
-	if (pBF)
-		return pBF->SymbolByAddress(uaddr);
-	return NULL;
+	return symbolByAddress(uaddr);
 }
 
 void Prog::dumpGlobals() {
@@ -890,11 +890,12 @@ void Prog::dumpGlobals() {
 		
 ADDRESS Prog::getGlobalAddr(const char *nam)
 {
-   	for (std::set<Global*>::iterator it = globals.begin(); it != globals.end(); it++) {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+	for (std::set<Global*>::iterator it = globals.begin(); it != globals.end(); it++) {
         if (!strcmp((*it)->getName(), nam))
         	return (*it)->getAddress();
    	}
-	return pBF->GetAddressByName(nam);
+	return stage_0->GetAddressByName(nam);
 }
 
 Global* Prog::getGlobal(const char *nam) {
@@ -907,7 +908,8 @@ Global* Prog::getGlobal(const char *nam) {
 
 bool Prog::globalUsed(ADDRESS uaddr, Type* knownType) {
     Global* global;
-    
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+
     for (std::set<Global*>::iterator it = globals.begin(); it != globals.end(); it++) {
         if ((*it)->getAddress() == uaddr) {
 			if (knownType) (*it)->meetType(knownType);
@@ -919,7 +921,7 @@ bool Prog::globalUsed(ADDRESS uaddr, Type* knownType) {
 		}
 	}
 
-	if (pBF->GetSectionInfoByAddr(uaddr) == NULL) {
+	if (stage_0->GetSectionInfoByAddr(uaddr) == NULL) {
 		if (VERBOSE)
 			LOG << "refusing to create a global at address that is in no known section of the binary: " << uaddr << "\n";
 		return false;
@@ -1035,7 +1037,7 @@ void Prog::setGlobalType(const char* nam, Type* ty) {
 // get a string constant at a given address if appropriate
 // if knownString, it is already known to be a char*
 char *Prog::getStringConstant(ADDRESS uaddr, bool knownString /* = false */) {
-	const SectionInfo* si = pBF->GetSectionInfoByAddr(uaddr);
+	const SectionInfo* si = getSectionInfoByAddr(uaddr);
 	// Too many compilers put constants, including string constants, into read/write sections
 	//if (si && si->bReadOnly)
 	if (si && !si->isAddressBss(uaddr)) {
@@ -1064,7 +1066,7 @@ char *Prog::getStringConstant(ADDRESS uaddr, bool knownString /* = false */) {
 
 double Prog::getFloatConstant(ADDRESS uaddr, bool &ok, int bits) {
 	ok = true;
-	SectionInfo* si = pBF->GetSectionInfoByAddr(uaddr);
+	SectionInfo* si = getSectionInfoByAddr(uaddr);
 	if (si && si->bReadOnly)
 		if (bits == 64) {
 			return pBF->readNativeFloat8(uaddr);
@@ -1673,7 +1675,7 @@ Global::~Global() {
 
 Exp* Global::getInitialValue(Prog* prog) {
 	Exp* e = NULL;
-	PSectionInfo si = prog->getSectionInfoByAddr(uaddr);
+	SectionInfo *si = prog->getSectionInfoByAddr(uaddr);
 	if (si && si->isAddressBss(uaddr))
 		// This global is in the BSS, so it can't be initialised
 		return NULL;
@@ -1692,7 +1694,7 @@ void Global::print(std::ostream& os, Prog* prog) {
 Exp *Prog::readNativeAs(ADDRESS uaddr, Type *type)
 {
 	Exp *e = NULL;
-	PSectionInfo si = getSectionInfoByAddr(uaddr);
+	SectionInfo *si = getSectionInfoByAddr(uaddr);
 	if (si == NULL)
 		return NULL;
 	if (type->resolvesToPointer()) {
@@ -2090,3 +2092,36 @@ Exp	*Prog::addReloc(Exp *e, ADDRESS lc)
 	return e;
 }
 
+const char* Prog::symbolByAddress( ADDRESS dest ) /* Get a symbol from an address */
+{
+	assert(false);
+	return 0;
+	//return pBF->SymbolByAddress(dest);
+}
+
+SectionInfo * Prog::getSectionInfoByAddr( ADDRESS a )
+{
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+
+	return stage_0->GetSectionInfoByAddr(a);
+}
+
+ADDRESS Prog::getLimitTextLow()
+{
+	return pBF->getLimitTextLow();
+}
+
+ADDRESS Prog::getLimitTextHigh()
+{
+	return pBF->getLimitTextHigh();
+}
+
+bool Prog::isStringConstant( ADDRESS a )
+{
+	return pBF->isStringConstant(a);
+}
+
+bool Prog::isCFStringConstant( ADDRESS a )
+{
+	return pBF->isCFStringConstant(a);
+}

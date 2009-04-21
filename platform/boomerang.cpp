@@ -38,6 +38,8 @@
 #include <windows.h>
 #endif
 #include "plugin_framework/PluginManager.h"
+#include "services/loader.h"
+#include "services/dispatcher.h"
 #include "prog.h"
 #include "proc.h"
 #include "BinaryFile.h"
@@ -86,8 +88,7 @@ Boomerang::Boomerang() : logger(NULL), vFlag(false), printRtl(false),
 {
 	progPath = "./";
 	outputPath = "./output/";
-	LoaderServices::instance();
-	PluginManager::getInstance().loadAll("loaders",LoaderDispatch);
+	PluginManager::getInstance().loadAll("loaders",LoaderDispatcher::invoke);
 }
 
 /**

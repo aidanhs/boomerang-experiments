@@ -51,10 +51,6 @@
 #else
 #define IMPORT_BINARYFILE
 #endif
-
-struct SectionInfo;
-typedef SectionInfo* PSectionInfo;
-
 // Objective-C stuff
 class ObjcIvar {
 public:
@@ -152,16 +148,9 @@ public:
     // Return the total size of the loaded image
     virtual size_t	getImageSize() = 0;
 
-// Section functions
-    int			GetNumSections() const;		// Return number of sections
-    PSectionInfo GetSectionInfo(int idx) const; // Return section struct
-    // Find section info given name, or 0 if not found
-    PSectionInfo GetSectionInfoByName(const char* sName);
-    // Find the end of a section, given an address in the section
-    PSectionInfo GetSectionInfoByAddr(ADDRESS uEntry) const;
-
     // returns true if the given address is in a read only section
-    virtual bool isReadOnly(ADDRESS uEntry);
+	// TODO: Convert this to use platform database of sections, and their info
+    //virtual bool isReadOnly(ADDRESS uEntry);
     // returns true if the given address is in a "strings" section
     virtual bool isStringConstant(ADDRESS uEntry) {
         return false;
@@ -194,11 +183,6 @@ public:
     }
 
 // Symbol table functions
-    // Lookup the address, return the name, or 0 if not found
-    virtual const char* SymbolByAddress(ADDRESS uNative);
-    // Lookup the name, return the address. If not found, return NO_ADDRESS
-    virtual ADDRESS		GetAddressByName(const char* pName, bool bNoTypeOK = false);
-    virtual void		AddSymbol(ADDRESS uNative, const char *pName) { }
     // Lookup the name, return the size
     virtual int GetSizeByName(const char* pName, bool bTypeOK = false);
     // Get an array of addresses of imported function stubs
@@ -305,7 +289,6 @@ protected:
     // Data
     bool		m_bArchive;					// True if archive member
     int			m_iNumSections;				// Number of sections
-    PSectionInfo m_pSections;				// The section info
     ADDRESS		m_uInitPC;					// Initial program counter
     ADDRESS		m_uInitSP;					// Initial stack pointer
 

@@ -35,7 +35,7 @@
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
 #endif
-
+#include "db/project.h"
 #include "exp.h"
 #include "register.h"
 #include "rtl.h"
@@ -226,6 +226,7 @@ void SparcFrontEnd::case_unhandled_stub(ADDRESS addr)
 bool SparcFrontEnd::case_CALL(ADDRESS& address, DecodeResult& inst, DecodeResult& delay_inst,
 		std::list<RTL*>*& BB_rtls, UserProc* proc, std::list<CallStatement*>& callList, std::ofstream &os,
 		bool isPattern/* = false*/) {
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
 
 	// Aliases for the call and delay RTLs
 	CallStatement* call_stmt = ((CallStatement*)inst.rtl->getList().back());
@@ -261,7 +262,7 @@ bool SparcFrontEnd::case_CALL(ADDRESS& address, DecodeResult& inst, DecodeResult
 		// First check for helper functions
 		ADDRESS dest = call_stmt->getFixedDest();
 		// Special check for calls to weird PLT entries which don't have symbols
-		if ((pBF->IsDynamicLinkedProc(dest)) && (pBF->SymbolByAddress(dest) == NULL)) {
+		if ((pBF->IsDynamicLinkedProc(dest)) && (stage_0->SymbolByAddress(dest) == NULL)) {
 			// This is one of those. Flag this as an invalid instruction
 			inst.valid = false;
 		}
@@ -310,7 +311,7 @@ bool SparcFrontEnd::case_CALL(ADDRESS& address, DecodeResult& inst, DecodeResult
 
 			bool ret = true;
 			// Check for _exit; probably should check for other "never return" functions
-			const char* name = pBF->SymbolByAddress(dest);
+			const char* name = stage_0->SymbolByAddress(dest);
 			if (name && strcmp(name, "_exit") == 0) {
 				// Don't keep decoding after this call
 				ret = false;
@@ -1276,8 +1277,10 @@ void SparcFrontEnd::quadOperation(ADDRESS addr, std::list<RTL*>* lrtl, OPER op)
 
 // Determine if this is a helper function, e.g. .mul. If so, append the appropriate RTLs to lrtl, and return true
 bool SparcFrontEnd::helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl) {
-	if (!pBF->IsDynamicLinkedProc(dest)) return false;
-	const char* p = pBF->SymbolByAddress(dest);
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+	if (!pBF->IsDynamicLinkedProc(dest)) 
+		return false;
+	const char* p = stage_0->SymbolByAddress(dest);
 	if (p == NULL) {
 		std::cerr << "Error: Can't find symbol for PLT address " << std::hex << dest << std::endl;
 		return false;
