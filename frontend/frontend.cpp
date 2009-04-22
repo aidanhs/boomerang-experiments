@@ -679,16 +679,17 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 							pBF->IsDynamicLinkedProcPointer(((Const*)pDest->getSubExp1())->getAddr())) {
 						if (VERBOSE)
 							LOG << "jump to a library function: " << stmt_jump << ", replacing with a call/ret.\n";
-						// jump to a library function
-						// replace with a call ret
-						std::string func = pBF->GetDynamicProcName(
-							((Const*)stmt_jump->getDest()->getSubExp1())->getAddr());
+						// jump to a library function -> replace with a call ret
+						std::string func = pBF->GetDynamicProcName(((Const*)stmt_jump->getDest()->getSubExp1())->getAddr());
 						CallStatement *call = new CallStatement;
 						call->setDest(stmt_jump->getDest()->clone());
 						LibProc *lp = pProc->getProg()->getLibraryProc(func.c_str());
 						if (lp == NULL)
+						{
 							LOG << "getLibraryProc returned NULL, aborting\n";
-						assert(lp);
+							assert(lp);
+							abort();
+						}
 						call->setDestProc(lp);
 						std::list<Statement*>* stmt_list = new std::list<Statement*>;
 						stmt_list->push_back(call);
