@@ -4106,6 +4106,12 @@ void UserProc::updateCallDefines() {
 	}
 }
 
+// Statement level transform : 
+// PREDICATE: (statement IS_A Assign) AND (statement.rhs IS_A MemOf) AND (statement.rhs.sub(1) IS_A IntConst)
+// ACTION: 
+//		$tmp_addr = assgn.rhs.sub(1);
+//		$tmp_val  = prog->readNative($tmp_addr,statement.type.bitwidth/8);
+//		statement.rhs.replace_with(Const($tmp_val))
 void UserProc::replaceSimpleGlobalConstants() {
 	if (VERBOSE)
 		LOG << "### replace simple global constants for " << getName() << " ###\n";
@@ -4115,28 +4121,28 @@ void UserProc::replaceSimpleGlobalConstants() {
 	for (it = stmts.begin(); it != stmts.end(); it++) {
 		Assign* assgn = dynamic_cast<Assign*>(*it);
 		if (assgn == NULL) continue;
-        if (!assgn->getRight()->isMemOf()) continue;
-        if (!assgn->getRight()->getSubExp1()->isIntConst()) continue;
-        ADDRESS addr = ((Const*)assgn->getRight()->getSubExp1())->getInt();
-        LOG << "assgn " << assgn << "\n";
-        if (prog->isReadOnly(addr)) {
-            LOG << "is readonly\n";
-            int val;
-            switch (assgn->getType()->getSize()) {
-                case 8:
-                    val = prog->readNative1(addr);
-                    break;
-                case 16:
-                    val = prog->readNative2(addr);
-                    break;
-                case 32:
-                    val = prog->readNative4(addr);
-                    break;
-                default:
-                    assert(false);
-            }
-            assgn->setRight(new Const(val));
-        }
+		if (!assgn->getRight()->isMemOf()) continue;
+		if (!assgn->getRight()->getSubExp1()->isIntConst()) continue;
+		ADDRESS addr = ((Const*)assgn->getRight()->getSubExp1())->getInt();
+		LOG << "assgn " << assgn << "\n";
+		if (prog->isReadOnly(addr)) {
+		    LOG << "is readonly\n";
+		    int val;
+		    switch (assgn->getType()->getSize()) {
+			case 8:
+			    val = prog->readNative1(addr);
+			    break;
+			case 16:
+			    val = prog->readNative2(addr);
+			    break;
+			case 32:
+			    val = prog->readNative4(addr);
+			    break;
+			default:
+			    assert(false);
+		    }
+		    assgn->setRight(new Const(val));
+		}
 	}
 }
 

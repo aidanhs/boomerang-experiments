@@ -1215,15 +1215,17 @@ UserProc* Prog::getNextUserProc(std::list<Proc*>::iterator& it) {
 const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 	delta=0;
 	last=0;
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+	int n = stage_0->GetNumSections();
+
 #ifdef _WIN32
 	// this is broken obviously
 	return NULL;
 #else
-	int n = pBF->GetNumSections();
 	int i;
 	// Search all code and read-only sections
 	for (i=0; i < n; i++) {
-		SectionInfo* pSect = pBF->GetSectionInfo(i);
+		SectionInfo* pSect = stage_0->GetSectionInfo(i);
 		if ((!pSect->bCode) && (!pSect->bReadOnly))
 			continue;
 		if ((uAddr < pSect->uNativeAddr) || (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))

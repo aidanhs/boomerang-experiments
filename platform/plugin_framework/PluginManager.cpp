@@ -153,15 +153,7 @@ int32_t PluginManager::loadByPath(const std::string & pluginPath)
     // Resolve symbolic links
 	
     #ifndef WIN32 
-    if (boost::filesystem::is_symlink(pluginPath))
-    {
-      char buff[APR_PATH_MAX+1];
-      int length = ::readlink(path, buff, APR_PATH_MAX);
-      if (length < 0)
-        return -1;
-        
-      path = std::string(buff, length);
-    }
+// TODO: Check handling of symlinks on *NIX system
     #endif
              
     // Don't load the same dynamic library twice

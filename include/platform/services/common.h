@@ -1,6 +1,6 @@
 #ifndef SERVICES_H
 #define SERVICES_H
-
+#include <stdlib.h>
 typedef struct LogParams
 {
   const char * filename;
