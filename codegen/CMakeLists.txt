@@ -1,3 +1,5 @@
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/platform/include/db)
+MESSAGE(WARN " TODO: separate codegenerators from the platform ?")
 SET(boomerang_c_codegen_sources
 chllcode.cpp
 syntax.cpp

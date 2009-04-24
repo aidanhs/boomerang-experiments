@@ -288,9 +288,7 @@ public:
     bool		isDynamicLinkedProcPointer(ADDRESS dest) {
         return pBF->IsDynamicLinkedProcPointer(dest);
     }
-    const char*	GetDynamicProcName(ADDRESS uNative) {
-        return pBF->GetDynamicProcName(uNative);
-    }
+    const char*	GetDynamicProcName(ADDRESS uNative);
 
     bool		processProc(int addr, UserProc* proc) {	// Decode a proc
         std::ofstream os;

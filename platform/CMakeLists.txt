@@ -1,8 +1,14 @@
+# common includes
 INCLUDE_DIRECTORIES(${MAIN_INCLUDE_DIRECTORY}/platform)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/db)
+#platform only includes
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+SET(boomerang_platform_INCLUDES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 ADD_SUBDIRECTORY(plugin_framework)
 ADD_SUBDIRECTORY(db)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include/db)
 SET(boomerang_platform_services_SRCS
    services/common.cpp
    services/loader.cpp

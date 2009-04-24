@@ -2127,3 +2127,10 @@ bool Prog::isCFStringConstant( ADDRESS a )
 {
 	return pBF->isCFStringConstant(a);
 }
+const char*	Prog::GetDynamicProcName(ADDRESS uNative) 
+{
+	Stage0 *stage_0 = Boomerang::get()->get_project()->get_stage0();
+	assert(!"Implement this method in terms of stage 0 symbol access?");
+	return 0;
+//    return pBF->GetDynamicProcName(uNative);
+}

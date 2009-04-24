@@ -1,4 +1,6 @@
-set(boomerang_typesystem_sources
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/platform/include/db)
+
+SET(boomerang_typesystem_sources
 type.cpp
 dfa.cpp
 constraint.cpp

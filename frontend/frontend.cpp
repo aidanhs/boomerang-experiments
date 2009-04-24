@@ -680,7 +680,10 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 						if (VERBOSE)
 							LOG << "jump to a library function: " << stmt_jump << ", replacing with a call/ret.\n";
 						// jump to a library function -> replace with a call ret
-						std::string func = pBF->GetDynamicProcName(((Const*)stmt_jump->getDest()->getSubExp1())->getAddr());
+						assert(false);
+						// Symbol table of the project must contain names of dynamically linked procedures for this to work.
+						//pBF->GetDynamicProcName(((Const*)stmt_jump->getDest()->getSubExp1())->getAddr());
+						std::string func = stage_0->SymbolByAddress(((Const*)stmt_jump->getDest()->getSubExp1())->getAddr());
 						CallStatement *call = new CallStatement;
 						call->setDest(stmt_jump->getDest()->clone());
 						LibProc *lp = pProc->getProg()->getLibraryProc(func.c_str());
@@ -775,8 +778,10 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 					if (call->getDest()->getOper() == opMemOf &&
 							call->getDest()->getSubExp1()->getOper() == opIntConst &&
 							pBF->IsDynamicLinkedProcPointer(((Const*)call->getDest()->getSubExp1())->getAddr())) {
+						ADDRESS tgt_addr = ((Const*)call->getDest()->getSubExp1())->getAddr();
+						assert(false);
 						// Dynamic linked proc pointers are treated as static.
-						const char *nam = pBF->GetDynamicProcName( ((Const*)call->getDest()->getSubExp1())->getAddr());
+						const char *nam = stage_0->SymbolByAddress(tgt_addr); // pBF->GetDynamicProcName(tgt_addr)
 						Proc *p = pProc->getProg()->getLibraryProc(nam);
 						call->setDestProc(p);
 						call->setIsComputed(false);
@@ -809,7 +814,9 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 									{
 										// Yes, it's a library function. Look up it's name.
 										ADDRESS a = ((Const*)stmt_jump->getDest()->getSubExp1())->getAddr();
-										const char *nam = pBF->GetDynamicProcName(a);
+
+										assert(false);
+										const char *nam = stage_0->SymbolByAddress(a); // pBF->GetDynamicProcName(a)
 										// Assign the proc to the call
 										Proc *p = pProc->getProg()->getLibraryProc(nam);
 										if (call->getDestProc()) {
@@ -878,7 +885,10 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bo
 											call->getDest()->getSubExp1()->isIntConst()) {
 							ADDRESS a = ((Const*)call->getDest()->getSubExp1())->getInt();
 							if (pBF->IsDynamicLinkedProcPointer(a))
-								name = pBF->GetDynamicProcName(a);
+							{
+								assert(false);
+								name = stage_0->SymbolByAddress(a); // pBF->GetDynamicProcName(a)
+							}
 						}	
 						if (name && noReturnCallDest(name)) {
 							// Make sure it has a return appended (so there is only one exit from the function)

@@ -42,6 +42,7 @@ namespace dbghelp {
 #endif
 
 #include "BinaryFile.h"
+#include "db/section_info.h"
 #include "Win32BinaryFile.h"
 #include "config.h"
 #include <iostream>
@@ -401,7 +402,15 @@ BOOL CALLBACK lookforsource(
     return FALSE;
 }
 #endif
-
+static std::string replace_dots(const std::string &str)
+{
+	std::string nodots(str);
+	int len = nodots.size();
+	for (int j=0; j < len; j++)
+		if (nodots[j] == '.')
+			nodots[j] = '_';
+	return nodots;
+}
 bool Win32BinaryFile::RealLoad(const char* sName) {
     m_pFileName = sName;
     FILE *fp = fopen(sName,"rb");
@@ -482,11 +491,7 @@ bool Win32BinaryFile::RealLoad(const char* sName) {
                 if (iatEntry >> 31) {
                     // This is an ordinal number (stupid idea)
                     std::ostringstream ost;
-                    std::string nodots(dllName);
-                    int len = nodots.size();
-                    for (int j=0; j < len; j++)
-                        if (nodots[j] == '.')
-                            nodots[j] = '_';	// Dots can't be in identifiers
+                    std::string nodots(replace_dots(dllName)); // Dots can't be in identifiers
                     ost << nodots << "_" << (iatEntry & 0x7FFFFFFF);
                     dlprocptrs[paddr] = ost.str();
                     // printf("Added symbol %s value %x\n", ost.str().c_str(), paddr);

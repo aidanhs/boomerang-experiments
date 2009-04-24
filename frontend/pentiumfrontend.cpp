@@ -612,11 +612,12 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint(bool& gotMain) {
 		CallStatement* cs = NULL;
 		if (inst.rtl->getList().size())
 			cs = (CallStatement*)(inst.rtl->getList().back());
-		if (cs && cs->getKind() == STMT_CALL &&
+		assert(!"Fix stage 0 ssymbol/dynamically linked functions lookup");
+		if (	cs && cs->getKind() == STMT_CALL &&
 				cs->getDest()->getOper() == opMemOf &&
 				cs->getDest()->getSubExp1()->getOper() == opIntConst &&
 				pBF->IsDynamicLinkedProcPointer(((Const*)cs->getDest() ->getSubExp1())->getAddr()) &&
-				!strcmp(pBF->GetDynamicProcName(((Const*)cs->getDest()->getSubExp1())->getAddr()), "GetModuleHandleA"))
+				!strcmp(stage_0->SymbolByAddress(((Const*)cs->getDest()->getSubExp1())->getAddr()), "GetModuleHandleA"))
 		{
 #if 0
 			std::cerr << "consider " << std::hex << addr << " " <<

@@ -3,10 +3,10 @@
  */
 #include "log.h"
 #include <sstream>
-#include "statement.h"
-#include "rtl.h"
-#include "exp.h"
-#include "managed.h"
+#include "db/statement.h"
+#include "db/rtl.h"
+#include "db/exp.h"
+#include "db/managed.h"
 
 Log &Log::operator<<(Statement *s)
 {

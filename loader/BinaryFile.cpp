@@ -115,10 +115,6 @@ ADDRESS BinaryFile::IsJumpToAnotherAddr(ADDRESS uNative) {
     return NO_ADDRESS;
 }
 
-const char *BinaryFile::GetDynamicProcName(ADDRESS uNative) {
-    return "dynamic";
-}
-
 bool BinaryFile::DisplayDetails(const char* fileName, FILE* f /* = stdout */) {
     return false;			// Should always be overridden
     // Should display file header, program
