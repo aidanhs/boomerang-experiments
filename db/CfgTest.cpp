@@ -29,11 +29,13 @@ suite->addTest(new CppUnit::TestCaller<CfgTest> ("CfgTest", \
 	&CfgTest::name, *this))
 
 void CfgTest::registerTests(CppUnit::TestSuite* suite) {
-	// Oops - they were all for dataflow. Need some real Cfg tests!
+    // Oops - they were all for dataflow. Need some real Cfg tests!
 }
 
 int CfgTest::countTestCases () const
-{ return 2; }	// ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:		CfgTest::setUp
@@ -43,7 +45,7 @@ int CfgTest::countTestCases () const
  * RETURNS:			<nothing>
  *============================================================================*/
 void CfgTest::setUp () {
-	//prog.setName("default name");
+    //prog.setName("default name");
 }
 
 /*==============================================================================

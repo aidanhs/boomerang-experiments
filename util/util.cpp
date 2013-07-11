@@ -35,9 +35,9 @@
  */
 
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER <= 1200 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <string>
 #include <sstream>
@@ -65,11 +65,11 @@
  *============================================================================*/
 std::string operator+(const std::string& s, int i)
 {
-	static char buf[50];
-	std::string ret(s);
+    static char buf[50];
+    std::string ret(s);
 
-	sprintf(buf,"%d",i);
-	return ret.append(buf);
+    sprintf(buf,"%d",i);
+    return ret.append(buf);
 }
 
 /*==============================================================================
@@ -81,9 +81,9 @@ std::string operator+(const std::string& s, int i)
  *============================================================================*/
 std::string initCapital(const std::string& s)
 {
-	std::string res(s);
+    std::string res(s);
     res[0] = toupper(res[0]);
-	return res;
+    return res;
 }
 
 /*==============================================================================
@@ -162,7 +162,7 @@ void upperStr(const char* s, char* d)
 {
     int len = strlen(s);
     for (int i=0; i < len; i++)
-       d[i] = toupper(s[i]);
+        d[i] = toupper(s[i]);
     d[len] = '\0';
 }
 
@@ -227,41 +227,52 @@ char* escapeStr(char* str) {
         char c = *p;
         if (c < ' ') {
             switch (c) {
-                case '\n': out << "\\n"; break;
-                case '\r': out << "\\r"; break;
-                case '\t': out << "\\t"; break;
-                case '\b': out << "\\b"; break;
-                case '\f': out << "\\f"; break;
-                default:   out << "\\x" << std::hex << std::setw(2) << (int)c;
+            case '\n':
+                out << "\\n";
+                break;
+            case '\r':
+                out << "\\r";
+                break;
+            case '\t':
+                out << "\\t";
+                break;
+            case '\b':
+                out << "\\b";
+                break;
+            case '\f':
+                out << "\\f";
+                break;
+            default:
+                out << "\\x" << std::hex << std::setw(2) << (int)c;
             }
         } else out << c;
     }
 #endif
-	char unescaped[]="ntvbrfa\"";
-	char escaped[]="\n\t\v\b\r\f\a\"";
-	bool escapedSucessfully;
+    char unescaped[]="ntvbrfa\"";
+    char escaped[]="\n\t\v\b\r\f\a\"";
+    bool escapedSucessfully;
 
-	// test each character
-	for(;*str;str++)
-	{
-		if( isprint(*str) && *str != '\"' ) {
-    		// it's printable, so just print it
-    		out << *str;
-		} else { // in fact, this shouldn't happen, except for "
-			// maybe it's a known escape sequence
-			escapedSucessfully=false;
-			for(int i=0;escaped[i] && !escapedSucessfully ;i++) {
-				if(*str == escaped[i]) {
-					out << "\\" << unescaped[i];
-					escapedSucessfully=true;
-      			}
-			}
-			if(!escapedSucessfully) {
- 				// it isn't so just use the \xhh escape
- 				out << "\\x" << std::hex << std::setfill('0') << std::setw(2) << (int)*str;
-				out << std::setfill(' ');
-			}
-		}
+    // test each character
+    for(; *str; str++)
+    {
+        if( isprint(*str) && *str != '\"' ) {
+            // it's printable, so just print it
+            out << *str;
+        } else { // in fact, this shouldn't happen, except for "
+            // maybe it's a known escape sequence
+            escapedSucessfully=false;
+            for(int i=0; escaped[i] && !escapedSucessfully ; i++) {
+                if(*str == escaped[i]) {
+                    out << "\\" << unescaped[i];
+                    escapedSucessfully=true;
+                }
+            }
+            if(!escapedSucessfully) {
+                // it isn't so just use the \xhh escape
+                out << "\\x" << std::hex << std::setfill('0') << std::setw(2) << (int)*str;
+                out << std::setfill(' ');
+            }
+        }
     }
 
     char* ret = new char[out.str().size()+1];

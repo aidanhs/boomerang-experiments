@@ -13,7 +13,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <numeric>      // For accumulate
 #include <algorithm>    // For std::max()
@@ -71,11 +71,11 @@ Exp *ExpTransformer::applyAllTo(Exp *p, bool &bMod)
 #endif
     bool mod;
     //do {
-        mod = false;
-        for (std::list<ExpTransformer *>::iterator it = transformers.begin(); it != transformers.end(); it++) {
-            e = (*it)->applyTo(e, mod);
-            bMod |= mod;
-        }
+    mod = false;
+    for (std::list<ExpTransformer *>::iterator it = transformers.begin(); it != transformers.end(); it++) {
+        e = (*it)->applyTo(e, mod);
+        bMod |= mod;
+    }
     //} while (mod);
 
     cache.push_back(new Binary(opEquals, p->clone(), e->clone()));
@@ -90,7 +90,7 @@ void ExpTransformer::loadAll()
     ifs.open(sPath.c_str());
 
     if (!ifs.good()) {
-		std::cerr << "can't open `" << sPath.c_str() << "'\n";
+        std::cerr << "can't open `" << sPath.c_str() << "'\n";
         exit(1);
     }
 
@@ -100,8 +100,8 @@ void ExpTransformer::loadAll()
         size_t j = sFile.find('#');
         if (j != (size_t)-1)
             sFile = sFile.substr(0, j);
-	    if (sFile.size() > 0 && sFile[sFile.size()-1] == '\n')
-	        sFile = sFile.substr(0, sFile.size()-1);
+        if (sFile.size() > 0 && sFile[sFile.size()-1] == '\n')
+            sFile = sFile.substr(0, sFile.size()-1);
         if (sFile == "") continue;
         std::ifstream ifs1;
         std::string sPath1 = Boomerang::get()->getProgPath() + "transformations/" + sFile;

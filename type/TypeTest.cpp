@@ -33,13 +33,15 @@ suite->addTest(new CppUnit::TestCaller<TypeTest> ("testUtil", \
 void TypeTest::registerTests(CppUnit::TestSuite* suite) {
 
 //	Note: there is nothing left to test in Util (for now)
-	MYTEST(testTypeLong);
-	MYTEST(testNotEqual);
-	MYTEST(testCompound);
+    MYTEST(testTypeLong);
+    MYTEST(testNotEqual);
+    MYTEST(testCompound);
 }
 
 int TypeTest::countTestCases () const
-{ return 1; }	// ? What's this for?
+{
+    return 1;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:		TypeTest::setUp
@@ -67,10 +69,10 @@ void TypeTest::tearDown () {
  *============================================================================*/
 void TypeTest::testTypeLong () {
 
-	std::string expected("unsigned long long");
-	IntegerType t(64, -1);
-	std::string actual(t.getCtype());
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    std::string expected("unsigned long long");
+    IntegerType t(64, -1);
+    std::string actual(t.getCtype());
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
 
 /*==============================================================================
@@ -79,11 +81,11 @@ void TypeTest::testTypeLong () {
  *============================================================================*/
 void TypeTest::testNotEqual () {
 
-	IntegerType t1(32, -1);
-	IntegerType t2(32, -1);
-	IntegerType t3(16, -1);
-	CPPUNIT_ASSERT(!(t1 != t2));
-	CPPUNIT_ASSERT(t2 != t3);
+    IntegerType t1(32, -1);
+    IntegerType t2(32, -1);
+    IntegerType t3(16, -1);
+    CPPUNIT_ASSERT(!(t1 != t2));
+    CPPUNIT_ASSERT(t2 != t3);
 }
 
 /*==============================================================================
@@ -91,60 +93,60 @@ void TypeTest::testNotEqual () {
  * OVERVIEW:		Test type inequality
  *============================================================================*/
 void TypeTest::testCompound() {
-	BinaryFile *pBF = BinaryFileFactory::Load(HELLO_WINDOWS);
-	FrontEnd *pFE = new PentiumFrontEnd(pBF);
-	pFE->readLibraryCatalog();				// Read definitions
+    BinaryFile *pBF = BinaryFileFactory::Load(HELLO_WINDOWS);
+    FrontEnd *pFE = new PentiumFrontEnd(pBF);
+    pFE->readLibraryCatalog();				// Read definitions
 
-	Boomerang::get()->setLogger(new FileLogger());
-	Signature* paintSig = pFE->getLibSignature("BeginPaint");
-	// Second argument should be an LPPAINTSTRUCT
-	Type* ty = paintSig->getParamType(1);
-	const char* p = ty->getCtype();
-	std::string expected("LPPAINTSTRUCT");
-	std::string actual(p);
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    Boomerang::get()->setLogger(new FileLogger());
+    Signature* paintSig = pFE->getLibSignature("BeginPaint");
+    // Second argument should be an LPPAINTSTRUCT
+    Type* ty = paintSig->getParamType(1);
+    const char* p = ty->getCtype();
+    std::string expected("LPPAINTSTRUCT");
+    std::string actual(p);
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// Get the type pointed to
-	ty = ty->asPointer()->getPointsTo();
-	p = ty->getCtype();
-	expected = "PAINTSTRUCT";
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // Get the type pointed to
+    ty = ty->asPointer()->getPointsTo();
+    p = ty->getCtype();
+    expected = "PAINTSTRUCT";
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
 
-	// Offset 8 should have a RECT
-	Type* subTy = ty->asCompound()->getTypeAtOffset(8*8);
-	p = subTy->getCtype();
-	expected = "RECT";
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // Offset 8 should have a RECT
+    Type* subTy = ty->asCompound()->getTypeAtOffset(8*8);
+    p = subTy->getCtype();
+    expected = "RECT";
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// Name at offset C should be bottom
-	p = subTy->asCompound()->getNameAtOffset(0x0C*8);
-	expected = "bottom";
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // Name at offset C should be bottom
+    p = subTy->asCompound()->getNameAtOffset(0x0C*8);
+    expected = "bottom";
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// Now figure out the name at offset 8+C
-	p = ty->asCompound()->getNameAtOffset((8 + 0x0C)*8);
-	expected = "rcPaint";
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // Now figure out the name at offset 8+C
+    p = ty->asCompound()->getNameAtOffset((8 + 0x0C)*8);
+    expected = "rcPaint";
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// Also at offset 8
-	p = ty->asCompound()->getNameAtOffset((8 + 0)*8);
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // Also at offset 8
+    p = ty->asCompound()->getNameAtOffset((8 + 0)*8);
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// Also at offset 8+4
-	p = ty->asCompound()->getNameAtOffset((8 + 4)*8);
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // Also at offset 8+4
+    p = ty->asCompound()->getNameAtOffset((8 + 4)*8);
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// And at offset 8+8
-	p = ty->asCompound()->getNameAtOffset((8 + 8)*8);
-	actual = p;
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // And at offset 8+8
+    p = ty->asCompound()->getNameAtOffset((8 + 8)*8);
+    actual = p;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
 
 

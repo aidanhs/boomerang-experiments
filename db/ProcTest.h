@@ -17,21 +17,21 @@
 #include "prog.h"
 
 class ProcTest : public CppUnit::TestCase {
-  protected:
-	Proc*  m_proc;
-	
+protected:
+    Proc*  m_proc;
 
-  public:
-	ProcTest(std::string name) : CppUnit::TestCase (name)
-	{}
 
-	virtual void registerTests(CppUnit::TestSuite* suite);
+public:
+    ProcTest(std::string name) : CppUnit::TestCase (name)
+    {}
 
-	int countTestCases () const;
+    virtual void registerTests(CppUnit::TestSuite* suite);
 
-	void setUp ();
-	void tearDown ();
+    int countTestCases () const;
 
-	void testName ();
+    void setUp ();
+    void tearDown ();
+
+    void testName ();
 };
 

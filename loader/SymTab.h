@@ -44,15 +44,15 @@
 
 typedef struct tSymTabEnt {
     ADDRESS dwValue;                    // Value of the symbol
-    char* pName;                        // Name of the symbol   
+    char* pName;                        // Name of the symbol
 } SymTabEnt;
 typedef SymTabEnt* PSYMTABENT;
- 
+
 class SymTab
 {
 public:
-            SymTab();                       // Constructor
-            ~SymTab();                      // Destructor
+    SymTab();                       // Constructor
+    ~SymTab();                      // Destructor
     int     Init(int iNumEnt);              // Allocate space; true if success
     void    Add(ADDRESS dwAddr, char* pName); // Add a new entry
     void    Sort();                         // Sort the entries
@@ -65,7 +65,7 @@ private:
     PSYMTABENT  m_pEnt;                 // Points to array of entries
     int     m_iNumEnt;                  // Max number of entries (num alloc'd)
     int     m_iCurEnt;                  // Numner added by the Add() method,
-                                        // i.e. the num of actual entries
+    // i.e. the num of actual entries
     int     m_iFindEnt;                 // Used by Find() method
 };
 
