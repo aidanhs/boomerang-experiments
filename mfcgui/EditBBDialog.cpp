@@ -84,17 +84,18 @@ BOOL CEditBBDialog::OnInitDialog()
     m_casehead.AddString("NONE");
     ntobb[nbbs] = NULL;
     bbton[NULL] = nbbs++;
-    for (a_bb = cfg->getFirstBB(it); a_bb; a_bb = cfg->getNextBB(it)) {
-        std::stringstream os;
-        os << std::hex << a_bb->getLowAddr() << std::ends;
-        ntobb[nbbs] = a_bb;
-        bbton[a_bb] = nbbs++;
-        m_loophead.AddString(os.str().c_str());
-        m_loopfollow.AddString(os.str().c_str());
-        m_latchnode.AddString(os.str().c_str());
-        m_condfollow.AddString(os.str().c_str());
-        m_casehead.AddString(os.str().c_str());
-    }
+    for (a_bb = cfg->getFirstBB(it); a_bb; a_bb = cfg->getNextBB(it))
+        {
+            std::stringstream os;
+            os << std::hex << a_bb->getLowAddr() << std::ends;
+            ntobb[nbbs] = a_bb;
+            bbton[a_bb] = nbbs++;
+            m_loophead.AddString(os.str().c_str());
+            m_loopfollow.AddString(os.str().c_str());
+            m_latchnode.AddString(os.str().c_str());
+            m_condfollow.AddString(os.str().c_str());
+            m_casehead.AddString(os.str().c_str());
+        }
 
     m_type.SetCurSel((int)bb->m_structType);
     m_condtype.SetCurSel((int)bb->m_loopCondType);

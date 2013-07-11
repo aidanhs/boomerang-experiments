@@ -61,15 +61,17 @@ void Analysis::finalSimplify(PBB pBB)
     if (pRtls == NULL)
         return;
     std::list<RTL*>::iterator rit;
-    for (rit = pRtls->begin(); rit != pRtls->end(); rit++) {
-        for (int i=0; i < (*rit)->getNumStmt(); i++) {
-            Statement* rt = (*rit)->elementAt(i);
-            rt->simplifyAddr();
-            // Also simplify everything; in particular, stack offsets are
-            // often negative, so we at least canonicalise [esp + -8] to [esp-8]
-            rt->simplify();
+    for (rit = pRtls->begin(); rit != pRtls->end(); rit++)
+        {
+            for (int i=0; i < (*rit)->getNumStmt(); i++)
+                {
+                    Statement* rt = (*rit)->elementAt(i);
+                    rt->simplifyAddr();
+                    // Also simplify everything; in particular, stack offsets are
+                    // often negative, so we at least canonicalise [esp + -8] to [esp-8]
+                    rt->simplify();
+                }
         }
-    }
 }
 
 /*==============================================================================
@@ -81,20 +83,21 @@ void Analysis::finalSimplify(PBB pBB)
  *					analysed
  * RETURNS:			<none>
  *============================================================================*/
-void Analysis::analyse(UserProc* proc) {
+void Analysis::analyse(UserProc* proc)
+{
     Cfg* cfg = proc->getCFG();
     std::list<PBB>::iterator it;
     PBB pBB = cfg->getFirstBB(it);
     while (pBB)
-    {
-        // Perform final simplifications
-        finalSimplify(pBB);
+        {
+            // Perform final simplifications
+            finalSimplify(pBB);
 
-        // analyse calls
-        analyseCalls(pBB, proc);
+            // analyse calls
+            analyseCalls(pBB, proc);
 
-        pBB = cfg->getNextBB(it);
-    }
+            pBB = cfg->getNextBB(it);
+        }
 
     cfg->simplify();
 }
@@ -152,20 +155,23 @@ void Analysis::analyseCalls(PBB pBB, UserProc *proc)
     if (rtls == NULL)
         return;
     for (std::list<RTL*>::iterator it = rtls->begin(); it != rtls->end();
-            it++) {
-        if (!(*it)->isCall()) continue;
-        CallStatement* call = (CallStatement*)(*it)->getList().back();
-        if (call->getDestProc() == NULL && !call->isComputed()) {
-            Proc *p = proc->getProg()->findProc(call->getFixedDest());
-            if (p == NULL) {
-                LOG << "cannot find proc for dest "
-                    << call->getFixedDest() << " in call at "
-                    << (*it)->getAddress() << "\n";
-                assert(p);
-            }
-            call->setDestProc(p);
+            it++)
+        {
+            if (!(*it)->isCall()) continue;
+            CallStatement* call = (CallStatement*)(*it)->getList().back();
+            if (call->getDestProc() == NULL && !call->isComputed())
+                {
+                    Proc *p = proc->getProg()->findProc(call->getFixedDest());
+                    if (p == NULL)
+                        {
+                            LOG << "cannot find proc for dest "
+                                << call->getFixedDest() << " in call at "
+                                << (*it)->getAddress() << "\n";
+                            assert(p);
+                        }
+                    call->setDestProc(p);
+                }
+            call->setSigArguments();
         }
-        call->setSigArguments();
-    }
 }
 

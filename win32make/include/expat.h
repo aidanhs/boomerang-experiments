@@ -38,7 +38,8 @@ typedef unsigned char XML_Bool;
    Otherwise, the #define hackery is quite ugly and would have been
    dropped.
 */
-enum XML_Status {
+enum XML_Status
+{
     XML_STATUS_ERROR = 0,
 #define XML_STATUS_ERROR XML_STATUS_ERROR
     XML_STATUS_OK = 1,
@@ -47,7 +48,8 @@ enum XML_Status {
 #define XML_STATUS_SUSPENDED XML_STATUS_SUSPENDED
 };
 
-enum XML_Error {
+enum XML_Error
+{
     XML_ERROR_NONE,
     XML_ERROR_NO_MEMORY,
     XML_ERROR_SYNTAX,
@@ -90,7 +92,8 @@ enum XML_Error {
     XML_ERROR_SUSPEND_PE
 };
 
-enum XML_Content_Type {
+enum XML_Content_Type
+{
     XML_CTYPE_EMPTY = 1,
     XML_CTYPE_ANY,
     XML_CTYPE_MIXED,
@@ -99,7 +102,8 @@ enum XML_Content_Type {
     XML_CTYPE_SEQ
 };
 
-enum XML_Content_Quant {
+enum XML_Content_Quant
+{
     XML_CQUANT_NONE,
     XML_CQUANT_OPT,
     XML_CQUANT_REP,
@@ -126,7 +130,8 @@ enum XML_Content_Quant {
 
 typedef struct XML_cp XML_Content;
 
-struct XML_cp {
+struct XML_cp
+{
     enum XML_Content_Type         type;
     enum XML_Content_Quant        quant;
     XML_Char *                    name;
@@ -185,7 +190,8 @@ XML_SetXmlDeclHandler(XML_Parser parser,
                       XML_XmlDeclHandler xmldecl);
 
 
-typedef struct {
+typedef struct
+{
     void *(*malloc_fcn)(size_t size);
     void *(*realloc_fcn)(void *ptr, size_t size);
     void (*free_fcn)(void *ptr);
@@ -495,7 +501,8 @@ typedef void (XMLCALL *XML_SkippedEntityHandler) (
    4. No Unicode character may be encoded by more than one distinct
       sequence of bytes.
 */
-typedef struct {
+typedef struct
+{
     int map[256];
     void *data;
     int (XMLCALL *convert)(void *data, const char *s);
@@ -801,14 +808,16 @@ XML_StopParser(XML_Parser parser, XML_Bool resumable);
 XMLPARSEAPI(enum XML_Status)
 XML_ResumeParser(XML_Parser parser);
 
-enum XML_Parsing {
+enum XML_Parsing
+{
     XML_INITIALIZED,
     XML_PARSING,
     XML_FINISHED,
     XML_SUSPENDED
 };
 
-typedef struct {
+typedef struct
+{
     enum XML_Parsing parsing;
     XML_Bool finalBuffer;
 } XML_ParsingStatus;
@@ -842,7 +851,8 @@ XML_ExternalEntityParserCreate(XML_Parser parser,
                                const XML_Char *context,
                                const XML_Char *encoding);
 
-enum XML_ParamEntityParsing {
+enum XML_ParamEntityParsing
+{
     XML_PARAM_ENTITY_PARSING_NEVER,
     XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE,
     XML_PARAM_ENTITY_PARSING_ALWAYS
@@ -953,7 +963,8 @@ XML_ErrorString(enum XML_Error code);
 XMLPARSEAPI(const XML_LChar *)
 XML_ExpatVersion(void);
 
-typedef struct {
+typedef struct
+{
     int major;
     int minor;
     int micro;
@@ -966,7 +977,8 @@ XMLPARSEAPI(XML_Expat_Version)
 XML_ExpatVersionInfo(void);
 
 /* Added in Expat 1.95.5. */
-enum XML_FeatureEnum {
+enum XML_FeatureEnum
+{
     XML_FEATURE_END = 0,
     XML_FEATURE_UNICODE,
     XML_FEATURE_UNICODE_WCHAR_T,
@@ -978,7 +990,8 @@ enum XML_FeatureEnum {
     /* Additional features must be added to the end of this enum. */
 };
 
-typedef struct {
+typedef struct
+{
     enum XML_FeatureEnum  feature;
     const XML_LChar       *name;
     long int              value;

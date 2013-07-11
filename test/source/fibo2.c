@@ -13,7 +13,8 @@ Compile with gcc -O4 -fno-inline -o test/sparc/fibo2 test/source/fibo2.c
 
 int fib2(int x);
 
-int fib1 (int x) {
+int fib1 (int x)
+{
     return fib2(x);
 }
 
@@ -25,7 +26,8 @@ int fib2 (int x)
 }
 
 int main (void)
-{   int number, value;
+{
+    int number, value;
 
     printf ("Input number: ");
     scanf ("%d", &number);

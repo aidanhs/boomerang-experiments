@@ -24,10 +24,12 @@ public:
     virtual ~Log() {};
 };
 
-class FileLogger : public Log {
+class FileLogger : public Log
+{
 public:
     FileLogger();		// Implemented in boomerang.cpp
-    virtual Log &operator<<(const char *str) {
+    virtual Log &operator<<(const char *str)
+    {
         out << str << std::flush;
         return *this;
     }

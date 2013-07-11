@@ -50,23 +50,26 @@ void segv_handler(int a, siginfo_t *b, void *c)
             uc->uc_mcontext.gregs[REG_G7]);
 
     fprintf(stderr, "stack: ");
-    for (int i = 0; i < 100; i++) {
-        unsigned int *sp = (unsigned int*)uc->uc_mcontext.gregs[REG_O6];
-        fprintf(stderr, "(%08X) %08X %08X %08X %08X", sp+i*4, sp[i*4], sp[i*4+1], sp[i*4+2], sp[i*4+3]);
-        fprintf(stderr, "\n		 ");
-    }
+    for (int i = 0; i < 100; i++)
+        {
+            unsigned int *sp = (unsigned int*)uc->uc_mcontext.gregs[REG_O6];
+            fprintf(stderr, "(%08X) %08X %08X %08X %08X", sp+i*4, sp[i*4], sp[i*4+1], sp[i*4+2], sp[i*4+3]);
+            fprintf(stderr, "\n		 ");
+        }
 #endif
 
     fprintf(stderr, "\napproximate stack trace:\n");
-    for (int i = 0; i < 100; i++) {
-        unsigned int *sp = (unsigned int*)uc->uc_mcontext.gregs[REG_O6];
-        if (sp[i] - (unsigned int)(sp+i) < 100)
-            fprintf(stderr, "%08X\n", sp[++i]);
-    }
+    for (int i = 0; i < 100; i++)
+        {
+            unsigned int *sp = (unsigned int*)uc->uc_mcontext.gregs[REG_O6];
+            if (sp[i] - (unsigned int)(sp+i) < 100)
+                fprintf(stderr, "%08X\n", sp[++i]);
+        }
     exit(0);
 }
 
-int main(int argc, const char* argv[]) {
+int main(int argc, const char* argv[])
+{
     struct sigaction act;
     memset(&act, 0, sizeof(struct sigaction));
     act.sa_sigaction = segv_handler;
@@ -74,14 +77,16 @@ int main(int argc, const char* argv[]) {
 
     sigaction(SIGSEGV, &act, NULL);
 #else
-int main(int argc, const char* argv[]) {
+int main(int argc, const char* argv[])
+{
 #endif
     return Boomerang::get()->commandLine(argc, argv);
 }
 
 /* This makes sure that the garbage collector sees all allocations, even those
 	that we can't be bothered collecting, especially standard STL objects */
-void* operator new(size_t n) {
+void* operator new(size_t n)
+{
 #ifdef DONT_COLLECT_STL
     return GC_malloc_uncollectable(n);	// Don't collect, but mark
 #else
@@ -89,7 +94,8 @@ void* operator new(size_t n) {
 #endif
 }
 
-void operator delete(void* p) {
+void operator delete(void* p)
+{
 #ifdef DONT_COLLECT_STL
     GC_free(p); // Important to call this if you call GC_malloc_uncollectable
     // #else do nothing!

@@ -136,10 +136,11 @@ void CViewDecodeDialog::alert_decode(ADDRESS pc, int nBytes)
     m_locked = true;
 
     RECT r;
-    for (int i = 0; i < nlines; i++) {
-        getUpdateRect(r, i, pc, nBytes);
-        buf.FillSolidRect(&r, INSTRUCTION);
-    }
+    for (int i = 0; i < nlines; i++)
+        {
+            getUpdateRect(r, i, pc, nBytes);
+            buf.FillSolidRect(&r, INSTRUCTION);
+        }
 
     m_locked = false;
 }
@@ -154,10 +155,11 @@ void CViewDecodeDialog::alert_baddecode(ADDRESS pc)
     problems.push_back(pc);
 
     RECT r;
-    for (int i = 0; i < nlines; i++) {
-        getUpdateRect(r, i, pc, 1);
-        buf.FillSolidRect(&r, PROBLEM);
-    }
+    for (int i = 0; i < nlines; i++)
+        {
+            getUpdateRect(r, i, pc, 1);
+            buf.FillSolidRect(&r, PROBLEM);
+        }
 
     m_locked = false;
 }
@@ -173,10 +175,11 @@ void CViewDecodeDialog::alert_done(Proc *p, ADDRESS pc, ADDRESS last, int nBytes
     procs.push_back(new std::pair<ADDRESS, int>(pc, nBytes));
 
     RECT r;
-    for (int i = 0; i < nlines; i++) {
-        getUpdateRect(r, i, pc, last - pc);
-        buf.FillSolidRect(&r, PROCEDURE);
-    }
+    for (int i = 0; i < nlines; i++)
+        {
+            getUpdateRect(r, i, pc, last - pc);
+            buf.FillSolidRect(&r, PROCEDURE);
+        }
 
     m_locked = false;
 }
@@ -205,10 +208,11 @@ BOOL CViewDecodeDialog::OnInitDialog()
 
     m_locked = false;
 
-    if ((m_thread = CreateThread(NULL, 0, dodecode, this, 0, &m_thread_id)) == NULL) {
-        MessageBox("Cannot create new thread to perform decompilation", "Error", MB_ICONEXCLAMATION|MB_OK);
-        return IDCANCEL;
-    }
+    if ((m_thread = CreateThread(NULL, 0, dodecode, this, 0, &m_thread_id)) == NULL)
+        {
+            MessageBox("Cannot create new thread to perform decompilation", "Error", MB_ICONEXCLAMATION|MB_OK);
+            return IDCANCEL;
+        }
 
     SetTimer(WM_TIMER, 100, NULL);
 
@@ -234,13 +238,14 @@ void CViewDecodeDialog::getUpdateRect(RECT &r1, int line, ADDRESS a, int nBytes)
     int off_start = st % oneline;
     int off_end = en % oneline;
 
-    if (line < line_start || line > line_end) {
-        r1.top = 0;
-        r1.bottom = 0;
-        r1.left = 0;
-        r1.right = 0;
-        return;
-    }
+    if (line < line_start || line > line_end)
+        {
+            r1.top = 0;
+            r1.bottom = 0;
+            r1.left = 0;
+            r1.right = 0;
+            return;
+        }
 
     r1.top = r.top + line*linesize;
     r1.bottom = r1.top + linesize;
@@ -248,10 +253,12 @@ void CViewDecodeDialog::getUpdateRect(RECT &r1, int line, ADDRESS a, int nBytes)
         r1.left = r.left + off_start*scaleamt;
     else
         r1.left = r.left;
-    if (line == line_end) {
-        r1.right = r.left + off_end*scaleamt;
-        //if ((r1.right - r1.left) < unitsize) r1.right = r1.left + unitsize;
-    } else
+    if (line == line_end)
+        {
+            r1.right = r.left + off_end*scaleamt;
+            //if ((r1.right - r1.left) < unitsize) r1.right = r1.left + unitsize;
+        }
+    else
         r1.right = r.right;
 
     if (r1.right > r.right)
@@ -323,10 +330,11 @@ void CViewDecodeDialog::OnTimer(UINT nIDEvent)
     /* this loop tries to sum up all the overlapping regions in a way which will
        not result in a % greater than 100 */
     for (std::list<std::pair<ADDRESS, int>* >::iterator it = procs.begin();
-            it != procs.end(); it++) {
-        int n = ((*it)->first - prog.limitTextLow) * 100 / textSize;
-        totaln[n] += (*it)->second;
-    }
+            it != procs.end(); it++)
+        {
+            int n = ((*it)->first - prog.limitTextLow) * 100 / textSize;
+            totaln[n] += (*it)->second;
+        }
 
     m_locked = false;
 
@@ -365,17 +373,19 @@ void CViewDecodeDialog::OnDblclkProctree(NMHDR* pNMHDR, LRESULT* pResult)
 {
     CString s;
     m_cancel.GetWindowText(s);
-    if (s == "done") {
-        HTREEITEM h = m_proctree.GetSelectedItem();
-        Proc *p = (Proc *)m_proctree.GetItemData(h);
-        if (p && !p->isLib()) {
-            UserProc *u = (UserProc *)p;
-            CProcDoc *d = (CProcDoc*)theApp.m_pDocManager->OpenDocumentFile(p->getName());
-            d->setProc(p);
-            d->UpdateAllViews(NULL);
+    if (s == "done")
+        {
+            HTREEITEM h = m_proctree.GetSelectedItem();
+            Proc *p = (Proc *)m_proctree.GetItemData(h);
+            if (p && !p->isLib())
+                {
+                    UserProc *u = (UserProc *)p;
+                    CProcDoc *d = (CProcDoc*)theApp.m_pDocManager->OpenDocumentFile(p->getName());
+                    d->setProc(p);
+                    d->UpdateAllViews(NULL);
 
-            EndDialog(IDOK);
+                    EndDialog(IDOK);
+                }
         }
-    }
     *pResult = 0;
 }

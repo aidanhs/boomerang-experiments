@@ -23,7 +23,8 @@
 suite->addTest(new CppUnit::TestCaller<CTest> ("testC", \
     &CTest::name, *this))
 
-void CTest::registerTests(CppUnit::TestSuite* suite) {
+void CTest::registerTests(CppUnit::TestSuite* suite)
+{
 
     MYTEST(testSignature);
 }
@@ -40,7 +41,8 @@ int CTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void CTest::setUp () {
+void CTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -50,7 +52,8 @@ void CTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void CTest::tearDown () {
+void CTest::tearDown ()
+{
 }
 
 /*==============================================================================
@@ -59,7 +62,8 @@ void CTest::tearDown () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void CTest::testSignature () {
+void CTest::testSignature ()
+{
     std::istringstream os("int printf(char *fmt, ...);");
     AnsiCParser *p = new AnsiCParser(os, false);
     p->yyparse(PLAT_PENTIUM, CONV_C);

@@ -11,7 +11,8 @@ class TestPlugin : public IPlugin
     wxString name;
 public:
     virtual wxMDIChildFrame *GetWindow(wxMDIParentFrame *parent);
-    virtual wxString &GetName(void) {
+    virtual wxString &GetName(void)
+    {
         return name;
     }
     TestPlugin() : m_window(NULL), name("Test Plugin") { }

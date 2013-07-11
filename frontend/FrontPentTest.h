@@ -7,7 +7,8 @@
 class FrontEnd;
 class PentiumFrontEnd;
 
-class FrontPentTest : public CppUnit::TestCase {
+class FrontPentTest : public CppUnit::TestCase
+{
 protected:
 
 public:

@@ -25,7 +25,8 @@
 
 static int nextUnionNumber = 0;
 
-bool max(int a, int b) {		// Faster to write than to find the #include for
+bool max(int a, int b)  		// Faster to write than to find the #include for
+{
     return a>b ? a : b;
 }
 
@@ -42,58 +43,66 @@ bool max(int a, int b) {		// Faster to write than to find the #include for
 
 // ch set true if any change
 
-Type* VoidType::meetWith(Type* other, bool& ch) {
+Type* VoidType::meetWith(Type* other, bool& ch)
+{
     // void meet x = x
     ch |= !other->isVoid();
     return other;
 }
 
-Type* FuncType::meetWith(Type* other, bool& ch) {
+Type* FuncType::meetWith(Type* other, bool& ch)
+{
     if (this == other) return this;		// NOTE: at present, compares names as well as types and number of parameters
     ch = true;
     return createUnion(other);
 }
 
-Type* IntegerType::meetWith(Type* other, bool& ch) {
-    if (other->isInteger()) {
-        IntegerType* otherInt = other->asInteger();
-        // Signedness
-        int oldSignedness = signedness;
-        if (otherInt->isSigned())
-            signedness++;
-        else
-            signedness--;
-        ch |= (signedness >= 0 != oldSignedness >= 0);
-        // Size. Assume 0 indicates unknown size
-        int oldSize = size;
-        size = max(size, otherInt->size);
-        ch |= (size != oldSize);
-        return this;
-    }
+Type* IntegerType::meetWith(Type* other, bool& ch)
+{
+    if (other->isInteger())
+        {
+            IntegerType* otherInt = other->asInteger();
+            // Signedness
+            int oldSignedness = signedness;
+            if (otherInt->isSigned())
+                signedness++;
+            else
+                signedness--;
+            ch |= (signedness >= 0 != oldSignedness >= 0);
+            // Size. Assume 0 indicates unknown size
+            int oldSize = size;
+            size = max(size, otherInt->size);
+            ch |= (size != oldSize);
+            return this;
+        }
     ch = true;
     return createUnion(other);
 }
 
-Type* FloatType::meetWith(Type* other, bool& ch) {
-    if (other->isFloat()) {
-        FloatType* otherFlt = other->asFloat();
-        int oldSize = size;
-        size = max(size, otherFlt->size);
-        ch |= size != oldSize;
-        return this;
-    }
+Type* FloatType::meetWith(Type* other, bool& ch)
+{
+    if (other->isFloat())
+        {
+            FloatType* otherFlt = other->asFloat();
+            int oldSize = size;
+            size = max(size, otherFlt->size);
+            ch |= size != oldSize;
+            return this;
+        }
     ch = true;
     return createUnion(other);
 }
 
-Type* BooleanType::meetWith(Type* other, bool& ch) {
+Type* BooleanType::meetWith(Type* other, bool& ch)
+{
     if (other->isBoolean())
         return this;
     ch = true;
     return createUnion(other);
 }
 
-Type* CharType::meetWith(Type* other, bool& ch) {
+Type* CharType::meetWith(Type* other, bool& ch)
+{
     if (other->isChar()) return this;
     // Also allow char to merge with integer
     ch = true;
@@ -101,48 +110,57 @@ Type* CharType::meetWith(Type* other, bool& ch) {
     return createUnion(other);
 }
 
-Type* PointerType::meetWith(Type* other, bool& ch) {
+Type* PointerType::meetWith(Type* other, bool& ch)
+{
     if (other->isVoid()) return this;
     if (other->isSize() && ((SizeType*)other)->getSize() == STD_SIZE) return this;
-    if (other->isPointer()) {
-        PointerType* otherPtr = other->asPointer();
-        if (pointsToAlpha() && !otherPtr->pointsToAlpha()) {
-            setPointsTo(otherPtr->getPointsTo());
-            ch = true;
+    if (other->isPointer())
+        {
+            PointerType* otherPtr = other->asPointer();
+            if (pointsToAlpha() && !otherPtr->pointsToAlpha())
+                {
+                    setPointsTo(otherPtr->getPointsTo());
+                    ch = true;
+                }
+            return this;
         }
-        return this;
-    }
     // Would be good to understand class hierarchys, so we know if a* is the same as b* when b is a subclass of a
     ch = true;
     return createUnion(other);
 }
 
-Type* ArrayType::meetWith(Type* other, bool& ch) {
+Type* ArrayType::meetWith(Type* other, bool& ch)
+{
     // Needs work
     ch = true;
     return createUnion(other);
 }
 
-Type* NamedType::meetWith(Type* other, bool& ch) {
+Type* NamedType::meetWith(Type* other, bool& ch)
+{
     return resolvesTo()->meetWith(other, ch);
 }
 
-Type* CompoundType::meetWith(Type* other, bool& ch) {
-    if (!other->isCompound()) {
-        ch = true;
-        return createUnion(other);
-    }
+Type* CompoundType::meetWith(Type* other, bool& ch)
+{
+    if (!other->isCompound())
+        {
+            ch = true;
+            return createUnion(other);
+        }
     CompoundType* otherCmp = other->asCompound();
-    if (otherCmp->isSuperStructOf(this)) {
-        // The other structure has a superset of my struct's offsets. Preserve the names etc of the bigger struct.
-        ch = true;
-        return this;
-    }
-    if (isSubStructOf(otherCmp)) {
-        // This is a superstruct of other
-        ch = true;
-        return this;
-    }
+    if (otherCmp->isSuperStructOf(this))
+        {
+            // The other structure has a superset of my struct's offsets. Preserve the names etc of the bigger struct.
+            ch = true;
+            return this;
+        }
+    if (isSubStructOf(otherCmp))
+        {
+            // This is a superstruct of other
+            ch = true;
+            return this;
+        }
     if (this == other) return this;
     // Not compatible structs. Create a union of both complete structs.
     // NOTE: may be possible to take advantage of some overlaps of the two structures some day.
@@ -150,34 +168,41 @@ Type* CompoundType::meetWith(Type* other, bool& ch) {
     return createUnion(other);
 }
 
-Type* UnionType::meetWith(Type* other, bool& ch) {
+Type* UnionType::meetWith(Type* other, bool& ch)
+{
     if (this == other) return this;
     ch = true;
     return createUnion(other);
 }
 
-Type* SizeType::meetWith(Type* other, bool& ch) {
-    if (other->isInteger() || other->isFloat() || other->isPointer() || other->isSize()) {
-        if (other->getSize() != size) {
-            ch = true;
-            other->setSize(size);
+Type* SizeType::meetWith(Type* other, bool& ch)
+{
+    if (other->isInteger() || other->isFloat() || other->isPointer() || other->isSize())
+        {
+            if (other->getSize() != size)
+                {
+                    ch = true;
+                    other->setSize(size);
+                }
         }
-    }
     ch = true;
     return other;
 }
 
-Type* Type::createUnion(Type* other) {
+Type* Type::createUnion(Type* other)
+{
     char name[20];
     sprintf(name, "x%d", ++nextUnionNumber);
-    if (isUnion()) {
-        ((UnionType*)this)->addType(other, name);
-        return this;
-    }
-    if (other->isUnion()) {
-        ((UnionType*)other)->addType(this, name);
-        return other;
-    }
+    if (isUnion())
+        {
+            ((UnionType*)this)->addType(other, name);
+            return this;
+        }
+    if (other->isUnion())
+        {
+            ((UnionType*)other)->addType(this, name);
+            return other;
+        }
     UnionType* u = new UnionType;
     u->addType(this, name);
     sprintf(name, "x%d", ++nextUnionNumber);

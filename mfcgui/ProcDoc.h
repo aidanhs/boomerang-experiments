@@ -20,7 +20,8 @@ protected: // create from serialization only
 // Attributes
 public:
     void setProc(Proc *p);
-    Proc *getProc() {
+    Proc *getProc()
+    {
         return m_proc;
     }
 

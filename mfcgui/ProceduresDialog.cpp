@@ -68,16 +68,17 @@ void CProceduresDialog::strForProc(Proc *p, CString &s)
     os << p->getName() << " <0x" << std::hex << p->getNativeAddress() << std::dec << ">";
     if (p->isLib())
         os << " library" << std::ends;
-    else {
-        UserProc *up = (UserProc*)p;
-        if (!up->getCFG()->isWellFormed())
-            os << " ill-formed";
-        if (!up->getCFG()->establishDFTOrder())
-            os << " disconnected";
-        if (!up->getCFG()->establishRevDFTOrder())
-            os << " irregular";
-        os << std::ends;
-    }
+    else
+        {
+            UserProc *up = (UserProc*)p;
+            if (!up->getCFG()->isWellFormed())
+                os << " ill-formed";
+            if (!up->getCFG()->establishDFTOrder())
+                os << " disconnected";
+            if (!up->getCFG()->establishRevDFTOrder())
+                os << " irregular";
+            os << std::ends;
+        }
     s = os.str().c_str();
 }
 
@@ -92,18 +93,21 @@ void CProceduresDialog::addToProcs(Proc *p)
     bool leaf = true;
     if (p->isLib())
         leaf = false;
-    else {
-        UserProc *u = (UserProc*)p;
-        std::set<Proc*>::iterator it;
-        for (it = u->getCallees().begin(); it != u->getCallees().end(); it++)
-            if (!(*it)->isLib()) leaf = false;
-    }
+    else
+        {
+            UserProc *u = (UserProc*)p;
+            std::set<Proc*>::iterator it;
+            for (it = u->getCallees().begin(); it != u->getCallees().end(); it++)
+                if (!(*it)->isLib()) leaf = false;
+        }
 
-    if (p->getFirstCaller()) {
-        addToProcs(p->getFirstCaller());
-        if (!m_leaves || leaf)
-            m_procitem[p] = m_procs.InsertItem(s, m_procitem[p->getFirstCaller()]);
-    } else if (!m_leaves || leaf)
+    if (p->getFirstCaller())
+        {
+            addToProcs(p->getFirstCaller());
+            if (!m_leaves || leaf)
+                m_procitem[p] = m_procs.InsertItem(s, m_procitem[p->getFirstCaller()]);
+        }
+    else if (!m_leaves || leaf)
         m_procitem[p] = m_procs.InsertItem(s);
     m_procs.SetItemData(m_procitem[p], (DWORD)p);
 }
@@ -127,12 +131,14 @@ void CProceduresDialog::redraw()
     m_procitem.clear();
     PROGMAP::const_iterator it;
     Proc *p;
-    for (p = prog.getFirstProc(it); p; p = prog.getNextProc(it)) {
-        addToProcs(p);
-    }
-    for (p = prog.getFirstProc(it); p; p = prog.getNextProc(it)) {
-        m_procs.Expand(m_procitem[p], TVE_EXPAND);
-    }
+    for (p = prog.getFirstProc(it); p; p = prog.getNextProc(it))
+        {
+            addToProcs(p);
+        }
+    for (p = prog.getFirstProc(it); p; p = prog.getNextProc(it))
+        {
+            m_procs.Expand(m_procitem[p], TVE_EXPAND);
+        }
 }
 
 void CProceduresDialog::OnSelchangedProcs(NMHDR* pNMHDR, LRESULT* pResult)
@@ -141,11 +147,13 @@ void CProceduresDialog::OnSelchangedProcs(NMHDR* pNMHDR, LRESULT* pResult)
 
     UserProc *p = (UserProc *)m_procs.GetItemData(m_procs.GetSelectedItem());
     m_calls.DeleteAllItems();
-    if (!p->isLib()) {
-        for (std::set<Proc*>::iterator it = p->getCallees().begin(); it != p->getCallees().end(); it++) {
-            m_calls.SetItemData(m_calls.InsertItem((*it)->getName()), (DWORD)*it);
+    if (!p->isLib())
+        {
+            for (std::set<Proc*>::iterator it = p->getCallees().begin(); it != p->getCallees().end(); it++)
+                {
+                    m_calls.SetItemData(m_calls.InsertItem((*it)->getName()), (DWORD)*it);
+                }
         }
-    }
     *pResult = 0;
 }
 
@@ -153,10 +161,11 @@ void CProceduresDialog::OnSelchangedCalls(NMHDR* pNMHDR, LRESULT* pResult)
 {
     NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
 
-    if (m_calls.GetSelectedItem()) {
-        Proc *p = (Proc *)m_calls.GetItemData(m_calls.GetSelectedItem());
-        m_procs.EnsureVisible(m_procitem[p]);
-    }
+    if (m_calls.GetSelectedItem())
+        {
+            Proc *p = (Proc *)m_calls.GetItemData(m_calls.GetSelectedItem());
+            m_procs.EnsureVisible(m_procitem[p]);
+        }
 
     *pResult = 0;
 }
@@ -186,26 +195,28 @@ void CProceduresDialog::OnRclickProcs(NMHDR* pNMHDR, LRESULT* pResult)
     if (h) m_procs.SelectItem(h);
 
     h = m_procs.GetSelectedItem();
-    if (h) {
-        Proc *pr = (Proc *)m_procs.GetItemData(h);
-        UserProc *up = NULL;
-        if (!pr->isLib()) up = (UserProc *)pr;
-        CMenu popup;
-        popup.CreatePopupMenu();
-        if (m_leaves)
-            popup.AppendMenu(0, ID_SHOW_LEAVES, "Show all");
-        else
-            popup.AppendMenu(0, ID_SHOW_LEAVES, "Show only leaves");
-        popup.AppendMenu(MFT_SEPARATOR);
-        if (up) {
-            popup.AppendMenu(0, ID_VIEW_CONTROLFLOW, "View control flow");
-            popup.AppendMenu(0, ID_EDIT_CODE, "Edit code");
+    if (h)
+        {
+            Proc *pr = (Proc *)m_procs.GetItemData(h);
+            UserProc *up = NULL;
+            if (!pr->isLib()) up = (UserProc *)pr;
+            CMenu popup;
+            popup.CreatePopupMenu();
+            if (m_leaves)
+                popup.AppendMenu(0, ID_SHOW_LEAVES, "Show all");
+            else
+                popup.AppendMenu(0, ID_SHOW_LEAVES, "Show only leaves");
             popup.AppendMenu(MFT_SEPARATOR);
+            if (up)
+                {
+                    popup.AppendMenu(0, ID_VIEW_CONTROLFLOW, "View control flow");
+                    popup.AppendMenu(0, ID_EDIT_CODE, "Edit code");
+                    popup.AppendMenu(MFT_SEPARATOR);
+                }
+            popup.AppendMenu(0, ID_PROPERTIES, "Properties");
+            m_procs.ClientToScreen(&p);
+            popup.TrackPopupMenu(0, p.x, p.y, this);
         }
-        popup.AppendMenu(0, ID_PROPERTIES, "Properties");
-        m_procs.ClientToScreen(&p);
-        popup.TrackPopupMenu(0, p.x, p.y, this);
-    }
 
     *pResult = 0;
 }
@@ -213,34 +224,37 @@ void CProceduresDialog::OnRclickProcs(NMHDR* pNMHDR, LRESULT* pResult)
 void CProceduresDialog::OnEditCode()
 {
     HTREEITEM h = m_procs.GetSelectedItem();
-    if (h) {
-        Proc *p = (Proc *)m_procs.GetItemData(h);
-        CProcDoc *d = (CProcDoc*)theApp.m_pDocManager->OpenDocumentFile(p->getName());
-        d->setProc(p);
-        d->UpdateAllViews(NULL);
+    if (h)
+        {
+            Proc *p = (Proc *)m_procs.GetItemData(h);
+            CProcDoc *d = (CProcDoc*)theApp.m_pDocManager->OpenDocumentFile(p->getName());
+            d->setProc(p);
+            d->UpdateAllViews(NULL);
 
-        EndDialog(IDOK);
-    }
+            EndDialog(IDOK);
+        }
 }
 
 void CProceduresDialog::OnProperties()
 {
     HTREEITEM h = m_procs.GetSelectedItem();
-    if (h) {
-        Proc *p = (Proc*)m_procs.GetItemData(h);
-        CProcPropertiesDialog d(p, theApp.GetMainWnd());
-        d.DoModal();
-    }
+    if (h)
+        {
+            Proc *p = (Proc*)m_procs.GetItemData(h);
+            CProcPropertiesDialog d(p, theApp.GetMainWnd());
+            d.DoModal();
+        }
 }
 
 void CProceduresDialog::OnViewControlflow()
 {
     HTREEITEM h = m_procs.GetSelectedItem();
-    if (h) {
-        UserProc *p = (UserProc *)m_procs.GetItemData(h);
-        CCFGViewDialog d(theApp.GetMainWnd(), p->getCFG());
-        d.DoModal();
-    }
+    if (h)
+        {
+            UserProc *p = (UserProc *)m_procs.GetItemData(h);
+            CCFGViewDialog d(theApp.GetMainWnd(), p->getCFG());
+            d.DoModal();
+        }
 }
 
 void CProceduresDialog::OnShowLeaves()

@@ -61,7 +61,8 @@ class Global;
 #define BELSE 1
 
 // an enumerated type for the class of stucture determined for a node
-enum structType {
+enum structType
+{
     Loop,	   // Header of a loop only
     Cond,	   // Header of a conditional only (if-then-else or switch)
     LoopCond,  // Header of a loop and a conditional
@@ -69,7 +70,8 @@ enum structType {
 };
 
 // an type for the class of unstructured conditional jumps
-enum unstructType {
+enum unstructType
+{
     Structured,
     JumpInOutLoop,
     JumpIntoCase
@@ -77,7 +79,8 @@ enum unstructType {
 
 
 // an enumerated type for the type of conditional headers
-enum condType {
+enum condType
+{
     IfThen,		// conditional with only a then clause
     IfThenElse, // conditional with a then and an else clause
     IfElse,		// conditional with only an else clause
@@ -85,14 +88,16 @@ enum condType {
 };
 
 // an enumerated type for the type of loop headers
-enum loopType {
+enum loopType
+{
     PreTested,	   // Header of a while loop
     PostTested,	   // Header of a repeat loop
     Endless		   // Header of an endless loop
 };
 
 // Depth-first traversal constants.
-enum travType {
+enum travType
+{
     UNTRAVERSED,   // Initial value
     DFS_TAG,	   // Remove redundant nodes pass
     DFS_LNUM,	   // DFS loop stamping pass
@@ -104,7 +109,8 @@ enum travType {
 
 // Kinds of basic block nodes
 // reordering these will break the save files - trent
-enum BBTYPE {
+enum BBTYPE
+{
     ONEWAY,					 // unconditional branch
     TWOWAY,					 // conditional branch
     NWAY,					 // case branch
@@ -116,7 +122,8 @@ enum BBTYPE {
     INVALID					 // invalid instruction
 };
 
-enum SBBTYPE {
+enum SBBTYPE
+{
     NONE,					 // not structured
     PRETESTLOOP,			 // header of a loop
     POSTTESTLOOP,
@@ -135,7 +142,8 @@ typedef std::list<PBB>::iterator BB_IT;
 /*==============================================================================
  * BasicBlock class. <more comments>
  *============================================================================*/
-class BasicBlock {
+class BasicBlock
+{
     /*
      * Objects of class Cfg can access the internals of a BasicBlock object.
      */
@@ -169,16 +177,20 @@ public:
      */
     int getLabel();
 
-    std::string &getLabelStr() {
+    std::string &getLabelStr()
+    {
         return m_labelStr;
     }
-    void setLabelStr(std::string &s) {
+    void setLabelStr(std::string &s)
+    {
         m_labelStr = s;
     }
-    bool isLabelNeeded() {
+    bool isLabelNeeded()
+    {
         return m_labelneeded;
     }
-    void setLabelNeeded(bool b) {
+    void setLabelNeeded(bool b)
+    {
         m_labelneeded = b;
     }
 
@@ -237,7 +249,8 @@ public:
      */
     std::vector<PBB>& getInEdges();
 
-    int getNumInEdges() {
+    int getNumInEdges()
+    {
         return m_iNumInEdges;
     }
 
@@ -261,7 +274,8 @@ public:
      */
     PBB getOutEdge(unsigned int i);
 
-    int getNumOutEdges() {
+    int getNumOutEdges()
+    {
         return m_iNumOutEdges;
     }
 
@@ -435,7 +449,8 @@ public:
 
     /* set the return value */
     void setReturnVal(Exp *e);
-    Exp *getReturnVal() {
+    Exp *getReturnVal()
+    {
         return m_returnVal;
     }
 
@@ -473,27 +488,34 @@ protected:
     void setRevLoopStamps(int &time);
     void setRevOrder(std::vector<PBB> &order);
 
-    void setLoopHead(PBB head) {
+    void setLoopHead(PBB head)
+    {
         loopHead = head;
     }
-    PBB getLoopHead() {
+    PBB getLoopHead()
+    {
         return loopHead;
     }
-    void setLatchNode(PBB latch) {
+    void setLatchNode(PBB latch)
+    {
         latchNode = latch;
     }
-    bool isLatchNode() {
+    bool isLatchNode()
+    {
         return loopHead && loopHead->latchNode == this;
     }
-    PBB getLatchNode() {
+    PBB getLatchNode()
+    {
         return latchNode;
     }
-    PBB getCaseHead() {
+    PBB getCaseHead()
+    {
         return caseHead;
     }
     void setCaseHead(PBB head, PBB follow);
 
-    structType getStructType() {
+    structType getStructType()
+    {
         return sType;
     }
     void setStructType(structType s);
@@ -507,17 +529,21 @@ protected:
     condType getCondType();
     void setCondType(condType l);
 
-    void setLoopFollow(PBB other) {
+    void setLoopFollow(PBB other)
+    {
         loopFollow = other;
     }
-    PBB getLoopFollow() {
+    PBB getLoopFollow()
+    {
         return loopFollow;
     }
 
-    void setCondFollow(PBB other) {
+    void setCondFollow(PBB other)
+    {
         condFollow = other;
     }
-    PBB getCondFollow() {
+    PBB getCondFollow()
+    {
         return condFollow;
     }
 
@@ -525,7 +551,8 @@ protected:
     bool hasBackEdgeTo(BasicBlock *dest);
 
     // establish if this bb has any back edges leading FROM it
-    bool hasBackEdge() {
+    bool hasBackEdge()
+    {
         for (unsigned int i = 0; i < m_OutEdges.size(); i++)
             if (hasBackEdgeTo(m_OutEdges[i]))
                 return true;
@@ -572,15 +599,18 @@ public:
 
 protected:
     friend class XMLProgParser;
-    void	addOutEdge(PBB bb) {
+    void	addOutEdge(PBB bb)
+    {
         m_OutEdges.push_back(bb);
     }
-    void	addRTL(RTL *rtl) {
+    void	addRTL(RTL *rtl)
+    {
         if (m_pRtls == NULL)
             m_pRtls = new std::list<RTL*>;
         m_pRtls->push_back(rtl);
     }
-    void	addLiveIn(Location *e) {
+    void	addLiveIn(Location *e)
+    {
         liveIn.insert(e);
     }
 
@@ -595,7 +625,8 @@ typedef std::map<ADDRESS, PBB, std::less<ADDRESS> >	  MAPBB;
  * procedure. These BBs contain all the RTLs for the procedure, so by traversing
  * the Cfg, one traverses the whole procedure.
  *============================================================================*/
-class Cfg {
+class Cfg
+{
     /*
      * Pointer to the UserProc object that contains this CFG object
      */
@@ -783,10 +814,12 @@ public:
      * An alternative to the above is to use begin() and end():
      */
     typedef BB_IT iterator;
-    iterator begin() {
+    iterator begin()
+    {
         return m_listBB.begin();
     }
-    iterator end()	 {
+    iterator end()
+    {
         return m_listBB.end();
     }
 
@@ -971,7 +1004,8 @@ public:
     std::vector<PBB> m_vectorBB; // faster access
 
     /* return a bb given an address */
-    PBB bbForAddr(ADDRESS addr) {
+    PBB bbForAddr(ADDRESS addr)
+    {
         return m_mapBB[addr];
     }
 
@@ -1046,10 +1080,12 @@ public:
     /*
      * Get the entry-point or exit BB
      */
-    PBB getEntryBB() {
+    PBB getEntryBB()
+    {
         return entryBB;
     }
-    PBB getExitBB()	 {
+    PBB getExitBB()
+    {
         return exitBB;
     }
 
@@ -1093,22 +1129,28 @@ public:
 
 
     // For testing:
-    int pbbToNode(PBB bb) {
+    int pbbToNode(PBB bb)
+    {
         return indices[bb];
     }
-    std::set<int>& getDF(int node) {
+    std::set<int>& getDF(int node)
+    {
         return DF[node];
     }
-    PBB nodeToBB(int node) {
+    PBB nodeToBB(int node)
+    {
         return BBs[node];
     }
-    int getIdom(int node) {
+    int getIdom(int node)
+    {
         return idom[node];
     }
-    int getSemi(int node) {
+    int getSemi(int node)
+    {
         return semi[node];
     }
-    std::set<int>& getA_phi(Exp* e) {
+    std::set<int>& getA_phi(Exp* e)
+    {
         return A_phi[e];
     }
 
@@ -1119,7 +1161,8 @@ public:
 
 protected:
     friend class XMLProgParser;
-    void addBB(PBB bb) {
+    void addBB(PBB bb)
+    {
         m_listBB.push_back(bb);
     }
 };				/* Cfg */

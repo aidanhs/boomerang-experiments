@@ -56,7 +56,8 @@ enum eType {eVoid, eFunc, eBoolean, eChar, eInteger, eFloat, ePointer,
             eArray, eNamed, eCompound, eUnion, eSize
            };	  // For operator< mostly
 
-class Type : public Memoisable {
+class Type : public Memoisable
+{
 protected:
     eType id;
 private:
@@ -66,7 +67,8 @@ public:
     // Constructors
     Type(eType id);
     virtual		~Type();
-    eType	getId() const {
+    eType	getId() const
+    {
         return id;
     }
 
@@ -78,45 +80,58 @@ public:
     static Type* parseType(const char *str); // parse a C type
 
     // runtime type information
-    virtual bool isVoid()		const {
+    virtual bool isVoid()		const
+    {
         return false;
     }
-    virtual bool isFunc()		const {
+    virtual bool isFunc()		const
+    {
         return false;
     }
-    virtual bool isBoolean()	const {
+    virtual bool isBoolean()	const
+    {
         return false;
     }
-    virtual bool isChar()		const {
+    virtual bool isChar()		const
+    {
         return false;
     }
-    virtual bool isInteger() 	const {
+    virtual bool isInteger() 	const
+    {
         return false;
     }
-    virtual bool isFloat()		const {
+    virtual bool isFloat()		const
+    {
         return false;
     }
-    virtual bool isPointer()	const {
+    virtual bool isPointer()	const
+    {
         return false;
     }
-    virtual bool isArray()		const {
+    virtual bool isArray()		const
+    {
         return false;
     }
-    virtual bool isNamed()		const {
+    virtual bool isNamed()		const
+    {
         return false;
     }
-    virtual bool isCompound()	const {
+    virtual bool isCompound()	const
+    {
         return false;
     }
-    virtual bool isUnion()		const {
+    virtual bool isUnion()		const
+    {
         return false;
     }
-    virtual bool isSize()		const {
+    virtual bool isSize()		const
+    {
         return false;
     }
 
 // Return false if some info is missing, e.g. unknown sign, size or basic type
-    virtual bool isComplete() {
+    virtual bool isComplete()
+    {
         return true;
     }
 
@@ -153,19 +168,22 @@ public:
     virtual bool	operator!=(const Type& other) const;		// Considers sign
 //virtual bool	  operator-=(const Type& other) const = 0;	// Ignores sign
     virtual bool	operator< (const Type& other) const = 0;	// Considers sign
-    bool	operator*=(const Type& other) const {		// Consider only
+    bool	operator*=(const Type& other) const  		// Consider only
+    {
         return id == other.id;
     }				 	// broad type
     virtual Exp		*match(Type *pattern);
     // Merge one type with another, e.g. size16 with integer-of-size-0 -> int16
-    virtual Type*	mergeWith(Type* other) {
+    virtual Type*	mergeWith(Type* other)
+    {
         assert(0);
         return 0;
     }
 
     // Acccess functions
     virtual int		getSize() const = 0;
-    virtual void	setSize(int sz) {
+    virtual void	setSize(int sz)
+    {
         assert(0);
     }
 
@@ -181,13 +199,15 @@ public:
 
     // Clear the named type map. This is necessary when testing; the
     // type for the first parameter to 'main' is different for sparc and pentium
-    static	void	clearNamedTypes() {
+    static	void	clearNamedTypes()
+    {
         namedTypes.clear();
     }
 
     bool	isPointerToAlpha();
 
-    virtual Memo *makeMemo(int mId) {
+    virtual Memo *makeMemo(int mId)
+    {
         return new Memo(mId);
     }
     virtual void readMemo(Memo *m, bool dec) { }
@@ -200,11 +220,13 @@ protected:
     friend class XMLProgParser;
 };	// class Type
 
-class VoidType : public Type {
+class VoidType : public Type
+{
 public:
     VoidType();
     virtual ~VoidType();
-    virtual bool isVoid() const {
+    virtual bool isVoid() const
+    {
         return true;
     }
 
@@ -225,19 +247,22 @@ protected:
     friend class XMLProgParser;
 };
 
-class FuncType : public Type {
+class FuncType : public Type
+{
 private:
     Signature *signature;
 public:
     FuncType(Signature *sig = NULL);
     virtual ~FuncType();
-    virtual bool isFunc() const {
+    virtual bool isFunc() const
+    {
         return true;
     }
 
     virtual Type *clone() const;
 
-    Signature *getSignature() {
+    Signature *getSignature()
+    {
         return signature;
     }
 
@@ -262,7 +287,8 @@ protected:
     friend class XMLProgParser;
 };
 
-class IntegerType : public Type {
+class IntegerType : public Type
+{
 private:
     int		size;				// Size in bits, e.g. 16
     int		signedness;			// pos=signed, neg=unsigned, 0=unknown or
@@ -271,10 +297,12 @@ private:
 public:
     IntegerType(int sz = 32, int sign = 0);
     virtual 		~IntegerType();
-    virtual bool	isInteger() const {
+    virtual bool	isInteger() const
+    {
         return true;
     }
-    virtual bool	isComplete() {
+    virtual bool	isComplete()
+    {
         return signedness != 0 && size != 0;
     }
 
@@ -287,23 +315,28 @@ public:
     virtual Exp		*match(Type *pattern);
 
     virtual int		getSize() const;
-    virtual void	setSize(int sz) {
+    virtual void	setSize(int sz)
+    {
         size = sz;
     }
     // Is it signed? 0=no, 1=yes, -1 = don't know
-    bool	isSigned() {
+    bool	isSigned()
+    {
         return signedness >= 0;
     }
     // A hint for signedness
-    void	bumpSigned(int sg) {
+    void	bumpSigned(int sg)
+    {
         signedness += sg;
     }
     // Do we need this? Set absolute signedness
-    void	setSigned(int sg) {
+    void	setSigned(int sg)
+    {
         signedness = sg;
     }
     // Get the signedness
-    int		getSignedness() {
+    int		getSignedness()
+    {
         return signedness;
     }
 
@@ -322,14 +355,16 @@ protected:
     friend class XMLProgParser;
 };	// class IntegerType
 
-class FloatType : public Type {
+class FloatType : public Type
+{
 private:
     int		size;				// Size in bits, e.g. 16
 
 public:
     FloatType(int sz = 64);
     virtual 		~FloatType();
-    virtual bool	isFloat() const {
+    virtual bool	isFloat() const
+    {
         return true;
     }
 
@@ -341,7 +376,8 @@ public:
     virtual Exp		*match(Type *pattern);
 
     virtual int		getSize() const;
-    virtual void	setSize(int sz) {
+    virtual void	setSize(int sz)
+    {
         size = sz;
     }
 
@@ -358,11 +394,13 @@ protected:
     friend class XMLProgParser;
 };	// class FloatType
 
-class BooleanType : public Type {
+class BooleanType : public Type
+{
 public:
     BooleanType();
     virtual ~BooleanType();
-    virtual bool isBoolean() const {
+    virtual bool isBoolean() const
+    {
         return true;
     }
 
@@ -383,11 +421,13 @@ protected:
     friend class XMLProgParser;
 };
 
-class CharType : public Type {
+class CharType : public Type
+{
 public:
     CharType();
     virtual ~CharType();
-    virtual bool isChar() const {
+    virtual bool isChar() const
+    {
         return true;
     }
 
@@ -408,20 +448,24 @@ protected:
     friend class XMLProgParser;
 };
 
-class PointerType : public Type {
+class PointerType : public Type
+{
 private:
     Type	*points_to;
 
 public:
     PointerType(Type *p);
     virtual			~PointerType();
-    virtual bool	isPointer() const {
+    virtual bool	isPointer() const
+    {
         return true;
     }
-    void	setPointsTo(Type *p) {
+    void	setPointsTo(Type *p)
+    {
         points_to = p;
     }
-    Type	*getPointsTo() {
+    Type	*getPointsTo()
+    {
         return points_to;
     }
     static PointerType* newPtrAlpha();
@@ -435,7 +479,8 @@ public:
     virtual Exp		*match(Type *pattern);
 
     virtual int		getSize() const;
-    virtual void	setSize(int sz) {
+    virtual void	setSize(int sz)
+    {
         assert(sz == STD_SIZE);
     }
 
@@ -450,7 +495,8 @@ protected:
     friend class XMLProgParser;
 };	// class PointerType
 
-class ArrayType : public Type {
+class ArrayType : public Type
+{
 private:
     Type	*base_type;
     unsigned length;
@@ -459,20 +505,25 @@ public:
     ArrayType(Type *p, unsigned length);
     ArrayType(Type *p);
     virtual 		~ArrayType();
-    virtual bool	isArray() const {
+    virtual bool	isArray() const
+    {
         return true;
     }
-    Type	*getBaseType() {
+    Type	*getBaseType()
+    {
         return base_type;
     }
-    void	setBaseType(Type *b) {
+    void	setBaseType(Type *b)
+    {
         base_type = b;
     }
     void	fixBaseType(Type *b);
-    unsigned getLength() {
+    unsigned getLength()
+    {
         return length;
     }
-    void	setLength(unsigned n) {
+    void	setLength(unsigned n)
+    {
         length = n;
     }
     bool	isUnbounded();
@@ -498,7 +549,8 @@ protected:
     ArrayType() : Type(eArray), base_type(NULL), length(0) { }
 };	// class ArrayType
 
-class NamedType : public Type {
+class NamedType : public Type
+{
 private:
     std::string name;
     static int nextAlpha;
@@ -506,10 +558,12 @@ private:
 public:
     NamedType(const char *name);
     virtual 		~NamedType();
-    virtual bool	isNamed() const {
+    virtual bool	isNamed() const
+    {
         return true;
     }
-    const char *getName() {
+    const char *getName()
+    {
         return name.c_str();
     }
     Type	*resolvesTo() const;
@@ -537,7 +591,8 @@ protected:
 };
 
 // The compound type represents structures, not unions
-class CompoundType : public Type {
+class CompoundType : public Type
+{
 private:
     std::vector<Type*> types;
     std::vector<std::string> names;
@@ -545,23 +600,28 @@ private:
 public:
     CompoundType();
     virtual			~CompoundType();
-    virtual bool	isCompound() const {
+    virtual bool	isCompound() const
+    {
         return true;
     }
 
-    void addType(Type *n, const char *str) {
+    void addType(Type *n, const char *str)
+    {
         types.push_back(n);
         names.push_back(str);
     }
-    int		getNumTypes() {
+    int		getNumTypes()
+    {
         return types.size();
     }
-    Type	*getType(int n) {
+    Type	*getType(int n)
+    {
         assert(n < getNumTypes());
         return types[n];
     }
     Type	*getType(const char *nam);
-    const char *getName(int n) {
+    const char *getName(int n)
+    {
         assert(n < getNumTypes());
         return names[n].c_str();
     }
@@ -595,7 +655,8 @@ protected:
 };	// class CompoundType
 
 // The union type represents the union of any number of any other types
-class UnionType : public Type {
+class UnionType : public Type
+{
 private:
     std::vector<Type*> types;
     std::vector<std::string> names;
@@ -603,20 +664,24 @@ private:
 public:
     UnionType();
     virtual ~UnionType();
-    virtual bool isUnion() const {
+    virtual bool isUnion() const
+    {
         return true;
     }
 
     void	addType(Type *n, const char *str);
-    int		getNumTypes() const {
+    int		getNumTypes() const
+    {
         return types.size();
     }
-    Type	*getType(int n) {
+    Type	*getType(int n)
+    {
         assert(n < getNumTypes());
         return types[n];
     }
     Type	*getType(const char *nam);
-    const char *getName(int n) {
+    const char *getName(int n)
+    {
         assert(n < getNumTypes());
         return names[n].c_str();
     }
@@ -643,7 +708,8 @@ protected:
 
 // This class is for before type analysis. Typically, you have no info at
 // all, or only know the size (e.g. width of a register or memory transfer)
-class SizeType : public Type {
+class SizeType : public Type
+{
 private:
     int			size;				// Size in bits, e.g. 16
 public:
@@ -657,13 +723,16 @@ public:
     virtual Type*	mergeWith(Type* other);
 
     virtual int		getSize() const;
-    virtual void	setSize(int sz) {
+    virtual void	setSize(int sz)
+    {
         size = sz;
     }
-    virtual bool	isSize() const {
+    virtual bool	isSize() const
+    {
         return true;
     }
-    virtual bool	isComplete() {
+    virtual bool	isComplete()
+    {
         return false;   // Basic type is unknown
     }
     virtual const char* getCtype(bool final = false) const;
