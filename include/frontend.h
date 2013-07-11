@@ -50,7 +50,8 @@ struct DecodeResult;
 class Signature;
 
 // Control flow types
-enum INSTTYPE {
+enum INSTTYPE
+{
     I_UNCOND,				 // unconditional branch
     I_COND,					 // conditional branch
     I_N_COND,				 // case branch
@@ -62,7 +63,8 @@ enum INSTTYPE {
 
 typedef bool (*PHELPER)(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
-class FrontEnd {
+class FrontEnd
+{
 protected:
 //	  const int NOP_SIZE;		  // Size of a no-op instruction (in bytes)
 //	  const int NOP_INST;		  // No-op pattern
@@ -85,7 +87,8 @@ public:
     static FrontEnd* Load(const char *fname);
 
     // Add a symbol to the loader
-    void AddSymbol(ADDRESS addr, const char *nam) {
+    void AddSymbol(ADDRESS addr, const char *nam)
+    {
         pBF->AddSymbol(addr, nam);
     }
 
@@ -112,7 +115,8 @@ public:
 
     bool	isWin32();					// Is this a win32 frontend?
 
-    BinaryFile *getBinaryFile() {
+    BinaryFile *getBinaryFile()
+    {
         return pBF;
     }
 
@@ -126,7 +130,8 @@ public:
     /*
      * Accessor function to get the decoder.
      */
-    NJMCDecoder *getDecoder() {
+    NJMCDecoder *getDecoder()
+    {
         return decoder;
     }
 
@@ -189,7 +194,8 @@ public:
      * semantics in lrtl.
      * addr is the native address of the call instruction
      */
-    virtual bool	helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl) {
+    virtual bool	helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl)
+    {
         return false;
     }
 
@@ -282,7 +288,8 @@ bool decodeProc(ADDRESS uAddr, FrontEnd& fe, bool keep = true,
                 bool spec = false);
 
 // Put the target queue logic into this small class
-class TargetQueue {
+class TargetQueue
+{
     std::queue<ADDRESS>	 targets;
 
 public:

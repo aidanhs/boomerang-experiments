@@ -91,11 +91,12 @@ BOOL CBoomerangApp::InitInstance()
 
     // get command line for base directories
     CString cmd(GetCommandLine());
-    if (cmd.Left(1) == "\"") {
-        cmd.Delete(0);
-        assert(cmd.Right(1) == "\"");
-        cmd.Delete(cmd.GetLength() - 1);
-    }
+    if (cmd.Left(1) == "\"")
+        {
+            cmd.Delete(0);
+            assert(cmd.Right(1) == "\"");
+            cmd.Delete(cmd.GetLength() - 1);
+        }
     char c[1024];
     char *p;
     GetFullPathName(cmd, 1024, c, &p);
@@ -220,55 +221,62 @@ void CBoomerangApp::OnViewSymbols()
 
 void CBoomerangApp::OnProjectNew()
 {
-    if (prog.project != std::string("")) {
-        int res = m_pMainWnd->MessageBox("Do you wish to save the current project?", NULL, MB_YESNOCANCEL);
-        if (res == IDYES)
-            OnProjectSave();
-        if (res == IDCANCEL)
-            return;
-    }
+    if (prog.project != std::string(""))
+        {
+            int res = m_pMainWnd->MessageBox("Do you wish to save the current project?", NULL, MB_YESNOCANCEL);
+            if (res == IDYES)
+                OnProjectSave();
+            if (res == IDCANCEL)
+                return;
+        }
     prog.clear();
     CNewProjectDialog d;
-    if (d.DoModal() == IDOK) {
-        CViewDecodeDialog d;
-        if (d.DoModal() == IDCANCEL) {
-            // impatient bastard
+    if (d.DoModal() == IDOK)
+        {
+            CViewDecodeDialog d;
+            if (d.DoModal() == IDCANCEL)
+                {
+                    // impatient bastard
+                }
         }
-    }
 }
 
 void CBoomerangApp::OnProjectOpen()
 {
-    if (prog.project != std::string("")) {
-        int res = m_pMainWnd->MessageBox("Do you wish to save the current project?", NULL, MB_YESNOCANCEL);
-        if (res == IDYES)
-            OnProjectSave();
-        if (res == IDCANCEL)
-            return;
-    }
+    if (prog.project != std::string(""))
+        {
+            int res = m_pMainWnd->MessageBox("Do you wish to save the current project?", NULL, MB_YESNOCANCEL);
+            if (res == IDYES)
+                OnProjectSave();
+            if (res == IDCANCEL)
+                return;
+        }
     prog.clear();
     CFileDialog f(true, "bpf", NULL, 0, "Boomerang project files (*.bpf)|*.bpf|All files (*.*)|*.*|");
-    if (f.DoModal() != IDCANCEL) {
-        prog.location = f.GetPathName();
-        CString s;
-        m_pMainWnd->GetWindowText(s);
-        m_pMainWnd->SetWindowText(s + " [loading]");
-        CSaveLoadDialog d(false);
-        if (d.DoModal() == IDCANCEL) {
+    if (f.DoModal() != IDCANCEL)
+        {
+            prog.location = f.GetPathName();
+            CString s;
+            m_pMainWnd->GetWindowText(s);
+            m_pMainWnd->SetWindowText(s + " [loading]");
+            CSaveLoadDialog d(false);
+            if (d.DoModal() == IDCANCEL)
+                {
+                }
+            m_pMainWnd->RedrawWindow();
         }
-        m_pMainWnd->RedrawWindow();
-    }
 }
 
 void CBoomerangApp::OnProjectClose()
 {
-    if (prog.project != std::string("")) {
-        int res = m_pMainWnd->MessageBox("Do you wish to save the current project?", NULL, MB_YESNOCANCEL);
-        if (res == IDYES)
-            OnProjectSave();
-        if (res == IDCANCEL)
-            return;
-    }
+    if (prog.project != std::string(""))
+        {
+            int res = m_pMainWnd->MessageBox("Do you wish to save the current project?", NULL, MB_YESNOCANCEL);
+            if (res == IDYES)
+                OnProjectSave();
+            if (res == IDCANCEL)
+                return;
+        }
     prog.clear();
     m_pMainWnd->RedrawWindow();
 }
@@ -280,24 +288,27 @@ void CBoomerangApp::OnProjectSave()
         return;
     if (prog.location == "")
         OnProjectSaveAs();
-    else {
-        CString s;
-        m_pMainWnd->GetWindowText(s);
-        m_pMainWnd->SetWindowText(s + " [saving]");
-        CSaveLoadDialog d(true);
-        if (d.DoModal() == IDCANCEL) {
+    else
+        {
+            CString s;
+            m_pMainWnd->GetWindowText(s);
+            m_pMainWnd->SetWindowText(s + " [saving]");
+            CSaveLoadDialog d(true);
+            if (d.DoModal() == IDCANCEL)
+                {
+                }
+            m_pMainWnd->RedrawWindow();
         }
-        m_pMainWnd->RedrawWindow();
-    }
 }
 
 void CBoomerangApp::OnProjectSaveAs()
 {
     CFileDialog f(false, "bpf", prog.project.c_str(), 0, "Boomerang project files (*.bpf)|*.bpf|All files (*.*)|*.*|");
-    if (f.DoModal() != IDCANCEL) {
-        prog.location = f.GetPathName();
-        if (prog.project == "")
-            prog.project = f.GetFileTitle();
-        OnProjectSave();
-    }
+    if (f.DoModal() != IDCANCEL)
+        {
+            prog.location = f.GetPathName();
+            if (prog.project == "")
+                prog.project = f.GetFileTitle();
+            OnProjectSave();
+        }
 }

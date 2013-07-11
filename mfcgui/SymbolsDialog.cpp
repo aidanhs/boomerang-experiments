@@ -83,51 +83,55 @@ BOOL CSymbolsDialog::OnInitDialog()
 void CSymbolsDialog::OnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult)
 {
     m_list.DeleteAllItems();
-    if (m_tab.GetCurSel() == 1) {
-        // locals
-        CMainFrame *m = (CMainFrame*)theApp.GetMainWnd();
-        CChildFrame *w = (CChildFrame*)m->GetActiveFrame();
-        if (w) {
-            CView *v = w->GetActiveView();
-            CProcDoc *doc = (CProcDoc*)v->GetDocument();
-            UserProc *p = (UserProc*)doc->getProc();
-            for (std::map<std::string, TypedExp *>::iterator it = p->symbols.begin(); it != p->symbols.end(); it++)
-            {
-                TypedExp *t = (*it).second;
-                std::stringstream os;
-                t->getSubExp1()->print(os);
-                LVITEM i;
-                i.mask = LVIF_TEXT;
-                i.stateMask = 0;
-                i.iItem = 0;
-                i.iSubItem = 0;
-                std::string s = os.str();
-                i.pszText = (char *)s.c_str();
-                m_list.InsertItem(&i);
-                s = (*it).first;
-                m_list.SetItem(0, 1, LVIF_TEXT, s.c_str(), 0, 0, 0, 0);
-                m_list.SetItem(0, 2, LVIF_TEXT, t->getType()->getCtype().c_str(), 0, 0, 0, 0);
-            }
-        }
-    } else {
-        // globals
-        for (std::map<std::string, TypedExp *>::iterator it = prog.symbols.begin(); it != prog.symbols.end(); it++)
+    if (m_tab.GetCurSel() == 1)
         {
-            TypedExp *t = (*it).second;
-            std::stringstream os;
-            t->getSubExp1()->print(os);
-            LVITEM i;
-            i.mask = LVIF_TEXT;
-            i.stateMask = 0;
-            i.iItem = 0;
-            i.iSubItem = 0;
-            std::string s = os.str();
-            i.pszText = (char *)s.c_str();
-            m_list.InsertItem(&i);
-            s = (*it).first;
-            m_list.SetItem(0, 1, LVIF_TEXT, s.c_str(), 0, 0, 0, 0);
-            m_list.SetItem(0, 2, LVIF_TEXT, t->getType()->getCtype().c_str(), 0, 0, 0, 0);
+            // locals
+            CMainFrame *m = (CMainFrame*)theApp.GetMainWnd();
+            CChildFrame *w = (CChildFrame*)m->GetActiveFrame();
+            if (w)
+                {
+                    CView *v = w->GetActiveView();
+                    CProcDoc *doc = (CProcDoc*)v->GetDocument();
+                    UserProc *p = (UserProc*)doc->getProc();
+                    for (std::map<std::string, TypedExp *>::iterator it = p->symbols.begin(); it != p->symbols.end(); it++)
+                        {
+                            TypedExp *t = (*it).second;
+                            std::stringstream os;
+                            t->getSubExp1()->print(os);
+                            LVITEM i;
+                            i.mask = LVIF_TEXT;
+                            i.stateMask = 0;
+                            i.iItem = 0;
+                            i.iSubItem = 0;
+                            std::string s = os.str();
+                            i.pszText = (char *)s.c_str();
+                            m_list.InsertItem(&i);
+                            s = (*it).first;
+                            m_list.SetItem(0, 1, LVIF_TEXT, s.c_str(), 0, 0, 0, 0);
+                            m_list.SetItem(0, 2, LVIF_TEXT, t->getType()->getCtype().c_str(), 0, 0, 0, 0);
+                        }
+                }
         }
-    }
+    else
+        {
+            // globals
+            for (std::map<std::string, TypedExp *>::iterator it = prog.symbols.begin(); it != prog.symbols.end(); it++)
+                {
+                    TypedExp *t = (*it).second;
+                    std::stringstream os;
+                    t->getSubExp1()->print(os);
+                    LVITEM i;
+                    i.mask = LVIF_TEXT;
+                    i.stateMask = 0;
+                    i.iItem = 0;
+                    i.iSubItem = 0;
+                    std::string s = os.str();
+                    i.pszText = (char *)s.c_str();
+                    m_list.InsertItem(&i);
+                    s = (*it).first;
+                    m_list.SetItem(0, 1, LVIF_TEXT, s.c_str(), 0, 0, 0, 0);
+                    m_list.SetItem(0, 2, LVIF_TEXT, t->getType()->getCtype().c_str(), 0, 0, 0, 0);
+                }
+        }
     *pResult = 0;
 }

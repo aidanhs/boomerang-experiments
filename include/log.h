@@ -21,16 +21,19 @@ public:
     virtual Log &operator<<(double d);
     virtual Log &operator<<(ADDRESS a);
     virtual Log &operator<<(LocationSet *l);
-    Log &operator<<(std::string& s) {
+    Log &operator<<(std::string& s)
+    {
         return operator<<(s.c_str());
     }
     virtual ~Log() {};
 };
 
-class FileLogger : public Log {
+class FileLogger : public Log
+{
 public:
     FileLogger();		// Implemented in boomerang.cpp
-    virtual Log &operator<<(const char *str) {
+    virtual Log &operator<<(const char *str)
+    {
         out << str << std::flush;
         return *this;
     }

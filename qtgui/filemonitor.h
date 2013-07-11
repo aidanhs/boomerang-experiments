@@ -7,18 +7,22 @@
 #include <sys/stat.h>
 #include <string>
 
-class FileMonitor : public QObject {
+class FileMonitor : public QObject
+{
     Q_OBJECT
 
 public:
     FileMonitor(const char *fname);
-    const char *getFileName() {
+    const char *getFileName()
+    {
         return filename.c_str();
     }
-    void setFileName(const char *fname) {
+    void setFileName(const char *fname)
+    {
         filename = fname;
     }
-    void stop() {
+    void stop()
+    {
         t->stop();
     }
 

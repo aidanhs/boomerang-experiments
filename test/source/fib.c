@@ -4,7 +4,8 @@ int main()
     return 0;
 }
 
-int fib(int x) {
+int fib(int x)
+{
     if (x <= 1)
         return x;
     else

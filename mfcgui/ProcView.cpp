@@ -133,15 +133,18 @@ void CProcView::OnRButtonDown(UINT nFlags, CPoint point)
     popup.AppendMenu(0, ID_NEW_SYMBOL, "Edit symbol");
     popup.AppendMenu(0, ID_DELETE_SYMBOL, "Delete symbol");
     popup.AppendMenu(MFT_SEPARATOR);
-    if (!hll->getProc()->isSSAForm()) {
-        popup.AppendMenu(0, ID_MAKE_SSA, "Make SSA form");
-        popup.AppendMenu(0, ID_PROPOGATE_FORWARD, "Simple propogation");
-    } else {
-        popup.AppendMenu(0, ID_REV_SSA_FORM, "Reverse SSA form");
-        popup.AppendMenu(0, ID_REMOVE_USELESS, "Remove useless code");
-        if (e && e->getOper() == opSubscript && !hll->getProc()->getCFG()->isUsedInPhi(e))
-            popup.AppendMenu(0, ID_PROPOGATE_FORWARD, "Propogate forward");
-    }
+    if (!hll->getProc()->isSSAForm())
+        {
+            popup.AppendMenu(0, ID_MAKE_SSA, "Make SSA form");
+            popup.AppendMenu(0, ID_PROPOGATE_FORWARD, "Simple propogation");
+        }
+    else
+        {
+            popup.AppendMenu(0, ID_REV_SSA_FORM, "Reverse SSA form");
+            popup.AppendMenu(0, ID_REMOVE_USELESS, "Remove useless code");
+            if (e && e->getOper() == opSubscript && !hll->getProc()->getCFG()->isUsedInPhi(e))
+                popup.AppendMenu(0, ID_PROPOGATE_FORWARD, "Propogate forward");
+        }
     popup.AppendMenu(MFT_SEPARATOR);
     popup.AppendMenu(0, ID_DEBUG_EXP, "Debug expression");
     popup.AppendMenu(0, ID_SIMPLIFY_EXP, "Simplify expression");
@@ -157,9 +160,10 @@ void CProcView::OnRButtonDown(UINT nFlags, CPoint point)
 void CProcView::OnRenameVariable()
 {
     CRenameVariableDialog d;
-    if (d.DoModal() == IDOK) {
+    if (d.DoModal() == IDOK)
+        {
 
-    }
+        }
 
 }
 
@@ -168,25 +172,30 @@ void CProcView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     CProcDoc* pDoc = GetDocument();
     ASSERT_VALID(pDoc);
 
-    if (hll == NULL) {
-        Proc *p = pDoc->getProc();
-        if (p)
-            if (p->isLib())
-                SetWindowText("This is a library procedure, you cannot view it.");
-            else
-                hll = new CHLLCode((UserProc*)p);
-    }
-    if (hll) {
-        hll->reset();
-        if (!hll->getProc()->generateCode(*hll)) {
-            SetWindowText("Cannot establish reverse DFT ordering.  Eep!");
-        } else {
-            std::string s;
-            hll->toString(s);
-            const char *str = s.c_str();
-            SetWindowText(str);
+    if (hll == NULL)
+        {
+            Proc *p = pDoc->getProc();
+            if (p)
+                if (p->isLib())
+                    SetWindowText("This is a library procedure, you cannot view it.");
+                else
+                    hll = new CHLLCode((UserProc*)p);
         }
-    }
+    if (hll)
+        {
+            hll->reset();
+            if (!hll->getProc()->generateCode(*hll))
+                {
+                    SetWindowText("Cannot establish reverse DFT ordering.  Eep!");
+                }
+            else
+                {
+                    std::string s;
+                    hll->toString(s);
+                    const char *str = s.c_str();
+                    SetWindowText(str);
+                }
+        }
 }
 
 
@@ -194,13 +203,14 @@ void CProcView::OnEditBb()
 {
     BasicBlock *bb = hll->getBlockAt(nCharIndex);
     CEditBBDialog d(theApp.m_pMainWnd, hll->getProc()->getCFG(), bb);
-    if (d.DoModal() == IDOK) {
-        int sp2 = GetScrollPos(1);
-        CPoint curpos = GetCaretPos();
-        OnUpdate(NULL, 0, NULL);
-        GetEditCtrl().LineScroll(sp2);
-        SetCaretPos(curpos);
-    }
+    if (d.DoModal() == IDOK)
+        {
+            int sp2 = GetScrollPos(1);
+            CPoint curpos = GetCaretPos();
+            OnUpdate(NULL, 0, NULL);
+            GetEditCtrl().LineScroll(sp2);
+            SetCaretPos(curpos);
+        }
 }
 
 void CProcView::OnHideUnLabels()
@@ -227,13 +237,14 @@ void CProcView::OnNewSymbol()
 {
     Exp *e = hll->getExpAt(nCharIndex);
     CNewSymbolDialog d(theApp.m_pMainWnd, hll->getProc(), e);
-    if (d.DoModal() == IDOK) {
-        int sp2 = GetScrollPos(1);
-        CPoint curpos = GetCaretPos();
-        OnUpdate(NULL, 0, NULL);
-        GetEditCtrl().LineScroll(sp2);
-        SetCaretPos(curpos);
-    }
+    if (d.DoModal() == IDOK)
+        {
+            int sp2 = GetScrollPos(1);
+            CPoint curpos = GetCaretPos();
+            OnUpdate(NULL, 0, NULL);
+            GetEditCtrl().LineScroll(sp2);
+            SetCaretPos(curpos);
+        }
 }
 
 void CProcView::OnDeleteSymbol()
@@ -241,25 +252,27 @@ void CProcView::OnDeleteSymbol()
     Exp *e = hll->getExpAt(nCharIndex);
     std::string s;
     TypedExp *s_exp;
-    if (e && hll->getProc()->findSymbolFor(e, s, s_exp)) {
-        hll->getProc()->symbols.erase(s);
-        prog.symbols.erase(s);
-        int sp2 = GetScrollPos(1);
-        CPoint curpos = GetCaretPos();
-        OnUpdate(NULL, 0, NULL);
-        GetEditCtrl().LineScroll(sp2);
-        SetCaretPos(curpos);
-    }
+    if (e && hll->getProc()->findSymbolFor(e, s, s_exp))
+        {
+            hll->getProc()->symbols.erase(s);
+            prog.symbols.erase(s);
+            int sp2 = GetScrollPos(1);
+            CPoint curpos = GetCaretPos();
+            OnUpdate(NULL, 0, NULL);
+            GetEditCtrl().LineScroll(sp2);
+            SetCaretPos(curpos);
+        }
 }
 
 void CProcView::OnEditProc()
 {
     Proc *p = hll->getCallAt(nCharIndex);
-    if (p) {
-        CProcDoc *d = (CProcDoc*)theApp.m_pDocManager->OpenDocumentFile(p->getName());
-        d->setProc(p);
-        d->UpdateAllViews(NULL);
-    }
+    if (p)
+        {
+            CProcDoc *d = (CProcDoc*)theApp.m_pDocManager->OpenDocumentFile(p->getName());
+            d->setProc(p);
+            d->UpdateAllViews(NULL);
+        }
 }
 
 void CProcView::OnChange()
@@ -312,14 +325,17 @@ void CProcView::OnMakeSsa()
 
 void CProcView::OnPropogateForward()
 {
-    if (hll->getProc()->isSSAForm()) {
-        Exp *e = hll->getExpAt(nCharIndex);
-        assert(e && e->getOper() == opSubscript);
-        hll->getProc()->getCFG()->propogateForward(e);
-    } else {
-        TypedExp *a = getAssign();
-        hll->getProc()->getCFG()->simplePropogate(a);
-    }
+    if (hll->getProc()->isSSAForm())
+        {
+            Exp *e = hll->getExpAt(nCharIndex);
+            assert(e && e->getOper() == opSubscript);
+            hll->getProc()->getCFG()->propogateForward(e);
+        }
+    else
+        {
+            TypedExp *a = getAssign();
+            hll->getProc()->getCFG()->simplePropogate(a);
+        }
     int sp2 = GetScrollPos(1);
     CPoint curpos = GetCaretPos();
     OnUpdate(NULL, 0, NULL);
@@ -331,14 +347,17 @@ TypedExp *CProcView::getAssign()
 {
     Exp *e = hll->getExpAt(nCharIndex);
     BasicBlock *bb = hll->getBlockAt(nCharIndex);
-    for (std::list<RTL*>::iterator rit = bb->getRTLs()->begin(); rit != bb->getRTLs()->end(); rit++) {
-        for (std::list<Exp*>::iterator it = (*rit)->getList().begin(); it != (*rit)->getList().end(); it++) {
-            if ((*it)->getSubExp1()->getSubExp1() == e) {
-                assert((*it)->getOper() == opTypedExp);
-                return (TypedExp*)*it;
-            }
+    for (std::list<RTL*>::iterator rit = bb->getRTLs()->begin(); rit != bb->getRTLs()->end(); rit++)
+        {
+            for (std::list<Exp*>::iterator it = (*rit)->getList().begin(); it != (*rit)->getList().end(); it++)
+                {
+                    if ((*it)->getSubExp1()->getSubExp1() == e)
+                        {
+                            assert((*it)->getOper() == opTypedExp);
+                            return (TypedExp*)*it;
+                        }
+                }
         }
-    }
     return false;
 }
 
@@ -355,16 +374,19 @@ void CProcView::OnSimplifyExp()
     Exp *e = hll->getExpAt(nCharIndex);
     BasicBlock *bb = hll->getBlockAt(nCharIndex);
     bool found = false;
-    for (std::list<RTL*>::iterator rit = bb->getRTLs()->begin(); rit != bb->getRTLs()->end(); rit++) {
-        for (std::list<Exp*>::iterator it = (*rit)->getList().begin(); it != (*rit)->getList().end(); it++) {
-            if ((*it)->getSubExp1()->getSubExp1() == e) {
-                *it = (*it)->simplify();
-                found = true;
-                break;
-            }
+    for (std::list<RTL*>::iterator rit = bb->getRTLs()->begin(); rit != bb->getRTLs()->end(); rit++)
+        {
+            for (std::list<Exp*>::iterator it = (*rit)->getList().begin(); it != (*rit)->getList().end(); it++)
+                {
+                    if ((*it)->getSubExp1()->getSubExp1() == e)
+                        {
+                            *it = (*it)->simplify();
+                            found = true;
+                            break;
+                        }
+                }
+            if (found) break;
         }
-        if (found) break;
-    }
     int sp2 = GetScrollPos(1);
     CPoint curpos = GetCaretPos();
     OnUpdate(NULL, 0, NULL);

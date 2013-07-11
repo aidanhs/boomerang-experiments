@@ -4,7 +4,8 @@
 #include "BinaryFile.h"
 
 
-class LoaderTest : public CppUnit::TestCase {
+class LoaderTest : public CppUnit::TestCase
+{
 protected:
 
 public:

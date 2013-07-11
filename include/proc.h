@@ -54,7 +54,8 @@ class XMLProgParser;
 /*==============================================================================
  * Procedure class.
  *============================================================================*/
-class Proc : public Memoisable {
+class Proc : public Memoisable
+{
 public:
 
     /*
@@ -87,10 +88,12 @@ public:
     /*
      * Get the program this procedure belongs to.
      */
-    Prog *getProg() {
+    Prog *getProg()
+    {
         return prog;
     }
-    void setProg(Prog *p) {
+    void setProg(Prog *p)
+    {
         prog = p;
     }
 
@@ -98,17 +101,20 @@ public:
      * Get/Set the first procedure that calls this procedure (or null for main/start).
      */
     Proc *getFirstCaller();
-    void setFirstCaller(Proc *p) {
+    void setFirstCaller(Proc *p)
+    {
         if (m_firstCaller == NULL) m_firstCaller = p;
     }
 
     /*
      * Returns a pointer to the Signature
      */
-    Signature *getSignature() {
+    Signature *getSignature()
+    {
         return signature;
     }
-    void setSignature(Signature *sig) {
+    void setSignature(Signature *sig)
+    {
         signature = sig;
     }
 
@@ -176,7 +182,8 @@ public:
     /*
      * Return true if this is a library proc
      */
-    virtual bool isLib() {
+    virtual bool isLib()
+    {
         return false;
     }
 
@@ -184,7 +191,8 @@ public:
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {
+    virtual bool isAggregateUsed()
+    {
         return false;
     }
 
@@ -196,7 +204,8 @@ public:
     virtual Exp *getProven(Exp *left) = 0;
 
     // Set an equation as proven. Useful for some sorts of testing
-    void setProven(Exp* fact) {
+    void setProven(Exp* fact)
+    {
         proven.insert(fact);
     }
 
@@ -205,14 +214,16 @@ public:
      * Note: the callers will be in a random order (determined by memory
      * allocation)
      */
-    std::set<CallStatement*>& getCallers() {
+    std::set<CallStatement*>& getCallers()
+    {
         return callerSet;
     }
 
     /*
      * Add to the set of callers
      */
-    void addCaller(CallStatement* caller) {
+    void addCaller(CallStatement* caller)
+    {
         callerSet.insert(caller);
     }
 
@@ -230,17 +241,21 @@ public:
     virtual void printCallGraphXML(std::ostream &os, int depth,
                                    bool recurse = true);
     void printDetailsXML();
-    void clearVisited() {
+    void clearVisited()
+    {
         visited = false;
     }
-    bool isVisited() {
+    bool isVisited()
+    {
         return visited;
     }
 
-    Cluster *getCluster() {
+    Cluster *getCluster()
+    {
         return cluster;
     }
-    void setCluster(Cluster *c) {
+    void setCluster(Cluster *c)
+    {
         cluster = c;
     }
 
@@ -275,7 +290,8 @@ protected:
 /*==============================================================================
  * LibProc class.
  *============================================================================*/
-class LibProc : public Proc {
+class LibProc : public Proc
+{
 public:
 
     LibProc(Prog *prog, std::string& name, ADDRESS address);
@@ -292,7 +308,8 @@ public:
     /*
      * Return true, since is a library proc
      */
-    bool isLib() {
+    bool isLib()
+    {
         return true;
     }
 
@@ -300,7 +317,8 @@ public:
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {
+    virtual bool isAggregateUsed()
+    {
         return false;
     }
 
@@ -325,7 +343,8 @@ protected:
 /*==============================================================================
  * UserProc class.
  *============================================================================*/
-class UserProc : public Proc {
+class UserProc : public Proc
+{
 
     /*
      * The control flow graph.
@@ -440,14 +459,17 @@ public:
      * it already been decoded).
      */
     bool isDecoded();
-    bool isDecompiled() {
+    bool isDecompiled()
+    {
         return decompiled;
     }
 
-    bool isAnalysed() {
+    bool isAnalysed()
+    {
         return analysed;
     }
-    void setAnalysed() {
+    void setAnalysed()
+    {
         analysed = true;
     }
 
@@ -474,7 +496,8 @@ public:
     void printToLog();
 
     // simplify the statements in this proc
-    void simplify() {
+    void simplify()
+    {
         cfg->simplify();
     }
 
@@ -583,12 +606,14 @@ public:
 
 #if 0
     // get the set of locations "defined" in this procedure
-    void getDefinitions(LocationSet &defs) {
+    void getDefinitions(LocationSet &defs)
+    {
         defs = definesSet;
     }
 
     // get the set of locations "returned" by this procedure
-    void getReturnSet(LocationSet &ret) {
+    void getReturnSet(LocationSet &ret)
+    {
         ret = returnsSet;
     }
 
@@ -653,7 +678,8 @@ public:
     Exp *getLocalExp(const char *nam);
     void setLocalExp(const char *nam, Exp *e);
 
-    int getNumLocals() {
+    int getNumLocals()
+    {
         return (int)locals.size();
     }
     const char *getLocalName(int n);
@@ -689,7 +715,8 @@ public:
     /*
      * Get the callees
      */
-    std::set<Proc*>& getCallees() {
+    std::set<Proc*>& getCallees()
+    {
         return calleeSet;
     }
 
@@ -711,7 +738,8 @@ public:
     /*
      * Change BB containing this statement from a COMPCALL to a CALL
      */
-    void undoComputedBB(Statement* stmt) {
+    void undoComputedBB(Statement* stmt)
+    {
         cfg->undoComputedBB(stmt);
     }
 
@@ -719,7 +747,8 @@ public:
      * Return true if this proc uses the special aggregate pointer as the
      * first parameter
      */
-    virtual bool isAggregateUsed() {
+    virtual bool isAggregateUsed()
+    {
         return aggregateUsed;
     }
 
@@ -749,25 +778,30 @@ private:
     // If no return statement, this will be NULL
     ReturnStatement* theReturnStatement;
 public:
-    ADDRESS getTheReturnAddr() {
+    ADDRESS getTheReturnAddr()
+    {
         return theReturnStatement == NULL ? NO_ADDRESS :
                theReturnStatement->getRetAddr();
     }
-    void setTheReturnAddr(ReturnStatement* s, ADDRESS r) {
+    void setTheReturnAddr(ReturnStatement* s, ADDRESS r)
+    {
         assert(theReturnStatement == NULL);
         theReturnStatement = s;
         theReturnStatement->setRetAddr(r);
     }
-    ReturnStatement* getTheReturnStatement() {
+    ReturnStatement* getTheReturnStatement()
+    {
         return theReturnStatement;
     }
 protected:
     friend class XMLProgParser;
     UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), decompileSeen(false), decompiled(false), isRecursive(false) { }
-    void setCFG(Cfg *c) {
+    void setCFG(Cfg *c)
+    {
         cfg = c;
     }
-    void addDef(Exp *e) {
+    void addDef(Exp *e)
+    {
         definesSet.insert(e);
     }
 };		// class UserProc

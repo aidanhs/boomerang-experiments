@@ -7,79 +7,100 @@
 
 #include <iostream>
 
-class P {
+class P
+{
 public:
     int p1;
-    P() {
+    P()
+    {
         p1 = 7;
     }
-    virtual void pea() {
+    virtual void pea()
+    {
         std::cout << "P::pea\n";
     }
 };
 
-class R {
+class R
+{
 public:
     int r1;
-    R() {
+    R()
+    {
         r1 = 8;
     }
-    virtual void ah() {
+    virtual void ah()
+    {
         std::cout << "R::ah\n";
     }
 };
 
-class Q : public virtual P, public virtual R {
+class Q : public virtual P, public virtual R
+{
 public:
     int q1;
-    Q() {
+    Q()
+    {
         q1 = 9;
     }
-    virtual void pea()	{
+    virtual void pea()
+    {
         std::cout << "Q::pea()\n";
     }
-    virtual void ah()	{
+    virtual void ah()
+    {
         std::cout << "Q::ah()\n";
     }
 };
 
-class S : public virtual P, public virtual R {
+class S : public virtual P, public virtual R
+{
 public:
     int s1;
-    S() {
+    S()
+    {
         s1 = 10;
     }
-    virtual void pea()	{
+    virtual void pea()
+    {
         std::cout << "S::pea()\n";
     }
-    virtual void ah()	{
+    virtual void ah()
+    {
         std::cout << "S::ah()\n";
     }
 };
 
-class T: virtual public Q, virtual public S {
+class T: virtual public Q, virtual public S
+{
 public:
     int t1;
-    T() {
+    T()
+    {
         t1 = 11;
     }
-    virtual void pea()	{
+    virtual void pea()
+    {
         std::cout << "T::pea()\n";
     }
-    virtual void ah()	{
+    virtual void ah()
+    {
         std::cout << "T::ah()\n";
     }
-    virtual      ~T()   {
+    virtual      ~T()
+    {
         t1 = -1;
     }
 };
 
-void fred() {
+void fred()
+{
     T* t = new T();
     delete t;
 }
 
-int main() {
+int main()
+{
     T* t = new T();
     t->pea();
     t->ah();

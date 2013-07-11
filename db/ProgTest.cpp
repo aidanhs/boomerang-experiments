@@ -28,7 +28,8 @@
 suite->addTest(new CppUnit::TestCaller<ProgTest> ("ProgTest", \
 	&ProgTest::name, *this))
 
-void ProgTest::registerTests(CppUnit::TestSuite* suite) {
+void ProgTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(testName);
 }
 
@@ -44,7 +45,8 @@ int ProgTest::countTestCases () const
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ProgTest::setUp () {
+void ProgTest::setUp ()
+{
     //prog.setName("default name");
 }
 
@@ -55,14 +57,16 @@ void ProgTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ProgTest::tearDown () {
+void ProgTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		ProgTest::testName
  * OVERVIEW:		Test setting and reading name
  *============================================================================*/
-void ProgTest::testName () {
+void ProgTest::testName ()
+{
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);	// Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
     // We need a Prog object with a pBF (for getEarlyParamExp())

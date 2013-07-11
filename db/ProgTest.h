@@ -4,7 +4,8 @@
 
 #include "prog.h"
 
-class ProgTest : public CppUnit::TestCase {
+class ProgTest : public CppUnit::TestCase
+{
 protected:
     Prog*  m_prog;
 

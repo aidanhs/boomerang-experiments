@@ -65,18 +65,18 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
                                | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
             !m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
-    {
-        TRACE0("Failed to create toolbar\n");
-        return -1;      // fail to create
-    }
+        {
+            TRACE0("Failed to create toolbar\n");
+            return -1;      // fail to create
+        }
 
     if (!m_wndStatusBar.Create(this) ||
             !m_wndStatusBar.SetIndicators(indicators,
                                           sizeof(indicators)/sizeof(UINT)))
-    {
-        TRACE0("Failed to create status bar\n");
-        return -1;      // fail to create
-    }
+        {
+            TRACE0("Failed to create status bar\n");
+            return -1;      // fail to create
+        }
 
     // TODO: Delete these three lines if you don't want the toolbar to
     //  be dockable
@@ -132,9 +132,10 @@ void CMainFrame::OnPaint()
     CPaintDC dc(this); // device context for painting
 
     std::string b("Boomerang");
-    if (prog.project != "") {
-        b = prog.project + " - " + b;
-    }
+    if (prog.project != "")
+        {
+            b = prog.project + " - " + b;
+        }
     SetTitle(b.c_str());
     SetWindowText(b.c_str());
 

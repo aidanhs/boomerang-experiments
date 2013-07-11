@@ -98,13 +98,16 @@ bool hasExt(const std::string& s, const char* ext)
 {
     std::string tailStr = std::string(".") + std::string(ext);
     unsigned int i = s.rfind(tailStr);
-    if (i == std::string::npos) {
-        return false;
-    } else {
-        unsigned int sLen = s.length();
-        unsigned int tailStrLen = tailStr.length();
-        return ((i + tailStrLen) == sLen);
-    }
+    if (i == std::string::npos)
+        {
+            return false;
+        }
+    else
+        {
+            unsigned int sLen = s.length();
+            unsigned int tailStrLen = tailStr.length();
+            return ((i + tailStrLen) == sLen);
+        }
 }
 
 /*==============================================================================
@@ -118,12 +121,14 @@ bool hasExt(const std::string& s, const char* ext)
 std::string changeExt(const std::string& s, const char* ext)
 {
     size_t i = s.rfind(".");
-    if (i == std::string::npos) {
-        return s + ext;
-    }
-    else {
-        return s.substr(0, i) + ext;
-    }
+    if (i == std::string::npos)
+        {
+            return s + ext;
+        }
+    else
+        {
+            return s.substr(0, i) + ext;
+        }
 }
 
 /*==============================================================================
@@ -139,15 +144,17 @@ std::string searchAndReplace( const std::string &in, const std::string &match,
                               const std::string &rep )
 {
     std::string result;
-    for( int n = 0; n != -1; ) {
-        int l = in.find(match,n);
-        result.append( in.substr(n,(l==-1?in.length() : l )-n) );
-        if( l != -1 ) {
-            result.append( rep );
-            l+=match.length();
+    for( int n = 0; n != -1; )
+        {
+            int l = in.find(match,n);
+            result.append( in.substr(n,(l==-1?in.length() : l )-n) );
+            if( l != -1 )
+                {
+                    result.append( rep );
+                    l+=match.length();
+                }
+            n = l;
         }
-        n = l;
-    }
     return result;
 }
 
@@ -210,42 +217,49 @@ void escapeXMLChars(std::string &s)
 {
     std::string bad = "<>&";
     const char *replace[] = { "&lt;", "&gt;", "&amp;" };
-    for (unsigned i = 0; i < s.size(); i++) {
-        unsigned n = bad.find(s[i]);
-        if (n != std::string::npos) {
-            s.replace(i, 1, replace[n]);
+    for (unsigned i = 0; i < s.size(); i++)
+        {
+            unsigned n = bad.find(s[i]);
+            if (n != std::string::npos)
+                {
+                    s.replace(i, 1, replace[n]);
+                }
         }
-    }
 }
 
 // Turn things like newline, return, tab into \n, \r, \t etc
 // Note: assumes a C or C++ back end...
-char* escapeStr(char* str) {
+char* escapeStr(char* str)
+{
     std::ostringstream out;
-    for (char* p = str; *p; p++) {
-        char c = *p;
-        if (c < ' ') {
-            switch (c) {
-            case '\n':
-                out << "\\n";
-                break;
-            case '\r':
-                out << "\\r";
-                break;
-            case '\t':
-                out << "\\t";
-                break;
-            case '\b':
-                out << "\\b";
-                break;
-            case '\f':
-                out << "\\f";
-                break;
-            default:
-                out << "\\x" << std::hex << std::setw(2) << (int)c;
-            }
-        } else out << c;
-    }
+    for (char* p = str; *p; p++)
+        {
+            char c = *p;
+            if (c < ' ')
+                {
+                    switch (c)
+                        {
+                        case '\n':
+                            out << "\\n";
+                            break;
+                        case '\r':
+                            out << "\\r";
+                            break;
+                        case '\t':
+                            out << "\\t";
+                            break;
+                        case '\b':
+                            out << "\\b";
+                            break;
+                        case '\f':
+                            out << "\\f";
+                            break;
+                        default:
+                            out << "\\x" << std::hex << std::setw(2) << (int)c;
+                        }
+                }
+            else out << c;
+        }
     char* ret = new char[out.str().size()+1];
     strcpy(ret, out.str().c_str());
     return ret;

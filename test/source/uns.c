@@ -1,6 +1,7 @@
 #include <stdio.h>
 
-int main(int argc) {
+int main(int argc)
+{
     if (argc >= 4000000000U)
         printf("Population exceeds %u\n", 4000000000U);
     if (argc < 0xF0000000)

@@ -38,7 +38,8 @@ typedef struct
 } SymValue;
 
 // Internal elf info
-typedef struct {
+typedef struct
+{
     char  e_ident[4];
     char  e_class;
     char  endianness;
@@ -73,7 +74,8 @@ typedef struct {
 #define R_386_PC32 2
 
 // Program header
-typedef struct {
+typedef struct
+{
     int	 p_type;	 /* entry type */
     int	 p_offset;	 /* file offset */
     int	 p_vaddr;	 /* virtual address */
@@ -85,7 +87,8 @@ typedef struct {
 } Elf32_Phdr;
 
 // Section header
-typedef struct {
+typedef struct
+{
     int	sh_name;
     int	sh_type;
     int	sh_flags;
@@ -104,7 +107,8 @@ typedef struct {
 
 #define SHT_NOBITS		8		// Bss
 
-typedef struct {
+typedef struct
+{
     int		st_name;
     unsigned st_value;
     int		st_size;
@@ -113,7 +117,8 @@ typedef struct {
     short	st_shndx;
 } Elf32_Sym;
 
-typedef struct {
+typedef struct
+{
     unsigned r_offset;
     int r_info;
 } Elf32_Rel;
@@ -126,9 +131,11 @@ typedef struct {
 #define STT_SECTION 3
 #define STB_GLOBAL 1
 
-typedef struct {
+typedef struct
+{
     short d_tag;			  /* how to interpret value */
-    union {
+    union
+    {
         int	 d_val;
         int	 d_ptr;
         int	 d_off;
@@ -153,7 +160,8 @@ public:
     virtual void	Close();						// Close file opened with Open()
     virtual LOAD_FMT GetFormat() const;			// Get format (e.g. LOADFMT_ELF)
     virtual MACHINE GetMachine() const;			// Get machine (e.g. MACHINE_SPARC)
-    virtual const char *getFilename() const {
+    virtual const char *getFilename() const
+    {
         return m_pFileName;
     }
     virtual bool isLibrary() const;
@@ -220,7 +228,8 @@ public:
     // The caller should delete the returned map.
     virtual std::map<ADDRESS, const char*>* GetDynamicGlobalMap();
 
-    virtual std::map<ADDRESS, std::string> &getSymbols() {
+    virtual std::map<ADDRESS, std::string> &getSymbols()
+    {
         return m_SymA;
     }
 

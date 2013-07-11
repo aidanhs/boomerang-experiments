@@ -33,7 +33,8 @@ class Cfg;
 
 // A class to implement sets of statements
 // We may choose to implement these very differently one day
-class StatementSet {
+class StatementSet
+{
     std::set<Statement*> sset;			// For now, use use standard sets
 
 public:
@@ -45,19 +46,23 @@ public:
     void makeIsect(StatementSet& other);	// Set intersection
     bool isSubSetOf(StatementSet& other);	 // subset relation
 
-    int size() {
+    int size()
+    {
         return sset.size();   // Number of elements
     }
     //Statement* getFirst(StmtSetIter& it);	  // Get the first Statement
     //Statement* getNext (StmtSetIter& it);	  // Get next
-    iterator begin() {
+    iterator begin()
+    {
         return sset.begin();
     }
-    iterator end()	 {
+    iterator end()
+    {
         return sset.end();
     }
 
-    void insert(Statement* s) {
+    void insert(Statement* s)
+    {
         sset.insert(s);   // Insertion
     }
     bool remove(Statement* s);				// Removal; rets false if not found
@@ -66,7 +71,8 @@ public:
     bool exists(Statement* s);				// Search; returns false if !found
     bool defines(Exp* loc);					// Search; returns true if any
     // statement defines loc
-    void clear() {
+    void clear()
+    {
         sset.clear();   // Clear the set
     }
     bool operator==(const StatementSet& o) const	// Compare if equal
@@ -80,34 +86,41 @@ public:
     //bool isLast(StmtSetIter& it);			  // returns true if it is at end
 };	// class StatementSet
 
-class StatementList {
+class StatementList
+{
     std::list<Statement*> slist;		  // For now, use use standard list
 
 public:
     typedef std::list<Statement*>::iterator iterator;
     typedef std::list<Statement*>::reverse_iterator reverse_iterator;
     virtual ~StatementList() {}
-    int size() {
+    int size()
+    {
         return slist.size();   // Number of elements
     }
     //Statement* getFirst(StmtListIter& it);   // Get the first Statement
     //Statement* getNext (StmtListIter& it);   // Get next
     //Statement* getLast (StmtListRevIter& it);// Get the last Statement
     //Statement* getPrev (StmtListRevIter& it);// Get previous
-    iterator begin()  {
+    iterator begin()
+    {
         return slist.begin();
     }
-    iterator end()	  {
+    iterator end()
+    {
         return slist.end();
     }
-    reverse_iterator rbegin() {
+    reverse_iterator rbegin()
+    {
         return slist.rbegin();
     }
-    reverse_iterator rend()	  {
+    reverse_iterator rend()
+    {
         return slist.rend();
     }
 
-    void append(Statement* s) {
+    void append(Statement* s)
+    {
         slist.push_back(s);   // Insert at end
     }
     void append(StatementList& sl);			// Append whole StatementList
@@ -115,39 +128,48 @@ public:
     bool remove(Statement* s);				// Removal; rets false if not found
     // This one is needed where you remove in the middle of a loop
     // Use like this: it = mystatementlist.remove(it);
-    iterator remove(iterator it) {
+    iterator remove(iterator it)
+    {
         return slist.erase(it);
     }
     bool exists(Statement* s);	// Find; returns false if not found
     char*  prints();			// Print to string (for debugging)
-    void clear() {
+    void clear()
+    {
         slist.clear();
     }
 };	// class StatementList
 
-class StatementVec {
+class StatementVec
+{
     std::vector<Statement*> svec;			// For now, use use standard vector
 
 public:
     typedef std::vector<Statement*>::iterator iterator;
     typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
-    int size() {
+    int size()
+    {
         return svec.size();   // Number of elements
     }
-    iterator begin() {
+    iterator begin()
+    {
         return svec.begin();
     }
-    iterator end()	 {
+    iterator end()
+    {
         return svec.end();
     }
-    reverse_iterator rbegin() {
+    reverse_iterator rbegin()
+    {
         return svec.rbegin();
     }
-    reverse_iterator rend()	  {
+    reverse_iterator rend()
+    {
         return svec.rend();
     }
     // Get/put at position idx (0 based)
-    Statement* operator[](int idx) {
+    Statement* operator[](int idx)
+    {
         return svec[idx];
     }
     void   putAt(int idx, Statement* s);
@@ -155,7 +177,8 @@ public:
     char*  prints();						// Print to string (for debugging)
     void   printLefts(std::ostream& os);	// Print the LHSs only e.g. 7 r8 := 0 print "r8{7}"
     void   printNums(std::ostream& os);
-    void   clear() {
+    void   clear()
+    {
         svec.clear();
     }
     bool operator==(const StatementVec& o) const	// Compare if equal
@@ -169,7 +192,8 @@ public:
 };	// class StatementVec
 
 // For liveness, we need sets of locations (registers or memory)
-class LocationSet {
+class LocationSet
+{
     // We use a standard set, but with a special "less than" operator
     // so that the sets are ordered by expression value. If this is not done,
     // then two expressions with the same value (say r[10]) but that happen to
@@ -185,24 +209,29 @@ public:
     LocationSet& operator=(const LocationSet& o); // Assignment
     void makeUnion(LocationSet& other);		// Set union
     void makeDiff (LocationSet& other);		// Set difference
-    void clear() {
+    void clear()
+    {
         sset.clear();   // Clear the set
     }
     //Exp* getFirst(LocSetIter& it);		  // Get the first Statement
     //Exp* getNext (LocSetIter& it);		  // Get next
-    iterator begin() {
+    iterator begin()
+    {
         return sset.begin();
     }
-    iterator end()	 {
+    iterator end()
+    {
         return sset.end();
     }
-    void insert(Exp* loc) {
+    void insert(Exp* loc)
+    {
         sset.insert(loc);   // Insert the given location
     }
     void remove(Exp* loc);					// Remove the given location
     void remove(iterator ll);			// Remove location, given iterator
     void removeIfDefines(StatementSet& given);// Remove locs defined in given
-    int	 size() const {
+    int	 size() const
+    {
         return sset.size();   // Number of elements
     }
     bool operator==(const LocationSet& o) const; // Compare

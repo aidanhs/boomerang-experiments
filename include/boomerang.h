@@ -29,7 +29,8 @@
 
 #define LOG Boomerang::get()->log()
 
-class Watcher {
+class Watcher
+{
 public:
     Watcher() { }
 
@@ -50,7 +51,8 @@ public:
     virtual void alert_load(Proc *p) { }
 };
 
-class Boomerang {
+class Boomerang
+{
 private:
     static Boomerang *boomerang;
     std::string progPath;	// String with the path to this exec
@@ -69,13 +71,15 @@ private:
     Boomerang();
     virtual ~Boomerang() {}
 public:
-    static Boomerang *get() {
+    static Boomerang *get()
+    {
         if (!boomerang) boomerang = new Boomerang();
         return boomerang;
     }
 
     Log		&log();
-    void	setLogger(Log *l) {
+    void	setLogger(Log *l)
+    {
         logger = l;
     }
     bool	setOutputDirectory(const char *path);
@@ -84,84 +88,104 @@ public:
 
     // performs command line operation
     int		commandLine(int argc, const char **argv);
-    void	setProgPath(const char* p) {
+    void	setProgPath(const char* p)
+    {
         progPath = p;
     }
-    const	std::string& getProgPath() {
+    const	std::string& getProgPath()
+    {
         return progPath;
     }
-    void	setOutputPath(const char* p) {
+    void	setOutputPath(const char* p)
+    {
         outputPath = p;
     }
-    const	std::string& getOutputPath() {
+    const	std::string& getOutputPath()
+    {
         return outputPath;
     }
     Prog	*loadAndDecode(const char *fname, const char *pname = NULL);
     int		decompile(const char *fname, const char *pname = NULL);
-    void	addWatcher(Watcher *watcher) {
+    void	addWatcher(Watcher *watcher)
+    {
         watchers.insert(watcher);
     }
     void	persistToXML(Prog *prog);
     Prog	*loadFromXML(const char *fname);
 
     // call the watchers
-    void alert_complete() {
+    void alert_complete()
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_complete();
     }
-    void alert_new(Proc *p) {
+    void alert_new(Proc *p)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_new(p);
     }
-    void alert_update_signature(Proc *p) {
+    void alert_update_signature(Proc *p)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_update_signature(p);
     }
-    void alert_decode(ADDRESS pc, int nBytes) {
+    void alert_decode(ADDRESS pc, int nBytes)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_decode(pc, nBytes);
     }
-    void alert_baddecode(ADDRESS pc) {
+    void alert_baddecode(ADDRESS pc)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_baddecode(pc);
     }
-    void alert_decode(Proc *p, ADDRESS pc, ADDRESS last, int nBytes) {
+    void alert_decode(Proc *p, ADDRESS pc, ADDRESS last, int nBytes)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_decode(p, pc, last, nBytes);
     }
-    void alert_load(Proc *p) {
+    void alert_load(Proc *p)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_load(p);
     }
-    void alert_start_decode(ADDRESS start, int nBytes) {
+    void alert_start_decode(ADDRESS start, int nBytes)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_start_decode(start, nBytes);
     }
-    void alert_end_decode() {
+    void alert_end_decode()
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_end_decode();
     }
-    virtual void alert_start_decompile(UserProc *p) {
+    virtual void alert_start_decompile(UserProc *p)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_start_decompile(p);
     }
-    virtual void alert_decompile_SSADepth(UserProc *p, int depth) {
+    virtual void alert_decompile_SSADepth(UserProc *p, int depth)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_decompile_SSADepth(p, depth);
     }
-    virtual void alert_decompile_beforePropagate(UserProc *p, int depth) {
+    virtual void alert_decompile_beforePropagate(UserProc *p, int depth)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_decompile_beforePropagate(p, depth);
     }
-    virtual void alert_decompile_afterPropagate(UserProc *p, int depth) {
+    virtual void alert_decompile_afterPropagate(UserProc *p, int depth)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_decompile_afterPropagate(p, depth);
     }
-    virtual void alert_decompile_afterRemoveStmts(UserProc *p, int depth) {
+    virtual void alert_decompile_afterRemoveStmts(UserProc *p, int depth)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_decompile_afterRemoveStmts(p, depth);
     }
-    virtual void alert_end_decompile(UserProc *p) {
+    virtual void alert_end_decompile(UserProc *p)
+    {
         for (std::set<Watcher*>::iterator it = watchers.begin(); it != watchers.end(); it++)
             (*it)->alert_end_decompile(p);
     }
