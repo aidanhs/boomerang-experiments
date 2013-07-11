@@ -5,11 +5,11 @@
 #include "exp.h"
 
 class ExpTest : public CppUnit::TestCase {
-  protected:
+protected:
     Const*  m_99;
     Unary*  m_rof2;
 
-  public:
+public:
     ExpTest(std::string name) : CppUnit::TestCase (name)
     {}
 
