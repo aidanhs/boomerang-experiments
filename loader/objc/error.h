@@ -2,7 +2,7 @@
  * Copyright (c) 1999 Apple Computer, Inc. All rights reserved.
  *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * Portions Copyright (c) 1999 Apple Computer, Inc.  All Rights
  * Reserved.  This file contains Original Code and/or Modifications of
  * Original Code as defined in and that are subject to the Apple Public
@@ -10,7 +10,7 @@
  * except in compliance with the License.  Please obtain a copy of the
  * License at http://www.apple.com/publicsource and read it before using
  * this file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -18,7 +18,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE OR NON- INFRINGEMENT.  Please see the
  * License for the specific language governing rights and limitations
  * under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 
@@ -50,7 +50,7 @@ typedef struct _NXHandler {	/* a node in the handler chain */
 
 /* Handles RAISE's with nowhere to longjmp to */
 typedef void NXUncaughtExceptionHandler(int code, const void *data1,
-						const void *data2);
+                                        const void *data2);
 OBJC_EXPORT NXUncaughtExceptionHandler *_NXUncaughtExceptionHandler;
 #define NXGetUncaughtExceptionHandler() _NXUncaughtExceptionHandler
 #define NXSetUncaughtExceptionHandler(proc) \
@@ -101,11 +101,11 @@ OBJC_EXPORT void _NXRemoveHandler( NXHandler *handler );
 
 OBJC_EXPORT
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-    volatile	/* never returns */
-#endif 
+volatile	/* never returns */
+#endif
 void _NXRaiseError(int code, const void *data1, const void *data2)
 #if defined(__GNUC__)
-  __attribute__ ((noreturn))
+__attribute__ ((noreturn))
 #endif
 ;
 

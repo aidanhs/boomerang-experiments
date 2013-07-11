@@ -5,60 +5,60 @@ int strcmpi(const char* s1, const char* s2);            // See util/util.cpp
 
 
 BfdObjMatcher::BfdObjMatcher(Prog *prog, const char *sSymbolContainer)
-:SymbolMatcher(prog, sSymbolContainer),
-m_bfd(NULL),
-m_symbol_table(NULL),
-m_current_section(0)
+    :SymbolMatcher(prog, sSymbolContainer),
+     m_bfd(NULL),
+     m_symbol_table(NULL),
+     m_current_section(0)
 {
 }
 
 BfdObjMatcher::~BfdObjMatcher(void)
 {
-	Unload();
+    Unload();
 }
 
 int BfdObjMatcher::Total() {
-	int total = 0;
-	bfd_section *sec = m_bfd->sections;
-	while(sec) {
-		// just count code sections
-		if(sec->flags & SEC_CODE)
-			total ++;
-		sec = sec->next;
-	}
-	return total;
+    int total = 0;
+    bfd_section *sec = m_bfd->sections;
+    while(sec) {
+        // just count code sections
+        if(sec->flags & SEC_CODE)
+            total ++;
+        sec = sec->next;
+    }
+    return total;
 }
 
 bool BfdObjMatcher::Next() {
 
-	// find next code section
-	do{
-		if(!m_current_section)
-			m_current_section = m_bfd->sections;
-		else
-			m_current_section = m_current_section->next;
-	}while(m_current_section && !(m_current_section->flags & SEC_CODE ));
+    // find next code section
+    do {
+        if(!m_current_section)
+            m_current_section = m_bfd->sections;
+        else
+            m_current_section = m_current_section->next;
+    } while(m_current_section && !(m_current_section->flags & SEC_CODE ));
 
-	return !Finished();
+    return !Finished();
 
 }
 
 bool BfdObjMatcher::Finished() {
 
-	return m_current_section == NULL;
+    return m_current_section == NULL;
 }
 
 bool BfdObjMatcher::GetSymbolInfo(SymbolInfo *symInfo) {
-	if(!m_symbol_table)
-		return false;
+    if(!m_symbol_table)
+        return false;
 
-	symInfo->name = get_comdat_info()->name;
-	symInfo->size = bfd_section_size(m_bfd, m_current_section);
+    symInfo->name = get_comdat_info()->name;
+    symInfo->size = bfd_section_size(m_bfd, m_current_section);
 
-	// assume function
-	symInfo->type = SYMBOL_TYPE_FUNCTION;
+    // assume function
+    symInfo->type = SYMBOL_TYPE_FUNCTION;
 
-	return true;
+    return true;
 }
 
 
@@ -66,111 +66,111 @@ bool BfdObjMatcher::GetSymbolInfo(SymbolInfo *symInfo) {
 // to the executable
 bool BfdObjMatcher::Match() {
 
-	if(!m_bfd)
-		return false;
+    if(!m_bfd)
+        return false;
 
-	bool found = false;
+    bool found = false;
 
-	// load function byte codes
-	unsigned char *func_data = new unsigned char[bfd_section_size(m_bfd, m_current_section)];
-	bool ret = bfd_get_section_contents(m_bfd,
-					m_current_section,
-					func_data,
-					0,
-					bfd_section_size(m_bfd, m_current_section));
+    // load function byte codes
+    unsigned char *func_data = new unsigned char[bfd_section_size(m_bfd, m_current_section)];
+    bool ret = bfd_get_section_contents(m_bfd,
+                                        m_current_section,
+                                        func_data,
+                                        0,
+                                        bfd_section_size(m_bfd, m_current_section));
 
-	// now get all wild bytes in the
-	// function codes
-	long reloc_size = bfd_get_reloc_upper_bound(m_bfd, m_current_section);
+    // now get all wild bytes in the
+    // function codes
+    long reloc_size = bfd_get_reloc_upper_bound(m_bfd, m_current_section);
 
-	arelent **reloc_data = new arelent *[reloc_size];
+    arelent **reloc_data = new arelent *[reloc_size];
 
-	int relocs = bfd_canonicalize_reloc(m_bfd, m_current_section,
-										reloc_data, m_symbol_table);
-	// on success
-	if(relocs >= 0) {
+    int relocs = bfd_canonicalize_reloc(m_bfd, m_current_section,
+                                        reloc_data, m_symbol_table);
+    // on success
+    if(relocs >= 0) {
 
-		// create a byte pattern to be matched
-		BytePattern fpat(func_data, bfd_section_size(m_bfd, m_current_section));
+        // create a byte pattern to be matched
+        BytePattern fpat(func_data, bfd_section_size(m_bfd, m_current_section));
 
-		for(int i=0; i<relocs; i++) {
+        for(int i=0; i<relocs; i++) {
 
-			// find out reloc item size
-			int reloc_item_size = bfd_get_reloc_size(reloc_data[i]->howto);
-						
-			// mark wild bytes
-			fpat.FlagWildBytes(reloc_data[i]->address,
-							reloc_item_size);
+            // find out reloc item size
+            int reloc_item_size = bfd_get_reloc_size(reloc_data[i]->howto);
 
-		}
-		
-		// now match the pattern against code sections
-		int total_sections = GetTotalSections();
-		int idx = 0;
-		while(idx < total_sections) {
-            
-			PSectionInfo sec_info = GetSectionInfo(idx);
+            // mark wild bytes
+            fpat.FlagWildBytes(reloc_data[i]->address,
+                               reloc_item_size);
 
-			// if it is a code section
-			if(sec_info->bCode) {
-				int match_pos = fpat.Match((unsigned char *)sec_info->uHostAddr, sec_info->uSectionSize);
+        }
 
-				// if function found
-				if(match_pos >= 0) {
+        // now match the pattern against code sections
+        int total_sections = GetTotalSections();
+        int idx = 0;
+        while(idx < total_sections) {
 
-					// create the function
-					if(get_comdat_info()) {
+            PSectionInfo sec_info = GetSectionInfo(idx);
 
-						std::string func_proto = Demangle(get_comdat_info()->name);
+            // if it is a code section
+            if(sec_info->bCode) {
+                int match_pos = fpat.Match((unsigned char *)sec_info->uHostAddr, sec_info->uSectionSize);
 
-						m_prog->newProc(func_proto.c_str(),
-										sec_info->uNativeAddr + match_pos,
-										true);
+                // if function found
+                if(match_pos >= 0) {
 
+                    // create the function
+                    if(get_comdat_info()) {
 
-						printf("Matched: %s\n", func_proto.c_str());
-					}
-					// add any symbols referenced by this
-					// function
-					for(int i=0; i<relocs; i++) {
+                        std::string func_proto = Demangle(get_comdat_info()->name);
 
-						// find out reloc item size
-						int reloc_item_size = bfd_get_reloc_size(reloc_data[i]->howto);
-
-						std::string sym_proto = Demangle(reloc_data[i]->sym_ptr_ptr[0]->name);
-
-						// add the symbol
-						AddSymbol((reloc_data[i]->howto->pc_relative ? sec_info->uNativeAddr + match_pos + reloc_data[i]->address : 0) +
-												*(unsigned long *)((char *)sec_info->uHostAddr + match_pos + reloc_data[i]->address) -
-												*(unsigned long *)(func_data + reloc_data[i]->address),
-												sym_proto.c_str(),
-												NULL);
-						printf("Symbol Reference: %s\n", sym_proto.c_str());
-												
+                        m_prog->newProc(func_proto.c_str(),
+                                        sec_info->uNativeAddr + match_pos,
+                                        true);
 
 
+                        printf("Matched: %s\n", func_proto.c_str());
+                    }
+                    // add any symbols referenced by this
+                    // function
+                    for(int i=0; i<relocs; i++) {
 
-					}
+                        // find out reloc item size
+                        int reloc_item_size = bfd_get_reloc_size(reloc_data[i]->howto);
 
-				}
-			}
+                        std::string sym_proto = Demangle(reloc_data[i]->sym_ptr_ptr[0]->name);
 
-			idx ++;
-		}
-
-	}
-	delete [] reloc_data;
-
-	if(!ret) 
-		goto cleanup;
+                        // add the symbol
+                        AddSymbol((reloc_data[i]->howto->pc_relative ? sec_info->uNativeAddr + match_pos + reloc_data[i]->address : 0) +
+                                  *(unsigned long *)((char *)sec_info->uHostAddr + match_pos + reloc_data[i]->address) -
+                                  *(unsigned long *)(func_data + reloc_data[i]->address),
+                                  sym_proto.c_str(),
+                                  NULL);
+                        printf("Symbol Reference: %s\n", sym_proto.c_str());
 
 
-	//search for a match
+
+
+                    }
+
+                }
+            }
+
+            idx ++;
+        }
+
+    }
+    delete [] reloc_data;
+
+    if(!ret)
+        goto cleanup;
+
+
+    //search for a match
 
 cleanup:
-	delete [] func_data;
+    delete [] func_data;
 
-	return found;
+    return found;
 
 
 }
@@ -180,25 +180,25 @@ bool BfdObjMatcher::Load()
 	loads the BFD object
 */
 {
-	bfd_init();
-	m_bfd = bfd_openr(m_sSymbolContainer.c_str(), NULL);
+    bfd_init();
+    m_bfd = bfd_openr(m_sSymbolContainer.c_str(), NULL);
 
-	if(!m_bfd)
-		return false;
+    if(!m_bfd)
+        return false;
 
-	if (!bfd_check_format (m_bfd, bfd_object)) {
-		return false;
-	}
+    if (!bfd_check_format (m_bfd, bfd_object)) {
+        return false;
+    }
 
- 	if(!InitSymtab())
-		return false;
+    if(!InitSymtab())
+        return false;
 
 
-	// start with the first section
-	m_current_section = NULL;
-	Next();
+    // start with the first section
+    m_current_section = NULL;
+    Next();
 
-	return true;
+    return true;
 
 }
 
@@ -208,16 +208,16 @@ void BfdObjMatcher::Unload()
 	Unloads the bfd object
 */
 {
-	// clean up symbol table
-	if(m_symbol_table)
-		delete []m_symbol_table;
-	m_symbol_table = NULL;
+    // clean up symbol table
+    if(m_symbol_table)
+        delete []m_symbol_table;
+    m_symbol_table = NULL;
 
 
-	// clean up bfd object
-	if(m_bfd)
-		bfd_close(m_bfd);
-	m_bfd = NULL;
+    // clean up bfd object
+    if(m_bfd)
+        bfd_close(m_bfd);
+    m_bfd = NULL;
 }
 
 bool BfdObjMatcher::InitSymtab()
@@ -225,39 +225,39 @@ bool BfdObjMatcher::InitSymtab()
 	Loads the symbol table of the bfd object
 */
 {
-   int storage_needed = bfd_get_symtab_upper_bound (m_bfd);
-   if (storage_needed <= 0)
-		return false;
+    int storage_needed = bfd_get_symtab_upper_bound (m_bfd);
+    if (storage_needed <= 0)
+        return false;
 
-   m_symbol_table = new asymbol * [storage_needed / sizeof(asymbol *)];
+    m_symbol_table = new asymbol * [storage_needed / sizeof(asymbol *)];
     m_nTotalSymbols =
-		bfd_canonicalize_symtab (m_bfd, m_symbol_table);
+        bfd_canonicalize_symtab (m_bfd, m_symbol_table);
 
     if (m_nTotalSymbols < 0)
-		return false;
+        return false;
 
-	return true;
+    return true;
 }
 
 // returns true if this class can handle
 // this type of sumbol container
 bool BfdObjMatcher::CanHandle(const char *sSymbolContainer)
 {
-	int s = strlen(sSymbolContainer);
-	if(s > 4 && !strcmpi(sSymbolContainer + s - 4, ".obj"))
-		return true;
+    int s = strlen(sSymbolContainer);
+    if(s > 4 && !strcmpi(sSymbolContainer + s - 4, ".obj"))
+        return true;
 
-	return false;
+    return false;
 }
 
 bool BfdObjMatcher::Init()
 {
-	if(!Load()) {
-		if(m_bfd)
-			Unload();
-		return false;
-	}
-	return true;
+    if(!Load()) {
+        if(m_bfd)
+            Unload();
+        return false;
+    }
+    return true;
 }
 
 std::string BfdObjMatcher::Demangle(const char *mangled_name)
@@ -267,7 +267,7 @@ std::string BfdObjMatcher::Demangle(const char *mangled_name)
 */
 {
 
-	return mangled_name + 1;
+    return mangled_name + 1;
 //	return do_symbol_demangle(m_bfd->arch_info,
 //								m_
 }
@@ -275,8 +275,8 @@ std::string BfdObjMatcher::Demangle(const char *mangled_name)
 COMDAT_INFO *BfdObjMatcher::get_comdat_info()
 {
 #ifdef BFD_2_15
-	return m_current_section->comdat;
+    return m_current_section->comdat;
 #else
-	return bfd_coff_get_comdat_section(m_bfd, m_current_section);
+    return bfd_coff_get_comdat_section(m_bfd, m_current_section);
 #endif
 }

@@ -29,7 +29,9 @@ void CTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int CTest::countTestCases () const
-{ return 1; }   // ? What's this for?
+{
+    return 1;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        CTest::setUp
@@ -67,7 +69,7 @@ void CTest::testSignature () {
     CPPUNIT_ASSERT(*sig->getReturnType(0) == IntegerType());
     Type *t = new PointerType(new CharType());
     // Pentium signatures used to have esp prepended to the list of parameters; no more?
-	int num = sig->getNumParams();
+    int num = sig->getNumParams();
     CPPUNIT_ASSERT_EQUAL(1, num);
     CPPUNIT_ASSERT(*sig->getParamType(0) == *t);
     CPPUNIT_ASSERT_EQUAL(std::string("fmt"), std::string(sig->getParamName(0)));

@@ -2,9 +2,9 @@
 #include "SymbolMatcher.h"
 
 class DynLibMatcher :
-	public SymbolMatcher
+    public SymbolMatcher
 {
 public:
-	DynLibMatcher(Prog *prog);
-	~DynLibMatcher(void);
+    DynLibMatcher(Prog *prog);
+    ~DynLibMatcher(void);
 };

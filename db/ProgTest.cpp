@@ -29,11 +29,13 @@ suite->addTest(new CppUnit::TestCaller<ProgTest> ("ProgTest", \
 	&ProgTest::name, *this))
 
 void ProgTest::registerTests(CppUnit::TestSuite* suite) {
-	MYTEST(testName);
+    MYTEST(testName);
 }
 
 int ProgTest::countTestCases () const
-{ return 2; }	// ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:		ProgTest::setUp
@@ -43,7 +45,7 @@ int ProgTest::countTestCases () const
  * RETURNS:			<nothing>
  *============================================================================*/
 void ProgTest::setUp () {
-	//prog.setName("default name");
+    //prog.setName("default name");
 }
 
 /*==============================================================================
@@ -61,20 +63,20 @@ void ProgTest::tearDown () {
  * OVERVIEW:		Test setting and reading name
  *============================================================================*/
 void ProgTest::testName () {
-	BinaryFileFactory bff;
-	BinaryFile *pBF = bff.Load(HELLO_PENTIUM);	// Don't actually use it
-	Prog* prog = new Prog();
-	FrontEnd *pFE = new PentiumFrontEnd(pBF, prog, &bff);
-	// We need a Prog object with a pBF (for getEarlyParamExp())
-	prog->setFrontEnd(pFE);
-	std::string actual(prog->getName());
-	std::string expected(HELLO_PENTIUM);
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
-	std::string name("Happy prog");
-	prog->setName(name.c_str());
-	actual =  prog->getName();
-	CPPUNIT_ASSERT_EQUAL(name, actual);
-	delete pFE;
+    BinaryFileFactory bff;
+    BinaryFile *pBF = bff.Load(HELLO_PENTIUM);	// Don't actually use it
+    Prog* prog = new Prog();
+    FrontEnd *pFE = new PentiumFrontEnd(pBF, prog, &bff);
+    // We need a Prog object with a pBF (for getEarlyParamExp())
+    prog->setFrontEnd(pFE);
+    std::string actual(prog->getName());
+    std::string expected(HELLO_PENTIUM);
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+    std::string name("Happy prog");
+    prog->setName(name.c_str());
+    actual =  prog->getName();
+    CPPUNIT_ASSERT_EQUAL(name, actual);
+    delete pFE;
 }
 
 // Pathetic: the second test we had (for readLibraryParams) is now obsolete;

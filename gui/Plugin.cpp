@@ -21,17 +21,17 @@ IPlugin *IPlugin::load(wxString filename)
     // have not stored h anywhere.
 
 #else
-	HMODULE h = LoadLibrary(filename.c_str());
-	if (h == NULL) {
-		DWORD error = GetLastError();	
-		return NULL;
-	}
-	create_func *create = (create_func *)GetProcAddress(h, "create");
-	if (create == NULL) {
-		DWORD error = GetLastError();	
-		return NULL;
-	}
+    HMODULE h = LoadLibrary(filename.c_str());
+    if (h == NULL) {
+        DWORD error = GetLastError();
+        return NULL;
+    }
+    create_func *create = (create_func *)GetProcAddress(h, "create");
+    if (create == NULL) {
+        DWORD error = GetLastError();
+        return NULL;
+    }
 #endif
 
-	return (*create)();
+    return (*create)();
 }

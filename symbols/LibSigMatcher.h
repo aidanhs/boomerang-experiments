@@ -2,9 +2,9 @@
 #include "SymbolMatcher.h"
 
 class LibSigMatcher :
-	public SymbolMatcher
+    public SymbolMatcher
 {
 public:
-	LibSigMatcher(Prog *prog);
-	~LibSigMatcher(void);
+    LibSigMatcher(Prog *prog);
+    ~LibSigMatcher(void);
 };

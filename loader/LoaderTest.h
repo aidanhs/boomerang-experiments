@@ -5,9 +5,9 @@
 
 
 class LoaderTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     LoaderTest(std::string name) : CppUnit::TestCase (name)
     {}
 
@@ -27,6 +27,6 @@ class LoaderTest : public CppUnit::TestCase {
     void testMicroDis1();
     void testMicroDis2();
 
-	void testElfHash();
+    void testElfHash();
 };
 

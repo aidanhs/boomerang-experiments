@@ -1,7 +1,7 @@
 #include "DynLibMatcher.h"
 
 DynLibMatcher::DynLibMatcher(Prog *prog)
-:SymbolMatcher(prog, "X")
+    :SymbolMatcher(prog, "X")
 {
 }
 

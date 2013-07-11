@@ -31,7 +31,7 @@ DetailsWidget::DetailsWidget( QWidget* parent, const char* name, WFlags fl )
     : QWidget( parent, name, fl )
 {
     if ( !name )
-	setName( "DetailsWidget" );
+        setName( "DetailsWidget" );
 
     QVBoxLayout *vt = new QVBoxLayout(this);
 
@@ -98,8 +98,8 @@ void DetailsWidget::setName(const QString &nam)
     nameLineEdit->setText(nam);
 }
 
-void DetailsWidget::addParam(const QString &nam, 
-                             const QString &ty, 
+void DetailsWidget::addParam(const QString &nam,
+                             const QString &ty,
                              const QString &e,
                              bool implicit)
 {
@@ -113,7 +113,7 @@ void DetailsWidget::addParam(const QString &nam,
     paramsListView->insertItem(i);
 }
 
-void DetailsWidget::addReturn(const QString &ty, 
+void DetailsWidget::addReturn(const QString &ty,
                               const QString &e)
 {
     QListViewItem *i = new QListViewItem(returnsListView);

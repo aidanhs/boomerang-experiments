@@ -6,24 +6,24 @@
 
 
 class TypeTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
-	TypeTest(std::string name) : CppUnit::TestCase (name)
-	{}
+public:
+    TypeTest(std::string name) : CppUnit::TestCase (name)
+    {}
 
-	virtual void registerTests(CppUnit::TestSuite* suite);
+    virtual void registerTests(CppUnit::TestSuite* suite);
 
-	int countTestCases () const;
+    int countTestCases () const;
 
-	void setUp ();
-	void tearDown ();
+    void setUp ();
+    void tearDown ();
 
-	void testTypeLong ();
-	void testNotEqual ();
-	void testCompound();
+    void testTypeLong ();
+    void testNotEqual ();
+    void testCompound();
 
-	void testDataInterval();
-	void testDataIntervalOverlaps();
+    void testDataInterval();
+    void testDataIntervalOverlaps();
 };
 

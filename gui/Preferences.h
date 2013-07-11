@@ -1,27 +1,27 @@
 
 
-class Preferences : public wxDialog 
+class Preferences : public wxDialog
 {
 public:
-	Preferences(wxWindow* parent);
+    Preferences(wxWindow* parent);
 
-	void LoadPreferences(void);
-	void SavePreferences(void);
-	void OnButton(wxCommandEvent& event);
+    void LoadPreferences(void);
+    void SavePreferences(void);
+    void OnButton(wxCommandEvent& event);
 
-	// the actual preferences
-	static wxString m_ProjectDir;
-	static wxString m_PluginDir;
+    // the actual preferences
+    static wxString m_ProjectDir;
+    static wxString m_PluginDir;
 
 private:
 
-	void GetPrefsFromDialog();
+    void GetPrefsFromDialog();
 
-	wxButton *m_btnApply, *m_btnSave, *m_btnCancel, *m_btnBrowse, *m_btnBrowse1;
-	wxTextCtrl *m_textProjectDir;
-	wxTextCtrl *m_textPluginDir;
+    wxButton *m_btnApply, *m_btnSave, *m_btnCancel, *m_btnBrowse, *m_btnBrowse1;
+    wxTextCtrl *m_textProjectDir;
+    wxTextCtrl *m_textPluginDir;
 
-	wxConfigBase *config;
+    wxConfigBase *config;
 
-	DECLARE_EVENT_TABLE()
+    DECLARE_EVENT_TABLE()
 };
