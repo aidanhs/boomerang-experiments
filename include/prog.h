@@ -21,7 +21,7 @@
  *      to procedure objects.  Similar for AddProc() and GetProc().
  *      added map of labels.
  * 26 Mar 98 - Cristina
- *  Changed AddProc() to NewProc() so that we have a reference to the  
+ *  Changed AddProc() to NewProc() so that we have a reference to the
  *      procedure and are able to change it during parsing.
  * 28 Jul 98 - Mike
  *  Now depends on PROC, which depends on CFG and RTL
@@ -57,14 +57,14 @@ typedef std::map<ADDRESS, Proc*, std::less<ADDRESS> > PROGMAP;
 
 class ProgWatcher {
 public:
-        ProgWatcher() { }
+    ProgWatcher() { }
 
-        virtual void alert_complete() = 0;
-        virtual void alert_new(Proc *p) = 0;
-        virtual void alert_decode(ADDRESS pc, int nBytes) = 0;
-        virtual void alert_baddecode(ADDRESS pc) = 0;
-        virtual void alert_done(Proc *p, ADDRESS pc, ADDRESS last, int nBytes) = 0;
-        virtual void alert_progress(unsigned long off, unsigned long size) = 0;
+    virtual void alert_complete() = 0;
+    virtual void alert_new(Proc *p) = 0;
+    virtual void alert_decode(ADDRESS pc, int nBytes) = 0;
+    virtual void alert_baddecode(ADDRESS pc) = 0;
+    virtual void alert_done(Proc *p, ADDRESS pc, ADDRESS last, int nBytes) = 0;
+    virtual void alert_progress(unsigned long off, unsigned long size) = 0;
 };
 
 class Prog {
@@ -72,10 +72,10 @@ class Prog {
     int     interProcDFAphase;
 
 public:
-            Prog();                     // Default constructor
-            Prog(BinaryFile *pBF, FrontEnd *pFE);
-            ~Prog();
-            Prog(const char* name);     // Constructor with name
+    Prog();                     // Default constructor
+    Prog(BinaryFile *pBF, FrontEnd *pFE);
+    ~Prog();
+    Prog(const char* name);     // Constructor with name
     void    setName(const char *name);      // Set the name of this program
     Proc*   setNewProc(ADDRESS uNative);    // Set up new proc
     // Return a pointer to a new proc
@@ -117,16 +117,22 @@ public:
     const void* getCodeInfo(ADDRESS uAddr, const char*& last, int& delta);
 
     // Get the watcher.. other classes (such as the decoder) can alert
-    // the watcher when there are changes.        
-    ProgWatcher *getWatcher() { return m_watcher; }
+    // the watcher when there are changes.
+    ProgWatcher *getWatcher() {
+        return m_watcher;
+    }
 
     // Indicate that a watcher would like to be updated of status (only 1
     // watcher allowed at the moment, old watchers will be disconnected).
-    void setWatcher(ProgWatcher *p) { m_watcher = p; }
+    void setWatcher(ProgWatcher *p) {
+        m_watcher = p;
+    }
 
-    const char *getRegName(int idx) { return pFE->getRegName(idx); }
+    const char *getRegName(int idx) {
+        return pFE->getRegName(idx);
+    }
 
-    void decode(ADDRESS a) { 
+    void decode(ADDRESS a) {
         if (findProc(a) == NULL) {
             pFE->decode(this, a);
             analyse();
@@ -145,7 +151,9 @@ public:
     void forwardGlobalDataflow();
 
     // Get the interprocedural data flow analysis phase number (0-2)
-    int getGDFAphase() {return interProcDFAphase; }
+    int getGDFAphase() {
+        return interProcDFAphase;
+    }
 
     // As above, but backward-floAs perw
 
@@ -185,17 +193,28 @@ public:
 
     // Hacks for Mike
     MACHINE getMachine()                // Get a code for the machine
-        { return pBF->GetMachine();}    // e.g. MACHINE_SPARC
+    {
+        return pBF->GetMachine();   // e.g. MACHINE_SPARC
+    }
     char* symbolByAddress(ADDRESS dest) // Get a symbol from an address
-        { return pBF->SymbolByAddress(dest);}
+    {
+        return pBF->SymbolByAddress(dest);
+    }
     PSectionInfo getSectionInfoByAddr(ADDRESS a)
-        { return pBF->GetSectionInfoByAddr(a);}
+    {
+        return pBF->GetSectionInfoByAddr(a);
+    }
     bool processProc(int addr, UserProc* proc)  // Decode a proc
-        { std::ofstream os;
-          return pFE->processProc((unsigned)addr, proc, os);}
+    {   std::ofstream os;
+        return pFE->processProc((unsigned)addr, proc, os);
+    }
     // Read 2 or 4 bytes given a native address
-    int readNative2(ADDRESS a) {return pBF->readNative2(a);}
-    int readNative4(ADDRESS a) {return pBF->readNative4(a);}
+    int readNative2(ADDRESS a) {
+        return pBF->readNative2(a);
+    }
+    int readNative4(ADDRESS a) {
+        return pBF->readNative4(a);
+    }
 
     // Public booleans that are set if and when a register jump or call is
     // found, respectively
@@ -215,6 +234,6 @@ protected:
     ProgWatcher *m_watcher;             // used for status updates
     // Next numbered proc will use this
     int m_iNumberedProc;
-}; 
+};
 
 #endif

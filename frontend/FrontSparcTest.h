@@ -10,9 +10,9 @@ class Prog;
 
 
 class FrontSparcTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     FrontSparcTest(std::string name) : CppUnit::TestCase (name)
     {}
 

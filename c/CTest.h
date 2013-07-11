@@ -8,7 +8,7 @@
 
 class CTest : public CppUnit::TestCase {
 
-  public:
+public:
     CTest(std::string name) : CppUnit::TestCase (name)
     {}
 

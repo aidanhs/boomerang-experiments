@@ -31,13 +31,13 @@ public:
     virtual std::string getinstruction(void);
     virtual std::string getinspattern(void);
     virtual void getrefmap(std::map<std::string, InsNameElem*> &m);
- 
+
     int ninstructions(void);
     void append(InsNameElem* next);
     bool increment(void);
     void reset(void);
     int getvalue(void);
-    
+
 protected:
     InsNameElem* nextelem;
     std::string elemname;
@@ -51,7 +51,7 @@ public:
     virtual int ntokens(void);
     virtual std::string getinstruction(void);
     virtual std::string getinspattern(void);
- 
+
 };
 
 class InsListElem : public InsNameElem {

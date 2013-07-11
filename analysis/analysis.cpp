@@ -75,13 +75,13 @@ void Analysis::checkBBflags(PBB pBB, UserProc* proc)
             // branches in some code, especially SPARC)
             if (pj->getCondExpr() == NULL)
                 findDefs(pBB, proc, JCOND_RTL, pj->isFloat(),
-                rit, false);
+                         rit, false);
         }
         else if (kd == SCOND_RTL) {
             HLScond* pj = (HLScond*)(*rit);
             if (pj->getCondExpr() == NULL)
                 findDefs(pBB, proc, SCOND_RTL, pj->isFloat(),
-                rit, false);
+                         rit, false);
         }
         else if (kd == HL_NONE) {
             // Check this ordinary RTL for assignments that use flags
@@ -145,7 +145,7 @@ void Analysis::analyse(UserProc* proc)
         // Perform final simplifications
         finalSimplify(pBB);
 #if USE_PROCESS_CONST       // Fatally flawed. Somehow, conversion of
-                            // strings and function pointers has disappeared!
+        // strings and function pointers has disappeared!
         // Check for constants
         checkBBconst(proc->getProg(), pBB);
 #endif // USE_PROCESS_CONST
@@ -180,7 +180,7 @@ static int findDefsCallDepth = 0;
  * RETURNS:         <nothing>
  *===========================================================================*/
 void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
-    std::list<RTL*>::iterator rit, bool withAssign)
+                        std::list<RTL*>::iterator rit, bool withAssign)
 {
     std::list<RTL*>* pRtls = pBB->getRTLs();
     Cfg *cfg = proc->getCFG();
@@ -189,12 +189,12 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
     PBB   pOrigBB   = pBB;
     std::list<RTL*>* pOrigRtls = pRtls;
     bool defFound = false;
-    
+
 #if DEBUG_ANALYSIS
     findDefsCallDepth++;
     std::cout << "\nfindDefs(" << findDefsCallDepth
-      << "): Finding def for CC used at " << std::hex << (*rit)->getAddress()
-      << " in " << proc->getName() << " BB 0x" << (unsigned int)pBB << endl;
+              << "): Finding def for CC used at " << std::hex << (*rit)->getAddress()
+              << " in " << proc->getName() << " BB 0x" << (unsigned int)pBB << endl;
 #endif
 
     std::list<RTL*>::reverse_iterator rrit = pRtls->rbegin();
@@ -215,9 +215,9 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
                 // Ensure that the "floatnesses" agree; don't be fooled
                 // by interleaved integer and float defines and uses`
                 if ((pRT->isFlagCall()) &&
-                  (std::string(((Const*)(pRT->getSubExp1()))->getStr())
-                    .find("FLAG") != std::string::npos)
-                  && (isFlagFloat(pRT, proc) == flt)) {
+                        (std::string(((Const*)(pRT->getSubExp1()))->getStr())
+                         .find("FLAG") != std::string::npos)
+                        && (isFlagFloat(pRT, proc) == flt)) {
                     defFound = true;          // Found RTL that sets cc
                     break;
                 }
@@ -241,7 +241,7 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
             rrit++;
         }
         if (defFound) break;
-        
+
         // If only one in-edge, then continue searching that BB
         std::vector<PBB>& inEdges = pBB->getInEdges();
         if (inEdges.size() != 1) break;
@@ -265,7 +265,7 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
 #if DEBUG_ANALYSIS
             findDefsCallDepth--;
 #endif
-        return;
+            return;
         }
         pRtls = pBB->getRTLs(); // repeat the search using the parent BB
         rrit = pRtls->rbegin();
@@ -280,15 +280,15 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
         else
             matchJScond(pOrigRtls, pOrigBB, rrit, proc, rit, (*rit)->getKind());
 #if DEBUG_ANALYSIS
-    findDefsCallDepth--;
+        findDefsCallDepth--;
 #endif
         return;
     }
 
 #if DEBUG_ANALYSIS
     std::cout << "findDefs(" << findDefsCallDepth
-      << "): Multiple in-edges to BB 0x" << std::hex << (unsigned int)pBB
-      << " at " << std::hex << pBB->getHiAddr() << ": ";
+              << "): Multiple in-edges to BB 0x" << std::hex << (unsigned int)pBB
+              << " at " << std::hex << pBB->getHiAddr() << ": ";
     for (unsigned z=0; z < pBB->getInEdges().size(); z++)
         std::cout << pBB->getInEdges()[z]->getLowAddr() << " ";
     std::cout << endl;
@@ -333,99 +333,99 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
         pBB->print(os);
         std::cerr << os.str() << std::endl;
         // Continue with next BB this Cfg
-    findDefsCallDepth--;
+        findDefsCallDepth--;
 #endif
         return;
     }
 
     while (vit != pBB->getInEdges().end()) {
         if (pBB->getInEdges().size() == 1) {
-        // There is only one in-edge left, so we are done
-        break;
-    }
-    // The parent may define the flags, or one of its parents may do it
-    PBB pParBB = *vit;
-    if ((pParBB->getType() == CALL) || (pParBB->getType() == COMPCALL)) {
-        // No error message here; we will issue one when we try to match
-        // this use and def.
-        vit++;              // Ignore this in-edge
-        std::cout << "[!]";
-        continue;
-    }
-    std::list<RTL*>* pCurRtls = pBB->getRTLs();
-    // It is possible to have more than one "fall through" BB parent
-    // when you start duplicating BBs (and some of those were fall
-    // throughs). So fall through BBs are treated exactly like one-way
-    // BBs now
-    if ((pParBB->getType() == ONEWAY) || (pParBB->getType() == FALL)) {
-        // As per the cmp1 case above, we need to replicate the BB using
-        // the flag here, keeping the in and out edges correct.
-        // Remove the branch RTL altogether (if present), as it points to
-        // the wrong place, and will be superceeded by the added RTLs
-        std::list<RTL*>* pParRtls = pParBB->getRTLs();
-        // Check to see if it's a branch. Not all one-way BBs will have
-        // a branch as the last RTL!
-        std::list<RTL*>::iterator lastIt = --pParRtls->end();
-        if ((*lastIt)->getKind() == JUMP_RTL) {
-            pParRtls->erase(lastIt, pParRtls->end());
+            // There is only one in-edge left, so we are done
+            break;
         }
-        // Copy the out edges of the current BB to the parent BB
-        std::vector<PBB>& destOuts = pBB->getOutEdges();
-        for (unsigned i=0; i < destOuts.size(); i++) {
-            PBB destBB = pBB->getOutEdges()[i];
-            if (i == 0) {
-                pParBB->setOutEdge(0, destBB);
-            } else {
-                // This function will make sure that a jump is generated,
-                // since this is a new out-edge
-                cfg->addNewOutEdge(pParBB, destBB);
+        // The parent may define the flags, or one of its parents may do it
+        PBB pParBB = *vit;
+        if ((pParBB->getType() == CALL) || (pParBB->getType() == COMPCALL)) {
+            // No error message here; we will issue one when we try to match
+            // this use and def.
+            vit++;              // Ignore this in-edge
+            std::cout << "[!]";
+            continue;
+        }
+        std::list<RTL*>* pCurRtls = pBB->getRTLs();
+        // It is possible to have more than one "fall through" BB parent
+        // when you start duplicating BBs (and some of those were fall
+        // throughs). So fall through BBs are treated exactly like one-way
+        // BBs now
+        if ((pParBB->getType() == ONEWAY) || (pParBB->getType() == FALL)) {
+            // As per the cmp1 case above, we need to replicate the BB using
+            // the flag here, keeping the in and out edges correct.
+            // Remove the branch RTL altogether (if present), as it points to
+            // the wrong place, and will be superceeded by the added RTLs
+            std::list<RTL*>* pParRtls = pParBB->getRTLs();
+            // Check to see if it's a branch. Not all one-way BBs will have
+            // a branch as the last RTL!
+            std::list<RTL*>::iterator lastIt = --pParRtls->end();
+            if ((*lastIt)->getKind() == JUMP_RTL) {
+                pParRtls->erase(lastIt, pParRtls->end());
             }
-            destBB->addInEdge(pParBB);
-        }
-        // Now it's the same type of BB, with the same number of out edges,
-        // as the current BB
-        pParBB->updateType(pBB->getType(), destOuts.size());
-        // Now insert a copy of the current BB at the end
-        // Note: a deep copy is required!
-        std::list<RTL*>::iterator it;
-        for (it = pCurRtls->begin(); it != pCurRtls->end(); it++) {
-            pParBB->getRTLs()->push_back((*it)->clone());
-        }
-        // Note that the original BB stays where it is, and code is
-        // generated for it (we perform this loop only until there is
-        // one in-edge left). If the BB that we copy is a fall through
-        // or two-way type (with a fall through edge), we must force
-        // a branch at the end of the original BB, because the new BB
-        // may have the same "address" as the original BB, and so
-        // it can be emitted after the original BB, thus causing the
-        // fallthrough address to be wrong. Subtle!
-        // Example: getarmyrn_pot() inlined into fixgralive() in 099.go
-        // Spec benchmark (note: depends on how ties are handled in the
-        // sort as to whether the problem actually shows up)
-        if ((pBB->getType() == FALL) || (pBB->getType() == TWOWAY)) {
-            pBB->setJumpReqd();
-            if (pBB->getType() == FALL)
-                cfg->setLabel(pBB->getOutEdges()[0]);
-            else
-                // Two way; first out edge is "true" edge, second is fall
-                cfg->setLabel(pBB->getOutEdges()[1]);
-        }
+            // Copy the out edges of the current BB to the parent BB
+            std::vector<PBB>& destOuts = pBB->getOutEdges();
+            for (unsigned i=0; i < destOuts.size(); i++) {
+                PBB destBB = pBB->getOutEdges()[i];
+                if (i == 0) {
+                    pParBB->setOutEdge(0, destBB);
+                } else {
+                    // This function will make sure that a jump is generated,
+                    // since this is a new out-edge
+                    cfg->addNewOutEdge(pParBB, destBB);
+                }
+                destBB->addInEdge(pParBB);
+            }
+            // Now it's the same type of BB, with the same number of out edges,
+            // as the current BB
+            pParBB->updateType(pBB->getType(), destOuts.size());
+            // Now insert a copy of the current BB at the end
+            // Note: a deep copy is required!
+            std::list<RTL*>::iterator it;
+            for (it = pCurRtls->begin(); it != pCurRtls->end(); it++) {
+                pParBB->getRTLs()->push_back((*it)->clone());
+            }
+            // Note that the original BB stays where it is, and code is
+            // generated for it (we perform this loop only until there is
+            // one in-edge left). If the BB that we copy is a fall through
+            // or two-way type (with a fall through edge), we must force
+            // a branch at the end of the original BB, because the new BB
+            // may have the same "address" as the original BB, and so
+            // it can be emitted after the original BB, thus causing the
+            // fallthrough address to be wrong. Subtle!
+            // Example: getarmyrn_pot() inlined into fixgralive() in 099.go
+            // Spec benchmark (note: depends on how ties are handled in the
+            // sort as to whether the problem actually shows up)
+            if ((pBB->getType() == FALL) || (pBB->getType() == TWOWAY)) {
+                pBB->setJumpReqd();
+                if (pBB->getType() == FALL)
+                    cfg->setLabel(pBB->getOutEdges()[0]);
+                else
+                    // Two way; first out edge is "true" edge, second is fall
+                    cfg->setLabel(pBB->getOutEdges()[1]);
+            }
 
 #if DEBUG_ANALYSIS
-        std::cout << "\nfindDefs(" << findDefsCallDepth
-          << "): copied 1W BB: " << std::hex;
-        for (it = pParBB->getRTLs()->begin(); it != pParBB->getRTLs()->end();
-          it++) {
-            std::cout << *it << " ";
-        }
-        std::cout << std::endl;
-        pParBB->print();
-        std::cout << "Current BB: ";
-        for (it = pCurRtls->begin(); it != pCurRtls->end(); it++) {
-            std::cout << *it << " ";
-        }
-        std::cout << std::endl << std::flush;
-        pBB->print();
+            std::cout << "\nfindDefs(" << findDefsCallDepth
+                      << "): copied 1W BB: " << std::hex;
+            for (it = pParBB->getRTLs()->begin(); it != pParBB->getRTLs()->end();
+                    it++) {
+                std::cout << *it << " ";
+            }
+            std::cout << std::endl;
+            pParBB->print();
+            std::cout << "Current BB: ";
+            for (it = pCurRtls->begin(); it != pCurRtls->end(); it++) {
+                std::cout << *it << " ";
+            }
+            std::cout << std::endl << std::flush;
+            pBB->print();
 #endif
 
             // Remove this in-edge
@@ -465,7 +465,7 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
 
 #if DEBUG_ANALYSIS
             std::cout << "\nfindDefs(" << findDefsCallDepth << "): copied 2W BB: "
-              << std::hex;
+                      << std::hex;
             for (it=pNewRtls->begin(); it!=pNewRtls->end(); it++) {
                 std::cout << *it << " ";
             }
@@ -556,11 +556,11 @@ void Analysis::findDefs(PBB pBB, UserProc* proc, int flagId, bool flt,
  * RETURNS:         <nothing>
  *============================================================================*/
 void Analysis::matchJScond(std::list<RTL*>* pOrigRtls, PBB pOrigBB, std::list<RTL*>::reverse_iterator rrit, UserProc* proc,
-    std::list<RTL*>::iterator rit, int kd)
+                           std::list<RTL*>::iterator rit, int kd)
 {
 #if DEBUG_ANALYSIS
     std::cout << "CC used by j/scond near " << std::hex << pOrigBB->getHiAddr() <<
-    " defined at " << (*rrit)->getAddress() << endl;
+              " defined at " << (*rrit)->getAddress() << endl;
 #endif
 
     // Get the last RT of the defining instr
@@ -584,9 +584,9 @@ void Analysis::matchJScond(std::list<RTL*>* pOrigRtls, PBB pOrigBB, std::list<RT
     // Otherwise, pRT is an RTFlagCall
     std::string fname(((Const*)pRT->getSubExp1())->getStr());
     if ((fname.substr(0, 3) == "SUB") ||
-        // Floating point compares are always "subtract like"
-        (fname.find("FFLAG") != std::string::npos))
-            processSubFlags(*rit, rrit, proc, (RTL_KIND)kd);
+            // Floating point compares are always "subtract like"
+            (fname.find("FFLAG") != std::string::npos))
+        processSubFlags(*rit, rrit, proc, (RTL_KIND)kd);
     else
         // Else name starts with ADD, or we have various possibilities like
         // MULT and LOGIC, which all act in an add-like form
@@ -607,7 +607,9 @@ OPER Analysis::anyFlagsUsed(Exp* s)
     Exp* srch = new Terminal(opCF);
     if (s->search(srch, res)) {
 #if DEBUG_ANALYSIS
-    std::cout << "Use of carry flag: res is "; res.print(); std::cout << "\n";
+        std::cout << "Use of carry flag: res is ";
+        res.print();
+        std::cout << "\n";
 #endif
         return opCF;
     }
@@ -615,7 +617,9 @@ OPER Analysis::anyFlagsUsed(Exp* s)
     srch = new Terminal(opZF);
     if (s->search(srch, res)) {
 #if DEBUG_ANALYSIS
-    std::cout << "Use of zero flag: res is "; res.print(); std::cout << "\n";
+        std::cout << "Use of zero flag: res is ";
+        res.print();
+        std::cout << "\n";
 #endif
         return opZF;
     }
@@ -647,7 +651,7 @@ OPER Analysis::anyFlagsUsed(Exp* s)
  * RETURNS:         <nothing>
  *============================================================================*/
 void Analysis::processSubFlags(RTL* rtl, std::list<RTL*>::reverse_iterator rrit,
-    UserProc* proc, RTL_KIND kd)
+                               UserProc* proc, RTL_KIND kd)
 {
     HLJcond* jc = (HLJcond*)rtl;
     HLScond* sc = (HLScond*)rtl;
@@ -659,58 +663,85 @@ void Analysis::processSubFlags(RTL* rtl, std::list<RTL*>::reverse_iterator rrit,
     Exp *pHL = NULL;
     OPER op = opWild;
     switch (jt) {
+    case HLJCOND_JMI:
+    case HLJCOND_JPOS: {
+        // These branches are special in that they always refer to the
+        // result of the subtract, rather than a comparison of the
+        // operands.
+        // The second last RT should always be the one that defines the
+        // result
+        // Result is (lhs < 0) or (lhs >= 0) etc
+        switch (jt) {
         case HLJCOND_JMI:
-        case HLJCOND_JPOS: {
-            // These branches are special in that they always refer to the
-            // result of the subtract, rather than a comparison of the
-            // operands.
-            // The second last RT should always be the one that defines the
-            // result
-            // Result is (lhs < 0) or (lhs >= 0) etc
-            switch (jt) {
-                case HLJCOND_JMI:   op = opLess; break;
-                case HLJCOND_JPOS:  op = opGtrEq; break;
-                default: /* Can't reach here */ break;
-            }
-            Exp* pRtDef = (*rrit)->elementAt((*rrit)->getNumExp()-2);
-
-            pHL = new Binary(op, pRtDef->getSubExp2()->clone()->simplify(), new Const(0));
+            op = opLess;
+            break;
+        case HLJCOND_JPOS:
+            op = opGtrEq;
+            break;
+        default: /* Can't reach here */
             break;
         }
-        default: {
-            // Otherwise, subtracts (even decrements) look like compares,
-            // as far as the HL result is concerned. For example, after
-            // r[8] = r[8] - 1 / jle dest, we want if (r[8] <= 1) goto dest
-            // except that we want the original values of the operands. So
-            // we use the parameters sent to the SUBFLAGS. They can readily
-            // get changed between the def and the use, so we keep a copy of
-            // the operands in two new vars
-            switch (jt) {
-                case HLJCOND_JE:    op = opEquals;  break;
-                case HLJCOND_JNE:   op = opNotEqual;break;
-                case HLJCOND_JSL:   op = opLess;    break;
-                case HLJCOND_JSLE:  op = opLessEq;  break;
-                case HLJCOND_JSGE:  op = opGtrEq;   break;
-                case HLJCOND_JSG:   op = opGtr;     break;
-                case HLJCOND_JUL:   op = opLessUns; break;
-                case HLJCOND_JULE:  op = opLessEqUns;break;
-                case HLJCOND_JUGE:  op = opGtrEqUns;break;
-                case HLJCOND_JUG:   op = opGtrUns;  break;
-                default: assert(0);
-            }
-            Exp* pRtf = (*rrit)->elementAt((*rrit)->getNumExp()-1);
-            Exp* li = pRtf->getSubExp2();
-            assert(li->getOper() == opList);
-            Exp* fst = li->getSubExp1();
-            li = li->getSubExp2();
-            assert(li->getOper() == opList);
-            Exp* sec = li->getSubExp1();
+        Exp* pRtDef = (*rrit)->elementAt((*rrit)->getNumExp()-2);
 
-            assert(fst); assert(sec);
-            pHL = new Binary(op, fst->clone()->simplify(),
-              sec->clone()->simplify());
+        pHL = new Binary(op, pRtDef->getSubExp2()->clone()->simplify(), new Const(0));
+        break;
+    }
+    default: {
+        // Otherwise, subtracts (even decrements) look like compares,
+        // as far as the HL result is concerned. For example, after
+        // r[8] = r[8] - 1 / jle dest, we want if (r[8] <= 1) goto dest
+        // except that we want the original values of the operands. So
+        // we use the parameters sent to the SUBFLAGS. They can readily
+        // get changed between the def and the use, so we keep a copy of
+        // the operands in two new vars
+        switch (jt) {
+        case HLJCOND_JE:
+            op = opEquals;
             break;
+        case HLJCOND_JNE:
+            op = opNotEqual;
+            break;
+        case HLJCOND_JSL:
+            op = opLess;
+            break;
+        case HLJCOND_JSLE:
+            op = opLessEq;
+            break;
+        case HLJCOND_JSGE:
+            op = opGtrEq;
+            break;
+        case HLJCOND_JSG:
+            op = opGtr;
+            break;
+        case HLJCOND_JUL:
+            op = opLessUns;
+            break;
+        case HLJCOND_JULE:
+            op = opLessEqUns;
+            break;
+        case HLJCOND_JUGE:
+            op = opGtrEqUns;
+            break;
+        case HLJCOND_JUG:
+            op = opGtrUns;
+            break;
+        default:
+            assert(0);
         }
+        Exp* pRtf = (*rrit)->elementAt((*rrit)->getNumExp()-1);
+        Exp* li = pRtf->getSubExp2();
+        assert(li->getOper() == opList);
+        Exp* fst = li->getSubExp1();
+        li = li->getSubExp2();
+        assert(li->getOper() == opList);
+        Exp* sec = li->getSubExp1();
+
+        assert(fst);
+        assert(sec);
+        pHL = new Binary(op, fst->clone()->simplify(),
+                         sec->clone()->simplify());
+        break;
+    }
     }   // end switch
     assert(pHL);
     if (kd == JCOND_RTL)
@@ -733,7 +764,7 @@ void Analysis::processSubFlags(RTL* rtl, std::list<RTL*>::reverse_iterator rrit,
  * RETURNS:         <nothing>
  *============================================================================*/
 void Analysis::processAddFlags(RTL* rtl, std::list<RTL*>::reverse_iterator rrit,
-    UserProc* proc, RTL_KIND kd)
+                               UserProc* proc, RTL_KIND kd)
 {
     HLJcond* jc = (HLJcond*)rtl;
     HLScond* sc = (HLScond*)rtl;
@@ -748,20 +779,32 @@ void Analysis::processAddFlags(RTL* rtl, std::list<RTL*>::reverse_iterator rrit,
     assert(pRtDef->getOper() == opAssignExp);
     OPER op = opWild;
     switch (jt) {
-        case HLJCOND_JE:    op = opEquals; break;
-        case HLJCOND_JNE:   op = opNotEqual; break;
-        case HLJCOND_JSL:   // Can be valid after a test instruction
-        case HLJCOND_JMI:   op = opLess; break;
-        case HLJCOND_JSGE:  // Can be valid after a test instruction
-        case HLJCOND_JPOS:  op = opGtrEq; break;
+    case HLJCOND_JE:
+        op = opEquals;
+        break;
+    case HLJCOND_JNE:
+        op = opNotEqual;
+        break;
+    case HLJCOND_JSL:   // Can be valid after a test instruction
+    case HLJCOND_JMI:
+        op = opLess;
+        break;
+    case HLJCOND_JSGE:  // Can be valid after a test instruction
+    case HLJCOND_JPOS:
+        op = opGtrEq;
+        break;
         // Next two can be valid after a test instr
-        case HLJCOND_JSLE:  op = opLessEq; break;
-        case HLJCOND_JSG:   op = opGtr; break;
-        default:
-            std::ostringstream ost;
-            ost << "ADD flags coupled with jcond kind " << (int)jt;
-            std::cerr << ost.str() << std::endl;
-            return;
+    case HLJCOND_JSLE:
+        op = opLessEq;
+        break;
+    case HLJCOND_JSG:
+        op = opGtr;
+        break;
+    default:
+        std::ostringstream ost;
+        ost << "ADD flags coupled with jcond kind " << (int)jt;
+        std::cerr << ost.str() << std::endl;
+        return;
     }
     Exp* pRight = pRtDef->getSubExp2()->clone()->simplify();
     pHL = new Binary(op, pRight, new Const(0));
@@ -787,14 +830,15 @@ void Analysis::processAddFlags(RTL* rtl, std::list<RTL*>::reverse_iterator rrit,
  * RETURNS:         <nothing>
  *============================================================================*/
 void Analysis::matchAssign(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
-  std::list<RTL*>::reverse_iterator rrit, UserProc* proc,
-  std::list<RTL*>::iterator rit, int flag)
+                           std::list<RTL*>::reverse_iterator rrit, UserProc* proc,
+                           std::list<RTL*>::iterator rit, int flag)
 {
 #if DEBUG_ANALYSIS
     std::cout << "Use of CC in this assignment: ";
     (*rit)->print();
     std::cout << endl;
-    std::cout << "CC set at "; (*rrit)->print();
+    std::cout << "CC set at ";
+    (*rrit)->print();
     std::cout <<  endl;
 #endif
     OPER flagUsed = (OPER) flag;
@@ -803,13 +847,14 @@ void Analysis::matchAssign(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
         Exp* pRT = (*rrit)->elementAt(n-1);
         char* fname;
         if (pRT->isFlagCall() &&
-          (fname = ((Const*)pRT->getSubExp1())->getStr(),
-          (std::string(fname).substr(0, 3) == "SUB"))) {
+                (fname = ((Const*)pRT->getSubExp1())->getStr(),
+                 (std::string(fname).substr(0, 3) == "SUB"))) {
             // Get the assignment/comparison. Should be the last assignment,
             // which should be the second last RT (excluding added RTs).
             // Note: have to assume that it has an opMinus or opNeg in the RHS
             // (to exclude the added RTs, which are probably moves to vars)
-            Exp* pRT; Exp* pRHS;
+            Exp* pRT;
+            Exp* pRHS;
             OPER op;
             int i=n-2;
             do {
@@ -831,8 +876,8 @@ void Analysis::matchAssign(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
                 int size = ((AssignExp*)pRT)->getSize();
                 Exp* pLHS = new Terminal(opCF);
                 Exp* notEq0 = new Binary(opNotEqual,
-                    pRHS->getSubExp1()->clone(),
-                    new Const(0));
+                                         pRHS->getSubExp1()->clone(),
+                                         new Const(0));
                 // Note, we must prepend the assignment to the CF, because it
                 // depends only on the value of the operands before the
                 // subtract, and an operand could be modified by the subtract
@@ -840,7 +885,9 @@ void Analysis::matchAssign(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
 //              (*rrit)->insertAssign(pLHS, notEq0, true, size);
                 (*rrit)->insertAfterTemps(pLHS, notEq0, size);
 #if DEBUG_ANALYSIS
-    std::cout << "Result: "; (*rrit)->print(); std::cout << endl;
+                std::cout << "Result: ";
+                (*rrit)->print();
+                std::cout << endl;
 #endif
             }
             else if (pRHS->getOper() == opIntConst) {
@@ -853,13 +900,15 @@ void Analysis::matchAssign(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
                 int size = ((AssignExp*)pRT)->getSize();
                 Exp* pLHS = new Terminal(opCF);
                 Exp* notEq0 = new Binary(opNotEqual,
-                    new Const(-((Const*)pRHS)->getInt()),
-                    new Const(0));
+                                         new Const(-((Const*)pRHS)->getInt()),
+                                         new Const(0));
                 // As per above, we must prepend the assignment to CF
 //              (*rrit)->insertAssign(pLHS, notEq0, true, size);
                 (*rrit)->insertAfterTemps(pLHS, notEq0, size);
 #if DEBUG_ANALYSIS
-    std::cout << "Result: "; (*rrit)->print(); std::cout << endl;
+                std::cout << "Result: ";
+                (*rrit)->print();
+                std::cout << endl;
 #endif
             }
             else {
@@ -871,27 +920,29 @@ void Analysis::matchAssign(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
                 int size = ((AssignExp*)pRT)->getSize();
                 Exp* pLHS = new Terminal(opCF);
                 Exp* xLTy = new Binary(opLessUns,
-                    pRHS->getSubExp1()->clone(),
-                    pRHS->getSubExp2()->clone());
+                                       pRHS->getSubExp1()->clone(),
+                                       pRHS->getSubExp2()->clone());
                 // As per above, we must prepend the assignment to CF
 //              (*rrit)->insertAssign(pLHS, xLTy, true, size);
                 (*rrit)->insertAfterTemps(pLHS, xLTy, size);
 #if DEBUG_ANALYSIS
-    std::cout << "Result: "; (*rrit)->print(); std::cout << std::endl;
+                std::cout << "Result: ";
+                (*rrit)->print();
+                std::cout << std::endl;
 #endif
             }
             return;
         }
         else if ((pRT->isFlagCall()) &&
-          (fname = ((Const*)pRT->getSubExp1())->getStr(),
-           std::string(fname).substr(0, 3) == "ADD")) {
+                 (fname = ((Const*)pRT->getSubExp1())->getStr(),
+                  std::string(fname).substr(0, 3) == "ADD")) {
             std::cerr << "CC definition at " << std::hex <<
-              (*rrit)->getAddress() << " is an ADD class instruction. "
-              "64 bit arithmetic not supported yet" << std::endl;
+                      (*rrit)->getAddress() << " is an ADD class instruction. "
+                      "64 bit arithmetic not supported yet" << std::endl;
         }
     }
     std::cerr << "CC use at " << std::hex << (*rit)->getAddress() <<
-      " not paired" << std::endl;
+              " not paired" << std::endl;
 }
 
 /*==============================================================================
@@ -908,7 +959,10 @@ int Analysis::copySwap4(int* w)
     char* p = (char*)w;
     int ret;
     char* q = (char*)(&ret+1);
-    *--q = *p++; *--q = *p++; *--q = *p++; *--q = *p;
+    *--q = *p++;
+    *--q = *p++;
+    *--q = *p++;
+    *--q = *p;
     return ret;
 }
 
@@ -926,7 +980,8 @@ int Analysis::copySwap2(short* h)
     char* p = (char*)h;
     short ret;
     char* q = (char*)(&ret);
-    *++q = *p++; *--q = *p;
+    *++q = *p++;
+    *--q = *p;
     return (int)ret;
 }
 
@@ -959,16 +1014,16 @@ void Analysis::processConst(Prog *prog, ADDRESS addr, Exp*& memExp, Exp* RHS)
     // Exp*'s are deemed to be same endianness as the source machine:
     // i.e., the constant is in src endianness.
     // Let "uqbt endianness" = endianness of machine UQBT is running on now.
-    // We must swap the constant during translation if 
+    // We must swap the constant during translation if
     //     uqbt endianness != src endianness
     // since then we must swap any constant read during translation.
     bool doSwaps;
-    #if ((WORDS_BIGENDIAN == 1) && (SRCENDIAN == LITTLEE)) || ((WORDS_BIGENDIAN == 0) && (SRCENDIAN == BIGE))
-        doSwaps = true;
-    #else
-        doSwaps = false;
-    #endif
-        
+#if ((WORDS_BIGENDIAN == 1) && (SRCENDIAN == LITTLEE)) || ((WORDS_BIGENDIAN == 0) && (SRCENDIAN == BIGE))
+    doSwaps = true;
+#else
+    doSwaps = false;
+#endif
+
     Exp* con = 0;
     if (memExp.getType().getType() == FLOATP) {
         if (doSwaps) {
@@ -1079,31 +1134,40 @@ bool Analysis::isConst(const Exp* exp, const KMAP& constMap, ADDRESS& value)
         return true;
     int idx = exp->getFirstIdx();
     switch (idx) {
-        case idPlus:
-        case idMinus:
-        case idBitOr:
-        {
-            // Expect op k1 k2 where k1 and k2 are constants    
-            Exp* k1; ADDRESS value1;
-            k1 = exp->getSubExpr(0);
-            if (!isConstTerm(k1, constMap, value1)) {
-                delete k1;
-                return false;
-            }
-            Exp* k2; ADDRESS value2;
-            k2 = exp->getSubExpr(1);
-            if (!isConstTerm(k2, constMap, value2)) {
-                delete k2;
-                return false;
-            }
-            delete k1; delete k2;
-            switch (idx) {
-                case idPlus:  value = value1 + value2; break;
-                case idMinus: value = value1 - value2; break;
-                case idBitOr: value = value1 | value2; break;
-            }
-            return true;
+    case idPlus:
+    case idMinus:
+    case idBitOr:
+    {
+        // Expect op k1 k2 where k1 and k2 are constants
+        Exp* k1;
+        ADDRESS value1;
+        k1 = exp->getSubExpr(0);
+        if (!isConstTerm(k1, constMap, value1)) {
+            delete k1;
+            return false;
         }
+        Exp* k2;
+        ADDRESS value2;
+        k2 = exp->getSubExpr(1);
+        if (!isConstTerm(k2, constMap, value2)) {
+            delete k2;
+            return false;
+        }
+        delete k1;
+        delete k2;
+        switch (idx) {
+        case idPlus:
+            value = value1 + value2;
+            break;
+        case idMinus:
+            value = value1 - value2;
+            break;
+        case idBitOr:
+            value = value1 | value2;
+            break;
+        }
+        return true;
+    }
     }
     return false;
 }
@@ -1160,7 +1224,7 @@ void Analysis::checkBBconst(Prog *prog, PBB pBB)
             std::list<Exp*> result;
             if (!RHS->searchAll(memX, result))
                 // No memOfs; ignore
-                continue; 
+                continue;
             // We have at leat one memOf; go through the list
             std::list<Exp*>::iterator it;
             for (it=result.begin(); it != result.end(); it++) {
@@ -1201,13 +1265,13 @@ bool Analysis::isFlagFloat(Exp* rt, UserProc* proc)
         if (firstSub->getOper() == opIntConst) {
             int regNum = ((Const*)firstSub)->getInt();
             // Get the register's intrinsic type (note how ugly this is).
-        RTLInstDict &dict = proc->getProg()->pFE->getDecoder()->getRTLDict();
-        if (dict.DetRegMap.find(regNum) == dict.DetRegMap.end())
-            return false;
-        Register &reg = dict.DetRegMap[regNum];
+            RTLInstDict &dict = proc->getProg()->pFE->getDecoder()->getRTLDict();
+            if (dict.DetRegMap.find(regNum) == dict.DetRegMap.end())
+                return false;
+            Register &reg = dict.DetRegMap[regNum];
             Type* rType = reg.g_type();
             bool ret = rType->isFloat();
-        delete rType;
+            delete rType;
             return ret;
         } else if (first->getOper() == opTemp) {
             Type* rType = Type::getTempType(((Const*)firstSub)->getStr());
@@ -1222,17 +1286,17 @@ bool Analysis::isFlagFloat(Exp* rt, UserProc* proc)
         // For now, assume integer
         //char* vname = ((Const*)firstSub)->getStr();
         return false;
-    }       
+    }
     return false;
 }
 #endif
 
-    // analyse calls
+// analyse calls
 void Analysis::analyseCalls(PBB pBB, UserProc *proc)
 {
     std::list<RTL*>* rtls = pBB->getRTLs();
-    for (std::list<RTL*>::iterator it = rtls->begin(); it != rtls->end(); 
-      it++) {
+    for (std::list<RTL*>::iterator it = rtls->begin(); it != rtls->end();
+            it++) {
         if ((*it)->getKind() != CALL_RTL) continue;
         HLCall *call = (HLCall*)*it;
         if (call->getDestProc() == NULL && !call->isComputed()) {

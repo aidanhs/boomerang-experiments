@@ -40,8 +40,8 @@ private:
 
 public:
     // Constructors
-                Type();
-virtual		~Type();
+    Type();
+    virtual		~Type();
 
     static void addNamedType(const char *name, Type *type);
     static Type *getNamedType(const char *name);
@@ -51,78 +51,98 @@ virtual		~Type();
     static Type* parseType(const char *str); // parse a C type
 
     // runtime type information
-virtual bool isVoid() const { return false; }
-virtual bool isFunc() const { return false; }
-virtual bool isBoolean() const { return false; }
-virtual bool isChar() const { return false; }
-virtual bool isInteger() const { return false; }
-virtual bool isFloat() const { return false; }
-virtual bool isPointer() const { return false; }
-virtual bool isNamed() const { return false; }
+    virtual bool isVoid() const {
+        return false;
+    }
+    virtual bool isFunc() const {
+        return false;
+    }
+    virtual bool isBoolean() const {
+        return false;
+    }
+    virtual bool isChar() const {
+        return false;
+    }
+    virtual bool isInteger() const {
+        return false;
+    }
+    virtual bool isFloat() const {
+        return false;
+    }
+    virtual bool isPointer() const {
+        return false;
+    }
+    virtual bool isNamed() const {
+        return false;
+    }
 
     // cloning
-virtual Type* clone() const = 0;
+    virtual Type* clone() const = 0;
 
     // Comparisons
-virtual bool    operator==(const Type& other) const = 0;// Considers sign
-virtual bool    operator!=(const Type& other) const;    // Considers sign
+    virtual bool    operator==(const Type& other) const = 0;// Considers sign
+    virtual bool    operator!=(const Type& other) const;    // Considers sign
 //virtual bool    operator-=(const Type& other) const = 0;// Ignores sign
-virtual bool    operator< (const Type& other) const = 0;// Considers sign
+    virtual bool    operator< (const Type& other) const = 0;// Considers sign
 
     // Access functions
-virtual int     getSize() const = 0;
+    virtual int     getSize() const = 0;
 
     // Format functions
-virtual const char *getCtype() const = 0;   // Get the C type, e.g. "unsigned int16"
+    virtual const char *getCtype() const = 0;   // Get the C type, e.g. "unsigned int16"
 
-virtual std::string getTempName() const; // Get a temporary name for the type
+    virtual std::string getTempName() const; // Get a temporary name for the type
 
-	// serialization
-virtual	bool serialize(std::ostream &ouf, int &len) = 0;
-virtual	bool deserialize_fid(std::istream &inf, int fid) = 0;
-	static Type *deserialize(std::istream &inf);
+    // serialization
+    virtual	bool serialize(std::ostream &ouf, int &len) = 0;
+    virtual	bool deserialize_fid(std::istream &inf, int fid) = 0;
+    static Type *deserialize(std::istream &inf);
 };
 
 class VoidType : public Type {
 public:
-	VoidType();
-virtual ~VoidType();
-virtual bool isVoid() const { return true; }
+    VoidType();
+    virtual ~VoidType();
+    virtual bool isVoid() const {
+        return true;
+    }
 
-virtual Type *clone() const;
+    virtual Type *clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 class FuncType : public Type {
 private:
-	Signature *signature;
+    Signature *signature;
 public:
-	FuncType(Signature *sig = NULL);
-virtual ~FuncType();
-virtual bool isFunc() const { return true; }
+    FuncType(Signature *sig = NULL);
+    virtual ~FuncType();
+    virtual bool isFunc() const {
+        return true;
+    }
 
-virtual Type *clone() const;
+    virtual Type *clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 class IntegerType : public Type {
@@ -131,26 +151,32 @@ private:
     bool        signd;              // True if a signed quantity
 
 public:
-	IntegerType(int sz = 32, bool sign = true);
-virtual ~IntegerType();
-virtual bool isInteger() const { return true; }
+    IntegerType(int sz = 32, bool sign = true);
+    virtual ~IntegerType();
+    virtual bool isInteger() const {
+        return true;
+    }
 
-virtual Type* clone() const;
+    virtual Type* clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
-        bool    isSigned() { return signd; }
-        void    setSigned(bool b) { signd = b; }
+    virtual int     getSize() const;
+    bool    isSigned() {
+        return signd;
+    }
+    void    setSigned(bool b) {
+        signd = b;
+    }
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual std::string getTempName() const;
+    virtual std::string getTempName() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 class FloatType : public Type {
@@ -158,64 +184,70 @@ private:
     int         size;               // Size in bits, e.g. 16
 
 public:
-	FloatType(int sz = 64);
-virtual ~FloatType();
-virtual bool isFloat() const { return true; }
+    FloatType(int sz = 64);
+    virtual ~FloatType();
+    virtual bool isFloat() const {
+        return true;
+    }
 
-virtual Type* clone() const;
+    virtual Type* clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual std::string getTempName() const;
+    virtual std::string getTempName() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 class BooleanType : public Type {
 public:
-	BooleanType();
-virtual ~BooleanType();
-virtual bool isBoolean() const { return true; }
+    BooleanType();
+    virtual ~BooleanType();
+    virtual bool isBoolean() const {
+        return true;
+    }
 
-virtual Type* clone() const;
+    virtual Type* clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 class CharType : public Type {
 public:
-	CharType();
-virtual ~CharType();
-virtual bool isChar() const { return true; }
+    CharType();
+    virtual ~CharType();
+    virtual bool isChar() const {
+        return true;
+    }
 
-virtual Type* clone() const;
+    virtual Type* clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 
@@ -224,23 +256,27 @@ private:
     Type *points_to;
 
 public:
-	PointerType(Type *p);
-virtual ~PointerType();
-virtual bool isPointer() const { return true; }
-        Type *getPointsTo() { return points_to; }
+    PointerType(Type *p);
+    virtual ~PointerType();
+    virtual bool isPointer() const {
+        return true;
+    }
+    Type *getPointsTo() {
+        return points_to;
+    }
 
-virtual Type* clone() const;
+    virtual Type* clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 class NamedType : public Type {
@@ -248,23 +284,27 @@ private:
     std::string name;
 
 public:
-	NamedType(const char *name);
-virtual ~NamedType();
-virtual bool isNamed() const { return true; }
-        const char *getName() { return name.c_str(); }
+    NamedType(const char *name);
+    virtual ~NamedType();
+    virtual bool isNamed() const {
+        return true;
+    }
+    const char *getName() {
+        return name.c_str();
+    }
 
-virtual Type* clone() const;
+    virtual Type* clone() const;
 
-virtual bool    operator==(const Type& other) const;
+    virtual bool    operator==(const Type& other) const;
 //virtual bool    operator-=(const Type& other) const;
-virtual bool    operator< (const Type& other) const;
+    virtual bool    operator< (const Type& other) const;
 
-virtual int     getSize() const;
+    virtual int     getSize() const;
 
-virtual const char *getCtype() const;
+    virtual const char *getCtype() const;
 
-virtual	bool serialize(std::ostream &ouf, int &len);
-virtual	bool deserialize_fid(std::istream &inf, int fid);
+    virtual	bool serialize(std::ostream &ouf, int &len);
+    virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
 #endif  // __TYPE_H__

@@ -50,7 +50,9 @@ void DataflowTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int DataflowTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::setUp
@@ -74,7 +76,7 @@ void DataflowTest::tearDown () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testEmpty
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testEmpty () {
     // create Prog
@@ -95,7 +97,7 @@ void DataflowTest::testEmpty () {
     std::string s = st.str();
     // compare it to expected
     std::string expected = "Ret BB: reach in: \n00000123 RET\n"
-        "cfg reachExit: \n";
+                           "cfg reachExit: \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -103,7 +105,7 @@ void DataflowTest::testEmpty () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testFlow
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testFlow () {
     // create Prog
@@ -116,7 +118,7 @@ void DataflowTest::testFlow () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-        new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -136,11 +138,11 @@ void DataflowTest::testFlow () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: \n"
-      "Ret BB: reach in: *32* r[24] := 5, \n"
-      "00000123 RET\n"
-      "cfg reachExit: *32* r[24] := 5, \n";
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: \n"
+        "Ret BB: reach in: *32* r[24] := 5, \n"
+        "00000123 RET\n"
+        "cfg reachExit: *32* r[24] := 5, \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -148,7 +150,7 @@ void DataflowTest::testFlow () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testKill
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testKill () {
     // create Prog
@@ -161,11 +163,11 @@ void DataflowTest::testKill () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                  new Const(6));
+                      new Const(6));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -185,12 +187,12 @@ void DataflowTest::testKill () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: \n"
-      "         *32* r[24] := 6   uses:    used by: \n"
-      "Ret BB: reach in: *32* r[24] := 6, \n"
-      "00000123 RET\n"
-      "cfg reachExit: *32* r[24] := 6, \n";
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: \n"
+        "         *32* r[24] := 6   uses:    used by: \n"
+        "Ret BB: reach in: *32* r[24] := 6, \n"
+        "00000123 RET\n"
+        "cfg reachExit: *32* r[24] := 6, \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -198,7 +200,7 @@ void DataflowTest::testKill () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testUse
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testUse () {
     // create Prog
@@ -211,11 +213,11 @@ void DataflowTest::testUse () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     e = new AssignExp(new Unary(opRegOf, new Const(28)),
-                  new Unary(opRegOf, new Const(24)));
+                      new Unary(opRegOf, new Const(24)));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -235,12 +237,12 @@ void DataflowTest::testUse () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: *32* r[28] := r[24], \n"
-      "         *32* r[28] := r[24]   uses: *32* r[24] := 5,    used by: \n"
-      "Ret BB: reach in: *32* r[24] := 5, *32* r[28] := r[24], \n"
-      "00000123 RET\n"
-      "cfg reachExit: *32* r[24] := 5, *32* r[28] := r[24], \n";
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: *32* r[28] := r[24], \n"
+        "         *32* r[28] := r[24]   uses: *32* r[24] := 5,    used by: \n"
+        "Ret BB: reach in: *32* r[24] := 5, *32* r[28] := r[24], \n"
+        "00000123 RET\n"
+        "cfg reachExit: *32* r[24] := 5, *32* r[28] := r[24], \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -248,7 +250,7 @@ void DataflowTest::testUse () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testUseOverKill
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testUseOverKill () {
     // create Prog
@@ -261,15 +263,15 @@ void DataflowTest::testUseOverKill () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(6));
+                      new Const(6));
     e->setProc(proc);
     rtl->appendExp(e);
     e = new AssignExp(new Unary(opRegOf, new Const(28)),
-                  new Unary(opRegOf, new Const(24)));
+                      new Unary(opRegOf, new Const(24)));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -288,14 +290,14 @@ void DataflowTest::testUseOverKill () {
     std::string s = st.str();
     // compare it to expected
     std::string expected;
-    expected = 
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: \n"
-      "         *32* r[24] := 6   uses:    used by: *32* r[28] := r[24], \n"
-      "         *32* r[28] := r[24]   uses: *32* r[24] := 6,    used by: \n"
-      "Ret BB: reach in: *32* r[24] := 6, *32* r[28] := r[24], \n"
-      "00000123 RET\n"
-      "cfg reachExit: *32* r[24] := 6, *32* r[28] := r[24], \n";
+    expected =
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: \n"
+        "         *32* r[24] := 6   uses:    used by: *32* r[28] := r[24], \n"
+        "         *32* r[28] := r[24]   uses: *32* r[24] := 6,    used by: \n"
+        "Ret BB: reach in: *32* r[24] := 6, *32* r[28] := r[24], \n"
+        "00000123 RET\n"
+        "cfg reachExit: *32* r[24] := 6, *32* r[28] := r[24], \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -303,7 +305,7 @@ void DataflowTest::testUseOverKill () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testUseOverBB
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testUseOverBB () {
     // create Prog
@@ -316,11 +318,11 @@ void DataflowTest::testUseOverBB () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(6));
+                      new Const(6));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -328,7 +330,7 @@ void DataflowTest::testUseOverBB () {
     pRtls = new std::list<RTL*>();
     rtl = new RTL();
     e = new AssignExp(new Unary(opRegOf, new Const(28)),
-                  new Unary(opRegOf, new Const(24)));
+                      new Unary(opRegOf, new Const(24)));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -346,13 +348,13 @@ void DataflowTest::testUseOverBB () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: \n"
-      "         *32* r[24] := 6   uses:    used by: *32* r[28] := r[24], \n"
-      "Ret BB: reach in: *32* r[24] := 6, \n"
-      "00000000 *32* r[28] := r[24]   uses: *32* r[24] := 6,    used by: \n"
-      "00000123 RET\n"
-      "cfg reachExit: *32* r[24] := 6, *32* r[28] := r[24], \n";
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: \n"
+        "         *32* r[24] := 6   uses:    used by: *32* r[28] := r[24], \n"
+        "Ret BB: reach in: *32* r[24] := 6, \n"
+        "00000000 *32* r[28] := r[24]   uses: *32* r[24] := 6,    used by: \n"
+        "00000123 RET\n"
+        "cfg reachExit: *32* r[24] := 6, *32* r[28] := r[24], \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -360,7 +362,7 @@ void DataflowTest::testUseOverBB () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testUseKill
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testUseKill () {
     // create Prog
@@ -373,12 +375,12 @@ void DataflowTest::testUseKill () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     e = new AssignExp(new Unary(opRegOf, new Const(24)),
-              new Binary(opPlus, new Unary(opRegOf, new Const(24)),
-                             new Const(1)));
+                      new Binary(opPlus, new Unary(opRegOf, new Const(24)),
+                                 new Const(1)));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -397,13 +399,13 @@ void DataflowTest::testUseKill () {
     std::string s = st.str();
     // compare it to expected
     std::string expected;
-    expected  = 
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
-      "         *32* r[24] := r[24] + 1   uses: *32* r[24] := 5,    used by: \n"
-      "Ret BB: reach in: *32* r[24] := r[24] + 1, \n"
-      "00000123 RET\n"
-      "cfg reachExit: *32* r[24] := r[24] + 1, \n";
+    expected  =
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
+        "         *32* r[24] := r[24] + 1   uses: *32* r[24] := 5,    used by: \n"
+        "Ret BB: reach in: *32* r[24] := r[24] + 1, \n"
+        "00000123 RET\n"
+        "cfg reachExit: *32* r[24] := r[24] + 1, \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -411,7 +413,7 @@ void DataflowTest::testUseKill () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testEndlessLoop
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testEndlessLoop () {
     // create Prog
@@ -425,7 +427,7 @@ void DataflowTest::testEndlessLoop () {
     RTL *rtl = new RTL();
     // r[24] := 5
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(24)),
-                     new Const(5));
+                                 new Const(5));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -434,8 +436,8 @@ void DataflowTest::testEndlessLoop () {
     rtl = new RTL();
     // r[24] := r[24] + 1
     e = new AssignExp(new Unary(opRegOf, new Const(24)),
-              new Binary(opPlus, new Unary(opRegOf, new Const(24)),
-                             new Const(1)));
+                      new Binary(opPlus, new Unary(opRegOf, new Const(24)),
+                                 new Const(1)));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -454,12 +456,12 @@ void DataflowTest::testEndlessLoop () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
-      "Oneway BB: reach in: *32* r[24] := 5, *32* r[24] := r[24] + 1, \n"
-      "00000000 *32* r[24] := r[24] + 1   uses: *32* r[24] := 5, "
-      "*32* r[24] := r[24] + 1,    used by: *32* r[24] := r[24] + 1, \n"
-      "cfg reachExit: \n";
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
+        "Oneway BB: reach in: *32* r[24] := 5, *32* r[24] := r[24] + 1, \n"
+        "00000000 *32* r[24] := r[24] + 1   uses: *32* r[24] := 5, "
+        "*32* r[24] := r[24] + 1,    used by: *32* r[24] := r[24] + 1, \n"
+        "cfg reachExit: \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -467,7 +469,7 @@ void DataflowTest::testEndlessLoop () {
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testLocationSet
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void DataflowTest::testLocationSet () {
     Unary rof(opRegOf, new Const(12));
@@ -488,15 +490,18 @@ void DataflowTest::testLocationSet () {
     CPPUNIT_ASSERT(rof == *ls.getFirst(ii));
     theReg.setInt(12);
     Exp* e;
-    e = ls.getNext(ii); CPPUNIT_ASSERT(rof == *e);
+    e = ls.getNext(ii);
+    CPPUNIT_ASSERT(rof == *e);
     theReg.setInt(24);
-    e = ls.getNext(ii); CPPUNIT_ASSERT(rof == *e);
+    e = ls.getNext(ii);
+    CPPUNIT_ASSERT(rof == *e);
     theReg.setInt(31);
-    e = ls.getNext(ii); CPPUNIT_ASSERT(rof == *e);
+    e = ls.getNext(ii);
+    CPPUNIT_ASSERT(rof == *e);
     Unary mof(opMemOf,
-        new Binary(opPlus,
-            new Unary(opRegOf, new Const(14)),
-            new Const(4)));
+              new Binary(opPlus,
+                         new Unary(opRegOf, new Const(14)),
+                         new Const(4)));
     ls.insert(mof.clone());
     ls.insert(mof.clone());
     CPPUNIT_ASSERT_EQUAL(5, ls.size());
@@ -507,7 +512,8 @@ void DataflowTest::testLocationSet () {
     CPPUNIT_ASSERT_EQUAL(5, ls2.size());
     CPPUNIT_ASSERT(mof == *ls2.getFirst(ii));
     theReg.setInt(8);
-    e = ls2.getNext(ii); CPPUNIT_ASSERT(rof == *e);
+    e = ls2.getNext(ii);
+    CPPUNIT_ASSERT(rof == *e);
 }
 
 /*==============================================================================
@@ -530,14 +536,14 @@ void DataflowTest::testRecursion () {
     // push bp
     // r28 := r28 + -4
     AssignExp *e = new AssignExp(new Unary(opRegOf, new Const(28)),
-        new Binary(opPlus,
-            new Unary(opRegOf, new Const(28)),
-            new Const(-4)));
+                                 new Binary(opPlus,
+                                            new Unary(opRegOf, new Const(28)),
+                                            new Const(-4)));
     rtl->appendExp(e);
     // m[r28] := r29
     e = new AssignExp(
         new Unary(opMemOf,
-            new Unary(opRegOf, new Const(28))),
+                  new Unary(opRegOf, new Const(28))),
         new Unary(opRegOf, new Const(29)));
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -545,20 +551,20 @@ void DataflowTest::testRecursion () {
     // push arg+1
     // r28 := r28 + -4
     e = new AssignExp(new Unary(opRegOf, new Const(28)),
-            new Binary(opPlus,
-                new Unary(opRegOf, new Const(28)),
-                new Const(-4)));
+                      new Binary(opPlus,
+                                 new Unary(opRegOf, new Const(28)),
+                                 new Const(-4)));
     rtl->appendExp(e);
     // Reference our parameter. At esp+0 is this arg; at esp+4 is old bp;
     // esp+8 is return address; esp+12 is our arg
     // m[r28] := m[r28+12] + 1
     e = new AssignExp(new Unary(opMemOf, new Unary(opRegOf, new Const(28))),
-                     new Binary(opPlus,
-                        new Unary(opMemOf,
-                            new Binary(opPlus,
-                                new Unary(opRegOf, new Const(28)),
-                                new Const(12))),
-                        new Const(1)));
+                      new Binary(opPlus,
+                                 new Unary(opMemOf,
+                                           new Binary(opPlus,
+                                                   new Unary(opRegOf, new Const(28)),
+                                                   new Const(12))),
+                                 new Const(1)));
     e->setProc(proc);
     rtl->appendExp(e);
     pRtls->push_back(rtl);
@@ -569,19 +575,19 @@ void DataflowTest::testRecursion () {
     HLCall* crtl = new HLCall(1);
     // r28 := r28 + -4
     e = new AssignExp(new Unary(opRegOf, new Const(28)),
-        new Binary(opPlus, new Unary(opRegOf, new Const(28)), new Const(-4)));
+                      new Binary(opPlus, new Unary(opRegOf, new Const(28)), new Const(-4)));
     crtl->appendExp(e);
     // m[r28] := pc
     e = new AssignExp(new Unary(opMemOf, new Unary(opRegOf, new Const(28))),
-        new Terminal(opPC));
+                      new Terminal(opPC));
     crtl->appendExp(e);
     // %pc := (%pc + 5) + 135893848
     e = new AssignExp(new Terminal(opPC),
-        new Binary(opPlus,
-            new Binary(opPlus,
-                new Terminal(opPC),
-                new Const(5)),
-            new Const(135893848)));
+                      new Binary(opPlus,
+                                 new Binary(opPlus,
+                                            new Terminal(opPC),
+                                            new Const(5)),
+                                 new Const(135893848)));
     e->setProc(proc);
     crtl->appendExp(e);
     pRtls->push_back(crtl);
@@ -590,7 +596,7 @@ void DataflowTest::testRecursion () {
     std::vector<Exp*> args;
     // m[r[28]+8]
     Exp* a = new Unary(opMemOf, new Binary(opPlus,
-      new Unary(opRegOf, new Const(28)), new Const(8)));
+                                           new Unary(opRegOf, new Const(28)), new Const(8)));
     args.push_back(a);
     crtl->setArguments(args);
 #endif
@@ -607,13 +613,13 @@ void DataflowTest::testRecursion () {
     // tests for standard Pentium calling convention
     // pc = m[r28]
     e = new AssignExp(new Terminal(opPC),
-        new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
+                      new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
     rrtl->appendExp(e);
     // r28 = r28 + 4
     e = new AssignExp(new Unary(opRegOf, new Const(28)),
-        new Binary(opPlus,
-            new Unary(opRegOf, new Const(28)),
-            new Const(4)));
+                      new Binary(opPlus,
+                                 new Unary(opRegOf, new Const(28)),
+                                 new Const(4)));
     rrtl->appendExp(e);
     pRtls->push_back(rrtl);
     PBB ret = cfg->newBB(pRtls, RET, 0);
@@ -622,8 +628,8 @@ void DataflowTest::testRecursion () {
     cfg->setEntryBB(first);
 
 // Force "verbose" flag (-v)
-Boomerang* boo = Boomerang::get();
-boo->vFlag = true;
+    Boomerang* boo = Boomerang::get();
+    boo->vFlag = true;
     // decompile the "proc"
     proc->decompile();
     // print cfg to a string
@@ -633,13 +639,13 @@ boo->vFlag = true;
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
-      "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
-      "Call BB: reach in: *32* r[24] := 5, *32* r[24] := r[24] + 1, \n"
-      "00000001 *32* r[24] := r[24] + 1   uses: *32* r[24] := 5, "
-      "*32* r[24] := r[24] + 1,    used by: *32* r[24] := r[24] + 1, \n"
-      "cfg reachExit: \n";
+        "Fall BB: reach in: \n"
+        "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
+        "00000000 *32* r[24] := 5   uses:    used by: *32* r[24] := r[24] + 1, \n"
+        "Call BB: reach in: *32* r[24] := 5, *32* r[24] := r[24] + 1, \n"
+        "00000001 *32* r[24] := r[24] + 1   uses: *32* r[24] := 5, "
+        "*32* r[24] := r[24] + 1,    used by: *32* r[24] := r[24] + 1, \n"
+        "cfg reachExit: \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;

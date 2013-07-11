@@ -27,7 +27,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <algorithm>        // For find()
 #include <fstream>
@@ -46,7 +46,7 @@
 
 void delete_lrtls(std::list<RTL*>* pLrtl);
 void erase_lrtls(std::list<RTL*>* pLrtl, std::list<RTL*>::iterator begin,
-    std::list<RTL*>::iterator end);
+                 std::list<RTL*>::iterator end);
 
 /**********************************
  * Cfg methods.
@@ -54,12 +54,12 @@ void erase_lrtls(std::list<RTL*>* pLrtl, std::list<RTL*>::iterator begin,
 
 /*==============================================================================
  * FUNCTION:        Cfg::Cfg
- * OVERVIEW:        
+ * OVERVIEW:
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
 Cfg::Cfg()
-  : entryBB(NULL), exitBB(NULL), m_bWellFormed(false), lastLabel(0)
+    : entryBB(NULL), exitBB(NULL), m_bWellFormed(false), lastLabel(0)
 {}
 
 /*==============================================================================
@@ -97,7 +97,7 @@ void Cfg::setProc(UserProc* proc)
  *============================================================================*/
 void Cfg::clear() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         delete *it;
     m_listBB.clear();
     m_mapBB.clear();
@@ -105,12 +105,12 @@ void Cfg::clear() {
     exitBB = NULL;
     m_bWellFormed = false;
     callSites.clear();
-    lastLabel = 0;    
+    lastLabel = 0;
 }
 
 /*==============================================================================
  * FUNCTION:        Cfg::operator=
- * OVERVIEW:        
+ * OVERVIEW:
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
@@ -163,7 +163,7 @@ bool Cfg::checkEntryBB()
 
 /*==============================================================================
  * FUNCTION:        Cfg::newBB
- * OVERVIEW:        Add a new basic block to this cfg 
+ * OVERVIEW:        Add a new basic block to this cfg
  * PARAMETERS:      pRtls: list of pointers to RTLs to initialise the BB with
  *                  bbType: the type of the BB (e.g. TWOWAY)
  *                  iNumOutEdges: number of out edges this BB will eventually
@@ -249,7 +249,7 @@ PBB Cfg::newBB(std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges)
         //  |   |   |   | =>    |   |
         //  |   |   |   |       |   | Existing; rest of new discarded
         //  +---+   +---+       +---+
-        //  
+        //
         // Check for overlap of the just added BB with the next BB
         // (address wise). If there is an overlap, truncate the std::list<Exp*> for
         // the new BB to not overlap, and make this a fall through BB
@@ -301,7 +301,7 @@ PBB Cfg::newBB(std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges)
 // yet. Usually used via addOutEdge()
 /*==============================================================================
  * FUNCTION:        Cfg::newIncompleteBB
- * OVERVIEW:        
+ * OVERVIEW:
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
@@ -344,7 +344,7 @@ void Cfg::addOutEdge(PBB pBB, PBB pDestBB, bool bSetLabel /* = false */)
  * OVERVIEW:        Add an out edge to this BB (and the in-edge to the dest BB)
  *                  May also set a label
  * NOTE:            Calls the above
- * PARAMETERS:      pBB: source BB (to have the out edge added to) 
+ * PARAMETERS:      pBB: source BB (to have the out edge added to)
  *                  addr: source address of destination (the out edge is to
  *                      point to the BB whose lowest address is addr)
  *                  bSetLabel: if true, set a label at the destination address.
@@ -370,7 +370,7 @@ void Cfg::addOutEdge(PBB pBB, ADDRESS addr, bool bSetLabel /* = false */)
 }
 
 /*==============================================================================
- * FUNCTION:        Cfg::isLabel 
+ * FUNCTION:        Cfg::isLabel
  * OVERVIEW:        Return true if the given address is the start of a basic
  *                    block, complete or not
  * PARAMETERS:      uNativeAddr: native address to look up
@@ -405,8 +405,8 @@ bool Cfg::isLabel (ADDRESS uNativeAddr)
  * RETURNS:     Returns a pointer to the "bottom" (new) part of the split BB.
  *============================================================================*/
 PBB Cfg::splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB /* = 0 */,
-    bool bDelRtls /* = false */)
-{ 
+                  bool bDelRtls /* = false */)
+{
     std::list<RTL*>::iterator ri;
 
     // First find which RTL has the split address; note that this
@@ -420,7 +420,7 @@ PBB Cfg::splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB /* = 0 */,
     {
         std::cerr << "could not split BB at " << std::hex;
         std::cerr << pBB->getLowAddr() << " at splt address " << uNativeAddr
-            << std::endl;
+                  << std::endl;
         return pBB;
     }
 
@@ -433,7 +433,7 @@ PBB Cfg::splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB /* = 0 */,
         // be the out edge from the top BB
         pNewBB->m_iNumInEdges = 0;
         pNewBB->m_InEdges.erase(pNewBB->m_InEdges.begin(),
-            pNewBB->m_InEdges.end());
+                                pNewBB->m_InEdges.end());
         // The "bottom" BB now starts at the implicit label, so we create
         // a new list that starts at ri. We need a new list, since it is
         // different from the original BB's list. We don't have to "deep
@@ -457,7 +457,7 @@ PBB Cfg::splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB /* = 0 */,
         int label = pNewBB->m_iLabelNum;
         // Copy over the details now, completing the bottom BB
         *pNewBB = *pBB;                 // Assign the BB, copying fields
-                                        // This will set m_bIncomplete false
+        // This will set m_bIncomplete false
         // Replace the in edges (likely only one)
         pNewBB->m_InEdges = ins;
         pNewBB->m_iNumInEdges = ins.size();
@@ -507,7 +507,7 @@ PBB Cfg::splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB /* = 0 */,
     // Erase any existing out edges
     pBB->m_OutEdges.erase(pBB->m_OutEdges.begin(), pBB->m_OutEdges.end());
     pBB->m_iNumOutEdges = 1;
-    addOutEdge (pBB, uNativeAddr);  
+    addOutEdge (pBB, uNativeAddr);
     return pNewBB;
 }
 
@@ -563,12 +563,12 @@ PBB Cfg::getNextBB(BB_IT& it)
  *              Note: pCurBB may be modified (as above)
  *============================================================================*/
 bool Cfg::label ( ADDRESS uNativeAddr, PBB& pCurBB )
-{ 
+{
     MAPBB::iterator mi, newi;
 
     // check if the native address is in the map already (explicit label)
     mi = m_mapBB.find (uNativeAddr);
-    
+
     if (mi == m_mapBB.end())        // not in the map
     {
         // If not an explicit label, temporarily add the address to the map
@@ -576,7 +576,7 @@ bool Cfg::label ( ADDRESS uNativeAddr, PBB& pCurBB )
 
         // get an iterator to the new native address and check if the
         // previous element in the (sorted) map overlaps
-        // this new native address; if so, it's a non-explicit label 
+        // this new native address; if so, it's a non-explicit label
         // which needs to be made explicit by splitting the previous BB.
         mi = m_mapBB.find (uNativeAddr);
 
@@ -586,13 +586,13 @@ bool Cfg::label ( ADDRESS uNativeAddr, PBB& pCurBB )
         if (newi != m_mapBB.begin()) {
             pPrevBB = (*--mi).second;
             if (!pPrevBB->m_bIncomplete &&
-                (pPrevBB->getLowAddr() < uNativeAddr) &&
-                (pPrevBB->getHiAddr () >= uNativeAddr))
-                    bSplit = true;
+                    (pPrevBB->getLowAddr() < uNativeAddr) &&
+                    (pPrevBB->getHiAddr () >= uNativeAddr))
+                bSplit = true;
         }
         if (bSplit) {
             // Non-explicit label. Split the previous BB
-            PBB pNewBB = splitBB (pPrevBB, uNativeAddr);    
+            PBB pNewBB = splitBB (pPrevBB, uNativeAddr);
             if (pCurBB == pPrevBB) {
                 // This means that the BB that we are expecting to use, usually
                 // to add out edges, has changed. We must change this pointer
@@ -626,9 +626,9 @@ bool Cfg::label ( ADDRESS uNativeAddr, PBB& pCurBB )
         {
             pPrevBB = (*--mi).second;
             if (!pPrevBB->m_bIncomplete &&
-                (pPrevBB->getLowAddr() < uNativeAddr) &&
-                (pPrevBB->getHiAddr () >= uNativeAddr))
-                    bSplit = true;
+                    (pPrevBB->getLowAddr() < uNativeAddr) &&
+                    (pPrevBB->getHiAddr () >= uNativeAddr))
+                bSplit = true;
         }
         if (bSplit)
         {
@@ -687,7 +687,7 @@ void Cfg::sortByFirstDFT()
 #else
     updateVectorBB();
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         m_vectorBB[(*it)->m_DFTfirst-1] = *it;
     m_listBB.clear();
     for (int i = 0; i < m_vectorBB.size(); i++)
@@ -819,7 +819,7 @@ bool Cfg::wellFormCfg()
 
 /*==============================================================================
  * FUNCTION:        Cfg::mergeBBs
- * OVERVIEW:        
+ * OVERVIEW:
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
@@ -925,14 +925,14 @@ bool Cfg::compressCfg()
             // We have a BB (*it) and its successor (*pSucc).
             // Attempt the three optimisations on it.
             // 1) Jumps to jumps
-            if (((*it)->m_nodeType == ONEWAY) && 
-                (pSucc->m_nodeType == ONEWAY))
+            if (((*it)->m_nodeType == ONEWAY) &&
+                    (pSucc->m_nodeType == ONEWAY))
             {
                 completeMerge(*it, pSucc, true);
             }
             // 2) Jump to next BB
             else if(((*it)->m_nodeType == ONEWAY) &&
-                ((*it)->m_OutEdges[0] == pSucc) && pSucc->m_iNumInEdges == 1)
+                    ((*it)->m_OutEdges[0] == pSucc) && pSucc->m_iNumInEdges == 1)
             {
                 completeMerge(*it, pSucc, true);
             }
@@ -961,7 +961,7 @@ bool Cfg::compressCfg()
     bool change = true;
     while (change && !Boomerang::get()->noBranchSimplify) {
         change = false;
-        for (BB_IT it = m_listBB.begin(); it != m_listBB.end(); it++) 
+        for (BB_IT it = m_listBB.begin(); it != m_listBB.end(); it++)
             if ((*it)->getType() == TWOWAY) {
                 PBB bb = *it;
                 PBB prev = NULL;
@@ -981,7 +981,7 @@ bool Cfg::compressCfg()
                 StmtSetIter sit;
                 StatementSet& priorUses = prior->getUses();
                 for (Statement* s = priorUses.getFirst(sit); s;
-                  s = priorUses.getNext(sit)) {
+                        s = priorUses.getNext(sit)) {
                     if (!reach.exists(s)) {
                         allReach = false;
                         break;
@@ -989,10 +989,10 @@ bool Cfg::compressCfg()
                 }
                 if (!allReach) continue;
                 Exp *priorcond = prior->getCondExpr()->clone();
-                if (priorcond == NULL) 
+                if (priorcond == NULL)
                     continue;
                 Exp *revpriorcond = new Unary(opNot,
-                  prior->getCondExpr()->clone());
+                                              prior->getCondExpr()->clone());
                 Exp *cond = jcond->getCondExpr();
                 if (cond == NULL)
                     continue;
@@ -1010,16 +1010,16 @@ bool Cfg::compressCfg()
                 bool alwaysTrue = (*cond == *priorcond);
                 bool alwaysFalse = (*cond == *revpriorcond);
                 // consider some other possibilities
-                if ((cond->getOper() == opLess && 
-                     priorcond->getOper() == opLessEq) ||
-                    (cond->getOper() == opGtr && 
-                     priorcond->getOper() == opGtrEq) ||
-                    (cond->getOper() == opLessUns && 
-                     priorcond->getOper() == opLessEqUns) ||
-                    (cond->getOper() == opGtrUns && 
-                     priorcond->getOper() == opGtrEqUns)) {
+                if ((cond->getOper() == opLess &&
+                        priorcond->getOper() == opLessEq) ||
+                        (cond->getOper() == opGtr &&
+                         priorcond->getOper() == opGtrEq) ||
+                        (cond->getOper() == opLessUns &&
+                         priorcond->getOper() == opLessEqUns) ||
+                        (cond->getOper() == opGtrUns &&
+                         priorcond->getOper() == opGtrEqUns)) {
                     if (*cond->getSubExp1() == *priorcond->getSubExp1() &&
-                        *cond->getSubExp2() == *priorcond->getSubExp2())
+                            *cond->getSubExp2() == *priorcond->getSubExp2())
                         alwaysTrue = true;
                 }
                 assert(!(alwaysTrue && alwaysFalse));
@@ -1030,7 +1030,7 @@ bool Cfg::compressCfg()
                     (*it)->m_nodeType = ONEWAY;
                     (*it)->deleteEdge((*it)->m_OutEdges[1]);
                     *(--(*it)->m_pRtls->end()) = new HLJump(jcond->getAddress(),
-                        (*it)->m_OutEdges[0]->getLowAddr());
+                                                            (*it)->m_OutEdges[0]->getLowAddr());
                     delete jcond;
                     change = true;
                 } else if (alwaysFalse) {
@@ -1040,25 +1040,25 @@ bool Cfg::compressCfg()
                     (*it)->m_nodeType = ONEWAY;
                     (*it)->deleteEdge((*it)->m_OutEdges[0]);
                     *(--(*it)->m_pRtls->end()) = new HLJump(jcond->getAddress(),
-                        (*it)->m_OutEdges[0]->getLowAddr());
+                                                            (*it)->m_OutEdges[0]->getLowAddr());
                     delete jcond;
                     change = true;
                 }
             }
     }
 #endif
-    
+
     // Find A -> J -> B  where J is a BB that is only a jump
     // Then A -> B
     for (BB_IT it = m_listBB.begin(); it != m_listBB.end(); it++)
     {
         for (std::vector<PBB>::iterator it1 = (*it)->m_OutEdges.begin();
-          it1 != (*it)->m_OutEdges.end(); it1++) {
+                it1 != (*it)->m_OutEdges.end(); it1++) {
             PBB pSucc = (*it1);         // Pointer to J
             PBB bb = (*it);             // Pointer to A
             if (pSucc->m_InEdges.size()==1 && pSucc->m_OutEdges.size()==1 &&
-              pSucc->m_pRtls->size()==1 &&
-              pSucc->m_pRtls->front()->getKind()==JUMP_RTL) {
+                    pSucc->m_pRtls->size()==1 &&
+                    pSucc->m_pRtls->front()->getKind()==JUMP_RTL) {
                 // Found an out-edge to an only-jump BB
                 /* std::cout << "outedge to jump detected at " << std::hex <<
                     bb->getLowAddr() << " to ";
@@ -1076,13 +1076,13 @@ bool Cfg::compressCfg()
                 // to A
                 std::vector<PBB>::iterator it2;
                 for (it2 = (*it1)->m_InEdges.begin();
-                  it2 != (*it1)->m_InEdges.end(); it2++) {
+                        it2 != (*it1)->m_InEdges.end(); it2++) {
                     if (*it2==pSucc)
                         *it2 = bb;          // Point to A
                 }
                 // Remove the in-edge from J to A. First find the in-edge
                 for (it2 = pSucc->m_InEdges.begin();
-                  it2 != pSucc->m_InEdges.end(); it2++) {
+                        it2 != pSucc->m_InEdges.end(); it2++) {
                     if (*it2 == bb)
                         break;
                 }
@@ -1091,7 +1091,7 @@ bool Cfg::compressCfg()
                 // If nothing else uses this BB (J), remove it from the CFG
                 if (pSucc->m_iNumInEdges == 0) {
                     for (BB_IT it3 = m_listBB.begin(); it3 != m_listBB.end();
-                      it3++) {
+                            it3++) {
                         if (*it3==pSucc) {
                             m_listBB.erase(it3);
                             // And delete the BB
@@ -1119,7 +1119,7 @@ void Cfg::unTraverse()
         (*it)->m_iTraversed = false;
     }
 }
-    
+
 /*==============================================================================
  * FUNCTION:        Cfg::establishDFTOrder
  * OVERVIEW:        Given a well-formed cfg graph, a partial ordering is
@@ -1156,8 +1156,8 @@ bool Cfg::establishDFTOrder()
 PBB Cfg::findRetNode()
 {
     PBB retNode = NULL;
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); 
-     it++) {
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
+            it++) {
         if ((*it)->getOutEdges().size() == 0 && (*it)->getType() == RET)
             retNode = *it;
     }
@@ -1166,7 +1166,7 @@ PBB Cfg::findRetNode()
 
 /*==============================================================================
  * FUNCTION:        Cfg::establishRevDFTOrder
- * OVERVIEW:        Performs establishDFTOrder on the reverse (flip) of the 
+ * OVERVIEW:        Performs establishDFTOrder on the reverse (flip) of the
  *          graph, assumes: establishDFTOrder has already been called
  * PARAMETERS:      <none>
  * RETURNS:         all nodes where ordered
@@ -1201,7 +1201,7 @@ bool Cfg::establishRevDFTOrder()
 
 /*==============================================================================
  * FUNCTION:        Cfg::isWellFormed
- * OVERVIEW:        
+ * OVERVIEW:
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
@@ -1212,7 +1212,7 @@ bool Cfg::isWellFormed()
 
 /*==============================================================================
  * FUNCTION:        Cfg::isOrphan
- * OVERVIEW:        
+ * OVERVIEW:
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
@@ -1230,7 +1230,7 @@ bool Cfg::isOrphan(ADDRESS uAddr)
 }
 
 /*==============================================================================
- * FUNCTION:        Cfg::pbbToIndex 
+ * FUNCTION:        Cfg::pbbToIndex
  * OVERVIEW:        Return an index for the given PBB
  * NOTE:            Linear search: O(N) complexity
  * PARAMETERS:      <none>
@@ -1281,74 +1281,74 @@ void Cfg::searchAndReplace(Exp* search, Exp* replace)
 
         std::list<RTL*>& rtls = *((*bb_it)->getRTLs());
         for (std::list<RTL*>::iterator rtl_it = rtls.begin(); rtl_it != rtls.end();
-          rtl_it++) {
+                rtl_it++) {
 
             RTL& rtl = **rtl_it;
             rtl.searchAndReplace(search,replace);
         }
-    if ((*bb_it)->getType() == RET && (*bb_it)->m_returnVal) {
+        if ((*bb_it)->getType() == RET && (*bb_it)->m_returnVal) {
             bool change;
-        (*bb_it)->m_returnVal = (*bb_it)->m_returnVal->searchReplaceAll(
-                search, replace, change);
-    }
+            (*bb_it)->m_returnVal = (*bb_it)->m_returnVal->searchReplaceAll(
+                                        search, replace, change);
+        }
     }
 }
 
 /*==============================================================================
  * FUNCTION:        Cfg::computeDominators
- * OVERVIEW:        computes the dominators of each BB 
+ * OVERVIEW:        computes the dominators of each BB
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
 void Cfg::computeDominators() {
     sortByLastDFT();
 
-/*    int index=0;
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++) 
-    {       
-        (*it)->m_index = index++;
-        (*it)->dominators.set();
-    }
-    
-    if (checkEntryBB()) return;
-    entryBB->dominators.reset();
-    entryBB->dominators.set(entryBB->m_index);
+    /*    int index=0;
+        for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
+        {
+            (*it)->m_index = index++;
+            (*it)->dominators.set();
+        }
 
-    bool change = true;
+        if (checkEntryBB()) return;
+        entryBB->dominators.reset();
+        entryBB->dominators.set(entryBB->m_index);
 
-    while(change) 
-    {   
-        change=false;
-        for (std::list<PBB>::iterator it1 = m_listBB.begin(); it1 != m_listBB.end(); it1++)
-            if ((*it1) != entryBB)
-            {
-                BITSET intersect,newd;
-                intersect.set();
-                newd.reset();
-                newd.set((*it1)->m_index);
-                for (std::vector<PBB>::iterator in = (*it1)->m_InEdges.begin(); in != (*it1)->m_InEdges.end(); in++)
-                    intersect &= (*in)->dominators;
-                newd |= intersect;
-                if (newd != (*it1)->dominators) {               
-                    change=true;
-                    (*it1)->dominators = newd;
+        bool change = true;
+
+        while(change)
+        {
+            change=false;
+            for (std::list<PBB>::iterator it1 = m_listBB.begin(); it1 != m_listBB.end(); it1++)
+                if ((*it1) != entryBB)
+                {
+                    BITSET intersect,newd;
+                    intersect.set();
+                    newd.reset();
+                    newd.set((*it1)->m_index);
+                    for (std::vector<PBB>::iterator in = (*it1)->m_InEdges.begin(); in != (*it1)->m_InEdges.end(); in++)
+                        intersect &= (*in)->dominators;
+                    newd |= intersect;
+                    if (newd != (*it1)->dominators) {
+                        change=true;
+                        (*it1)->dominators = newd;
+                    }
                 }
-            }
-    }
+        }
 
-    for (std::list<PBB>::iterator it2 = m_listBB.begin(); it2 != m_listBB.end(); it2++) 
-    {
-        (*it2)->m_dominatedBy.clear();
-        for (std::list<PBB>::iterator it3 = m_listBB.begin(); it3 != m_listBB.end(); it3++)
-            if ((*it2)->dominators.test((*it3)->m_index))
-                (*it2)->m_dominatedBy.push_back(*it3);
-    }*/
+        for (std::list<PBB>::iterator it2 = m_listBB.begin(); it2 != m_listBB.end(); it2++)
+        {
+            (*it2)->m_dominatedBy.clear();
+            for (std::list<PBB>::iterator it3 = m_listBB.begin(); it3 != m_listBB.end(); it3++)
+                if ((*it2)->dominators.test((*it3)->m_index))
+                    (*it2)->m_dominatedBy.push_back(*it3);
+        }*/
 }
 
 #if 0
 /*==============================================================================
  * FUNCTION:        Cfg::computePostDominators
- * OVERVIEW:        computes the dominators of each BB 
+ * OVERVIEW:        computes the dominators of each BB
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
@@ -1358,25 +1358,25 @@ void Cfg::computePostDominators() {
     PBB retnode = NULL;
 
     int index=0;
-    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++) 
-    {       
+    for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end(); it++)
+    {
         (*it)->m_index = index++;
         (*it)->postdominators.set();
-        if ((*it)->m_OutEdges.empty()) 
+        if ((*it)->m_OutEdges.empty())
         {
             if (retnode!=NULL)
                 cout << "eek, more than one ret node detected" << std::endl;
             retnode = *it;
         }
     }
-    
+
     retnode->postdominators.reset();
     retnode->postdominators.set(retnode->m_index);
 
     bool change = true;
 
-    while(change) 
-    {   
+    while(change)
+    {
         change=false;
         for (std::list<PBB>::iterator it1 = m_listBB.begin(); it1 != m_listBB.end(); it1++)
             if ((*it1) != retnode)
@@ -1388,14 +1388,14 @@ void Cfg::computePostDominators() {
                 for (std::vector<PBB>::iterator in = (*it1)->m_OutEdges.begin(); in != (*it1)->m_OutEdges.end(); in++)
                     intersect &= (*in)->postdominators;
                 newd |= intersect;
-                if (newd != (*it1)->postdominators) {               
+                if (newd != (*it1)->postdominators) {
                     change=true;
                     (*it1)->postdominators = newd;
                 }
             }
     }
 
-    for (std::list<PBB>::iterator it2 = m_listBB.begin(); it2 != m_listBB.end(); it2++) 
+    for (std::list<PBB>::iterator it2 = m_listBB.begin(); it2 != m_listBB.end(); it2++)
     {
         (*it2)->m_postdominatedBy.clear();
         for (std::list<PBB>::iterator it3 = m_listBB.begin(); it3 != m_listBB.end(); it3++)
@@ -1406,8 +1406,8 @@ void Cfg::computePostDominators() {
 #endif
 
 void Cfg::clearDataflow() {
-    for (std::list<PBB>::iterator it = m_listBB.begin(); 
-      it != m_listBB.end(); it++) {
+    for (std::list<PBB>::iterator it = m_listBB.begin();
+            it != m_listBB.end(); it++) {
         (*it)->reachOut.clear();
         (*it)->availOut.clear();
     }
@@ -1426,8 +1426,8 @@ bool Cfg::computeAvailable(int phase) {
     bool change, anychange = false;
     do {
         change = false;
-        for (std::list<PBB>::iterator it = m_listBB.begin(); 
-          it != m_listBB.end(); it++) {
+        for (std::list<PBB>::iterator it = m_listBB.begin();
+                it != m_listBB.end(); it++) {
             StatementSet out;
             (*it)->calcAvailOut(out, phase);
             if (!(out == (*it)->availOut)) {
@@ -1444,8 +1444,8 @@ void Cfg::computeLiveness() {
     bool change;
     do {
         change = false;
-        for (std::list<PBB>::iterator it = m_listBB.begin(); 
-          it != m_listBB.end(); it++) {
+        for (std::list<PBB>::iterator it = m_listBB.begin();
+                it != m_listBB.end(); it++) {
             LocationSet in;
             (*it)->calcLiveIn(in);
             if (!(in == (*it)->liveIn)) {
@@ -1470,25 +1470,25 @@ bool Cfg::computeDataflow() {
 
 void Cfg::setCallInterprocEdges() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         (*it)->setCallInterprocEdges();
 }
 
 void Cfg::clearCallInterprocEdges() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         (*it)->clearCallInterprocEdges();
 }
 
 void Cfg::setReturnInterprocEdges() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         (*it)->setReturnInterprocEdges();
 }
 
 void Cfg::clearReturnInterprocEdges() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         (*it)->clearReturnInterprocEdges();
 }
 
@@ -1515,7 +1515,7 @@ void delete_lrtls(std::list<RTL*>* pLrtl)
  * RETURNS:     <none>
  *============================================================================*/
 void erase_lrtls(std::list<RTL*>* pLrtl, std::list<RTL*>::iterator begin,
-    std::list<RTL*>::iterator end)
+                 std::list<RTL*>::iterator end)
 {
     std::list<RTL*>::iterator it;
     for (it = begin; it != end; it++) {
@@ -1571,11 +1571,11 @@ bool Cfg::serialize(std::ostream &ouf, int &len) {
     // save BBs
     int n = 0;
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++)
+            it++)
         (*it)->m_nindex = n++;
     for (
 #ifndef WIN32
-        std::list<PBB>::iterator 
+        std::list<PBB>::iterator
 #endif
         it = m_listBB.begin(); it != m_listBB.end(); it++) {
         saveFID(ouf, FID_CFG_BB);
@@ -1611,35 +1611,35 @@ bool Cfg::deserialize(std::istream &inf)
 
     while ((fid = loadFID(inf)) != -1 && fid != FID_CFG_END) {
         switch (fid) {
-            case FID_CFG_WELLFORMED:
-                loadValue(inf, m_bWellFormed);
-                break;
-            case FID_CFG_BB:
-                {
-                    int len = loadLen(inf);
-                    std::streampos pos = inf.tellg();
-                    PBB bb = new BasicBlock();
-                    assert(bb);                 
-                    assert(bb->deserialize(inf));
-                    assert((int)(inf.tellg() - pos) == len);
-                    m_listBB.push_back(bb);
-                }
-                break;
-            case FID_CFG_ENTRYBB:
-                {
-                    loadValue(inf, entry_idx);
-                }
-                break;
-    /*
-    TODO:
+        case FID_CFG_WELLFORMED:
+            loadValue(inf, m_bWellFormed);
+            break;
+        case FID_CFG_BB:
+        {
+            int len = loadLen(inf);
+            std::streampos pos = inf.tellg();
+            PBB bb = new BasicBlock();
+            assert(bb);
+            assert(bb->deserialize(inf));
+            assert((int)(inf.tellg() - pos) == len);
+            m_listBB.push_back(bb);
+        }
+        break;
+        case FID_CFG_ENTRYBB:
+        {
+            loadValue(inf, entry_idx);
+        }
+        break;
+        /*
+        TODO:
 
-    MAPBB m_mapBB;
-    unsigned m_uExtraCover;
-    std::set<HLCall*> callSites;
-    int lastLabel;
-    */
-            default:
-                skipFID(inf, fid);
+        MAPBB m_mapBB;
+        unsigned m_uExtraCover;
+        std::set<HLCall*> callSites;
+        int lastLabel;
+        */
+        default:
+            skipFID(inf, fid);
         }
     }
     assert(loadLen(inf) == 0);
@@ -1649,7 +1649,7 @@ bool Cfg::deserialize(std::istream &inf)
     int n = 0;
     entryBB = NULL;
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) {
+            it++) {
         (*it)->getInEdges().clear();
         (*it)->getOutEdges().clear();
         if (n == entry_idx)
@@ -1663,11 +1663,11 @@ bool Cfg::deserialize(std::istream &inf)
 
     for (
 #ifndef WIN32
-        std::list<PBB>::iterator 
+        std::list<PBB>::iterator
 #endif
         it = m_listBB.begin(); it != m_listBB.end(); it++) {
         for (std::vector<int>::iterator nit = (*it)->m_nOutEdges.begin();
-          nit != (*it)->m_nOutEdges.end(); nit++) {
+                nit != (*it)->m_nOutEdges.end(); nit++) {
             PBB dest = ntobb[*nit];
             (*it)->getOutEdges().push_back(dest);
             dest->getInEdges().push_back(*it);
@@ -1676,7 +1676,7 @@ bool Cfg::deserialize(std::istream &inf)
 
     for (
 #ifndef WIN32
-        std::list<PBB>::iterator 
+        std::list<PBB>::iterator
 #endif
         it = m_listBB.begin(); it != m_listBB.end(); it++) {
         (*it)->m_iNumInEdges = (*it)->getInEdges().size();
@@ -1711,20 +1711,20 @@ void Cfg::makeCallRet(PBB head, Proc *p)
 
 void Cfg::simplify() {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) 
+            it++)
         (*it)->simplify();
 }
 
 // print this cfg, mainly for debugging
 void Cfg::print(std::ostream &out, bool withDF) {
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) 
+            it++)
         (*it)->print(out, withDF);
     out << "cfg reachExit: ";
     if (exitBB) {
         StmtSetIter it;
         for (Statement* s = exitBB->reachOut.getFirst(it); s;
-          s = exitBB->reachOut.getNext(it)) {
+                s = exitBB->reachOut.getNext(it)) {
             s->printAsUse(out);
             out << ", ";
         }
@@ -1736,7 +1736,7 @@ void Cfg::setReturnVal(Exp *e)
 {
     bool onlyOneReturnBB = true;
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) {
+            it++) {
         if ((*it)->getType() == RET) {
             assert(onlyOneReturnBB);
             (*it)->setReturnVal(e);
@@ -1749,7 +1749,7 @@ Exp *Cfg::getReturnVal() {
     Exp *e = NULL;
     bool onlyOneReturnBB = true;
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-      it++) {
+            it++) {
         if ((*it)->getType() == RET) {
             assert(onlyOneReturnBB);
             e = (*it)->getReturnVal();
@@ -1763,7 +1763,7 @@ void Cfg::setTimeStamps()
 {
     // set DFS tag
     for (std::list<PBB>::iterator it = m_listBB.begin(); it != m_listBB.end();
-         it++) (*it)->traversed = DFS_TAG;
+            it++) (*it)->traversed = DFS_TAG;
 
     // set the parenthesis for the nodes as well as setting
     // the post-order ordering between the nodes
@@ -1825,8 +1825,8 @@ void Cfg::findImmedPDom()
         if (oEdges.size() > 1)
             for (unsigned int j = 0; j < oEdges.size(); j++) {
                 succNode = oEdges[j];
-            curNode->immPDom = commonPDom(curNode->immPDom, succNode);
-        }
+                curNode->immPDom = commonPDom(curNode->immPDom, succNode);
+            }
     }
 
     // one final pass to fix up nodes involved in a loop
@@ -1836,13 +1836,13 @@ void Cfg::findImmedPDom()
         if (oEdges.size() > 1)
             for (unsigned int j = 0; j < oEdges.size(); j++) {
                 succNode = oEdges[j];
-                if (curNode->hasBackEdgeTo(succNode) && 
-                    curNode->getOutEdges().size() > 1 &&
-                    succNode->immPDom->ord < curNode->immPDom->ord)
-                    curNode->immPDom = 
+                if (curNode->hasBackEdgeTo(succNode) &&
+                        curNode->getOutEdges().size() > 1 &&
+                        succNode->immPDom->ord < curNode->immPDom->ord)
+                    curNode->immPDom =
                         commonPDom(succNode->immPDom, curNode->immPDom);
                 else
-                    curNode->immPDom = 
+                    curNode->immPDom =
                         commonPDom(curNode->immPDom, succNode);
             }
     }
@@ -1857,13 +1857,13 @@ void Cfg::structConds()
 
         // does the current node have more than one out edge?
         if (curNode->getOutEdges().size() > 1) {
-            // if the current conditional header is a two way node and has a 
+            // if the current conditional header is a two way node and has a
             // back edge, then it won't have a follow
             if (curNode->hasBackEdge() && curNode->getType() == TWOWAY) {
                 curNode->setStructType(Cond);
                 continue;
             }
-        
+
             // set the follow of a node to be its immediate post dominator
             curNode->setCondFollow(curNode->immPDom);
 
@@ -1878,19 +1878,19 @@ void Cfg::structConds()
     }
 }
 
-// Pre: The loop induced by (head,latch) has already had all its member nodes 
+// Pre: The loop induced by (head,latch) has already had all its member nodes
 //      tagged
 // Post: The type of loop has been deduced
 void Cfg::determineLoopType(PBB header, bool* &loopNodes)
 {
     assert(header->getLatchNode());
 
-    // if the latch node is a two way node then this must be a post tested 
+    // if the latch node is a two way node then this must be a post tested
     // loop
     if (header->getLatchNode()->getType() == TWOWAY) {
         header->setLoopType(PostTested);
 
-        // if the head of the loop is a two way node and the loop spans more 
+        // if the head of the loop is a two way node and the loop spans more
         // than one block  then it must also be a conditional header
         if (header->getType() == TWOWAY && header != header->getLatchNode())
             header->setStructType(LoopCond);
@@ -1898,8 +1898,8 @@ void Cfg::determineLoopType(PBB header, bool* &loopNodes)
 
     // otherwise it is either a pretested or endless loop
     else if (header->getType() == TWOWAY) {
-        // if the header is a two way node then it must have a conditional 
-        // follow (since it can't have any backedges leading from it). If this 
+        // if the header is a two way node then it must have a conditional
+        // follow (since it can't have any backedges leading from it). If this
         // follow is within the loop then this must be an endless loop
         assert(header->getCondFollow());
         if (loopNodes[header->getCondFollow()->ord]) {
@@ -1911,31 +1911,31 @@ void Cfg::determineLoopType(PBB header, bool* &loopNodes)
             header->setLoopType(PreTested);
     }
 
-    // both the header and latch node are one way nodes so this must be an 
+    // both the header and latch node are one way nodes so this must be an
     // endless loop
     else
         header->setLoopType(Endless);
 }
 
-// Pre: The loop headed by header has been induced and all it's member nodes 
+// Pre: The loop headed by header has been induced and all it's member nodes
 //      have been tagged
 // Post: The follow of the loop has been determined.
 void Cfg::findLoopFollow(PBB header, bool* &loopNodes)
 {
-    assert(header->getStructType() == Loop || 
+    assert(header->getStructType() == Loop ||
            header->getStructType() == LoopCond);
     loopType lType = header->getLoopType();
     PBB latch = header->getLatchNode();
 
     if (lType == PreTested) {
-        // if the 'while' loop's true child is within the loop, then its false 
+        // if the 'while' loop's true child is within the loop, then its false
         // child is the loop follow
         if (loopNodes[header->getOutEdges()[0]->ord])
             header->setLoopFollow(header->getOutEdges()[1]);
         else
-        header->setLoopFollow(header->getOutEdges()[0]);
+            header->setLoopFollow(header->getOutEdges()[0]);
     } else if (lType == PostTested) {
-        // the follow of a post tested ('repeat') loop is the node on the end 
+        // the follow of a post tested ('repeat') loop is the node on the end
         // of the non-back edge from the latch node
         if (latch->getOutEdges()[0] == header)
             header->setLoopFollow(latch->getOutEdges()[1]);
@@ -1943,69 +1943,69 @@ void Cfg::findLoopFollow(PBB header, bool* &loopNodes)
             header->setLoopFollow(latch->getOutEdges()[0]);
     } else { // endless loop
         PBB follow = NULL;
-    
+
         // traverse the ordering array between the header and latch nodes.
         PBB latch = header->getLatchNode();
-    for (int i = header->ord - 1; i > latch->ord; i--) {
-        PBB &desc = Ordering[i];
-        // the follow for an endless loop will have the following 
+        for (int i = header->ord - 1; i > latch->ord; i--) {
+            PBB &desc = Ordering[i];
+            // the follow for an endless loop will have the following
             // properties:
-            //   i) it will have a parent that is a conditional header inside 
+            //   i) it will have a parent that is a conditional header inside
             //      the loop whose follow is outside the loop
-        //  ii) it will be outside the loop according to its loop stamp 
+            //  ii) it will be outside the loop according to its loop stamp
             //      pair
-            // iii) have the highest ordering of all suitable follows (i.e. 
+            // iii) have the highest ordering of all suitable follows (i.e.
             //      highest in the graph)
-    
-        if (desc->getStructType() == Cond && desc->getCondFollow() && 
-                desc->getLoopHead() == header) {
-            if (loopNodes[desc->getCondFollow()->ord]) {
-                // if the conditional's follow is in the same loop AND is 
+
+            if (desc->getStructType() == Cond && desc->getCondFollow() &&
+                    desc->getLoopHead() == header) {
+                if (loopNodes[desc->getCondFollow()->ord]) {
+                    // if the conditional's follow is in the same loop AND is
                     // lower in the loop, jump to this follow
                     if (desc->ord > desc->getCondFollow()->ord)
-                i = desc->getCondFollow()->ord;
-                    // otherwise there is a backward jump somewhere to a node 
-                    // earlier in this loop. We don't need to any nodes below 
-                    // this one as they will all have a conditional within the 
-                    // loop.  
+                        i = desc->getCondFollow()->ord;
+                    // otherwise there is a backward jump somewhere to a node
+                    // earlier in this loop. We don't need to any nodes below
+                    // this one as they will all have a conditional within the
+                    // loop.
                     else break;
                 } else {
-                    // otherwise find the child (if any) of the conditional 
-                    // header that isn't inside the same loop 
+                    // otherwise find the child (if any) of the conditional
+                    // header that isn't inside the same loop
                     PBB succ = desc->getOutEdges()[0];
-            if (loopNodes[succ->ord])
-                if (!loopNodes[desc->getOutEdges()[1]->ord])
+                    if (loopNodes[succ->ord])
+                        if (!loopNodes[desc->getOutEdges()[1]->ord])
                             succ = desc->getOutEdges()[1];
                         else
                             succ = NULL;
-            // if a potential follow was found, compare its ordering 
+                    // if a potential follow was found, compare its ordering
                     // with the currently found follow
                     if (succ && (!follow || succ->ord > follow->ord))
                         follow = succ;
                 }
             }
-        } 
-    // if a follow was found, assign it to be the follow of the loop under 
+        }
+        // if a follow was found, assign it to be the follow of the loop under
         // investigation
-    if (follow)
-        header->setLoopFollow(follow);
+        if (follow)
+            header->setLoopFollow(follow);
     }
 }
 
-// Pre: header has been detected as a loop header and has the details of the 
+// Pre: header has been detected as a loop header and has the details of the
 //      latching node
 // Post: the nodes within the loop have been tagged
 void Cfg::tagNodesInLoop(PBB header, bool* &loopNodes)
 {
     assert(header->getLatchNode());
 
-    // traverse the ordering structure from the header to the latch node 
-    // tagging the nodes determined to be within the loop. These are nodes 
+    // traverse the ordering structure from the header to the latch node
+    // tagging the nodes determined to be within the loop. These are nodes
     // that satisfy the following:
-    //  i) header.loopStamps encloses curNode.loopStamps and 
+    //  i) header.loopStamps encloses curNode.loopStamps and
     //     curNode.loopStamps encloses latch.loopStamps
     //  OR
-    //  ii) latch.revLoopStamps encloses curNode.revLoopStamps and 
+    //  ii) latch.revLoopStamps encloses curNode.revLoopStamps and
     //      curNode.revLoopStamps encloses header.revLoopStamps
     //  OR
     //  iii) curNode is the latch node
@@ -2013,18 +2013,18 @@ void Cfg::tagNodesInLoop(PBB header, bool* &loopNodes)
     PBB latch = header->getLatchNode();
     for (int i = header->ord - 1; i >= latch->ord; i--)
         if (Ordering[i]->inLoop(header, latch)) {
-            // update the membership map to reflect that this node is within 
+            // update the membership map to reflect that this node is within
             // the loop
             loopNodes[i] = true;
 
-        Ordering[i]->setLoopHead(header);
-    }
+            Ordering[i]->setLoopHead(header);
+        }
 }
 
 // Pre: The graph for curProc has been built.
-// Post: Each node is tagged with the header of the most nested loop of which 
+// Post: Each node is tagged with the header of the most nested loop of which
 //       it is a member (possibly none).
-// The header of each loop stores information on the latching node as well as 
+// The header of each loop stores information on the latching node as well as
 // the type of loop it heads.
 void Cfg::structLoops()
 {
@@ -2032,10 +2032,10 @@ void Cfg::structLoops()
         PBB curNode = Ordering[i];  // the current node under investigation
         PBB latch = NULL;           // the latching node of the loop
 
-        // If the current node has at least one back edge into it, it is a 
-        // loop header. If there are numerous back edges into the header, 
+        // If the current node has at least one back edge into it, it is a
+        // loop header. If there are numerous back edges into the header,
         // determine which one comes form the proper latching node.
-        // The proper latching node is defined to have the following 
+        // The proper latching node is defined to have the following
         // properties:
         //   i) has a back edge to the current node
         //  ii) has the same case head as the current node
@@ -2043,25 +2043,25 @@ void Cfg::structLoops()
         //  iv) is not an nway node
         //   v) is not the latch node of an enclosing loop
         //  vi) has a lower ordering than all other suitable candiates
-        // If no nodes meet the above criteria, then the current node is not a 
+        // If no nodes meet the above criteria, then the current node is not a
         // loop header
 
         std::vector<PBB> &iEdges = curNode->getInEdges();
         for (unsigned int j = 0; j < iEdges.size(); j++) {
             PBB pred = iEdges[j];
             if (pred->getCaseHead() == curNode->getCaseHead() &&  // ii)
-                pred->getLoopHead() == curNode->getLoopHead() &&  // iii)
-                (!latch || latch->ord > pred->ord) &&             // vi)
-                !(pred->getLoopHead() && 
-                  pred->getLoopHead()->getLatchNode() == pred) && // v)
-                pred->hasBackEdgeTo(curNode))                     // i)
+                    pred->getLoopHead() == curNode->getLoopHead() &&  // iii)
+                    (!latch || latch->ord > pred->ord) &&             // vi)
+                    !(pred->getLoopHead() &&
+                      pred->getLoopHead()->getLatchNode() == pred) && // v)
+                    pred->hasBackEdgeTo(curNode))                     // i)
                 latch = pred;
         }
 
-        // if a latching node was found for the current node then it is a loop 
-        // header. 
+        // if a latching node was found for the current node then it is a loop
+        // header.
         if (latch) {
-            // define the map that maps each node to whether or not it is 
+            // define the map that maps each node to whether or not it is
             // within the current loop
             bool* loopNodes = new bool[Ordering.size()];
             for (unsigned int j = 0; j < Ordering.size(); j++)
@@ -2069,14 +2069,14 @@ void Cfg::structLoops()
 
             curNode->setLatchNode(latch);
 
-            // the latching node may already have been structured as a 
-            // conditional header. If it is not also the loop header (i.e. the 
-            // loop is over more than one block) then reset it to be a 
-            // sequential node otherwise it will be correctly set as a loop 
+            // the latching node may already have been structured as a
+            // conditional header. If it is not also the loop header (i.e. the
+            // loop is over more than one block) then reset it to be a
+            // sequential node otherwise it will be correctly set as a loop
             // header only later
             if (latch != curNode && latch->getStructType() == Cond)
                 latch->setStructType(Seq);
-    
+
             // set the structured type of this node
             curNode->setStructType(Loop);
 
@@ -2095,62 +2095,62 @@ void Cfg::structLoops()
     }
 }
 
-// This routine is called after all the other structuring has been done. It 
-// detects conditionals that are in fact the head of a jump into/outof a loop 
-// or into a case body.  Only forward jumps are considered as unstructured 
+// This routine is called after all the other structuring has been done. It
+// detects conditionals that are in fact the head of a jump into/outof a loop
+// or into a case body.  Only forward jumps are considered as unstructured
 // backward jumps will always be generated nicely.
 void Cfg::checkConds()
 {
     for (unsigned int i = 0; i < Ordering.size(); i++) {
         PBB curNode = Ordering[i];
         std::vector<PBB> &oEdges = curNode->getOutEdges();
-        
-        // consider only conditional headers that have a follow and aren't 
+
+        // consider only conditional headers that have a follow and aren't
         // case headers
-        if ((curNode->getStructType() == Cond || 
-             curNode->getStructType() == LoopCond) &&
-            curNode->getCondFollow() && curNode->getCondType() != Case) {
-            // define convenient aliases for the relevant loop and case heads 
+        if ((curNode->getStructType() == Cond ||
+                curNode->getStructType() == LoopCond) &&
+                curNode->getCondFollow() && curNode->getCondType() != Case) {
+            // define convenient aliases for the relevant loop and case heads
             // and the out edges
-        PBB myLoopHead = (curNode->getStructType() == LoopCond ? 
+            PBB myLoopHead = (curNode->getStructType() == LoopCond ?
                               curNode : curNode->getLoopHead());
             PBB follLoopHead = curNode->getCondFollow()->getLoopHead();
 
             // analyse whether this is a jump into/outof a loop
             if (myLoopHead != follLoopHead) {
-                // we want to find the branch that the latch node is on for a 
+                // we want to find the branch that the latch node is on for a
                 // jump out of a loop
                 if (myLoopHead) {
                     PBB myLoopLatch = myLoopHead->getLatchNode();
 
                     // does the then branch goto the loop latch?
-                    if (oEdges[BTHEN]->isAncestorOf(myLoopLatch) || 
-                        oEdges[BTHEN] == myLoopLatch) {
+                    if (oEdges[BTHEN]->isAncestorOf(myLoopLatch) ||
+                            oEdges[BTHEN] == myLoopLatch) {
                         curNode->setUnstructType(JumpInOutLoop);
                         curNode->setCondType(IfElse);
                     }
-            // does the else branch goto the loop latch?
-            else if (oEdges[BELSE]->isAncestorOf(myLoopLatch) || 
+                    // does the else branch goto the loop latch?
+                    else if (oEdges[BELSE]->isAncestorOf(myLoopLatch) ||
                              oEdges[BELSE] == myLoopLatch) {
                         curNode->setUnstructType(JumpInOutLoop);
                         curNode->setCondType(IfThen);
                     }
                 }
 
-                if (curNode->getUnstructType() == Structured && follLoopHead) { 
-                    // find the branch that the loop head is on for a jump 
-                    // into a loop body. If a branch has already been found, 
+                if (curNode->getUnstructType() == Structured && follLoopHead) {
+                    // find the branch that the loop head is on for a jump
+                    // into a loop body. If a branch has already been found,
                     // then it will match this one anyway
 
                     // does the else branch goto the loop head?
-                    if (oEdges[BTHEN]->isAncestorOf(follLoopHead) || 
-                        oEdges[BTHEN] == follLoopHead) {
+                    if (oEdges[BTHEN]->isAncestorOf(follLoopHead) ||
+                            oEdges[BTHEN] == follLoopHead) {
                         curNode->setUnstructType(JumpInOutLoop);
                         curNode->setCondType(IfElse);
                     }
 
                     // does the else branch goto the loop head?
-                    else if (oEdges[BELSE]->isAncestorOf(follLoopHead) || 
+                    else if (oEdges[BELSE]->isAncestorOf(follLoopHead) ||
                              oEdges[BELSE] == follLoopHead) {
                         curNode->setUnstructType(JumpInOutLoop);
                         curNode->setCondType(IfThen);
@@ -2158,38 +2158,38 @@ void Cfg::checkConds()
                 }
             }
 
-            // this is a jump into a case body if either of its children don't 
+            // this is a jump into a case body if either of its children don't
             // have the same same case header as itself
             if (curNode->getUnstructType() == Structured &&
-                (curNode->getCaseHead() != 
+                    (curNode->getCaseHead() !=
                      curNode->getOutEdges()[BTHEN]->getCaseHead() ||
-                 curNode->getCaseHead() != 
+                     curNode->getCaseHead() !=
                      curNode->getOutEdges()[BELSE]->getCaseHead())) {
                 PBB myCaseHead = curNode->getCaseHead();
                 PBB thenCaseHead = curNode->getOutEdges()[BTHEN]->getCaseHead();
                 PBB elseCaseHead = curNode->getOutEdges()[BELSE]->getCaseHead();
 
-                if (thenCaseHead == myCaseHead && 
-                    (!myCaseHead || 
-                     elseCaseHead != myCaseHead->getCondFollow())) {
+                if (thenCaseHead == myCaseHead &&
+                        (!myCaseHead ||
+                         elseCaseHead != myCaseHead->getCondFollow())) {
                     curNode->setUnstructType(JumpIntoCase);
                     curNode->setCondType(IfElse);
-                } else if (elseCaseHead == myCaseHead && 
-                           (!myCaseHead || 
+                } else if (elseCaseHead == myCaseHead &&
+                           (!myCaseHead ||
                             thenCaseHead != myCaseHead->getCondFollow())) {
                     curNode->setUnstructType(JumpIntoCase);
                     curNode->setCondType(IfThen);
                 }
-            }   
+            }
         }
 
-        // for 2 way conditional headers that don't have a follow (i.e. are 
-        // the source of a back edge) and haven't been structured as latching 
+        // for 2 way conditional headers that don't have a follow (i.e. are
+        // the source of a back edge) and haven't been structured as latching
         // nodes, set their follow to be the non-back edge child.
         if (curNode->getStructType() == Cond && !curNode->getCondFollow() &&
-            curNode->getUnstructType() == Structured && 
-            curNode->getCondType() != Case) {
-            // latching nodes will already have been reset to Seq structured 
+                curNode->getUnstructType() == Structured &&
+                curNode->getCondType() != Case) {
+            // latching nodes will already have been reset to Seq structured
             // type
             assert(curNode->hasBackEdge());
 
@@ -2229,20 +2229,36 @@ void Cfg::generateDotFile(const char *str)
         of << "    " << i << " [";
         of << "label=\"";
         switch(Ordering[i]->getType()) {
-            case ONEWAY: of << "oneway"; break;
-            case TWOWAY: 
-                if (Ordering[i]->getCond())
-                    Ordering[i]->getCond()->print(of); 
-                else
-                    of << "twoway";
-                break;
-            case NWAY: of << "nway"; break;
-            case CALL: of << "call"; break;
-            case RET: of << "ret"; break;
-            case FALL: of << "fall"; break;
-            case COMPJUMP: of << "compjump"; break;
-            case COMPCALL: of << "compcall"; break;
-            case INVALID: of << "invalid"; break;
+        case ONEWAY:
+            of << "oneway";
+            break;
+        case TWOWAY:
+            if (Ordering[i]->getCond())
+                Ordering[i]->getCond()->print(of);
+            else
+                of << "twoway";
+            break;
+        case NWAY:
+            of << "nway";
+            break;
+        case CALL:
+            of << "call";
+            break;
+        case RET:
+            of << "ret";
+            break;
+        case FALL:
+            of << "fall";
+            break;
+        case COMPJUMP:
+            of << "compjump";
+            break;
+        case COMPCALL:
+            of << "compcall";
+            break;
+        case INVALID:
+            of << "invalid";
+            break;
         }
         of << "\"];\n";
     }

@@ -40,11 +40,11 @@ Win32BinaryFile::Win32BinaryFile()
 
 Win32BinaryFile::~Win32BinaryFile()
 {
-	for (int i=0; i < m_iNumSections; i++) {
-		if (m_pSections[i].pSectionName)
-			delete [] m_pSections[i].pSectionName;
-	}
-	if (m_pSections) delete [] m_pSections;
+    for (int i=0; i < m_iNumSections; i++) {
+        if (m_pSections[i].pSectionName)
+            delete [] m_pSections[i].pSectionName;
+    }
+    if (m_pSections) delete [] m_pSections;
 }
 
 bool Win32BinaryFile::Open(const char* sName) {
@@ -111,7 +111,7 @@ ADDRESS Win32BinaryFile::GetMainEntryPoint() {
         int size = microX86Dis(p + base);
         if (size == 0x40) {
             fprintf(stderr, "Warning! Microdisassembler out of step at "
-              "offset 0x%x\n", p);
+                    "offset 0x%x\n", p);
             size = 1;
         }
         p += size;
@@ -139,8 +139,8 @@ bool Win32BinaryFile::RealLoad(const char* sName)
     base = (char *)malloc(LMMH(tmphdr.ImageSize));
 
     if (!base) {
-      fprintf(stderr,"Cannot allocate memory for copy of image\n");
-      return false;
+        fprintf(stderr,"Cannot allocate memory for copy of image\n");
+        return false;
     }
 
     fseek(fp, 0, SEEK_SET);
@@ -162,32 +162,32 @@ bool Win32BinaryFile::RealLoad(const char* sName)
 //printf("Image Base %08X, real base %p\n", LMMH(m_pPEHeader->Imagebase), base);
 
     PEObject *o = (PEObject *)(
-        ((char *)m_pPEHeader) + LH(&m_pPEHeader->NtHdrSize) + 24);
+                      ((char *)m_pPEHeader) + LH(&m_pPEHeader->NtHdrSize) + 24);
     m_iNumSections = LH(&m_pPEHeader->numObjects);
     m_pSections = new SectionInfo[m_iNumSections];
     for (int i=0; i<m_iNumSections; i++, o++) {
 //printf("%.8s RVA=%08X Offset=%08X size=%08X\n",
 //  (char*)o->ObjectName, LMMH(o->RVA), LMMH(o->PhysicalOffset),
 //  LMMH(o->VirtualSize));
-      m_pSections[i].pSectionName = new char[9];
-      strncpy(m_pSections[i].pSectionName, o->ObjectName, 8);
-      m_pSections[i].uNativeAddr=(ADDRESS)(LMMH(o->RVA) +
-        LMMH(m_pPEHeader->Imagebase));
-      m_pSections[i].uHostAddr=(ADDRESS)(LMMH(o->RVA) + base);
-      m_pSections[i].uSectionSize=LMMH(o->VirtualSize);
-      DWord Flags = LMMH(o->Flags);
-      m_pSections[i].bBss       = Flags&0x80?1:0;
-      m_pSections[i].bCode      = Flags&0x20?1:0;
-      m_pSections[i].bData      = Flags&0x40?1:0;
-      m_pSections[i].bReadOnly  = Flags&0x80000000?0:1;
-      fseek(fp, LMMH(o->PhysicalOffset), SEEK_SET);
-      memset(base + LMMH(o->RVA), 0, LMMH(o->VirtualSize));
-      fread(base + LMMH(o->RVA), LMMH(o->PhysicalSize), 1, fp);
+        m_pSections[i].pSectionName = new char[9];
+        strncpy(m_pSections[i].pSectionName, o->ObjectName, 8);
+        m_pSections[i].uNativeAddr=(ADDRESS)(LMMH(o->RVA) +
+                                             LMMH(m_pPEHeader->Imagebase));
+        m_pSections[i].uHostAddr=(ADDRESS)(LMMH(o->RVA) + base);
+        m_pSections[i].uSectionSize=LMMH(o->VirtualSize);
+        DWord Flags = LMMH(o->Flags);
+        m_pSections[i].bBss       = Flags&0x80?1:0;
+        m_pSections[i].bCode      = Flags&0x20?1:0;
+        m_pSections[i].bData      = Flags&0x40?1:0;
+        m_pSections[i].bReadOnly  = Flags&0x80000000?0:1;
+        fseek(fp, LMMH(o->PhysicalOffset), SEEK_SET);
+        memset(base + LMMH(o->RVA), 0, LMMH(o->VirtualSize));
+        fread(base + LMMH(o->RVA), LMMH(o->PhysicalSize), 1, fp);
     }
 
     // Add the Import Address Table entries to the symbol table
     PEImportDtor* id = (PEImportDtor*)
-      (LMMH(m_pPEHeader->ImportTableRVA) + base);
+                       (LMMH(m_pPEHeader->ImportTableRVA) + base);
     while (id->originalFirstThunk != 0) {
         char* dllName = LMMH(id->name) + base;
         unsigned* iat = (unsigned*)(LMMH(id->originalFirstThunk) + base);
@@ -197,11 +197,11 @@ bool Win32BinaryFile::RealLoad(const char* sName)
             if (iatEntry >> 31) {
                 // This is an ordinal number (stupid idea)
                 std::ostringstream ost;
-                ost << dllName << "_" << (iatEntry & 0x7FFFFFFF);                
+                ost << dllName << "_" << (iatEntry & 0x7FFFFFFF);
                 dlprocptrs[paddr] = ost.str();
                 //printf("Added symbol %s value %x\n", ost.str().c_str(),paddr);
             } else {
-                // Normal case (IMAGE_IMPORT_BY_NAME)                
+                // Normal case (IMAGE_IMPORT_BY_NAME)
                 // Skip the useless hint (2 bytes)
                 std::string name((const char*)(iatEntry+2+base));
                 dlprocptrs[paddr] = name;
@@ -231,7 +231,7 @@ bool Win32BinaryFile::RealLoad(const char* sName)
 // Clean up and unload the binary image
 void Win32BinaryFile::UnLoad()
 {
-} 
+}
 
 bool Win32BinaryFile::PostLoad(void* handle)
 {
@@ -248,7 +248,7 @@ char* Win32BinaryFile::SymbolByAddress(ADDRESS dwAddr)
 }
 
 ADDRESS Win32BinaryFile::GetAddressByName(const char* pName,
-    bool bNoTypeOK /* = false */) {
+        bool bNoTypeOK /* = false */) {
     // This is "looking up the wrong way" and hopefully is uncommon
     // Use linear search
     std::map<ADDRESS, std::string>::iterator it = dlprocptrs.begin();
@@ -262,21 +262,21 @@ ADDRESS Win32BinaryFile::GetAddressByName(const char* pName,
 #endif
 
 bool Win32BinaryFile::DisplayDetails(const char* fileName, FILE* f
-     /* = stdout */)
+                                     /* = stdout */)
 {
     return false;
 }
 
 bool Win32BinaryFile::IsDynamicLinkedProcPointer(ADDRESS uNative)
 {
-	if (dlprocptrs.find(uNative) != dlprocptrs.end())
-		return true;
-	return false;
+    if (dlprocptrs.find(uNative) != dlprocptrs.end())
+        return true;
+    return false;
 }
 
 const char *Win32BinaryFile::GetDynamicProcName(ADDRESS uNative)
 {
-	return dlprocptrs[uNative].c_str();
+    return dlprocptrs[uNative].c_str();
 }
 
 LOAD_FMT Win32BinaryFile::GetFormat() const
@@ -311,7 +311,7 @@ std::list<const char *> Win32BinaryFile::getDependencyList()
 
 DWord Win32BinaryFile::getDelta()
 {
-    return (DWord)base - LMMH(m_pPEHeader->Imagebase); 
+    return (DWord)base - LMMH(m_pPEHeader->Imagebase);
 }
 
 #ifndef WIN32
@@ -323,6 +323,6 @@ extern "C" {
     BinaryFile* construct()
     {
         return new Win32BinaryFile;
-    }    
+    }
 }
 #endif

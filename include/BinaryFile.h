@@ -23,19 +23,19 @@
  * 3 Feb 98 - Mike
  *  included unneeded <string> library to avoid linking problems.
  *      Whenever list and string are used, string should be included
- *      before list (at least with the gcc compiler). 
+ *      before list (at least with the gcc compiler).
  * 25 Feb 98 - Cristina
  *  removed BOOL type as it's now defined in driver.h.
  * 3 Mar 98 - Cristina
  *  make use of global ADDRESS type instead of local ADDR definition.
- *  when the BinaryFile object is used on its own, a -DLOADER directive 
- *      needs to be specified at compilation time so that the type 
- *      definitions are effected.  If used as part of the uqbt project 
+ *  when the BinaryFile object is used on its own, a -DLOADER directive
+ *      needs to be specified at compilation time so that the type
+ *      definitions are effected.  If used as part of the uqbt project
  *      (or any other project for that matter), the driver.h file should
  *      have the right type definitions.
- * 11 Mar 98 - Cristina  
+ * 11 Mar 98 - Cristina
  *  replaced BOOL for bool type (C++'s), same for TRUE and FALSE.
- * 24 Mar 98 - Cristina: replaced driver include to global.h. 
+ * 24 Mar 98 - Cristina: replaced driver include to global.h.
  * 22 May 98 - Mike: Now uses its own global.h
  * 27 May 98 - Mike: Class called BinaryFile
  * 28 Apr 99 - Mike: Added GetSectionInfoByAddr()
@@ -89,7 +89,7 @@ typedef struct sectioninfo_tag
 } SectionInfo;
 
 typedef SectionInfo* PSectionInfo;
-    
+
 // Required by GetInitialState()
 enum REG_ENUM {REG_PC, REG_SP};
 typedef struct reg_addr_tag
@@ -112,11 +112,11 @@ enum MACHINE {MACHINE_PENTIUM, MACHINE_SPARC, MACHINE_HPRISC, MACHINE_PALM};
 
 class BinaryFile {
 
-  friend class ArchiveFile;			// So can use the protected Load()
- 
-  public:
+    friend class ArchiveFile;			// So can use the protected Load()
 
-virtual ~BinaryFile() {}			// Virtual destructor
+public:
+
+    virtual ~BinaryFile() {}			// Virtual destructor
     /*
      * Perform simple magic on the file by the given name in order to
      * determine the appropriate type, and then return an instance of
@@ -124,7 +124,7 @@ virtual ~BinaryFile() {}			// Virtual destructor
      */
     static BinaryFile *BinaryFile::getInstanceFor(const char *sName);
     static BinaryFile *Load( const char *sName );
-    
+
 // General loader functions
     BinaryFile(bool bArchive = false);  // Constructor
     // Unload the file. Pure virtual
@@ -143,9 +143,11 @@ virtual ~BinaryFile() {}			// Virtual destructor
     // Return whether the object can be relocated if necessary
     // (ie if it is not tied to a particular base address). If not, the object
     // must be loaded at the address given by getImageBase()
-    virtual bool isRelocatable() const { return isLibrary(); }
+    virtual bool isRelocatable() const {
+        return isLibrary();
+    }
     // Return a list of library names which the binary file depends on
-    virtual std::list<const char *> getDependencyList() = 0;    
+    virtual std::list<const char *> getDependencyList() = 0;
     // Return the virtual address at which the binary expects to be loaded.
     // For position independent / relocatable code this should be NO_ADDDRESS
     virtual ADDRESS getImageBase() = 0;
@@ -161,13 +163,17 @@ virtual ~BinaryFile() {}			// Virtual destructor
     PSectionInfo GetSectionInfoByAddr(ADDRESS uEntry) const;
 
     // returns true if the given address is in a read only section
-    bool isReadOnly(ADDRESS uEntry) { 
+    bool isReadOnly(ADDRESS uEntry) {
         return GetSectionInfoByAddr(uEntry)->bReadOnly;
     }
     // Read 2 bytes from given native address a; considers endianness
-    virtual int readNative2(ADDRESS a) {return 0;}
+    virtual int readNative2(ADDRESS a) {
+        return 0;
+    }
     // Read 4 bytes from given native address a; considers endianness
-    virtual int readNative4(ADDRESS a) {return 0;}
+    virtual int readNative4(ADDRESS a) {
+        return 0;
+    }
 
 // Symbol table functions
     // Lookup the address, return the name, or 0 if not found
@@ -216,33 +222,41 @@ virtual ~BinaryFile() {}			// Virtual destructor
     // Analysis functions
     virtual std::list<RegAddr>& GetInitialState();
     virtual bool    IsDynamicLinkedProc(ADDRESS uNative);
-	virtual bool    IsDynamicLinkedProcPointer(ADDRESS uNative);
-	virtual const char *GetDynamicProcName(ADDRESS uNative);
+    virtual bool    IsDynamicLinkedProcPointer(ADDRESS uNative);
+    virtual const char *GetDynamicProcName(ADDRESS uNative);
     virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main") = 0;
     virtual ADDRESS GetMainEntryPoint() = 0;
 
     /*
      * Return the "real" entry point, ie where execution of the program begins
      */
-    virtual ADDRESS GetEntryPoint() = 0; 
+    virtual ADDRESS GetEntryPoint() = 0;
     // Find section index given name, or -1 if not found
     int         GetSectionIndexByName(const char* sName);
 
 
     virtual bool    RealLoad(const char* sName) = 0;
 
-	virtual std::map<ADDRESS, std::string> &getFuncSymbols() { return *new std::map<ADDRESS, std::string>(); }
+    virtual std::map<ADDRESS, std::string> &getFuncSymbols() {
+        return *new std::map<ADDRESS, std::string>();
+    }
 
-    ADDRESS getLimitTextLow() { return limitTextLow; }
-    ADDRESS getLimitTextHigh() { return limitTextHigh; }
+    ADDRESS getLimitTextLow() {
+        return limitTextLow;
+    }
+    ADDRESS getLimitTextHigh() {
+        return limitTextHigh;
+    }
 
-    int getTextDelta() { return textDelta; }
+    int getTextDelta() {
+        return textDelta;
+    }
 
 //
 //  --  --  --  --  --  --  --  --  --  --  --
 //
 
-  protected:
+protected:
     // Special load function for archive members
     virtual bool    PostLoad(void* handle) = 0;     // Called after loading archive member
 

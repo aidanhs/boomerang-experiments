@@ -77,8 +77,8 @@ typedef std::list<RTL*>::iterator               RTLList_IT;
  * Forward declarartions.
  *============================================================================*/
 void setSwitchInfo(PBB pSwitchBB, char chForm, int iLower, int iUpper,
-    ADDRESS uTable, int iNumTable, int iOffset, RTLList_IT itDefinesSw,
-    UserProc* pProc);
+                   ADDRESS uTable, int iNumTable, int iOffset, RTLList_IT itDefinesSw,
+                   UserProc* pProc);
 
 /*==============================================================================
  * File globals.
@@ -89,40 +89,40 @@ static std::set<PBB> setPathDone;        // Set of PBBs already traversed
 
 // Pattern: m[<expr> * 4 + T ]
 static Unary formA (opMemOf,
-        new Binary(opPlus,
-            new Binary(opMult,
-                new Terminal(opWild),
-                new Const(4)),
-            new Terminal(opWildIntConst)));
+                    new Binary(opPlus,
+                               new Binary(opMult,
+                                       new Terminal(opWild),
+                                       new Const(4)),
+                               new Terminal(opWildIntConst)));
 //static int arrA[] = {idMemOf, opPlus, opMult, -1 /* Whole subexpression */,
 //    opIntConst, 4, opIntConst, -1};
 
 // Pattern: m[<expr> * 4 + T ] + T
 static Binary formO (opPlus,
-    new Unary(opMemOf,
-        new Binary(opPlus,
-            new Binary(opMult,
-                new Terminal(opWild),
-                new Const(4)),
-            new Terminal(opWild))),
-    new Terminal(opWildIntConst));
+                     new Unary(opMemOf,
+                               new Binary(opPlus,
+                                       new Binary(opMult,
+                                               new Terminal(opWild),
+                                               new Const(4)),
+                                       new Terminal(opWild))),
+                     new Terminal(opWildIntConst));
 //static int arrO[] = {opPlus, idMemOf, opPlus, opMult, -1 /* Whole
 //    subexpression */, opIntConst, 4, opIntConst, -1, opIntConst, -1};
 
 // Pattern example: m[(((<expr> & 63) * 8) + 12340) + 4]
 // Simplifies to m[((<expr> & 63) * 8) + 12344]
 static Unary formH(opMemOf,
-    new Binary(opPlus,
-        new Binary(opMult,
-            new Binary(opBitAnd,
-                new Terminal(opWild),
-                new Terminal(opWildIntConst)
-            ),
-            new Const(8)
-        ),
-        new Terminal(opWildIntConst)
-    )
-);
+                   new Binary(opPlus,
+                              new Binary(opMult,
+                                      new Binary(opBitAnd,
+                                              new Terminal(opWild),
+                                              new Terminal(opWildIntConst)
+                                                ),
+                                      new Const(8)
+                                        ),
+                              new Terminal(opWildIntConst)
+                             )
+                  );
 
 //static int arrH[] = {idMemOf, opPlus, opMult, idBitAnd,
 //    -1 /* whole subexpression */, opIntConst, -1, opIntConst, 8,
@@ -131,62 +131,62 @@ static Unary formH(opMemOf,
 // Pattern: %pc + m[%pc  + (<expr> * 4) + k]
 // where k is a small constant, typically 28 or 20
 static Binary formO1(opPlus,
-    new Terminal(opPC),
-    new Unary(opMemOf,
-        new Binary(opPlus,
-            new Terminal(opPC),
-            new Binary(opPlus,
-                new Binary(opMult,
-                    new Terminal(opWild),
-                    new Const(4)
-                ),
-                new Const(opWildIntConst)
-            )
-        )
-    )
-);
-                
-//static int arrO1[] = {opPlus, opPC, idMemOf, opPlus, opPlus, opPC, 
+                     new Terminal(opPC),
+                     new Unary(opMemOf,
+                               new Binary(opPlus,
+                                       new Terminal(opPC),
+                                       new Binary(opPlus,
+                                               new Binary(opMult,
+                                                       new Terminal(opWild),
+                                                       new Const(4)
+                                                         ),
+                                               new Const(opWildIntConst)
+                                                 )
+                                         )
+                              )
+                    );
+
+//static int arrO1[] = {opPlus, opPC, idMemOf, opPlus, opPlus, opPC,
 //    opMult, -1 /* Whole subexpression */, opIntConst, 4, opIntConst, -1};
 
 // Pattern: %pc + m[%pc + ((<expr> * 4) - k)] - k
 // where k is a smallish constant, e.g. 288 (/usr/bin/vi 2.6, 0c4233c).
 static Binary formO2(opPlus,
-    new Terminal(opPC),
-    new Unary(opMemOf,
-        new Binary(opPlus,
-            new Terminal(opPC),
-            new Binary(opMinus,
-                new Binary(opMult,
-                    new Terminal(opWild),
-                    new Const(4)
-                ),
-                new Terminal(opWildIntConst)
-            )
-        )
-    )
-);
+                     new Terminal(opPC),
+                     new Unary(opMemOf,
+                               new Binary(opPlus,
+                                       new Terminal(opPC),
+                                       new Binary(opMinus,
+                                               new Binary(opMult,
+                                                       new Terminal(opWild),
+                                                       new Const(4)
+                                                         ),
+                                               new Terminal(opWildIntConst)
+                                                 )
+                                         )
+                              )
+                    );
 //static int arrO2[] = {opMinus, opPlus, opPC, idMemOf, opMinus, opPlus, opPC,
 //    opMult, -1 /* Whole subexpression */, opIntConst, 4, opIntConst, -1,
 //    opIntConst, -1};
 
 // A subexpression representing `r[v] - k' needed in two places below
 static Binary expRegMinus(opMinus,
-    new Terminal(opWildRegOf),
-    new Terminal(opWild));
+                          new Terminal(opWildRegOf),
+                          new Terminal(opWild));
 static Binary expRegPlus(opPlus,
-    new Terminal(opWildRegOf),
-    new Terminal(opWild));
+                         new Terminal(opWildRegOf),
+                         new Terminal(opWild));
 static Unary expReg999(opRegOf, new Const(999));
 
 // Pattern: r[iReg] + negativeConst
 static Binary expRegPlusNegConst(opPlus, new Terminal(opWildRegOf),
-    new Terminal(opWild)); 
+                                 new Terminal(opWild));
 
 // Pattern: r[x] & const
 static Binary expRegAndConst(opBitAnd,
-    new Terminal(opWildRegOf),
-    new Terminal(opWildIntConst));
+                             new Terminal(opWildRegOf),
+                             new Terminal(opWildIntConst));
 
 // Address of the last CALL instruction copying the PC to a register.
 // Needed for form O2 / "r"
@@ -254,12 +254,12 @@ bool getPrevRtl(PBB& pCurBB, RTLList_IT& itRtl, bool& bNegate) {
     else {
         // More than one in-edge.
 #if DEBUG_SWITCH
-            std::cout << "Multiple in-edges for BB at " << std::hex <<
-              pCurBB->getLowAddr() << std::endl;
+        std::cout << "Multiple in-edges for BB at " << std::hex <<
+                  pCurBB->getLowAddr() << std::endl;
 #endif
 #if 0
         std::cout << "Multiple in-edges for BB at " << std::hex <<
-            pCurBB->getLowAddr() << ":\n==\n";
+                  pCurBB->getLowAddr() << ":\n==\n";
         for (unsigned ii=0; ii < pCurBB->getInEdges().size(); ii++) {
             (pCurBB->getInEdges()[ii])->print();
         }
@@ -281,7 +281,7 @@ bool getPrevRtl(PBB& pCurBB, RTLList_IT& itRtl, bool& bNegate) {
         // 080fedb1 ja     080ff13c     ! Exit if above (important)
         // Fall through if false
         // 080fedb7 jmp    *0x80fedc0(,%edx,4) ! Indexed jump
-        
+
         bool found = false;
         // Try for fallthrough BB
         for (unsigned ii=0; ii < pCurBB->getInEdges().size(); ii++) {
@@ -345,15 +345,16 @@ bool getPrevRtl(PBB& pCurBB, RTLList_IT& itRtl, bool& bNegate) {
     setPathDone.insert(pCurBB); // Don't consider it again
     // Check if we have come via the first out edge of a TWOWAY BB
     if (pCurBB->getType() == TWOWAY &&
-        pCurBB->getOutEdges().size() &&
-        pCurBB->getOutEdges()[0] == pOldBB)
+            pCurBB->getOutEdges().size() &&
+            pCurBB->getOutEdges()[0] == pOldBB)
         // This is a two way BB, and the first out edge (the
         // taken branch) points to the BB we came from.
         // This indicates a logical negation, for the purposes
         // of switch detection
         bNegate = true;
     // Point to the last RT
-    itRtl = pCurBB->getRTLs()->end(); itRtl--;
+    itRtl = pCurBB->getRTLs()->end();
+    itRtl--;
     return false;
 }
 
@@ -384,7 +385,7 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
     // return false;                // Use to disable switch analysis
 
     Exp* ssJmp;                     // The expression repr jump, or
-                                    //  reresenting <expr> when bPostForm
+    //  reresenting <expr> when bPostForm
     bool bStopped = false;          // True when search must stop
     bool bUpperFnd = false;         // True when have ss for upper bound
     bool bGotUpper = false;         // True when have final iUpper
@@ -403,19 +404,19 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
     int iOffset;                    // Offset from jump to table (form R only)
     RTLList_IT itDefinesSw;         // Iterator to RTL that defines switch var
     int iCompareReg = -1;           // The register involved in a compare, that
-                                    //  might turn out to be of interest
+    //  might turn out to be of interest
     Exp* expCompare = NULL;         // Pointer to last compare argument
     // I'm not sure that bDestBound is a good idea!
     // It seems to be asserting that the current RTL affects ssBound, and not
     // ssJmp-> But it could affect both!
     bool bDestBound = false;
-	int iReg;
+    int iReg;
     iOffset = 0;                    // Needed only for type R
     uCopyPC = 0;                    // Needed only for type "r"; no call yet
     // Get the register that contains the function return value
     // e.g. 8 for sparc
 #if 0       // Problem is that the signature object is generic (class Signature)
-            // until the signature is "promoted" (happens much later).
+    // until the signature is "promoted" (happens much later).
     Exp* retExp = pProc->getSignature()->getReturnExp();
 #else
     // So for now, we call a special cludge in signature.cpp
@@ -423,11 +424,11 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
 #endif
     assert(retExp);
     const int iFuncRetReg = ((Const*)((Unary*)retExp)->getSubExp1())->getInt();
-	int iDest;
-	int n;
+    int iDest;
+    int n;
     Exp* pRHS;
     Exp* pLHS;
-	Exp* pRT;
+    Exp* pRT;
     Exp* temp;
 
     // Clear the set used for detecting cycles
@@ -462,7 +463,7 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
             if (bPostForm) {
                 iLower = 0;
                 setSwitchInfo(pSwitchBB, chForm, iLower, iUpper,
-                    uTable, iNumTable, iOffset, itDefinesSw, pProc);
+                              uTable, iNumTable, iOffset, itDefinesSw, pProc);
                 return true;
             }
             else return false;
@@ -474,7 +475,7 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
             ssBound = new Unary(opNot, ssBound);
         }
 //      pRtl->machineSimplify();
-        
+
         // General approach: we look for the comparison that defines the
         // switch variable's upper bound separately.
         // We maintain a Semantic String, ssJmp, that is the current
@@ -495,7 +496,7 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
         // Along the way, we check for subtracts that assign to a register
         // of interest.  This is assumed to set the lower bound, and is
         // therefore the ideal place to assign the switch variable.
-        if ((pRtl->getKind() == HL_NONE) && (pRtl->getNumExp() > indexRT)){
+        if ((pRtl->getKind() == HL_NONE) && (pRtl->getNumExp() > indexRT)) {
             pRT = pRtl->elementAt(indexRT);
             if (pRT->isAssign()) {
                 Exp* rhs = pRT->getSubExp2();
@@ -544,15 +545,15 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
                 }
             }
         }
-        
+
         // See if we are defining the upper or lower bound with a compare
         // and branch. We need to do this first, because most other
         // cases require an assignment to a register of interest, and will
         // continue the loop if this is not found
         Unary regOfFuncRet(opRegOf, new Const(iFuncRetReg));
         Exp* result;
-        if ((pRtl->getKind() == CALL_RTL) && 
-          ssJmp->search(&regOfFuncRet, result)) {
+        if ((pRtl->getKind() == CALL_RTL) &&
+                ssJmp->search(&regOfFuncRet, result)) {
             // We have come across a call, and the function return
             // register is used in ssJmp-> We have to assume that
             // this call will define the switch variable. Replace it
@@ -561,7 +562,7 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
             ssJmp = ssJmp->searchReplaceAll(&regOfFuncRet, &expReg999, changed);
             // Do the same to ssBound
             ssBound = ssBound->searchReplaceAll(&regOfFuncRet, &expReg999,
-              changed);
+                                                changed);
             continue;
         }
         else if (pRtl->getKind() == JCOND_RTL) {
@@ -573,7 +574,7 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF) {
                 if (jt == HLJCOND_JULE) {
                     // Replace the not with opUpper
                     //ssBound->substIndex(0, opUpper);
-std::cerr << "FIXME: Replace the not with opUpper here: " << ssBound << std::endl;
+                    std::cerr << "FIXME: Replace the not with opUpper here: " << ssBound << std::endl;
                 }
                 else {
                     // not really sure what to do... but it does recover
@@ -603,16 +604,16 @@ std::cerr << "FIXME: Replace the not with opUpper here: " << ssBound << std::end
 #else
                     if (ssBound == NULL)
                         ssBound = new Binary(operBr,
-                            new Terminal(opNil),
-                            new Terminal(opNil));
+                                             new Terminal(opNil),
+                                             new Terminal(opNil));
                     else {
-std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a bare " << operStrings[operBr] << "\n";
+                        std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a bare " << operStrings[operBr] << "\n";
                     }
 #endif
 
 #if DEBUG_SWITCH
                     std::cout << "isSwitch @ " << std::hex <<
-                      pRtl->getAddress();
+                              pRtl->getAddress();
                     std::cout << ": ssBound now " << ssBound << "\n";
 #endif
 
@@ -627,7 +628,7 @@ std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a b
         //if (ssBound->getLastIdx() == opUpper ||
         //    ssBound->getLastIdx() == opLower) {
         if (ssBound &&
-          (ssBound->getOper() == opUpper || ssBound->getOper() == opLower)) {
+                (ssBound->getOper() == opUpper || ssBound->getOper() == opLower)) {
             int iReg;
             if ((*itCurRtl)->isCompare(iReg, expCompare)) {
                 // It is a compare instruction. But it should be a comparison
@@ -655,8 +656,8 @@ std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a b
 
 #if DEBUG_SWITCH
                 std::cout << "isSwitch @ " << std::hex <<
-                  (*itCurRtl)->getAddress() << ": ssBound now " <<
-                  ssBound << std::endl;
+                          (*itCurRtl)->getAddress() << ": ssBound now " <<
+                          ssBound << std::endl;
 #endif
 
                 // Force a check. There may be no instructions after
@@ -680,7 +681,7 @@ std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a b
                 ssBound = ssBound->getSubExp1();
 #if DEBUG_SWITCH
                 std::cout << "Popping opNot from ssBound: now " << ssBound
-                  << std::endl;
+                          << std::endl;
 #endif
             }
         }
@@ -726,7 +727,7 @@ std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a b
                 Unary regOfK(opRegOf, new Const(iDest));
                 bool changed;
                 ssBound = ssBound->searchReplaceAll(&regOfK, &expReg999,
-                  changed);
+                                                    changed);
                 continue;
             }
             // We record the fact that we have seen the m[] part of the switch
@@ -749,7 +750,7 @@ std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a b
                 // Do the same to ssBound, if set
                 if (ssBound)
                     ssBound = ssBound->searchReplaceAll(&regOfK, &expReg999,
-                      changed);
+                                                        changed);
                 iDest = 999;             // Don't subst again
                 // This defines the switch variable, if not already set
                 if (!bGotDefines) {
@@ -835,7 +836,7 @@ std::cerr << "FIXME: Supposed to OR current ssBound (" << ssBound << ") with a b
 forcedCheck:
 #if DEBUG_SWITCH
         std::cout << "ssJmp @ " << std::hex << (*itCurRtl)->getAddress() <<
-          ": " << ssJmp << std::endl;
+                  ": " << ssJmp << std::endl;
         if (ssBound) std::cout << "ssBound is " << ssBound << "\n";
 #endif
 
@@ -847,7 +848,7 @@ forcedCheck:
 
 #if DEBUG_SWITCH
             std::cout << "isSwitch @ " << std::hex << (*itCurRtl)->getAddress()
-              << ": " << ssJmp << std::endl;
+                      << ": " << ssJmp << std::endl;
 #endif
 
             // Simplify the expression, by removing all {size} and sign extend
@@ -861,7 +862,7 @@ forcedCheck:
                 chForm = 'A';
                 ssJmp = ((Unary*) ssJmp)->becomeSubExp1();     // <expr> * 4 + T
                 uTable = (ADDRESS)
-                  ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
+                         ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
                 ssJmp = ((Binary*)ssJmp)->becomeSubExp1();     // <expr> * 4
                 ssJmp = ((Binary*)ssJmp)->becomeSubExp1();  // <expr>
             }
@@ -874,7 +875,7 @@ forcedCheck:
                 // m[<expr> * 4 + T]
                 ssJmp = ((Unary*) ssJmp)->becomeSubExp1();     // <expr> * 4 + T
                 uTable = (ADDRESS)
-                  ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
+                         ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
                 ssJmp = ((Binary*)ssJmp)->becomeSubExp1();     // <expr> * 4
                 ssJmp = ((Binary*)ssJmp)->becomeSubExp1();     // <expr>
             }
@@ -889,7 +890,7 @@ forcedCheck:
                 ssJmp = ((Unary*) ssJmp)->becomeSubExp1();
                 //((<expr> & K) * 8) + T
                 uTable = (ADDRESS)
-                  ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
+                         ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
                 ssJmp = ((Binary*)ssJmp)->becomeSubExp1();
                 // ((<expr> & K) * 8)
                 ssJmp = ((Binary*)ssJmp)->becomeSubExp1(); // <expr> & K
@@ -947,12 +948,12 @@ forcedCheck:
             // Check if we have the upper and lower bounds together
             // ((r[v] GT k1] || (r[v] LT k2))
             static Binary expBoth(opOr,
-                new Binary(opUpper,
-                    new Terminal(opWildRegOf),
-                    new Terminal(opWildIntConst)),
-                new Binary(opLower,
-                    new Terminal(opWildRegOf),
-                    new Terminal(opWildIntConst)));
+                                  new Binary(opUpper,
+                                             new Terminal(opWildRegOf),
+                                             new Terminal(opWildIntConst)),
+                                  new Binary(opLower,
+                                             new Terminal(opWildRegOf),
+                                             new Terminal(opWildIntConst)));
             if (ssBound && *ssBound == expBoth) {
                 // We have both bounds
                 Exp* sub1 = ssBound->getSubExp1();
@@ -969,18 +970,19 @@ forcedCheck:
                 uTable += iLower * iSize;
                 if (chForm != '?') {
                     setSwitchInfo(pSwitchBB, chForm, iLower, iUpper,
-                        uTable, iNumTable, iOffset, itDefinesSw, pProc);
+                                  uTable, iNumTable, iOffset, itDefinesSw, pProc);
                     return true;
                 }
-                bGotUpper = true; bGotLower = true;
+                bGotUpper = true;
+                bGotLower = true;
             }
         }
 
         // Check for upper bound only
         if (!bGotUpper) {
             static Binary expUpper(opUpper,
-                new Terminal(opWildRegOf),
-                new Terminal(opWildIntConst));
+                                   new Terminal(opWildRegOf),
+                                   new Terminal(opWildIntConst));
             if (ssBound && *ssBound == expUpper) {
                 bGotUpper = true;
                 Exp* sub = ((Binary*)ssBound)->getSubExp2();
@@ -1003,7 +1005,7 @@ forcedCheck:
 
 #if DEBUG_SWITCH
             std::cout << "Post form @ " << std::hex << (*itCurRtl)->getAddress()
-              << ": " << ssJmp << std::endl;
+                      << ": " << ssJmp << std::endl;
 #endif
 
             // Save the "switch variable" so we can return it in a SWITCH_INFO
@@ -1023,8 +1025,8 @@ forcedCheck:
                 bGotLower = true;
                 iLower = ((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
 #if DEBUG_SWITCH
-            std::cout << "Got lower: ssJmp " << ssJmp <<
-              " -> iLower " << std::dec << iLower << std::endl;
+                std::cout << "Got lower: ssJmp " << ssJmp <<
+                          " -> iLower " << std::dec << iLower << std::endl;
 #endif
                 iUpper += iLower;
             }
@@ -1035,10 +1037,11 @@ forcedCheck:
                 if (bRet) {
                     // We now have the lower bound, and all is done
                     iLower =
-                      -((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
+                        -((Const*)((Binary*)ssJmp)->getSubExp2())->getInt();
 #if DEBUG_SWITCH
                     std::cout << "Got lower: ssJmp " << ssJmp <<
-                      " -> iLower " << std::dec; std::cout << iLower << "\n";
+                              " -> iLower " << std::dec;
+                    std::cout << iLower << "\n";
 #endif
                     iUpper += iLower;
                     bGotLower = true;
@@ -1049,7 +1052,7 @@ forcedCheck:
         // Check if we are done
         if (bGotLower && bGotUpper && chForm != '?') {
             setSwitchInfo(pSwitchBB, chForm, iLower, iUpper,
-                uTable, iNumTable, iOffset, itDefinesSw, pProc);
+                          uTable, iNumTable, iOffset, itDefinesSw, pProc);
             return true;
         }
 
@@ -1076,8 +1079,8 @@ forcedCheck:
  * RETURNS:       <nothing>
  *============================================================================*/
 void setSwitchInfo(PBB pSwitchBB, char chForm, int iLower, int iUpper,
-    ADDRESS uTable, int iNumTable, int iOffset, RTLList_IT itDefinesSw,
-    UserProc* pProc) {
+                   ADDRESS uTable, int iNumTable, int iOffset, RTLList_IT itDefinesSw,
+                   UserProc* pProc) {
     SWITCH_INFO* pSwitchInfo = new SWITCH_INFO;
     pSwitchInfo->chForm = chForm;
     pSwitchInfo->iLower = iLower;
@@ -1108,22 +1111,22 @@ void setSwitchInfo(PBB pSwitchBB, char chForm, int iLower, int iUpper,
         // We want to insert the var assignment before the defining assignment,
         // and from the first subexpression
         insertAfterTemps(*itDefinesSw, new AssignExp(
-          pLHS->clone(), rhs->getSubExp1()->clone()));
+                             pLHS->clone(), rhs->getSubExp1()->clone()));
     }
     // Check if it's adding a negative constant to a register. If so,
     // assume it's just like the subtract above
     else if ((*rhs == expRegPlusNegConst) &&
-      (((Binary*)rhs)->getSubExp2()->isIntConst()) &&
-      (((Const*)((Binary*)rhs)->getSubExp2())->getInt() < 0)) {
+             (((Binary*)rhs)->getSubExp2()->isIntConst()) &&
+             (((Const*)((Binary*)rhs)->getSubExp2())->getInt() < 0)) {
         insertAfterTemps(*itDefinesSw, new AssignExp(
-          pLHS->clone(), rhs->getSubExp1()->clone()));
+                             pLHS->clone(), rhs->getSubExp1()->clone()));
     }
     else {
         // We assume that this assign is a load (or something) that defines the
         // switch variable
         Exp* lhs = pRT->getSubExp1();
         (*itDefinesSw)->appendExp(new AssignExp(
-          pLHS->clone(), lhs->clone()));
+                                      pLHS->clone(), lhs->clone()));
     }
     pSwitchInfo->pSwitchVar = pLHS;
 }
@@ -1140,7 +1143,7 @@ void setSwitchInfo(PBB pSwitchBB, char chForm, int iLower, int iUpper,
  * RETURNS:       <nothing>
  *============================================================================*/
 void processSwitch(PBB pBB, int delta, Cfg* pCfg, TargetQueue& tq,
-  BinaryFile* pBF) {
+                   BinaryFile* pBF) {
 
     HLNwayJump* jump = (HLNwayJump*)pBB->getRTLs()->back();
     SWITCH_INFO* si = jump->getSwitchInfo();
@@ -1149,16 +1152,17 @@ void processSwitch(PBB pBB, int delta, Cfg* pCfg, TargetQueue& tq,
 
 #if DEBUG_SWITCH
     std::cout << "Found switch statement type " << si->chForm <<
-      " with table at 0x" << std::hex << si->uTable << ", ";
+              " with table at 0x" << std::hex << si->uTable << ", ";
     if (si->iNumTable)
         std::cout << std::dec << si->iNumTable << " entries, ";
     std::cout << "lo= " << std::dec << si->iLower << ", hi= " << si->iUpper <<
-      "\n";
+              "\n";
 #endif
     ADDRESS uSwitch;
     int iNumOut, iNum;
     if (si->chForm == 'H') {
-        iNumOut = 0; int i, j=0;
+        iNumOut = 0;
+        int i, j=0;
         for (i=0; i < si->iNumTable; i++, j+=2) {
             // Endian-ness doesn't matter here; -1 is still -1!
             int iValue = ((ADDRESS*)(si->uTable+delta))[j];
@@ -1174,7 +1178,7 @@ void processSwitch(PBB pBB, int delta, Cfg* pCfg, TargetQueue& tq,
     // Emit an NWAY BB instead of the COMPJUMP
     // Also update the number of out edges.
     pBB->updateType(NWAY, iNumOut);
-    
+
     for (int i=0; i < iNum; i++) {
         // Get the destination address from the
         // switch table.

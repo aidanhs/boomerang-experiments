@@ -39,8 +39,8 @@
     ((int)((Byte *)(&x))[2] << 16) + ((int)((Byte *)(&x))[3] << 24))
 
 typedef struct {                /* exe file header, just the signature really */
-         Byte   sigLo;          /* .EXE signature: 0x4D 0x5A     */
-         Byte   sigHi;
+    Byte   sigLo;          /* .EXE signature: 0x4D 0x5A     */
+    Byte   sigHi;
 } Header;
 
 //#ifdef WIN32
@@ -48,84 +48,84 @@ typedef struct {                /* exe file header, just the signature really */
 //#endif
 
 typedef struct {
-  Byte sigLo;
-  Byte sigHi;
-  SWord sigver;
-  SWord cputype;
-  SWord numObjects;
-  DWord TimeDate;
-  DWord Reserved1;
-  DWord Reserved2;
-  SWord NtHdrSize;
-  SWord Flags;
-  SWord Reserved3;
-  Byte LMajor;
-  Byte LMinor;
-  DWord Reserved4;
-  DWord Reserved5;
-  DWord Reserved6;
-  DWord EntrypointRVA;
-  DWord Reserved7;
-  DWord Reserved8;
-  DWord Imagebase;
-  DWord ObjectAlign;
-  DWord FileAlign;
-  SWord OSMajor;
-  SWord OSMinor;
-  SWord UserMajor;
-  SWord UserMinor;
-  SWord SubsysMajor;
-  SWord SubsysMinor;
-  DWord Reserved9;
-  DWord ImageSize;
-  DWord HeaderSize;
-  DWord FileChecksum;
-  SWord Subsystem;
-  SWord DLLFlags;
-  DWord StackReserveSize;
-  DWord StackCommitSize;
-  DWord HeapReserveSize;
-  DWord HeapCommitSize;
-  DWord Reserved10;
-  DWord nInterestingRVASizes;
-  DWord ExportTableRVA;
-  DWord TotalExportDataSize;
-  DWord ImportTableRVA;
-  DWord TotalImportDataSize;
-  DWord ResourceTableRVA;
-  DWord TotalResourceDataSize;
-  DWord ExceptionTableRVA;
-  DWord TotalExceptionDataSize;
-  DWord SecurityTableRVA;
-  DWord TotalSecurityDataSize;
-  DWord FixupTableRVA;
-  DWord TotalFixupDataSize;
-  DWord DebugTableRVA;
-  DWord TotalDebugDirectories;
-  DWord ImageDescriptionRVA;
-  DWord TotalDescriptionSize;
-  DWord MachineSpecificRVA;
-  DWord MachineSpecificSize;
-  DWord ThreadLocalStorageRVA;
-  DWord TotalTLSSize;
+    Byte sigLo;
+    Byte sigHi;
+    SWord sigver;
+    SWord cputype;
+    SWord numObjects;
+    DWord TimeDate;
+    DWord Reserved1;
+    DWord Reserved2;
+    SWord NtHdrSize;
+    SWord Flags;
+    SWord Reserved3;
+    Byte LMajor;
+    Byte LMinor;
+    DWord Reserved4;
+    DWord Reserved5;
+    DWord Reserved6;
+    DWord EntrypointRVA;
+    DWord Reserved7;
+    DWord Reserved8;
+    DWord Imagebase;
+    DWord ObjectAlign;
+    DWord FileAlign;
+    SWord OSMajor;
+    SWord OSMinor;
+    SWord UserMajor;
+    SWord UserMinor;
+    SWord SubsysMajor;
+    SWord SubsysMinor;
+    DWord Reserved9;
+    DWord ImageSize;
+    DWord HeaderSize;
+    DWord FileChecksum;
+    SWord Subsystem;
+    SWord DLLFlags;
+    DWord StackReserveSize;
+    DWord StackCommitSize;
+    DWord HeapReserveSize;
+    DWord HeapCommitSize;
+    DWord Reserved10;
+    DWord nInterestingRVASizes;
+    DWord ExportTableRVA;
+    DWord TotalExportDataSize;
+    DWord ImportTableRVA;
+    DWord TotalImportDataSize;
+    DWord ResourceTableRVA;
+    DWord TotalResourceDataSize;
+    DWord ExceptionTableRVA;
+    DWord TotalExceptionDataSize;
+    DWord SecurityTableRVA;
+    DWord TotalSecurityDataSize;
+    DWord FixupTableRVA;
+    DWord TotalFixupDataSize;
+    DWord DebugTableRVA;
+    DWord TotalDebugDirectories;
+    DWord ImageDescriptionRVA;
+    DWord TotalDescriptionSize;
+    DWord MachineSpecificRVA;
+    DWord MachineSpecificSize;
+    DWord ThreadLocalStorageRVA;
+    DWord TotalTLSSize;
 } PEHeader;
 
 typedef struct {
-  char ObjectName[8];
-  DWord VirtualSize;
-  DWord RVA;
-  DWord PhysicalSize;
-  DWord PhysicalOffset;
-  DWord Reserved1;
-  DWord Reserved2;
-  DWord Reserved3;
-  DWord Flags;
+    char ObjectName[8];
+    DWord VirtualSize;
+    DWord RVA;
+    DWord PhysicalSize;
+    DWord PhysicalOffset;
+    DWord Reserved1;
+    DWord Reserved2;
+    DWord Reserved3;
+    DWord Flags;
 } PEObject;
 
 typedef struct {
     DWord originalFirstThunk; // 0 for end of array; also ptr to hintNameArray
     DWord preSnapDate;      // Time and date the import data was pre-snapped
-                            // or zero if not pre-snapped
+    // or zero if not pre-snapped
     SWord verMajor;         // Major version number of dll being ref'd
     SWord verMinor;         // Minor "       "
     DWord name;             // RVA of dll name (asciz)
@@ -139,54 +139,54 @@ typedef struct {
 class Win32BinaryFile : public BinaryFile
 {
 public:
-                Win32BinaryFile();              // Default constructor
-  virtual       ~Win32BinaryFile();             // Destructor
-  virtual bool  Open(const char* sName);        // Open the file for r/w; ???
-  virtual void  Close();                        // Close file opened with Open()
-  virtual void  UnLoad();                       // Unload the image
-  virtual LOAD_FMT GetFormat() const;           // Get format (i.e.
-                                                // LOADFMT_Win32)
-  virtual MACHINE GetMachine() const;           // Get machine (i.e.
-                                                // MACHINE_Pentium)
-  virtual bool isLibrary() const;
-  virtual std::list<const char *> getDependencyList();
-  virtual ADDRESS getImageBase();
-  virtual size_t getImageSize();
+    Win32BinaryFile();              // Default constructor
+    virtual       ~Win32BinaryFile();             // Destructor
+    virtual bool  Open(const char* sName);        // Open the file for r/w; ???
+    virtual void  Close();                        // Close file opened with Open()
+    virtual void  UnLoad();                       // Unload the image
+    virtual LOAD_FMT GetFormat() const;           // Get format (i.e.
+    // LOADFMT_Win32)
+    virtual MACHINE GetMachine() const;           // Get machine (i.e.
+    // MACHINE_Pentium)
+    virtual bool isLibrary() const;
+    virtual std::list<const char *> getDependencyList();
+    virtual ADDRESS getImageBase();
+    virtual size_t getImageSize();
 
-  virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main");
-  virtual ADDRESS GetMainEntryPoint();
-  virtual ADDRESS GetEntryPoint();
-  DWord getDelta();
+    virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main");
+    virtual ADDRESS GetMainEntryPoint();
+    virtual ADDRESS GetEntryPoint();
+    DWord getDelta();
 #ifndef WIN32
-  virtual char* SymbolByAddress(ADDRESS dwAddr); // Get sym from addr
-  virtual ADDRESS GetAddressByName(const char* name,
-    bool bNoTypeOK = false);                    // Find addr given name  
+    virtual char* SymbolByAddress(ADDRESS dwAddr); // Get sym from addr
+    virtual ADDRESS GetAddressByName(const char* name,
+                                     bool bNoTypeOK = false);                    // Find addr given name
 #endif
 
 //
 //      --      --      --      --      --      --      --      --      --
 //
-        // Internal information
-        // Dump headers, etc
-virtual bool    DisplayDetails(const char* fileName, FILE* f = stdout);
+    // Internal information
+    // Dump headers, etc
+    virtual bool    DisplayDetails(const char* fileName, FILE* f = stdout);
 
-virtual bool    IsDynamicLinkedProcPointer(ADDRESS uNative);
-virtual const char *GetDynamicProcName(ADDRESS uNative);
+    virtual bool    IsDynamicLinkedProcPointer(ADDRESS uNative);
+    virtual const char *GetDynamicProcName(ADDRESS uNative);
 
-  protected:
+protected:
     virtual bool  RealLoad(const char* sName); // Load the file; pure virtual
 
-  private:
+private:
 
-        bool    PostLoad(void* handle); // Called after archive member loaded
+    bool    PostLoad(void* handle); // Called after archive member loaded
 
-        Header* m_pHeader;              // Pointer to header
-        PEHeader* m_pPEHeader;          // Pointer to pe header
-        int     m_cbImage;              // Size of image
-        int     m_cReloc;               // Number of relocation entries
-        DWord*  m_pRelocTable;          // The relocation table
-        char *  base;                   // Beginning of the loaded image
-        std::map<ADDRESS, std::string> dlprocptrs;  // Address of dynamic pointers to library procedures
+    Header* m_pHeader;              // Pointer to header
+    PEHeader* m_pPEHeader;          // Pointer to pe header
+    int     m_cbImage;              // Size of image
+    int     m_cReloc;               // Number of relocation entries
+    DWord*  m_pRelocTable;          // The relocation table
+    char *  base;                   // Beginning of the loaded image
+    std::map<ADDRESS, std::string> dlprocptrs;  // Address of dynamic pointers to library procedures
 
 };
 

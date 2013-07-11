@@ -36,7 +36,9 @@ void ParserTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int ParserTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        ParserTest::setUp

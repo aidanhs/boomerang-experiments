@@ -26,10 +26,10 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CProcDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CProcDoc, CDocument)
-	//{{AFX_MSG_MAP(CProcDoc)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-		//    DO NOT EDIT what you see in these blocks of generated code!
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CProcDoc)
+    // NOTE - the ClassWizard will add and remove mapping macros here.
+    //    DO NOT EDIT what you see in these blocks of generated code!
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ END_MESSAGE_MAP()
 
 CProcDoc::CProcDoc() : m_proc(NULL)
 {
-	// TODO: add one-time construction code here
+    // TODO: add one-time construction code here
 }
 
 CProcDoc::~CProcDoc()
@@ -46,15 +46,15 @@ CProcDoc::~CProcDoc()
 
 BOOL CProcDoc::OnNewDocument()
 {
-	return FALSE;
+    return FALSE;
 
-	if (!CDocument::OnNewDocument())
-		return FALSE;
+    if (!CDocument::OnNewDocument())
+        return FALSE;
 
-	// TODO: add reinitialization code here
-	// (SDI documents will reuse this document)
+    // TODO: add reinitialization code here
+    // (SDI documents will reuse this document)
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -64,8 +64,8 @@ BOOL CProcDoc::OnNewDocument()
 
 void CProcDoc::Serialize(CArchive& ar)
 {
-	// CEditView contains an edit control which handles all serialization
-	((CEditView*)m_viewList.GetHead())->SerializeRaw(ar);
+    // CEditView contains an edit control which handles all serialization
+    ((CEditView*)m_viewList.GetHead())->SerializeRaw(ar);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -74,29 +74,29 @@ void CProcDoc::Serialize(CArchive& ar)
 #ifdef _DEBUG
 void CProcDoc::AssertValid() const
 {
-	CDocument::AssertValid();
+    CDocument::AssertValid();
 }
 
 void CProcDoc::Dump(CDumpContext& dc) const
 {
-	CDocument::Dump(dc);
+    CDocument::Dump(dc);
 }
 #endif //_DEBUG
 
 /////////////////////////////////////////////////////////////////////////////
 // CProcDoc commands
 
-BOOL CProcDoc::OnOpenDocument(LPCTSTR lpszPathName) 
+BOOL CProcDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-	return TRUE; // we dont actually open procs
+    return TRUE; // we dont actually open procs
 
-	if (!CDocument::OnOpenDocument(lpszPathName))
-		return FALSE;
-	
-	return TRUE;
+    if (!CDocument::OnOpenDocument(lpszPathName))
+        return FALSE;
+
+    return TRUE;
 }
 
 void CProcDoc::setProc(Proc *p)
 {
-	m_proc = p;
+    m_proc = p;
 }

@@ -33,9 +33,9 @@
  *============================================================================*/
 
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER <= 1200 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <assert.h>
 #include <fstream>
@@ -90,7 +90,7 @@ Prog::~Prog() {
     if (pBF) delete pBF;
     if (pFE) delete pFE;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         if (*it)
             delete *it;
     }
@@ -110,7 +110,7 @@ bool Prog::wellForm() {
     bool wellformed = true;
 
     for (std::list<Proc *>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (!(*it)->isLib()) {
             UserProc *u = (UserProc*)*it;
             wellformed &= u->getCFG()->wellFormCfg();
@@ -122,7 +122,7 @@ bool Prog::wellForm() {
 void Prog::analyse() {
     Analysis *analysis = new Analysis();
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -140,9 +140,9 @@ void Prog::analyse() {
 
 // Do decompilation
 void Prog::decompile() {
-int stmtNumber = 0;
+    int stmtNumber = 0;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-         it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -157,47 +157,47 @@ int stmtNumber = 0;
 
     //int stmtNumber = 0;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
         if (!p->isDecoded()) continue;
 
         // Initialise (number, etc) the statements of this proc
-      //p->initStatements(stmtNumber);
+        //p->initStatements(stmtNumber);
 
         // Put this proc into implicit SSA form
         p->toSSAform();
     }
 
 #if 0
-PROGMAP::iterator pp;
-std::list<PBB> workList;            // List of BBs still to be processed
+    PROGMAP::iterator pp;
+    std::list<PBB> workList;            // List of BBs still to be processed
 // Set of the same; used for quick membership test
-std::set<PBB> workSet;
-for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
-    UserProc* proc = (UserProc*)pp->second;
-    if (proc->isLib()) continue;
-    Cfg* cfg = proc->getCFG();
-    cfg->appendBBs(workList, workSet);
-}
-while (workList.size()) {
-    PBB currBB = workList.front();
-    workList.erase(workList.begin());
-    std::list<RTL*>* rtls = currBB->getRTLs();
-    for (std::list<RTL*>::iterator rit = rtls->begin();
-      rit != rtls->end(); rit++) {
-        RTL *rtl = *rit;
-        for (std::list<Exp*>::iterator ee = rtl->getList().begin();
-          ee != rtl->getList().end(); ee++)
-            (*ee)->check();
+    std::set<PBB> workSet;
+    for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
+        UserProc* proc = (UserProc*)pp->second;
+        if (proc->isLib()) continue;
+        Cfg* cfg = proc->getCFG();
+        cfg->appendBBs(workList, workSet);
     }
-}
-std::cerr << "Checked!\n";
+    while (workList.size()) {
+        PBB currBB = workList.front();
+        workList.erase(workList.begin());
+        std::list<RTL*>* rtls = currBB->getRTLs();
+        for (std::list<RTL*>::iterator rit = rtls->begin();
+                rit != rtls->end(); rit++) {
+            RTL *rtl = *rit;
+            for (std::list<Exp*>::iterator ee = rtl->getList().begin();
+                    ee != rtl->getList().end(); ee++)
+                (*ee)->check();
+        }
+    }
+    std::cerr << "Checked!\n";
 #endif
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -210,7 +210,7 @@ std::cerr << "Checked!\n";
 
 void Prog::generateDotFile() {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -221,7 +221,7 @@ void Prog::generateDotFile() {
 
 void Prog::generateCode(std::ostream &os) {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -236,7 +236,7 @@ void Prog::generateCode(std::ostream &os) {
 // Print this program, mainly for debugging
 void Prog::print(std::ostream &out, bool withDF) {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -261,39 +261,39 @@ void Prog::deserialize(std::istream &inf) {
 //            case FID_FILENAME:
 //                loadString(inf, filename);
 //                break;
-         case FID_FRONTEND:
-                {
-                    len = loadLen(inf);
-                    std::streampos pos = inf.tellg();
+        case FID_FRONTEND:
+        {
+            len = loadLen(inf);
+            std::streampos pos = inf.tellg();
 
-                    //loadValue(inf, limitTextLow, false);
-                    //loadValue(inf, limitTextHigh, false);
-                    //loadValue(inf, textDelta, false);
+            //loadValue(inf, limitTextLow, false);
+            //loadValue(inf, limitTextHigh, false);
+            //loadValue(inf, textDelta, false);
 
-                    std::string frontend;
-                    loadString(inf, frontend);
-                    pFE = FrontEnd::createById(frontend, pBF);
-                    assert(pFE);
+            std::string frontend;
+            loadString(inf, frontend);
+            pFE = FrontEnd::createById(frontend, pBF);
+            assert(pFE);
 
-                    assert((int)(inf.tellg() - pos) == len);
-                }
-                break;
-            case FID_PROC:
-                {
-                    len = loadLen(inf);
-                    std::streampos pos = inf.tellg();
-                    Proc *pProc = Proc::deserialize(this, inf);
-                    assert((int)(inf.tellg() - pos) == len);
-                    assert(pProc);
-                    m_procs.push_back(pProc);   // Append this to list of procs
-                    m_procLabels[pProc->getNativeAddress()] = pProc;
-                    // alert the watcher of a new proc
-                    if (m_watcher) m_watcher->alert_new(pProc);
-                    cProcs++;
-                }
-                break;
-            default:
-                skipFID(inf, fid);
+            assert((int)(inf.tellg() - pos) == len);
+        }
+        break;
+        case FID_PROC:
+        {
+            len = loadLen(inf);
+            std::streampos pos = inf.tellg();
+            Proc *pProc = Proc::deserialize(this, inf);
+            assert((int)(inf.tellg() - pos) == len);
+            assert(pProc);
+            m_procs.push_back(pProc);   // Append this to list of procs
+            m_procLabels[pProc->getNativeAddress()] = pProc;
+            // alert the watcher of a new proc
+            if (m_watcher) m_watcher->alert_new(pProc);
+            cProcs++;
+        }
+        break;
+        default:
+            skipFID(inf, fid);
         }
 
         if (m_watcher) {
@@ -308,11 +308,11 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
 
     int nProcs = 0, cProcs = 0;
     for (std::list<Proc *>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         nProcs++;
     saveValue(ouf, nProcs, false);
 
-    // write information about Prog    
+    // write information about Prog
 //    saveFID(ouf, FID_PROJECT_NAME);
 //    saveString(ouf, project);
 //    saveFID(ouf, FID_FILENAME);
@@ -344,9 +344,9 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
     // write information about each proc
     for (
 #ifndef WIN32
-      std::list<Proc *>::iterator 
+        std::list<Proc *>::iterator
 #endif
-      it = m_procs.begin(); it != m_procs.end(); it++) {
+        it = m_procs.begin(); it != m_procs.end(); it++) {
         Proc *p = *it;
 
         fid = FID_PROC;
@@ -377,10 +377,10 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
 
 
 // clear the current project
-void Prog::clear() {   
+void Prog::clear() {
     m_name = std::string("");
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (*it)
             delete *it;
     m_procs.clear();
@@ -467,7 +467,7 @@ void Prog::remProc(UserProc* uProc) {
     m_procLabels[uProc->getNativeAddress()] = (Proc*)-1;
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (*it == uProc) {
             m_procs.erase(it);
             break;
@@ -523,7 +523,7 @@ Proc* Prog::findProc(ADDRESS uAddr) const {
         return (*it).second;
 }
 
-Proc* Prog::findProc(const char *name) const {   
+Proc* Prog::findProc(const char *name) const {
     std::list<Proc *>::const_iterator it;
     for (it = m_procs.begin(); it != m_procs.end(); it++)
         if (!strcmp((*it)->getName(), name))
@@ -558,9 +558,9 @@ const char *Prog::getGlobal(ADDRESS uaddr)
 
 void Prog::makeGlobal(ADDRESS uaddr, const char *name)
 {
-/*    if (globalMap == NULL) globalMap = pBF->GetDynamicGlobalMap();
-    assert(globalMap && globalMap->find(uaddr) == globalMap->end());
-    (*globalMap)[uaddr] = strdup(name);*/
+    /*    if (globalMap == NULL) globalMap = pBF->GetDynamicGlobalMap();
+        assert(globalMap && globalMap->find(uaddr) == globalMap->end());
+        (*globalMap)[uaddr] = strdup(name);*/
 }
 
 // get a string constant at a given address if appropriate
@@ -579,7 +579,7 @@ char *Prog::getStringConstant(ADDRESS uaddr) {
  *============================================================================*/
 Proc* Prog::findContainingProc(ADDRESS uAddr) const {
     for (std::list<Proc*>::const_iterator it = m_procs.begin();
-      it != m_procs.end(); it++) {
+            it != m_procs.end(); it++) {
         Proc *p = (*it);
         if (p->getNativeAddress() == uAddr)
             return p;
@@ -678,7 +678,7 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
         if ((!pSect->bCode) && (!pSect->bReadOnly))
             continue;
         if ((uAddr < pSect->uNativeAddr) ||
-          (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
+                (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
             continue;           // Try the next section
         delta = pSect->uHostAddr - pSect->uNativeAddr;
         last = (const char*) (pSect->uHostAddr + pSect->uSectionSize);
@@ -690,7 +690,7 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
 }
 
 void updateWorkList(PBB currBB, std::list<PBB>&workList,
-  std::set<PBB>& workSet) {
+                    std::set<PBB>& workSet) {
     // Insert outedges of currBB into the worklist, unless already there
     std::vector<PBB>& outs = currBB->getOutEdges();
     int n = outs.size();
@@ -714,7 +714,7 @@ void Prog::forwardGlobalDataflow() {
     PROGMAP::iterator pp;
     std::list<PBB> workList;            // List of BBs still to be processed
     // Set of the same; used for quick membership test
-    std::set<PBB> workSet; 
+    std::set<PBB> workSet;
     // Sort the BBs into approximatly preorder
     // Note: the ideal order differs for phase 1 and 2
     // This order should be ideal for phase 2, and so-so for phase 1
@@ -731,7 +731,7 @@ void Prog::forwardGlobalDataflow() {
     }
 
     // Set up for phase 1
-std::cerr << "Global DFA: phase 1\n";
+    std::cerr << "Global DFA: phase 1\n";
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;
         if (proc->isLib()) continue;
@@ -741,7 +741,7 @@ std::cerr << "Global DFA: phase 1\n";
         cfg->clearDataflow();
     }
     bool change;
-int iter=0;
+    int iter=0;
     while (workList.size()) {
         PBB currBB = workList.front();
         workList.erase(workList.begin());
@@ -754,7 +754,7 @@ int iter=0;
     };
 
     // Phase 2
-std::cerr << "Global DFA: phase 2\n";
+    std::cerr << "Global DFA: phase 2\n";
     workSet.clear();            // Should be clear already
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;
@@ -768,7 +768,7 @@ std::cerr << "Global DFA: phase 2\n";
         cfg->setCallInterprocEdges();
         cfg->appendBBs(workList, workSet);
     }
-iter=0;
+    iter=0;
     while (workList.size()) {
         PBB currBB = workList.front();
         workList.erase(workList.begin());
@@ -782,7 +782,7 @@ iter=0;
     // For now, stay in phase 2. Going to "standard" ("phase 0") dataflow
     // won't work (I think). MVE
 #if 0
-std::cerr << "Global DFA: phase 0\n";
+    std::cerr << "Global DFA: phase 0\n";
     interProcDFAphase = 0;
     for (pp = m_procLabels.begin(); pp != m_procLabels.end(); pp++) {
         UserProc* proc = (UserProc*)pp->second;

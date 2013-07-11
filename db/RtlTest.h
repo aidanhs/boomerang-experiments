@@ -5,9 +5,9 @@
 #include "rtl.h"
 
 class RtlTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     RtlTest(std::string name) : CppUnit::TestCase (name)
     {}
 

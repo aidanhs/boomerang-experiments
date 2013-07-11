@@ -33,7 +33,7 @@ protected:
     int copySwap4(int* w);
     int copySwap2(short* h);
     void findDefs(PBB pBB, UserProc* proc,
-                  int ty, bool flt, std::list<RTL*>::iterator rit, 
+                  int ty, bool flt, std::list<RTL*>::iterator rit,
                   bool withAssign);
     void matchJScond(std::list<RTL*>* pOrigRtls, PBB pOrigBB,
                      std::list<RTL*>::reverse_iterator rrit, UserProc* proc,

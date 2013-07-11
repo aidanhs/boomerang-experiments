@@ -17,9 +17,11 @@ public:
      */
     PentiumFrontEnd(BinaryFile *pBF);
 
-virtual ~PentiumFrontEnd();
+    virtual ~PentiumFrontEnd();
 
-virtual const char *getFrontEndId() { return "pentium"; }
+    virtual const char *getFrontEndId() {
+        return "pentium";
+    }
 
     /*
      * processProc. This is the main function for decoding a procedure.
@@ -30,49 +32,49 @@ virtual const char *getFrontEndId() { return "pentium"; }
      * instruction)
      * Returns true on a good decode
      */
-virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
-                bool spec = false, PHELPER helperFunc = NULL);
+    virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
+                                bool spec = false, PHELPER helperFunc = NULL);
 
-virtual ADDRESS getMainEntryPoint( bool &gotMain );
+    virtual ADDRESS getMainEntryPoint( bool &gotMain );
 
 private:
 
     /*
      * Process an F(n)STSW instruction.
      */
-	bool 	processStsw(std::list<RTL*>::iterator& rit, std::list<RTL*>* pRtls, PBB pBB, Cfg* pCfg);
+    bool 	processStsw(std::list<RTL*>::iterator& rit, std::list<RTL*>* pRtls, PBB pBB, Cfg* pCfg);
 
     /*
      * Emit a set instruction.
      */
-        void 	emitSet(std::list<RTL*>* pRtls, std::list<RTL*>::iterator& itRtl, ADDRESS uAddr,
-  			Exp* pLHS, Exp* cond);
+    void 	emitSet(std::list<RTL*>* pRtls, std::list<RTL*>::iterator& itRtl, ADDRESS uAddr,
+                    Exp* pLHS, Exp* cond);
 
     /*
      * Handle the case of being in state 23 and encountering a set instruction.
      */
-    	void 	State25(Exp* pLHS, Exp* pRHS, std::list<RTL*>* pRtls, std::list<RTL*>::iterator& rit,
-    			ADDRESS uAddr);
+    void 	State25(Exp* pLHS, Exp* pRHS, std::list<RTL*>* pRtls, std::list<RTL*>::iterator& rit,
+                    ADDRESS uAddr);
 
-	int idPF;              // Parity flag
+    int idPF;              // Parity flag
 
     /*
      * Process a BB and its successors for floating point code
      */
-	void 	processFloatCode(PBB pBB, int& tos, Cfg* pCfg);
+    void 	processFloatCode(PBB pBB, int& tos, Cfg* pCfg);
 
     /*
      * Check a HLCall for a helper function, and replace with appropriate
      *  semantics if possible
      */
-	bool 	helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
+    bool 	helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
-	bool 	isStoreFsw(Exp* e);
-	bool 	isDecAh(RTL* r);
-	bool 	isSetX(Exp* e);
-	bool 	isAssignFromTern(Exp* e);
-	Exp* 	bumpRegisterAll(Exp* e, int min, int max, int delta, int mask);
-	unsigned fetch4(unsigned char* ptr);
+    bool 	isStoreFsw(Exp* e);
+    bool 	isDecAh(RTL* r);
+    bool 	isSetX(Exp* e);
+    bool 	isAssignFromTern(Exp* e);
+    Exp* 	bumpRegisterAll(Exp* e, int min, int max, int delta, int mask);
+    unsigned fetch4(unsigned char* ptr);
 
 
 };

@@ -23,7 +23,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <sstream>
 #include "types.h"
@@ -45,7 +45,7 @@ typedef union {
     int             num;
     double          dbl;
     Exp*            regtransfer;
-    
+
     Table*          tab;
     InsNameElem*    insel;
     std::list<std::string>*   parmlist;
@@ -56,7 +56,7 @@ typedef union {
     RTL*            rtlist;
 } yy_SSLParser_stype;
 #define YY_SSLParser_STYPE yy_SSLParser_stype
-#define YY_SSLParser_DEBUG  1 
+#define YY_SSLParser_DEBUG  1
 #define YY_SSLParser_PARSE_PARAM  \
     RTLInstDict& Dict
 #define YY_SSLParser_CONSTRUCTOR_PARAM  \
@@ -122,7 +122,7 @@ protected: \
     bool bFloat;
 
 #line 14 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h"
- /* %{ and %header{ and %union, during decl */
+/* %{ and %header{ and %union, during decl */
 #ifndef YY_SSLParser_COMPATIBILITY
 #ifndef YY_USE_CLASS
 #define  YY_SSLParser_COMPATIBILITY 1
@@ -141,7 +141,7 @@ protected: \
 #endif
 #endif
 #ifdef YYSTYPE
-#ifndef YY_SSLParser_STYPE 
+#ifndef YY_SSLParser_STYPE
 #define YY_SSLParser_STYPE YYSTYPE
 /* WARNING obsolete !!! user defined YYSTYPE not reported into generated header */
 /* use %define STYPE */
@@ -198,22 +198,22 @@ protected: \
 #line 199 "sslparser.h"
 
 #line 70 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h"
- /* YY_SSLParser_LSP_NEEDED*/
+/* YY_SSLParser_LSP_NEEDED*/
 #endif
 /* DEFAULT LTYPE*/
 #ifdef YY_SSLParser_LSP_NEEDED
 #ifndef YY_SSLParser_LTYPE
 typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
+struct yyltype
+{
+    int timestamp;
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    char *text;
+}
+yyltype;
 
 #define YY_SSLParser_LTYPE yyltype
 #endif
@@ -323,7 +323,7 @@ extern YY_SSLParser_STYPE YY_SSLParser_LVAL;
 
 
 #line 143 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h"
- /* #defines token */
+/* #defines token */
 /* after #define tokens, before const tokens S5*/
 #else
 #ifndef YY_SSLParser_CLASS
@@ -334,13 +334,13 @@ extern YY_SSLParser_STYPE YY_SSLParser_LVAL;
 #define YY_SSLParser_INHERIT
 #endif
 #ifndef YY_SSLParser_MEMBERS
-#define YY_SSLParser_MEMBERS 
+#define YY_SSLParser_MEMBERS
 #endif
 #ifndef YY_SSLParser_LEX_BODY
-#define YY_SSLParser_LEX_BODY  
+#define YY_SSLParser_LEX_BODY
 #endif
 #ifndef YY_SSLParser_ERROR_BODY
-#define YY_SSLParser_ERROR_BODY  
+#define YY_SSLParser_ERROR_BODY
 #endif
 #ifndef YY_SSLParser_CONSTRUCTOR_PARAM
 #define YY_SSLParser_CONSTRUCTOR_PARAM
@@ -361,143 +361,143 @@ class YY_SSLParser_CLASS YY_SSLParser_INHERIT
 {
 public:
 #if YY_SSLParser_USE_CONST_TOKEN != 0
-/* static const int token ... */
+    /* static const int token ... */
 
-/* #line 182 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h" */
+    /* #line 182 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h" */
 #line 368 "sslparser.h"
-static const int COND_OP;
-static const int BIT_OP;
-static const int ARITH_OP;
-static const int LOG_OP;
-static const int NAME;
-static const int REG_ID;
-static const int COND_TNAME;
-static const int DECOR;
-static const int FARITH_OP;
-static const int FPUSH;
-static const int FPOP;
-static const int TEMP;
-static const int SHARES;
-static const int CONV_FUNC;
-static const int TRANSCEND;
-static const int BIG;
-static const int LITTLE;
-static const int NAME_CALL;
-static const int NAME_LOOKUP;
-static const int ENDIANNESS;
-static const int COVERS;
-static const int INDEX;
-static const int NOT;
-static const int THEN;
-static const int LOOKUP_RDC;
-static const int BOGUS;
-static const int ASSIGN;
-static const int TO;
-static const int COLON;
-static const int S_E;
-static const int AT;
-static const int ADDR;
-static const int REG_IDX;
-static const int EQUATE;
-static const int MEM_IDX;
-static const int TOK_INTEGER;
-static const int TOK_FLOAT;
-static const int FAST;
-static const int OPERAND;
-static const int FETCHEXEC;
-static const int CAST_OP;
-static const int FLAGMACRO;
-static const int SUCCESSOR;
-static const int NUM;
-static const int ASSIGNSIZE;
-static const int FLOATNUM;
+    static const int COND_OP;
+    static const int BIT_OP;
+    static const int ARITH_OP;
+    static const int LOG_OP;
+    static const int NAME;
+    static const int REG_ID;
+    static const int COND_TNAME;
+    static const int DECOR;
+    static const int FARITH_OP;
+    static const int FPUSH;
+    static const int FPOP;
+    static const int TEMP;
+    static const int SHARES;
+    static const int CONV_FUNC;
+    static const int TRANSCEND;
+    static const int BIG;
+    static const int LITTLE;
+    static const int NAME_CALL;
+    static const int NAME_LOOKUP;
+    static const int ENDIANNESS;
+    static const int COVERS;
+    static const int INDEX;
+    static const int NOT;
+    static const int THEN;
+    static const int LOOKUP_RDC;
+    static const int BOGUS;
+    static const int ASSIGN;
+    static const int TO;
+    static const int COLON;
+    static const int S_E;
+    static const int AT;
+    static const int ADDR;
+    static const int REG_IDX;
+    static const int EQUATE;
+    static const int MEM_IDX;
+    static const int TOK_INTEGER;
+    static const int TOK_FLOAT;
+    static const int FAST;
+    static const int OPERAND;
+    static const int FETCHEXEC;
+    static const int CAST_OP;
+    static const int FLAGMACRO;
+    static const int SUCCESSOR;
+    static const int NUM;
+    static const int ASSIGNSIZE;
+    static const int FLOATNUM;
 
 
 #line 182 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h"
- /* decl const */
+    /* decl const */
 #else
-enum YY_SSLParser_ENUM_TOKEN { YY_SSLParser_NULL_TOKEN=0
+    enum YY_SSLParser_ENUM_TOKEN { YY_SSLParser_NULL_TOKEN=0
 
-/* #line 185 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h" */
+                                   /* #line 185 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h" */
 #line 423 "sslparser.h"
-	,COND_OP=258
-	,BIT_OP=259
-	,ARITH_OP=260
-	,LOG_OP=261
-	,NAME=262
-	,REG_ID=263
-	,COND_TNAME=264
-	,DECOR=265
-	,FARITH_OP=266
-	,FPUSH=267
-	,FPOP=268
-	,TEMP=269
-	,SHARES=270
-	,CONV_FUNC=271
-	,TRANSCEND=272
-	,BIG=273
-	,LITTLE=274
-	,NAME_CALL=275
-	,NAME_LOOKUP=276
-	,ENDIANNESS=277
-	,COVERS=278
-	,INDEX=279
-	,NOT=280
-	,THEN=281
-	,LOOKUP_RDC=282
-	,BOGUS=283
-	,ASSIGN=284
-	,TO=285
-	,COLON=286
-	,S_E=287
-	,AT=288
-	,ADDR=289
-	,REG_IDX=290
-	,EQUATE=291
-	,MEM_IDX=292
-	,TOK_INTEGER=293
-	,TOK_FLOAT=294
-	,FAST=295
-	,OPERAND=296
-	,FETCHEXEC=297
-	,CAST_OP=298
-	,FLAGMACRO=299
-	,SUCCESSOR=300
-	,NUM=301
-	,ASSIGNSIZE=302
-	,FLOATNUM=303
+                                   ,COND_OP=258
+                                            ,BIT_OP=259
+                                                    ,ARITH_OP=260
+                                                            ,LOG_OP=261
+                                                                    ,NAME=262
+                                                                            ,REG_ID=263
+                                                                                    ,COND_TNAME=264
+                                                                                            ,DECOR=265
+                                                                                                    ,FARITH_OP=266
+                                                                                                            ,FPUSH=267
+                                                                                                                    ,FPOP=268
+                                                                                                                            ,TEMP=269
+                                                                                                                                    ,SHARES=270
+                                                                                                                                            ,CONV_FUNC=271
+                                                                                                                                                    ,TRANSCEND=272
+                                                                                                                                                            ,BIG=273
+                                                                                                                                                                    ,LITTLE=274
+                                                                                                                                                                            ,NAME_CALL=275
+                                                                                                                                                                                    ,NAME_LOOKUP=276
+                                                                                                                                                                                            ,ENDIANNESS=277
+                                                                                                                                                                                                    ,COVERS=278
+                                                                                                                                                                                                            ,INDEX=279
+                                                                                                                                                                                                                    ,NOT=280
+                                                                                                                                                                                                                            ,THEN=281
+                                                                                                                                                                                                                                    ,LOOKUP_RDC=282
+                                                                                                                                                                                                                                            ,BOGUS=283
+                                                                                                                                                                                                                                                    ,ASSIGN=284
+                                                                                                                                                                                                                                                            ,TO=285
+                                                                                                                                                                                                                                                                    ,COLON=286
+                                                                                                                                                                                                                                                                            ,S_E=287
+                                                                                                                                                                                                                                                                                    ,AT=288
+                                                                                                                                                                                                                                                                                            ,ADDR=289
+                                                                                                                                                                                                                                                                                                    ,REG_IDX=290
+                                                                                                                                                                                                                                                                                                            ,EQUATE=291
+                                                                                                                                                                                                                                                                                                                    ,MEM_IDX=292
+                                                                                                                                                                                                                                                                                                                            ,TOK_INTEGER=293
+                                                                                                                                                                                                                                                                                                                                    ,TOK_FLOAT=294
+                                                                                                                                                                                                                                                                                                                                            ,FAST=295
+                                                                                                                                                                                                                                                                                                                                                    ,OPERAND=296
+                                                                                                                                                                                                                                                                                                                                                            ,FETCHEXEC=297
+                                                                                                                                                                                                                                                                                                                                                                    ,CAST_OP=298
+                                                                                                                                                                                                                                                                                                                                                                            ,FLAGMACRO=299
+                                                                                                                                                                                                                                                                                                                                                                                    ,SUCCESSOR=300
+                                                                                                                                                                                                                                                                                                                                                                                            ,NUM=301
+                                                                                                                                                                                                                                                                                                                                                                                                    ,ASSIGNSIZE=302
+                                                                                                                                                                                                                                                                                                                                                                                                            ,FLOATNUM=303
 
 
 #line 185 "/home/02/binary/u1.luna.tools/bison++/lib/bison.h"
- /* enum token */
-     }; /* end of enum declaration */
+                                                                                                                                                                                                                                                                                                                                                                                                                    /* enum token */
+                                 }; /* end of enum declaration */
 #endif
 public:
- int YY_SSLParser_PARSE(YY_SSLParser_PARSE_PARAM);
- virtual void YY_SSLParser_ERROR(char *msg) YY_SSLParser_ERROR_BODY;
+    int YY_SSLParser_PARSE(YY_SSLParser_PARSE_PARAM);
+    virtual void YY_SSLParser_ERROR(char *msg) YY_SSLParser_ERROR_BODY;
 #ifdef YY_SSLParser_PURE
 #ifdef YY_SSLParser_LSP_NEEDED
- virtual int  YY_SSLParser_LEX(YY_SSLParser_STYPE *YY_SSLParser_LVAL,YY_SSLParser_LTYPE *YY_SSLParser_LLOC) YY_SSLParser_LEX_BODY;
+    virtual int  YY_SSLParser_LEX(YY_SSLParser_STYPE *YY_SSLParser_LVAL,YY_SSLParser_LTYPE *YY_SSLParser_LLOC) YY_SSLParser_LEX_BODY;
 #else
- virtual int  YY_SSLParser_LEX(YY_SSLParser_STYPE *YY_SSLParser_LVAL) YY_SSLParser_LEX_BODY;
+    virtual int  YY_SSLParser_LEX(YY_SSLParser_STYPE *YY_SSLParser_LVAL) YY_SSLParser_LEX_BODY;
 #endif
 #else
- virtual int YY_SSLParser_LEX() YY_SSLParser_LEX_BODY;
- YY_SSLParser_STYPE YY_SSLParser_LVAL;
+    virtual int YY_SSLParser_LEX() YY_SSLParser_LEX_BODY;
+    YY_SSLParser_STYPE YY_SSLParser_LVAL;
 #ifdef YY_SSLParser_LSP_NEEDED
- YY_SSLParser_LTYPE YY_SSLParser_LLOC;
+    YY_SSLParser_LTYPE YY_SSLParser_LLOC;
 #endif
- int YY_SSLParser_NERRS;
- int YY_SSLParser_CHAR;
+    int YY_SSLParser_NERRS;
+    int YY_SSLParser_CHAR;
 #endif
 #if YY_SSLParser_DEBUG != 0
 public:
- int YY_SSLParser_DEBUG_FLAG;	/*  nonzero means print parse trace	*/
+    int YY_SSLParser_DEBUG_FLAG;	/*  nonzero means print parse trace	*/
 #endif
 public:
- YY_SSLParser_CLASS(YY_SSLParser_CONSTRUCTOR_PARAM);
+    YY_SSLParser_CLASS(YY_SSLParser_CONSTRUCTOR_PARAM);
 public:
- YY_SSLParser_MEMBERS 
+    YY_SSLParser_MEMBERS
 };
 /* other declare folow */
 #endif
@@ -513,7 +513,7 @@ public:
 #define YYLTYPE YY_SSLParser_LTYPE
 #endif
 #ifndef YYDEBUG
-#ifdef YY_SSLParser_DEBUG 
+#ifdef YY_SSLParser_DEBUG
 #define YYDEBUG YY_SSLParser_DEBUG
 #endif
 #endif

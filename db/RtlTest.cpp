@@ -44,7 +44,9 @@ void RtlTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int RtlTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        RtlTest::setUp
@@ -72,10 +74,10 @@ void RtlTest::tearDown () {
  *============================================================================*/
 void RtlTest::testAppend () {
     AssignExp* e = new AssignExp(32,
-            new Unary(opRegOf, new Const(8)),
-            new Binary(opPlus,
-                new Unary(opRegOf, new Const(9)),
-                new Const(99)));
+                                 new Unary(opRegOf, new Const(8)),
+                                 new Binary(opPlus,
+                                            new Unary(opRegOf, new Const(9)),
+                                            new Const(99)));
     RTL r;
     r.appendExp(e);
     std::ostringstream ost;
@@ -95,13 +97,13 @@ void RtlTest::testAppend () {
  *============================================================================*/
 void RtlTest::testClone () {
     AssignExp* e1 = new AssignExp(32,
-            new Unary(opRegOf, new Const(8)),
-            new Binary(opPlus,
-                new Unary(opRegOf, new Const(9)),
-                new Const(99)));
+                                  new Unary(opRegOf, new Const(8)),
+                                  new Binary(opPlus,
+                                          new Unary(opRegOf, new Const(9)),
+                                          new Const(99)));
     AssignExp* e2 = new AssignExp(16,
-            new Unary(opParam, new Const("x")),
-            new Unary(opParam, new Const("y")));
+                                  new Unary(opParam, new Const("x")),
+                                  new Unary(opParam, new Const("y")));
     std::list<Exp*> le;
     le.push_back(e1);
     le.push_back(e2);
@@ -127,18 +129,43 @@ void RtlTest::testClone () {
 
 class RTLVisitorStub : public RTLVisitor {
 public:
-    bool a, b, c, d, e, f, g; 
+    bool a, b, c, d, e, f, g;
 
-    void clear() { a = b = c = d = e = f = false; }
-    RTLVisitorStub() { clear(); }
+    void clear() {
+        a = b = c = d = e = f = false;
+    }
+    RTLVisitorStub() {
+        clear();
+    }
     virtual ~RTLVisitorStub() { }
-    virtual bool visit(RTL *rtl)        { a = true; return false; }
-    virtual bool visit(HLJump *rtl)     { b = true; return false; }
-    virtual bool visit(HLJcond *rtl)    { c = true; return false; }
-    virtual bool visit(HLNwayJump *rtl) { d = true; return false; }
-    virtual bool visit(HLCall *rtl)     { e = true; return false; }
-    virtual bool visit(HLReturn *rtl)   { f = true; return false; }
-    virtual bool visit(HLScond *rtl)    { g = true; return false; }
+    virtual bool visit(RTL *rtl)        {
+        a = true;
+        return false;
+    }
+    virtual bool visit(HLJump *rtl)     {
+        b = true;
+        return false;
+    }
+    virtual bool visit(HLJcond *rtl)    {
+        c = true;
+        return false;
+    }
+    virtual bool visit(HLNwayJump *rtl) {
+        d = true;
+        return false;
+    }
+    virtual bool visit(HLCall *rtl)     {
+        e = true;
+        return false;
+    }
+    virtual bool visit(HLReturn *rtl)   {
+        f = true;
+        return false;
+    }
+    virtual bool visit(HLScond *rtl)    {
+        g = true;
+        return false;
+    }
 };
 
 void RtlTest::testVisitor()
@@ -213,7 +240,7 @@ void RtlTest::testIsCompare () {
     DecodeResult inst = pFE->decodeInstruction(0x10910);
     CPPUNIT_ASSERT(inst.rtl != NULL);
     CPPUNIT_ASSERT(inst.rtl->isCompare(iReg, eOperand) == false);
-    
+
     // Decode fifth instruction: "cmp          %o1, 5"
     inst = pFE->decodeInstruction(0x1091c);
     CPPUNIT_ASSERT(inst.rtl != NULL);
@@ -242,10 +269,10 @@ void RtlTest::testIsCompare () {
     eOperand->print(ost2);
     actual = ost2.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-    
+
     // Decode instruction: "add    $0x4,%esp"
     inst = pFE->decodeInstruction(0x804890c);
     CPPUNIT_ASSERT(inst.rtl != NULL);
     CPPUNIT_ASSERT(inst.rtl->isCompare(iReg, eOperand) == false);
-    
+
 }
