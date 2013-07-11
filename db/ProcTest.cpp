@@ -40,7 +40,9 @@ void ProcTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int ProcTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        ProcTest::setUp

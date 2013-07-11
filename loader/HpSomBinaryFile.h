@@ -86,7 +86,7 @@ struct symElem {
 class HpSomBinaryFile : public BinaryFile
 {
 public:
-                  HpSomBinaryFile();          // Constructor
+    HpSomBinaryFile();          // Constructor
     virtual       ~HpSomBinaryFile();
     virtual void  UnLoad();                   // Unload the image
     virtual bool  Open(const char* sName);    // Open the file for r/w; pv
@@ -135,10 +135,10 @@ public:
 
 //    bool        IsDynamicLinkedProc(ADDRESS wNative);
 //    ADDRESS     NativeToHostAddress(ADDRESS uNative);
-  protected:
+protected:
     virtual bool  RealLoad(const char* sName); // Load the file; pure virtual
 
-    
+
 private:
     // Private method to get the start and length of a given subspace
     std::pair<ADDRESS, int> getSubspaceInfo(const char* ssname);

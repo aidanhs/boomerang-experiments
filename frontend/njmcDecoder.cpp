@@ -15,7 +15,7 @@
  *             decoding functionality.
  *
  * $Revision: 1.3 $
- *============================================================================*/ 
+ *============================================================================*/
 /*
  * 27 Apr 02 - Mike: Mods for boomerang
  */
@@ -36,11 +36,11 @@
 
 /**********************************
  * NJMCDecoder methods.
- **********************************/   
+ **********************************/
 
 /*==============================================================================
  * FUNCTION:       NJMCDecoder::NJMCDecoder
- * OVERVIEW:       
+ * OVERVIEW:
  * PARAMETERS:     None
  * RETURNS:        N/A
  *============================================================================*/
@@ -59,38 +59,38 @@ NJMCDecoder::NJMCDecoder()
  *============================================================================*/
 std::list<Exp*>* NJMCDecoder::instantiate(ADDRESS pc, const char* name, ...)
 {
-	// Get the signature of the instruction and extract its parts
-	std::pair<std::string,unsigned> sig = RTLDict.getSignature(name);
-	std::string opcode = sig.first;
-	unsigned numOperands = sig.second;
+    // Get the signature of the instruction and extract its parts
+    std::pair<std::string,unsigned> sig = RTLDict.getSignature(name);
+    std::string opcode = sig.first;
+    unsigned numOperands = sig.second;
 
-	// Put the operands into an vector
-	std::vector<Exp*> actuals(numOperands);
-	va_list args;
-	va_start(args,name);
-	for (unsigned i = 0; i < numOperands; i++)
-		actuals[i] = va_arg(args,Exp*);
-	va_end(args);
+    // Put the operands into an vector
+    std::vector<Exp*> actuals(numOperands);
+    va_list args;
+    va_start(args,name);
+    for (unsigned i = 0; i < numOperands; i++)
+        actuals[i] = va_arg(args,Exp*);
+    va_end(args);
 
-#ifdef DEBUG_DECODER 
-	// Display a disassembly of this instruction if necessary
-	std::cout << std::hex << pc << std::dec << ": " << name << " ";
-	for (std::vector<Exp*>::iterator itd = actuals.begin();
-		 itd != actuals.end(); itd++) {
-			(*itd)->print(std::cout);
-			std::cout << ", ";
-	}
-	std::cout << std::endl;
+#ifdef DEBUG_DECODER
+    // Display a disassembly of this instruction if necessary
+    std::cout << std::hex << pc << std::dec << ": " << name << " ";
+    for (std::vector<Exp*>::iterator itd = actuals.begin();
+            itd != actuals.end(); itd++) {
+        (*itd)->print(std::cout);
+        std::cout << ", ";
+    }
+    std::cout << std::endl;
 #endif
 
-	std::list<Exp*>* instance = RTLDict.instantiateRTL(opcode,actuals);
+    std::list<Exp*>* instance = RTLDict.instantiateRTL(opcode,actuals);
 
-	// Delete the memory used for the actuals
-	for (std::vector<Exp*>::iterator it = actuals.begin();
-		it != actuals.end(); it++)
-		delete *it;
+    // Delete the memory used for the actuals
+    for (std::vector<Exp*>::iterator it = actuals.begin();
+            it != actuals.end(); it++)
+        delete *it;
 
-	return instance;
+    return instance;
 }
 
 /*==============================================================================
@@ -113,18 +113,18 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...)
     ParamEntry &ent = RTLDict.DetParamMap[name];
     if (ent.kind != PARAM_EXPR && ent.kind != PARAM_LAMBDA ) {
         std::cerr << "Attempt to instantiate expressionless parameter '" << name
-          << "'\n";
+                  << "'\n";
         return 0;
     }
     // Start with the RHS
 // It may well be opTypedExp, in which case we need another getSubExp1()
-assert(ent.exp->getOper() == opAssignExp);
+    assert(ent.exp->getOper() == opAssignExp);
     Exp* result = ent.exp->getSubExp2()->clone();
 
     va_list args;
     va_start(args,name);
     for( std::list<std::string>::iterator it = ent.params.begin();
-      it != ent.params.end(); it++ ) {
+            it != ent.params.end(); it++ ) {
         Exp* formal = new Unary(opParam, new Const((char*)it->c_str()));
         Exp* actual = va_arg(args, Exp*);
         bool change;
@@ -158,11 +158,11 @@ void NJMCDecoder::substituteCallArgs(char *name, Exp*& exp, ...)
         std::cerr << "Attempt to instantiate expressionless parameter '" << name << "'\n";
         return;
     }*/
-    
+
     va_list args;
     va_start(args, exp);
     for (std::list<std::string>::iterator it = ent.funcParams.begin();
-         it != ent.funcParams.end(); it++) {
+            it != ent.funcParams.end(); it++) {
         Exp* formal = new Unary(opParam, new Const((char*)it->c_str()));
         Exp* actual = va_arg(args, Exp*);
         bool change;
@@ -179,11 +179,11 @@ void NJMCDecoder::substituteCallArgs(char *name, Exp*& exp, ...)
  *============================================================================*/
 void DecodeResult::reset()
 {
-	numBytes = 0;
-	type = NCT;
-	valid = true;
-	rtl = NULL;
-    forceOutEdge = 0;	
+    numBytes = 0;
+    type = NCT;
+    valid = true;
+    rtl = NULL;
+    forceOutEdge = 0;
 }
 
 /*==============================================================================
@@ -199,8 +199,8 @@ void DecodeResult::reset()
  *============================================================================*/
 Exp* NJMCDecoder::dis_Reg(int regNum)
 {
-      Exp* expr = new Unary(opRegOf, new Const(regNum));
-      return expr;
+    Exp* expr = new Unary(opRegOf, new Const(regNum));
+    return expr;
 }
 
 /*==============================================================================
@@ -211,8 +211,8 @@ Exp* NJMCDecoder::dis_Reg(int regNum)
  *============================================================================*/
 Exp* NJMCDecoder::dis_Num(unsigned num)
 {
-	Exp* expr = new Const((int)num);
-	return expr;
+    Exp* expr = new Const((int)num);
+    return expr;
 }
 
 /*==============================================================================
@@ -223,13 +223,13 @@ Exp* NJMCDecoder::dis_Num(unsigned num)
  * RETURNS:         the reference to the RTLInstDict object
  *============================================================================*/
 void NJMCDecoder::unconditionalJump(const char* name, int size,
-  ADDRESS relocd, /*UserProc* proc,*/ int delta, ADDRESS pc, std::list<Exp*>* Exps,
-  DecodeResult& result) {
-        HLJump* jump = new HLJump(pc, Exps);
-        result.rtl = jump;
-        result.numBytes = size;
-        jump->setDest(relocd-delta);
-        SHOW_ASM(name<<" "<<relocd)
+                                    ADDRESS relocd, /*UserProc* proc,*/ int delta, ADDRESS pc, std::list<Exp*>* Exps,
+                                    DecodeResult& result) {
+    HLJump* jump = new HLJump(pc, Exps);
+    result.rtl = jump;
+    result.numBytes = size;
+    jump->setDest(relocd-delta);
+    SHOW_ASM(name<<" "<<relocd)
 }
 
 #if 0       // HACK!

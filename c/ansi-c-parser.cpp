@@ -2,8 +2,8 @@
 
 /*  A Bison++ parser, made from ansi-c.y  */
 
- /* with Bison++ version bison++ Version 1.21-8, adapted from GNU bison by coetmeur@icdc.fr
-  */
+/* with Bison++ version bison++ Version 1.21-8, adapted from GNU bison by coetmeur@icdc.fr
+ */
 
 
 #line 1 "/usr/local/lib/bison.cc"
@@ -26,7 +26,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* HEADER SECTION */
-#if defined( _MSDOS ) || defined(MSDOS) || defined(__MSDOS__) 
+#if defined( _MSDOS ) || defined(MSDOS) || defined(__MSDOS__)
 #define __MSDOS_AND_ALIKE
 #endif
 #if defined(_WINDOWS) && defined(_MSC_VER)
@@ -55,7 +55,7 @@
 #elif defined(__hpux)
 #ifdef __cplusplus
 extern "C" {
-void *alloca (unsigned int);
+    void *alloca (unsigned int);
 };
 #else /* not __cplusplus */
 void *alloca ();
@@ -78,7 +78,7 @@ void *alloca ();
 #endif
 #endif
 #include <stdio.h>
-#define YYBISON 1  
+#define YYBISON 1
 
 /* #line 73 "/usr/local/lib/bison.cc" */
 #line 85 "ansi-c-parser.cpp"
@@ -87,7 +87,7 @@ void *alloca ();
     const char *sigstr
 #define YY_AnsiCParser_CONSTRUCTOR_PARAM  \
     std::istream &in, bool trace
-#define YY_AnsiCParser_CONSTRUCTOR_INIT 
+#define YY_AnsiCParser_CONSTRUCTOR_INIT
 #define YY_AnsiCParser_CONSTRUCTOR_CODE  \
     theScanner = new AnsiCScanner(in, trace); \
     if (trace) yydebug = 1; else yydebug = 0;
@@ -98,24 +98,24 @@ public: \
     std::list<Signature*> signatures;
 #line 36 "ansi-c.y"
 
-  #include <list>
-  #include <string>
-  #include "exp.h"
-  #include "type.h"
-  #include "proc.h"
-  #include "signature.h"
-  class AnsiCScanner;
+#include <list>
+#include <string>
+#include "exp.h"
+#include "type.h"
+#include "proc.h"
+#include "signature.h"
+class AnsiCScanner;
 
 
 #line 61 "ansi-c.y"
 typedef union {
-   int ival;
-   char *str;
-   Type *type;
-   std::list<Parameter*> *param_list;
-   Parameter *param;
-   Exp *exp;
-   Signature *signature;
+    int ival;
+    char *str;
+    Type *type;
+    std::list<Parameter*> *param_list;
+    Parameter *param;
+    Exp *exp;
+    Signature *signature;
 } yy_AnsiCParser_stype;
 #define YY_AnsiCParser_STYPE yy_AnsiCParser_stype
 #line 71 "ansi-c.y"
@@ -141,7 +141,7 @@ typedef union {
 #endif
 #endif
 #ifdef YYSTYPE
-#ifndef YY_AnsiCParser_STYPE 
+#ifndef YY_AnsiCParser_STYPE
 #define YY_AnsiCParser_STYPE YYSTYPE
 #endif
 #endif
@@ -198,7 +198,7 @@ typedef union {
 #line 199 "ansi-c-parser.cpp"
 
 #line 128 "/usr/local/lib/bison.cc"
- /* YY_AnsiCParser_LSP_NEEDED*/
+/* YY_AnsiCParser_LSP_NEEDED*/
 #endif
 
 
@@ -207,24 +207,24 @@ typedef union {
 #ifdef YY_AnsiCParser_LSP_NEEDED
 #ifndef YY_AnsiCParser_LTYPE
 typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
+struct yyltype
+{
+    int timestamp;
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    char *text;
+}
+yyltype;
 
 #define YY_AnsiCParser_LTYPE yyltype
 #endif
 #endif
 /* DEFAULT STYPE*/
-      /* We used to use `unsigned long' as YY_AnsiCParser_STYPE on MSDOS,
-	 but it seems better to be consistent.
-	 Most programs should declare their own type anyway.  */
+/* We used to use `unsigned long' as YY_AnsiCParser_STYPE on MSDOS,
+but it seems better to be consistent.
+ Most programs should declare their own type anyway.  */
 
 #ifndef YY_AnsiCParser_STYPE
 #define YY_AnsiCParser_STYPE int
@@ -290,7 +290,7 @@ typedef
 #endif
 #ifdef YY_AnsiCParser_DEBUG
 #ifndef YYDEBUG
-#define YYDEBUG YY_AnsiCParser_DEBUG 
+#define YYDEBUG YY_AnsiCParser_DEBUG
 #endif
 #endif
 #ifndef YY_AnsiCParser_ERROR_VERBOSE
@@ -376,7 +376,7 @@ typedef
 
 
 #line 236 "/usr/local/lib/bison.cc"
- /* #defines tokens */
+/* #defines tokens */
 #else
 /* CLASS */
 #ifndef YY_AnsiCParser_CLASS
@@ -386,13 +386,13 @@ typedef
 #define YY_AnsiCParser_INHERIT
 #endif
 #ifndef YY_AnsiCParser_MEMBERS
-#define YY_AnsiCParser_MEMBERS 
+#define YY_AnsiCParser_MEMBERS
 #endif
 #ifndef YY_AnsiCParser_LEX_BODY
-#define YY_AnsiCParser_LEX_BODY  
+#define YY_AnsiCParser_LEX_BODY
 #endif
 #ifndef YY_AnsiCParser_ERROR_BODY
-#define YY_AnsiCParser_ERROR_BODY  
+#define YY_AnsiCParser_ERROR_BODY
 #endif
 #ifndef YY_AnsiCParser_CONSTRUCTOR_PARAM
 #define YY_AnsiCParser_CONSTRUCTOR_PARAM
@@ -407,7 +407,7 @@ typedef
 #ifndef YY_AnsiCParser_USE_CONST_TOKEN
 #define YY_AnsiCParser_USE_CONST_TOKEN 0
 /* yes enum is more compatible with flex,  */
-/* so by default we use it */ 
+/* so by default we use it */
 #endif
 #if YY_AnsiCParser_USE_CONST_TOKEN != 0
 #ifndef YY_AnsiCParser_ENUM_TOKEN
@@ -417,180 +417,180 @@ typedef
 
 class YY_AnsiCParser_CLASS YY_AnsiCParser_INHERIT
 {
-public: 
+public:
 #if YY_AnsiCParser_USE_CONST_TOKEN != 0
-/* static const int token ... */
+    /* static const int token ... */
 
-/* #line 280 "/usr/local/lib/bison.cc" */
+    /* #line 280 "/usr/local/lib/bison.cc" */
 #line 426 "ansi-c-parser.cpp"
-static const int PREINCLUDE;
-static const int PREDEFINE;
-static const int PREIF;
-static const int PREIFDEF;
-static const int PREENDIF;
-static const int PRELINE;
-static const int IDENTIFIER;
-static const int STRING_LITERAL;
-static const int CONSTANT;
-static const int SIZEOF;
-static const int PTR_OP;
-static const int INC_OP;
-static const int DEC_OP;
-static const int LEFT_OP;
-static const int RIGHT_OP;
-static const int LE_OP;
-static const int GE_OP;
-static const int EQ_OP;
-static const int NE_OP;
-static const int AND_OP;
-static const int OR_OP;
-static const int MUL_ASSIGN;
-static const int DIV_ASSIGN;
-static const int MOD_ASSIGN;
-static const int ADD_ASSIGN;
-static const int SUB_ASSIGN;
-static const int LEFT_ASSIGN;
-static const int RIGHT_ASSIGN;
-static const int AND_ASSIGN;
-static const int XOR_ASSIGN;
-static const int OR_ASSIGN;
-static const int TYPE_NAME;
-static const int TYPEDEF;
-static const int EXTERN;
-static const int STATIC;
-static const int AUTO;
-static const int REGISTER;
-static const int CHAR;
-static const int SHORT;
-static const int INT;
-static const int LONG;
-static const int SIGNED;
-static const int UNSIGNED;
-static const int FLOAT;
-static const int DOUBLE;
-static const int CONST;
-static const int VOLATILE;
-static const int VOID;
-static const int STRUCT;
-static const int UNION;
-static const int ENUM;
-static const int ELLIPSIS;
-static const int CASE;
-static const int DEFAULT;
-static const int IF;
-static const int ELSE;
-static const int SWITCH;
-static const int WHILE;
-static const int DO;
-static const int FOR;
-static const int GOTO;
-static const int CONTINUE;
-static const int BREAK;
-static const int RETURN;
+    static const int PREINCLUDE;
+    static const int PREDEFINE;
+    static const int PREIF;
+    static const int PREIFDEF;
+    static const int PREENDIF;
+    static const int PRELINE;
+    static const int IDENTIFIER;
+    static const int STRING_LITERAL;
+    static const int CONSTANT;
+    static const int SIZEOF;
+    static const int PTR_OP;
+    static const int INC_OP;
+    static const int DEC_OP;
+    static const int LEFT_OP;
+    static const int RIGHT_OP;
+    static const int LE_OP;
+    static const int GE_OP;
+    static const int EQ_OP;
+    static const int NE_OP;
+    static const int AND_OP;
+    static const int OR_OP;
+    static const int MUL_ASSIGN;
+    static const int DIV_ASSIGN;
+    static const int MOD_ASSIGN;
+    static const int ADD_ASSIGN;
+    static const int SUB_ASSIGN;
+    static const int LEFT_ASSIGN;
+    static const int RIGHT_ASSIGN;
+    static const int AND_ASSIGN;
+    static const int XOR_ASSIGN;
+    static const int OR_ASSIGN;
+    static const int TYPE_NAME;
+    static const int TYPEDEF;
+    static const int EXTERN;
+    static const int STATIC;
+    static const int AUTO;
+    static const int REGISTER;
+    static const int CHAR;
+    static const int SHORT;
+    static const int INT;
+    static const int LONG;
+    static const int SIGNED;
+    static const int UNSIGNED;
+    static const int FLOAT;
+    static const int DOUBLE;
+    static const int CONST;
+    static const int VOLATILE;
+    static const int VOID;
+    static const int STRUCT;
+    static const int UNION;
+    static const int ENUM;
+    static const int ELLIPSIS;
+    static const int CASE;
+    static const int DEFAULT;
+    static const int IF;
+    static const int ELSE;
+    static const int SWITCH;
+    static const int WHILE;
+    static const int DO;
+    static const int FOR;
+    static const int GOTO;
+    static const int CONTINUE;
+    static const int BREAK;
+    static const int RETURN;
 
 
 #line 280 "/usr/local/lib/bison.cc"
- /* decl const */
+    /* decl const */
 #else
-enum YY_AnsiCParser_ENUM_TOKEN { YY_AnsiCParser_NULL_TOKEN=0
+    enum YY_AnsiCParser_ENUM_TOKEN { YY_AnsiCParser_NULL_TOKEN=0
 
-/* #line 283 "/usr/local/lib/bison.cc" */
+                                     /* #line 283 "/usr/local/lib/bison.cc" */
 #line 499 "ansi-c-parser.cpp"
-	,PREINCLUDE=258
-	,PREDEFINE=259
-	,PREIF=260
-	,PREIFDEF=261
-	,PREENDIF=262
-	,PRELINE=263
-	,IDENTIFIER=264
-	,STRING_LITERAL=265
-	,CONSTANT=266
-	,SIZEOF=267
-	,PTR_OP=268
-	,INC_OP=269
-	,DEC_OP=270
-	,LEFT_OP=271
-	,RIGHT_OP=272
-	,LE_OP=273
-	,GE_OP=274
-	,EQ_OP=275
-	,NE_OP=276
-	,AND_OP=277
-	,OR_OP=278
-	,MUL_ASSIGN=279
-	,DIV_ASSIGN=280
-	,MOD_ASSIGN=281
-	,ADD_ASSIGN=282
-	,SUB_ASSIGN=283
-	,LEFT_ASSIGN=284
-	,RIGHT_ASSIGN=285
-	,AND_ASSIGN=286
-	,XOR_ASSIGN=287
-	,OR_ASSIGN=288
-	,TYPE_NAME=289
-	,TYPEDEF=290
-	,EXTERN=291
-	,STATIC=292
-	,AUTO=293
-	,REGISTER=294
-	,CHAR=295
-	,SHORT=296
-	,INT=297
-	,LONG=298
-	,SIGNED=299
-	,UNSIGNED=300
-	,FLOAT=301
-	,DOUBLE=302
-	,CONST=303
-	,VOLATILE=304
-	,VOID=305
-	,STRUCT=306
-	,UNION=307
-	,ENUM=308
-	,ELLIPSIS=309
-	,CASE=310
-	,DEFAULT=311
-	,IF=312
-	,ELSE=313
-	,SWITCH=314
-	,WHILE=315
-	,DO=316
-	,FOR=317
-	,GOTO=318
-	,CONTINUE=319
-	,BREAK=320
-	,RETURN=321
+                                     ,PREINCLUDE=258
+                                             ,PREDEFINE=259
+                                                     ,PREIF=260
+                                                             ,PREIFDEF=261
+                                                                     ,PREENDIF=262
+                                                                             ,PRELINE=263
+                                                                                     ,IDENTIFIER=264
+                                                                                             ,STRING_LITERAL=265
+                                                                                                     ,CONSTANT=266
+                                                                                                             ,SIZEOF=267
+                                                                                                                     ,PTR_OP=268
+                                                                                                                             ,INC_OP=269
+                                                                                                                                     ,DEC_OP=270
+                                                                                                                                             ,LEFT_OP=271
+                                                                                                                                                     ,RIGHT_OP=272
+                                                                                                                                                             ,LE_OP=273
+                                                                                                                                                                     ,GE_OP=274
+                                                                                                                                                                             ,EQ_OP=275
+                                                                                                                                                                                     ,NE_OP=276
+                                                                                                                                                                                             ,AND_OP=277
+                                                                                                                                                                                                     ,OR_OP=278
+                                                                                                                                                                                                             ,MUL_ASSIGN=279
+                                                                                                                                                                                                                     ,DIV_ASSIGN=280
+                                                                                                                                                                                                                             ,MOD_ASSIGN=281
+                                                                                                                                                                                                                                     ,ADD_ASSIGN=282
+                                                                                                                                                                                                                                             ,SUB_ASSIGN=283
+                                                                                                                                                                                                                                                     ,LEFT_ASSIGN=284
+                                                                                                                                                                                                                                                             ,RIGHT_ASSIGN=285
+                                                                                                                                                                                                                                                                     ,AND_ASSIGN=286
+                                                                                                                                                                                                                                                                             ,XOR_ASSIGN=287
+                                                                                                                                                                                                                                                                                     ,OR_ASSIGN=288
+                                                                                                                                                                                                                                                                                             ,TYPE_NAME=289
+                                                                                                                                                                                                                                                                                                     ,TYPEDEF=290
+                                                                                                                                                                                                                                                                                                             ,EXTERN=291
+                                                                                                                                                                                                                                                                                                                     ,STATIC=292
+                                                                                                                                                                                                                                                                                                                             ,AUTO=293
+                                                                                                                                                                                                                                                                                                                                     ,REGISTER=294
+                                                                                                                                                                                                                                                                                                                                             ,CHAR=295
+                                                                                                                                                                                                                                                                                                                                                     ,SHORT=296
+                                                                                                                                                                                                                                                                                                                                                             ,INT=297
+                                                                                                                                                                                                                                                                                                                                                                     ,LONG=298
+                                                                                                                                                                                                                                                                                                                                                                             ,SIGNED=299
+                                                                                                                                                                                                                                                                                                                                                                                     ,UNSIGNED=300
+                                                                                                                                                                                                                                                                                                                                                                                             ,FLOAT=301
+                                                                                                                                                                                                                                                                                                                                                                                                     ,DOUBLE=302
+                                                                                                                                                                                                                                                                                                                                                                                                             ,CONST=303
+                                                                                                                                                                                                                                                                                                                                                                                                                     ,VOLATILE=304
+                                                                                                                                                                                                                                                                                                                                                                                                                             ,VOID=305
+                                                                                                                                                                                                                                                                                                                                                                                                                                     ,STRUCT=306
+                                                                                                                                                                                                                                                                                                                                                                                                                                             ,UNION=307
+                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,ENUM=308
+                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,ELLIPSIS=309
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,CASE=310
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,DEFAULT=311
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,IF=312
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,ELSE=313
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,SWITCH=314
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,WHILE=315
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,DO=316
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,FOR=317
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,GOTO=318
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,CONTINUE=319
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,BREAK=320
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ,RETURN=321
 
 
 #line 283 "/usr/local/lib/bison.cc"
- /* enum token */
-     }; /* end of enum declaration */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     /* enum token */
+                                   }; /* end of enum declaration */
 #endif
 public:
- int YY_AnsiCParser_PARSE (YY_AnsiCParser_PARSE_PARAM);
- virtual void YY_AnsiCParser_ERROR(char *msg) YY_AnsiCParser_ERROR_BODY;
+    int YY_AnsiCParser_PARSE (YY_AnsiCParser_PARSE_PARAM);
+    virtual void YY_AnsiCParser_ERROR(char *msg) YY_AnsiCParser_ERROR_BODY;
 #ifdef YY_AnsiCParser_PURE
 #ifdef YY_AnsiCParser_LSP_NEEDED
- virtual int  YY_AnsiCParser_LEX (YY_AnsiCParser_STYPE *YY_AnsiCParser_LVAL,YY_AnsiCParser_LTYPE *YY_AnsiCParser_LLOC) YY_AnsiCParser_LEX_BODY;
+    virtual int  YY_AnsiCParser_LEX (YY_AnsiCParser_STYPE *YY_AnsiCParser_LVAL,YY_AnsiCParser_LTYPE *YY_AnsiCParser_LLOC) YY_AnsiCParser_LEX_BODY;
 #else
- virtual int  YY_AnsiCParser_LEX (YY_AnsiCParser_STYPE *YY_AnsiCParser_LVAL) YY_AnsiCParser_LEX_BODY;
+    virtual int  YY_AnsiCParser_LEX (YY_AnsiCParser_STYPE *YY_AnsiCParser_LVAL) YY_AnsiCParser_LEX_BODY;
 #endif
 #else
- virtual int YY_AnsiCParser_LEX() YY_AnsiCParser_LEX_BODY;
- YY_AnsiCParser_STYPE YY_AnsiCParser_LVAL;
+    virtual int YY_AnsiCParser_LEX() YY_AnsiCParser_LEX_BODY;
+    YY_AnsiCParser_STYPE YY_AnsiCParser_LVAL;
 #ifdef YY_AnsiCParser_LSP_NEEDED
- YY_AnsiCParser_LTYPE YY_AnsiCParser_LLOC;
+    YY_AnsiCParser_LTYPE YY_AnsiCParser_LLOC;
 #endif
- int   YY_AnsiCParser_NERRS;
- int    YY_AnsiCParser_CHAR;
+    int   YY_AnsiCParser_NERRS;
+    int    YY_AnsiCParser_CHAR;
 #endif
 #if YY_AnsiCParser_DEBUG != 0
- int YY_AnsiCParser_DEBUG_FLAG;   /*  nonzero means print parse trace     */
+    int YY_AnsiCParser_DEBUG_FLAG;   /*  nonzero means print parse trace     */
 #endif
 public:
- YY_AnsiCParser_CLASS(YY_AnsiCParser_CONSTRUCTOR_PARAM);
+    YY_AnsiCParser_CLASS(YY_AnsiCParser_CONSTRUCTOR_PARAM);
 public:
- YY_AnsiCParser_MEMBERS 
+    YY_AnsiCParser_MEMBERS
 };
 /* other declare folow */
 #if YY_AnsiCParser_USE_CONST_TOKEN != 0
@@ -664,15 +664,15 @@ const int YY_AnsiCParser_CLASS::RETURN=321;
 
 
 #line 314 "/usr/local/lib/bison.cc"
- /* const YY_AnsiCParser_CLASS::token */
+/* const YY_AnsiCParser_CLASS::token */
 #endif
 /*apres const  */
 YY_AnsiCParser_CLASS::YY_AnsiCParser_CLASS(YY_AnsiCParser_CONSTRUCTOR_PARAM) YY_AnsiCParser_CONSTRUCTOR_INIT
 {
 #if YY_AnsiCParser_DEBUG != 0
-YY_AnsiCParser_DEBUG_FLAG=0;
+    YY_AnsiCParser_DEBUG_FLAG=0;
 #endif
-YY_AnsiCParser_CONSTRUCTOR_CODE;
+    YY_AnsiCParser_CONSTRUCTOR_CODE;
 };
 #endif
 
@@ -687,142 +687,142 @@ YY_AnsiCParser_CONSTRUCTOR_CODE;
 #define YYTRANSLATE(x) ((unsigned)(x) <= 321 ? yytranslate[x] : 80)
 
 static const char yytranslate[] = {     0,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,    69,
-    70,    71,     2,    67,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,    68,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     1,     2,     3,     4,     5,
-     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
-    16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
-    26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-    36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-    46,    47,    48,    49,    50,    51,    52,    53,    54,    55,
-    56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
-    66
-};
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,    69,
+                                        70,    71,     2,    67,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,    68,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+                                        2,     2,     2,     2,     2,     1,     2,     3,     4,     5,
+                                        6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
+                                        16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
+                                        26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
+                                        36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
+                                        46,    47,    48,    49,    50,    51,    52,    53,    54,    55,
+                                        56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
+                                        66
+                                  };
 
 #if YY_AnsiCParser_DEBUG != 0
 static const short yyprhs[] = {     0,
-     0,     2,     5,     6,     8,    10,    14,    16,    17,    20,
-    22,    27,    34,    36,    38,    40,    42,    44,    46,    48,
-    51
-};
+                                    0,     2,     5,     6,     8,    10,    14,    16,    17,    20,
+                                    22,    27,    34,    36,    38,    40,    42,    44,    46,    48,
+                                    51
+                              };
 
 static const short yyrhs[] = {    73,
-     0,    74,    73,     0,     0,    77,     0,    78,     0,    76,
-    67,    75,     0,    76,     0,     0,    79,     9,     0,    54,
-     0,    35,    79,     9,    68,     0,    79,     9,    69,    75,
-    70,    68,     0,    40,     0,    41,     0,    42,     0,    43,
-     0,    46,     0,    47,     0,    50,     0,    79,    71,     0,
-     9,     0
-};
+                                  0,    74,    73,     0,     0,    77,     0,    78,     0,    76,
+                                  67,    75,     0,    76,     0,     0,    79,     9,     0,    54,
+                                  0,    35,    79,     9,    68,     0,    79,     9,    69,    75,
+                                  70,    68,     0,    40,     0,    41,     0,    42,     0,    43,
+                                  0,    46,     0,    47,     0,    50,     0,    79,    71,     0,
+                                  9,     0
+                             };
 
 #endif
 
 #if YY_AnsiCParser_DEBUG != 0
 static const short yyrline[] = { 0,
-    82,    86,    88,    92,    94,    98,   102,   106,   110,   112,
-   116,   120,   136,   138,   140,   142,   144,   146,   148,   150,
-   152
-};
+                                 82,    86,    88,    92,    94,    98,   102,   106,   110,   112,
+                                 116,   120,   136,   138,   140,   142,   144,   146,   148,   150,
+                                 152
+                               };
 
 static const char * const yytname[] = {   "$","error","$illegal.","PREINCLUDE",
-"PREDEFINE","PREIF","PREIFDEF","PREENDIF","PRELINE","IDENTIFIER","STRING_LITERAL",
-"CONSTANT","SIZEOF","PTR_OP","INC_OP","DEC_OP","LEFT_OP","RIGHT_OP","LE_OP",
-"GE_OP","EQ_OP","NE_OP","AND_OP","OR_OP","MUL_ASSIGN","DIV_ASSIGN","MOD_ASSIGN",
-"ADD_ASSIGN","SUB_ASSIGN","LEFT_ASSIGN","RIGHT_ASSIGN","AND_ASSIGN","XOR_ASSIGN",
-"OR_ASSIGN","TYPE_NAME","TYPEDEF","EXTERN","STATIC","AUTO","REGISTER","CHAR",
-"SHORT","INT","LONG","SIGNED","UNSIGNED","FLOAT","DOUBLE","CONST","VOLATILE",
-"VOID","STRUCT","UNION","ENUM","ELLIPSIS","CASE","DEFAULT","IF","ELSE","SWITCH",
-"WHILE","DO","FOR","GOTO","CONTINUE","BREAK","RETURN","','","';'","'('","')'",
-"'*'","translation_unit","decls","decl","param_list","param","type_decl","func_decl",
-"type",""
-};
+                                      "PREDEFINE","PREIF","PREIFDEF","PREENDIF","PRELINE","IDENTIFIER","STRING_LITERAL",
+                                      "CONSTANT","SIZEOF","PTR_OP","INC_OP","DEC_OP","LEFT_OP","RIGHT_OP","LE_OP",
+                                      "GE_OP","EQ_OP","NE_OP","AND_OP","OR_OP","MUL_ASSIGN","DIV_ASSIGN","MOD_ASSIGN",
+                                      "ADD_ASSIGN","SUB_ASSIGN","LEFT_ASSIGN","RIGHT_ASSIGN","AND_ASSIGN","XOR_ASSIGN",
+                                      "OR_ASSIGN","TYPE_NAME","TYPEDEF","EXTERN","STATIC","AUTO","REGISTER","CHAR",
+                                      "SHORT","INT","LONG","SIGNED","UNSIGNED","FLOAT","DOUBLE","CONST","VOLATILE",
+                                      "VOID","STRUCT","UNION","ENUM","ELLIPSIS","CASE","DEFAULT","IF","ELSE","SWITCH",
+                                      "WHILE","DO","FOR","GOTO","CONTINUE","BREAK","RETURN","','","';'","'('","')'",
+                                      "'*'","translation_unit","decls","decl","param_list","param","type_decl","func_decl",
+                                      "type",""
+                                      };
 #endif
 
 static const short yyr1[] = {     0,
-    72,    73,    73,    74,    74,    75,    75,    75,    76,    76,
-    77,    78,    79,    79,    79,    79,    79,    79,    79,    79,
-    79
-};
+                                  72,    73,    73,    74,    74,    75,    75,    75,    76,    76,
+                                  77,    78,    79,    79,    79,    79,    79,    79,    79,    79,
+                                  79
+                            };
 
 static const short yyr2[] = {     0,
-     1,     2,     0,     1,     1,     3,     1,     0,     2,     1,
-     4,     6,     1,     1,     1,     1,     1,     1,     1,     2,
-     1
-};
+                                  1,     2,     0,     1,     1,     3,     1,     0,     2,     1,
+                                  4,     6,     1,     1,     1,     1,     1,     1,     1,     2,
+                                  1
+                            };
 
 static const short yydefact[] = {     3,
-    21,     0,    13,    14,    15,    16,    17,    18,    19,     1,
-     3,     4,     5,     0,     0,     2,     0,    20,     0,     8,
-    11,    10,     0,     7,     0,     0,     8,     9,    12,     6,
-     0,     0,     0
-};
+                                      21,     0,    13,    14,    15,    16,    17,    18,    19,     1,
+                                      3,     4,     5,     0,     0,     2,     0,    20,     0,     8,
+                                      11,    10,     0,     7,     0,     0,     8,     9,    12,     6,
+                                      0,     0,     0
+                                };
 
 static const short yydefgoto[] = {    31,
-    10,    11,    23,    24,    12,    13,    14
-};
+                                      10,    11,    23,    24,    12,    13,    14
+                                 };
 
 static const short yypact[] = {    10,
--32768,    29,-32768,-32768,-32768,-32768,-32768,-32768,-32768,-32768,
-    10,-32768,-32768,    -9,    -8,-32768,   -64,-32768,   -62,    -6,
--32768,-32768,   -63,   -59,    -7,   -58,    -6,-32768,-32768,-32768,
-     9,    11,-32768
-};
+                                   -32768,    29,-32768,-32768,-32768,-32768,-32768,-32768,-32768,-32768,
+                                   10,-32768,-32768,    -9,    -8,-32768,   -64,-32768,   -62,    -6,
+                                   -32768,-32768,   -63,   -59,    -7,   -58,    -6,-32768,-32768,-32768,
+                                   9,    11,-32768
+                              };
 
 static const short yypgoto[] = {-32768,
-     1,-32768,   -14,-32768,-32768,-32768,     2
-};
+                                1,-32768,   -14,-32768,-32768,-32768,     2
+                               };
 
 
 #define	YYLAST		79
 
 
 static const short yytable[] = {    17,
-    19,    28,     1,    15,    20,    21,    26,    27,    32,    29,
-    33,    16,    30,     0,     0,     0,     0,     0,     1,     0,
-     0,    25,     0,     0,     0,     0,     0,     0,    25,     0,
-     0,     0,     0,     3,     4,     5,     6,     1,     0,     7,
-     8,     0,     0,     9,     2,     0,     0,    22,     0,     3,
-     4,     5,     6,     0,     0,     7,     8,     0,     0,     9,
-     0,    18,    18,    18,     0,     0,     0,     0,     3,     4,
-     5,     6,     0,     0,     7,     8,     0,     0,     9
-};
+                                    19,    28,     1,    15,    20,    21,    26,    27,    32,    29,
+                                    33,    16,    30,     0,     0,     0,     0,     0,     1,     0,
+                                    0,    25,     0,     0,     0,     0,     0,     0,    25,     0,
+                                    0,     0,     0,     3,     4,     5,     6,     1,     0,     7,
+                                    8,     0,     0,     9,     2,     0,     0,    22,     0,     3,
+                                    4,     5,     6,     0,     0,     7,     8,     0,     0,     9,
+                                    0,    18,    18,    18,     0,     0,     0,     0,     3,     4,
+                                    5,     6,     0,     0,     7,     8,     0,     0,     9
+                               };
 
 static const short yycheck[] = {     9,
-     9,     9,     9,     2,    69,    68,    70,    67,     0,    68,
-     0,    11,    27,    -1,    -1,    -1,    -1,    -1,     9,    -1,
-    -1,    20,    -1,    -1,    -1,    -1,    -1,    -1,    27,    -1,
-    -1,    -1,    -1,    40,    41,    42,    43,     9,    -1,    46,
-    47,    -1,    -1,    50,    35,    -1,    -1,    54,    -1,    40,
-    41,    42,    43,    -1,    -1,    46,    47,    -1,    -1,    50,
-    -1,    71,    71,    71,    -1,    -1,    -1,    -1,    40,    41,
-    42,    43,    -1,    -1,    46,    47,    -1,    -1,    50
-};
+                                     9,     9,     9,     2,    69,    68,    70,    67,     0,    68,
+                                     0,    11,    27,    -1,    -1,    -1,    -1,    -1,     9,    -1,
+                                     -1,    20,    -1,    -1,    -1,    -1,    -1,    -1,    27,    -1,
+                                     -1,    -1,    -1,    40,    41,    42,    43,     9,    -1,    46,
+                                     47,    -1,    -1,    50,    35,    -1,    -1,    54,    -1,    40,
+                                     41,    42,    43,    -1,    -1,    46,    47,    -1,    -1,    50,
+                                     -1,    71,    71,    71,    -1,    -1,    -1,    -1,    40,    41,
+                                     42,    43,    -1,    -1,    46,    47,    -1,    -1,    50
+                               };
 
 #line 325 "/usr/local/lib/bison.cc"
- /* fattrs + tables */
+/* fattrs + tables */
 
 /* parser code folow  */
 
@@ -834,10 +834,10 @@ static const short yycheck[] = {     9,
 
 /* Note: dollar marks section change
    the next  is replaced by the list of actions, each action
-   as one case of the switch.  */ 
+   as one case of the switch.  */
 
 #if YY_AnsiCParser_USE_GOTO != 0
-/* 
+/*
  SUPRESSION OF GOTO : on some C++ compiler (sun c++)
   the goto is strictly forbidden if any constructor/destructor
   is used in the whole function (very stupid isn't it ?)
@@ -848,39 +848,40 @@ static const short yycheck[] = {     9,
 #define YYBEGINGOTO  enum yy_labels yy_gotostate=yygotostart; \
                      for(;;) switch(yy_gotostate) { case yygotostart: {
 #define YYLABEL(lb) } case lb: {
-#define YYENDGOTO } } 
+#define YYENDGOTO } }
 #define YYBEGINDECLARELABEL enum yy_labels {yygotostart
 #define YYDECLARELABEL(lb) ,lb
 #define YYENDDECLARELABEL  };
 #else
 /* macro to keep goto */
 #define YYGOTO(lb) goto lb
-#define YYBEGINGOTO 
+#define YYBEGINGOTO
 #define YYLABEL(lb) lb:
 #define YYENDGOTO
-#define YYBEGINDECLARELABEL 
+#define YYBEGINDECLARELABEL
 #define YYDECLARELABEL(lb)
-#define YYENDDECLARELABEL 
+#define YYENDDECLARELABEL
 #endif
 /* LABEL DECLARATION */
 YYBEGINDECLARELABEL
-  YYDECLARELABEL(yynewstate)
-  YYDECLARELABEL(yybackup)
+YYDECLARELABEL(yynewstate)
+YYDECLARELABEL(yybackup)
 /* YYDECLARELABEL(yyresume) */
-  YYDECLARELABEL(yydefault)
-  YYDECLARELABEL(yyreduce)
-  YYDECLARELABEL(yyerrlab)   /* here on detecting error */
-  YYDECLARELABEL(yyerrlab1)   /* here on error raised explicitly by an action */
-  YYDECLARELABEL(yyerrdefault)  /* current state does not do anything special for the error token. */
-  YYDECLARELABEL(yyerrpop)   /* pop the current state because it cannot handle the error token */
-  YYDECLARELABEL(yyerrhandle)  
+YYDECLARELABEL(yydefault)
+YYDECLARELABEL(yyreduce)
+YYDECLARELABEL(yyerrlab)   /* here on detecting error */
+YYDECLARELABEL(yyerrlab1)   /* here on error raised explicitly by an action */
+YYDECLARELABEL(yyerrdefault)  /* current state does not do anything special for the error token. */
+YYDECLARELABEL(yyerrpop)   /* pop the current state because it cannot handle the error token */
+YYDECLARELABEL(yyerrhandle)
 YYENDDECLARELABEL
 /* ALLOCA SIMULATION */
 /* __HAVE_NO_ALLOCA */
 #ifdef __HAVE_NO_ALLOCA
 int __alloca_free_ptr(char *ptr,char *ref)
-{if(ptr!=ref) free(ptr);
- return 0;}
+{   if(ptr!=ref) free(ptr);
+    return 0;
+}
 
 #define __ALLOCA_alloca(size) malloc(size)
 #define __ALLOCA_free(ptr,ref) __alloca_free_ptr((char *)ptr,(char *)ref)
@@ -900,7 +901,7 @@ int __alloca_free_ptr(char *ptr,char *ref)
 #else
 #define __ALLOCA_return(num) return(num)
 #define __ALLOCA_alloca(size) alloca(size)
-#define __ALLOCA_free(ptr,ref) 
+#define __ALLOCA_free(ptr,ref)
 #endif
 
 /* ENDALLOCA SIMULATION */
@@ -940,11 +941,11 @@ while (0)
 /* If nonreentrant, and not class , generate the variables here */
 int     YY_AnsiCParser_CHAR;                      /*  the lookahead symbol        */
 YY_AnsiCParser_STYPE      YY_AnsiCParser_LVAL;              /*  the semantic value of the */
-				/*  lookahead symbol    */
+/*  lookahead symbol    */
 int YY_AnsiCParser_NERRS;                 /*  number of parse errors so far */
 #ifdef YY_AnsiCParser_LSP_NEEDED
 YY_AnsiCParser_LTYPE YY_AnsiCParser_LLOC;   /*  location data for the lookahead     */
-			/*  symbol                              */
+/*  symbol                              */
 #endif
 #endif
 
@@ -999,26 +1000,26 @@ static void __yy_bcopy (char *from, char *to, int count)
 static void __yy_bcopy (char *from, char *to, int count)
 #else
 static void __yy_bcopy (from, to, count)
-     char *from;
-     char *to;
-     int count;
+char *from;
+char *to;
+int count;
 #endif
 #endif
 {
-  register char *f = from;
-  register char *t = to;
-  register int i = count;
+    register char *f = from;
+    register char *t = to;
+    register int i = count;
 
-  while (i-- > 0)
-    *t++ = *f++;
+    while (i-- > 0)
+        *t++ = *f++;
 }
 #endif
 
 int
 #ifdef YY_USE_CLASS
- YY_AnsiCParser_CLASS::
+YY_AnsiCParser_CLASS::
 #endif
-     YY_AnsiCParser_PARSE(YY_AnsiCParser_PARSE_PARAM)
+YY_AnsiCParser_PARSE(YY_AnsiCParser_PARSE_PARAM)
 #ifndef __STDC__
 #ifndef __cplusplus
 #ifndef YY_USE_CLASS
@@ -1028,591 +1029,613 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 #endif
 #endif
 {
-  register int yystate;
-  register int yyn;
-  register short *yyssp;
-  register YY_AnsiCParser_STYPE *yyvsp;
-  int yyerrstatus;      /*  number of tokens to shift before error messages enabled */
-  int yychar1=0;          /*  lookahead token as an internal (translated) token number */
+    register int yystate;
+    register int yyn;
+    register short *yyssp;
+    register YY_AnsiCParser_STYPE *yyvsp;
+    int yyerrstatus;      /*  number of tokens to shift before error messages enabled */
+    int yychar1=0;          /*  lookahead token as an internal (translated) token number */
 
-  short yyssa[YYINITDEPTH];     /*  the state stack                     */
-  YY_AnsiCParser_STYPE yyvsa[YYINITDEPTH];        /*  the semantic value stack            */
+    short yyssa[YYINITDEPTH];     /*  the state stack                     */
+    YY_AnsiCParser_STYPE yyvsa[YYINITDEPTH];        /*  the semantic value stack            */
 
-  short *yyss = yyssa;          /*  refer to the stacks thru separate pointers */
-  YY_AnsiCParser_STYPE *yyvs = yyvsa;     /*  to allow yyoverflow to reallocate them elsewhere */
+    short *yyss = yyssa;          /*  refer to the stacks thru separate pointers */
+    YY_AnsiCParser_STYPE *yyvs = yyvsa;     /*  to allow yyoverflow to reallocate them elsewhere */
 
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  YY_AnsiCParser_LTYPE yylsa[YYINITDEPTH];        /*  the location stack                  */
-  YY_AnsiCParser_LTYPE *yyls = yylsa;
-  YY_AnsiCParser_LTYPE *yylsp;
+    YY_AnsiCParser_LTYPE yylsa[YYINITDEPTH];        /*  the location stack                  */
+    YY_AnsiCParser_LTYPE *yyls = yylsa;
+    YY_AnsiCParser_LTYPE *yylsp;
 
 #define YYPOPSTACK   (yyvsp--, yyssp--, yylsp--)
 #else
 #define YYPOPSTACK   (yyvsp--, yyssp--)
 #endif
 
-  int yystacksize = YYINITDEPTH;
+    int yystacksize = YYINITDEPTH;
 
 #ifdef YY_AnsiCParser_PURE
-  int YY_AnsiCParser_CHAR;
-  YY_AnsiCParser_STYPE YY_AnsiCParser_LVAL;
-  int YY_AnsiCParser_NERRS;
+    int YY_AnsiCParser_CHAR;
+    YY_AnsiCParser_STYPE YY_AnsiCParser_LVAL;
+    int YY_AnsiCParser_NERRS;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  YY_AnsiCParser_LTYPE YY_AnsiCParser_LLOC;
+    YY_AnsiCParser_LTYPE YY_AnsiCParser_LLOC;
 #endif
 #endif
 
-  YY_AnsiCParser_STYPE yyval;             /*  the variable used to return         */
-				/*  semantic values from the action     */
-				/*  routines                            */
+    YY_AnsiCParser_STYPE yyval;             /*  the variable used to return         */
+    /*  semantic values from the action     */
+    /*  routines                            */
 
-  int yylen;
-/* start loop, in which YYGOTO may be used. */
-YYBEGINGOTO
+    int yylen;
+    /* start loop, in which YYGOTO may be used. */
+    YYBEGINGOTO
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
-    fprintf(stderr, "Starting parse\n");
+    if (YY_AnsiCParser_DEBUG_FLAG)
+        fprintf(stderr, "Starting parse\n");
 #endif
-  yystate = 0;
-  yyerrstatus = 0;
-  YY_AnsiCParser_NERRS = 0;
-  YY_AnsiCParser_CHAR = YYEMPTY;          /* Cause a token to be read.  */
+    yystate = 0;
+    yyerrstatus = 0;
+    YY_AnsiCParser_NERRS = 0;
+    YY_AnsiCParser_CHAR = YYEMPTY;          /* Cause a token to be read.  */
 
-  /* Initialize stack pointers.
-     Waste one element of value and location stack
-     so that they stay on the same level as the state stack.
-     The wasted elements are never initialized.  */
+    /* Initialize stack pointers.
+       Waste one element of value and location stack
+       so that they stay on the same level as the state stack.
+       The wasted elements are never initialized.  */
 
-  yyssp = yyss - 1;
-  yyvsp = yyvs;
+    yyssp = yyss - 1;
+    yyvsp = yyvs;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  yylsp = yyls;
+    yylsp = yyls;
 #endif
 
-/* Push a new state, which is found in  yystate  .  */
-/* In all cases, when you get here, the value and location stacks
-   have just been pushed. so pushing a state here evens the stacks.  */
-YYLABEL(yynewstate)
+    /* Push a new state, which is found in  yystate  .  */
+    /* In all cases, when you get here, the value and location stacks
+       have just been pushed. so pushing a state here evens the stacks.  */
+    YYLABEL(yynewstate)
 
-  *++yyssp = yystate;
+    *++yyssp = yystate;
 
-  if (yyssp >= yyss + yystacksize - 1)
+    if (yyssp >= yyss + yystacksize - 1)
     {
-      /* Give user a chance to reallocate the stack */
-      /* Use copies of these so that the &'s don't force the real ones into memory. */
-      YY_AnsiCParser_STYPE *yyvs1 = yyvs;
-      short *yyss1 = yyss;
+        /* Give user a chance to reallocate the stack */
+        /* Use copies of these so that the &'s don't force the real ones into memory. */
+        YY_AnsiCParser_STYPE *yyvs1 = yyvs;
+        short *yyss1 = yyss;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-      YY_AnsiCParser_LTYPE *yyls1 = yyls;
+        YY_AnsiCParser_LTYPE *yyls1 = yyls;
 #endif
 
-      /* Get the current used size of the three stacks, in elements.  */
-      int size = yyssp - yyss + 1;
+        /* Get the current used size of the three stacks, in elements.  */
+        int size = yyssp - yyss + 1;
 
 #ifdef yyoverflow
-      /* Each stack pointer address is followed by the size of
-	 the data in use in that stack, in bytes.  */
+        /* Each stack pointer address is followed by the size of
+        the data in use in that stack, in bytes.  */
 #ifdef YY_AnsiCParser_LSP_NEEDED
-      /* This used to be a conditional around just the two extra args,
-	 but that might be undefined if yyoverflow is a macro.  */
-      yyoverflow("parser stack overflow",
-		 &yyss1, size * sizeof (*yyssp),
-		 &yyvs1, size * sizeof (*yyvsp),
-		 &yyls1, size * sizeof (*yylsp),
-		 &yystacksize);
+        /* This used to be a conditional around just the two extra args,
+        but that might be undefined if yyoverflow is a macro.  */
+        yyoverflow("parser stack overflow",
+        &yyss1, size * sizeof (*yyssp),
+        &yyvs1, size * sizeof (*yyvsp),
+        &yyls1, size * sizeof (*yylsp),
+        &yystacksize);
 #else
-      yyoverflow("parser stack overflow",
-		 &yyss1, size * sizeof (*yyssp),
-		 &yyvs1, size * sizeof (*yyvsp),
-		 &yystacksize);
+        yyoverflow("parser stack overflow",
+        &yyss1, size * sizeof (*yyssp),
+        &yyvs1, size * sizeof (*yyvsp),
+        &yystacksize);
 #endif
 
-      yyss = yyss1; yyvs = yyvs1;
+        yyss = yyss1;
+        yyvs = yyvs1;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-      yyls = yyls1;
+        yyls = yyls1;
 #endif
 #else /* no yyoverflow */
-      /* Extend the stack our own way.  */
-      if (yystacksize >= YYMAXDEPTH)
-	{
-	  YY_AnsiCParser_ERROR("parser stack overflow");
-	  __ALLOCA_return(2);
-	}
-      yystacksize *= 2;
-      if (yystacksize > YYMAXDEPTH)
-	yystacksize = YYMAXDEPTH;
-      yyss = (short *) __ALLOCA_alloca (yystacksize * sizeof (*yyssp));
-      __yy_bcopy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
-      __ALLOCA_free(yyss1,yyssa);
-      yyvs = (YY_AnsiCParser_STYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yyvsp));
-      __yy_bcopy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
-      __ALLOCA_free(yyvs1,yyvsa);
+        /* Extend the stack our own way.  */
+        if (yystacksize >= YYMAXDEPTH)
+        {
+            YY_AnsiCParser_ERROR("parser stack overflow");
+            __ALLOCA_return(2);
+        }
+        yystacksize *= 2;
+        if (yystacksize > YYMAXDEPTH)
+            yystacksize = YYMAXDEPTH;
+        yyss = (short *) __ALLOCA_alloca (yystacksize * sizeof (*yyssp));
+        __yy_bcopy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+        __ALLOCA_free(yyss1,yyssa);
+        yyvs = (YY_AnsiCParser_STYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yyvsp));
+        __yy_bcopy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+        __ALLOCA_free(yyvs1,yyvsa);
 #ifdef YY_AnsiCParser_LSP_NEEDED
-      yyls = (YY_AnsiCParser_LTYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yylsp));
-      __yy_bcopy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
-      __ALLOCA_free(yyls1,yylsa);
+        yyls = (YY_AnsiCParser_LTYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yylsp));
+        __yy_bcopy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+        __ALLOCA_free(yyls1,yylsa);
 #endif
 #endif /* no yyoverflow */
 
-      yyssp = yyss + size - 1;
-      yyvsp = yyvs + size - 1;
+        yyssp = yyss + size - 1;
+        yyvsp = yyvs + size - 1;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-      yylsp = yyls + size - 1;
+        yylsp = yyls + size - 1;
 #endif
 
 #if YY_AnsiCParser_DEBUG != 0
-      if (YY_AnsiCParser_DEBUG_FLAG)
-	fprintf(stderr, "Stack size increased to %d\n", yystacksize);
+        if (YY_AnsiCParser_DEBUG_FLAG)
+            fprintf(stderr, "Stack size increased to %d\n", yystacksize);
 #endif
 
-      if (yyssp >= yyss + yystacksize - 1)
-	YYABORT;
+        if (yyssp >= yyss + yystacksize - 1)
+            YYABORT;
     }
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
-    fprintf(stderr, "Entering state %d\n", yystate);
+    if (YY_AnsiCParser_DEBUG_FLAG)
+        fprintf(stderr, "Entering state %d\n", yystate);
 #endif
 
-  YYGOTO(yybackup);
-YYLABEL(yybackup)
+    YYGOTO(yybackup);
+    YYLABEL(yybackup)
 
-/* Do appropriate processing given the current state.  */
-/* Read a lookahead token if we need one and don't already have one.  */
-/* YYLABEL(yyresume) */
+    /* Do appropriate processing given the current state.  */
+    /* Read a lookahead token if we need one and don't already have one.  */
+    /* YYLABEL(yyresume) */
 
-  /* First try to decide what to do without reference to lookahead token.  */
+    /* First try to decide what to do without reference to lookahead token.  */
 
-  yyn = yypact[yystate];
-  if (yyn == YYFLAG)
-    YYGOTO(yydefault);
+    yyn = yypact[yystate];
+    if (yyn == YYFLAG)
+        YYGOTO(yydefault);
 
-  /* Not known => get a lookahead token if don't already have one.  */
+    /* Not known => get a lookahead token if don't already have one.  */
 
-  /* yychar is either YYEMPTY or YYEOF
-     or a valid token in external form.  */
+    /* yychar is either YYEMPTY or YYEOF
+       or a valid token in external form.  */
 
-  if (YY_AnsiCParser_CHAR == YYEMPTY)
+    if (YY_AnsiCParser_CHAR == YYEMPTY)
     {
 #if YY_AnsiCParser_DEBUG != 0
-      if (YY_AnsiCParser_DEBUG_FLAG)
-	fprintf(stderr, "Reading a token: ");
+        if (YY_AnsiCParser_DEBUG_FLAG)
+            fprintf(stderr, "Reading a token: ");
 #endif
-      YY_AnsiCParser_CHAR = YYLEX;
+        YY_AnsiCParser_CHAR = YYLEX;
     }
 
-  /* Convert token to internal form (in yychar1) for indexing tables with */
+    /* Convert token to internal form (in yychar1) for indexing tables with */
 
-  if (YY_AnsiCParser_CHAR <= 0)           /* This means end of input. */
+    if (YY_AnsiCParser_CHAR <= 0)           /* This means end of input. */
     {
-      yychar1 = 0;
-      YY_AnsiCParser_CHAR = YYEOF;                /* Don't call YYLEX any more */
+        yychar1 = 0;
+        YY_AnsiCParser_CHAR = YYEOF;                /* Don't call YYLEX any more */
 
 #if YY_AnsiCParser_DEBUG != 0
-      if (YY_AnsiCParser_DEBUG_FLAG)
-	fprintf(stderr, "Now at end of input.\n");
+        if (YY_AnsiCParser_DEBUG_FLAG)
+            fprintf(stderr, "Now at end of input.\n");
 #endif
     }
-  else
+    else
     {
-      yychar1 = YYTRANSLATE(YY_AnsiCParser_CHAR);
+        yychar1 = YYTRANSLATE(YY_AnsiCParser_CHAR);
 
 #if YY_AnsiCParser_DEBUG != 0
-      if (YY_AnsiCParser_DEBUG_FLAG)
-	{
-	  fprintf (stderr, "Next token is %d (%s", YY_AnsiCParser_CHAR, yytname[yychar1]);
-	  /* Give the individual parser a way to print the precise meaning
-	     of a token, for further debugging info.  */
+        if (YY_AnsiCParser_DEBUG_FLAG)
+        {
+            fprintf (stderr, "Next token is %d (%s", YY_AnsiCParser_CHAR, yytname[yychar1]);
+            /* Give the individual parser a way to print the precise meaning
+               of a token, for further debugging info.  */
 #ifdef YYPRINT
-	  YYPRINT (stderr, YY_AnsiCParser_CHAR, YY_AnsiCParser_LVAL);
+            YYPRINT (stderr, YY_AnsiCParser_CHAR, YY_AnsiCParser_LVAL);
 #endif
-	  fprintf (stderr, ")\n");
-	}
+            fprintf (stderr, ")\n");
+        }
 #endif
     }
 
-  yyn += yychar1;
-  if (yyn < 0 || yyn > YYLAST || yycheck[yyn] != yychar1)
-    YYGOTO(yydefault);
+    yyn += yychar1;
+    if (yyn < 0 || yyn > YYLAST || yycheck[yyn] != yychar1)
+        YYGOTO(yydefault);
 
-  yyn = yytable[yyn];
+    yyn = yytable[yyn];
 
-  /* yyn is what to do for this token type in this state.
-     Negative => reduce, -yyn is rule number.
-     Positive => shift, yyn is new state.
-       New state is final state => don't bother to shift,
-       just return success.
-     0, or most negative number => error.  */
+    /* yyn is what to do for this token type in this state.
+       Negative => reduce, -yyn is rule number.
+       Positive => shift, yyn is new state.
+         New state is final state => don't bother to shift,
+         just return success.
+       0, or most negative number => error.  */
 
-  if (yyn < 0)
+    if (yyn < 0)
     {
-      if (yyn == YYFLAG)
-	YYGOTO(yyerrlab);
-      yyn = -yyn;
-      YYGOTO(yyreduce);
+        if (yyn == YYFLAG)
+            YYGOTO(yyerrlab);
+        yyn = -yyn;
+        YYGOTO(yyreduce);
     }
-  else if (yyn == 0)
-    YYGOTO(yyerrlab);
+    else if (yyn == 0)
+        YYGOTO(yyerrlab);
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
+    if (yyn == YYFINAL)
+        YYACCEPT;
 
-  /* Shift the lookahead token.  */
+    /* Shift the lookahead token.  */
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
-    fprintf(stderr, "Shifting token %d (%s), ", YY_AnsiCParser_CHAR, yytname[yychar1]);
+    if (YY_AnsiCParser_DEBUG_FLAG)
+        fprintf(stderr, "Shifting token %d (%s), ", YY_AnsiCParser_CHAR, yytname[yychar1]);
 #endif
 
-  /* Discard the token being shifted unless it is eof.  */
-  if (YY_AnsiCParser_CHAR != YYEOF)
-    YY_AnsiCParser_CHAR = YYEMPTY;
+    /* Discard the token being shifted unless it is eof.  */
+    if (YY_AnsiCParser_CHAR != YYEOF)
+        YY_AnsiCParser_CHAR = YYEMPTY;
 
-  *++yyvsp = YY_AnsiCParser_LVAL;
+    *++yyvsp = YY_AnsiCParser_LVAL;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  *++yylsp = YY_AnsiCParser_LLOC;
+    *++yylsp = YY_AnsiCParser_LLOC;
 #endif
 
-  /* count tokens shifted since error; after three, turn off error status.  */
-  if (yyerrstatus) yyerrstatus--;
+    /* count tokens shifted since error; after three, turn off error status.  */
+    if (yyerrstatus) yyerrstatus--;
 
-  yystate = yyn;
-  YYGOTO(yynewstate);
+    yystate = yyn;
+    YYGOTO(yynewstate);
 
-/* Do the default action for the current state.  */
-YYLABEL(yydefault)
+    /* Do the default action for the current state.  */
+    YYLABEL(yydefault)
 
-  yyn = yydefact[yystate];
-  if (yyn == 0)
-    YYGOTO(yyerrlab);
+    yyn = yydefact[yystate];
+    if (yyn == 0)
+        YYGOTO(yyerrlab);
 
-/* Do a reduction.  yyn is the number of a rule to reduce with.  */
-YYLABEL(yyreduce)
-  yylen = yyr2[yyn];
-  if (yylen > 0)
-    yyval = yyvsp[1-yylen]; /* implement default value of the action */
+    /* Do a reduction.  yyn is the number of a rule to reduce with.  */
+    YYLABEL(yyreduce)
+    yylen = yyr2[yyn];
+    if (yylen > 0)
+        yyval = yyvsp[1-yylen]; /* implement default value of the action */
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
+    if (YY_AnsiCParser_DEBUG_FLAG)
     {
-      int i;
+        int i;
 
-      fprintf (stderr, "Reducing via rule %d (line %d), ",
-	       yyn, yyrline[yyn]);
+        fprintf (stderr, "Reducing via rule %d (line %d), ",
+        yyn, yyrline[yyn]);
 
-      /* Print the symbols being reduced, and their result.  */
-      for (i = yyprhs[yyn]; yyrhs[i] > 0; i++)
-	fprintf (stderr, "%s ", yytname[yyrhs[i]]);
-      fprintf (stderr, " -> %s\n", yytname[yyr1[yyn]]);
+        /* Print the symbols being reduced, and their result.  */
+        for (i = yyprhs[yyn]; yyrhs[i] > 0; i++)
+            fprintf (stderr, "%s ", yytname[yyrhs[i]]);
+        fprintf (stderr, " -> %s\n", yytname[yyr1[yyn]]);
     }
 #endif
 
 
-/* #line 811 "/usr/local/lib/bison.cc" */
+    /* #line 811 "/usr/local/lib/bison.cc" */
 #line 1314 "ansi-c-parser.cpp"
 
-  switch (yyn) {
+    switch (yyn) {
 
-case 1:
+    case 1:
 #line 83 "ansi-c.y"
-{ ;
-    break;}
-case 2:
+    {   ;
+        break;
+    }
+    case 2:
 #line 87 "ansi-c.y"
-{ ;
-    break;}
-case 3:
+    {   ;
+        break;
+    }
+    case 3:
 #line 89 "ansi-c.y"
-{ ;
-    break;}
-case 4:
+    {   ;
+        break;
+    }
+    case 4:
 #line 93 "ansi-c.y"
-{ ;
-    break;}
-case 5:
+    {   ;
+        break;
+    }
+    case 5:
 #line 95 "ansi-c.y"
-{ ;
-    break;}
-case 6:
+    {   ;
+        break;
+    }
+    case 6:
 #line 99 "ansi-c.y"
-{ yyval.param_list = yyvsp[0].param_list;
-            yyval.param_list->push_front(yyvsp[-2].param);
-          ;
-    break;}
-case 7:
+    {   yyval.param_list = yyvsp[0].param_list;
+        yyval.param_list->push_front(yyvsp[-2].param);
+        ;
+        break;
+    }
+    case 7:
 #line 103 "ansi-c.y"
-{ yyval.param_list = new std::list<Parameter*>(); 
-            yyval.param_list->push_back(yyvsp[0].param);
-          ;
-    break;}
-case 8:
+    {   yyval.param_list = new std::list<Parameter*>();
+        yyval.param_list->push_back(yyvsp[0].param);
+        ;
+        break;
+    }
+    case 8:
 #line 107 "ansi-c.y"
-{ yyval.param_list = new std::list<Parameter*>();
-    break;}
-case 9:
+    {   yyval.param_list = new std::list<Parameter*>();
+        break;
+    }
+    case 9:
 #line 111 "ansi-c.y"
-{ yyval.param = new Parameter(yyvsp[-1].type, yyvsp[0].str); ;
-    break;}
-case 10:
+    {   yyval.param = new Parameter(yyvsp[-1].type, yyvsp[0].str); ;
+        break;
+    }
+    case 10:
 #line 113 "ansi-c.y"
-{ yyval.param = new Parameter(new VoidType, "..."); ;
-    break;}
-case 11:
+    {   yyval.param = new Parameter(new VoidType, "..."); ;
+        break;
+    }
+    case 11:
 #line 117 "ansi-c.y"
-{ ;
-    break;}
-case 12:
+    {   ;
+        break;
+    }
+    case 12:
 #line 121 "ansi-c.y"
-{ Signature *sig = Signature::instantiate(sigstr, yyvsp[-4].str); 
-           sig->setReturnType(yyvsp[-5].type);
-           for (std::list<Parameter*>::iterator it = yyvsp[-2].param_list->begin();
-                it != yyvsp[-2].param_list->end(); it++)
-               if (std::string((*it)->getName()) != "...")
-                   sig->addParameter(*it);
-               else {
-                   sig->addEllipsis();
-                   delete *it;
-               }
-           delete yyvsp[-2].param_list;
-           signatures.push_back(sig);
-         ;
-    break;}
-case 13:
+    {   Signature *sig = Signature::instantiate(sigstr, yyvsp[-4].str);
+        sig->setReturnType(yyvsp[-5].type);
+        for (std::list<Parameter*>::iterator it = yyvsp[-2].param_list->begin();
+        it != yyvsp[-2].param_list->end(); it++)
+            if (std::string((*it)->getName()) != "...")
+                sig->addParameter(*it);
+            else {
+                sig->addEllipsis();
+                delete *it;
+            }
+        delete yyvsp[-2].param_list;
+        signatures.push_back(sig);
+        ;
+        break;
+    }
+    case 13:
 #line 137 "ansi-c.y"
-{ yyval.type = new CharType(); ;
-    break;}
-case 14:
+    {   yyval.type = new CharType(); ;
+        break;
+    }
+    case 14:
 #line 139 "ansi-c.y"
-{ yyval.type = new IntegerType(16); ;
-    break;}
-case 15:
+    {   yyval.type = new IntegerType(16); ;
+        break;
+    }
+    case 15:
 #line 141 "ansi-c.y"
-{ yyval.type = new IntegerType(); ;
-    break;}
-case 16:
+    {   yyval.type = new IntegerType(); ;
+        break;
+    }
+    case 16:
 #line 143 "ansi-c.y"
-{ yyval.type = new IntegerType(); ;
-    break;}
-case 17:
+    {   yyval.type = new IntegerType(); ;
+        break;
+    }
+    case 17:
 #line 145 "ansi-c.y"
-{ yyval.type = new FloatType(32); ;
-    break;}
-case 18:
+    {   yyval.type = new FloatType(32); ;
+        break;
+    }
+    case 18:
 #line 147 "ansi-c.y"
-{ yyval.type = new FloatType(32); ;
-    break;}
-case 19:
+    {   yyval.type = new FloatType(32); ;
+        break;
+    }
+    case 19:
 #line 149 "ansi-c.y"
-{ yyval.type = new VoidType(); ;
-    break;}
-case 20:
+    {   yyval.type = new VoidType(); ;
+        break;
+    }
+    case 20:
 #line 151 "ansi-c.y"
-{ yyval.type = new PointerType(yyvsp[-1].type); ;
-    break;}
-case 21:
+    {   yyval.type = new PointerType(yyvsp[-1].type); ;
+        break;
+    }
+    case 21:
 #line 153 "ansi-c.y"
-{ yyval.type = new NamedType(yyvsp[0].str); ;
-    break;}
-}
+    {   yyval.type = new NamedType(yyvsp[0].str); ;
+        break;
+    }
+    }
 
 #line 811 "/usr/local/lib/bison.cc"
-   /* the action file gets copied in in place of this dollarsign  */
-  yyvsp -= yylen;
-  yyssp -= yylen;
+    /* the action file gets copied in in place of this dollarsign  */
+    yyvsp -= yylen;
+    yyssp -= yylen;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  yylsp -= yylen;
+    yylsp -= yylen;
 #endif
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
+    if (YY_AnsiCParser_DEBUG_FLAG)
     {
-      short *ssp1 = yyss - 1;
-      fprintf (stderr, "state stack now");
-      while (ssp1 != yyssp)
-	fprintf (stderr, " %d", *++ssp1);
-      fprintf (stderr, "\n");
+        short *ssp1 = yyss - 1;
+        fprintf (stderr, "state stack now");
+        while (ssp1 != yyssp)
+            fprintf (stderr, " %d", *++ssp1);
+        fprintf (stderr, "\n");
     }
 #endif
 
-  *++yyvsp = yyval;
+    *++yyvsp = yyval;
 
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  yylsp++;
-  if (yylen == 0)
+    yylsp++;
+    if (yylen == 0)
     {
-      yylsp->first_line = YY_AnsiCParser_LLOC.first_line;
-      yylsp->first_column = YY_AnsiCParser_LLOC.first_column;
-      yylsp->last_line = (yylsp-1)->last_line;
-      yylsp->last_column = (yylsp-1)->last_column;
-      yylsp->text = 0;
+        yylsp->first_line = YY_AnsiCParser_LLOC.first_line;
+        yylsp->first_column = YY_AnsiCParser_LLOC.first_column;
+        yylsp->last_line = (yylsp-1)->last_line;
+        yylsp->last_column = (yylsp-1)->last_column;
+        yylsp->text = 0;
     }
-  else
+    else
     {
-      yylsp->last_line = (yylsp+yylen-1)->last_line;
-      yylsp->last_column = (yylsp+yylen-1)->last_column;
+        yylsp->last_line = (yylsp+yylen-1)->last_line;
+        yylsp->last_column = (yylsp+yylen-1)->last_column;
     }
 #endif
 
-  /* Now "shift" the result of the reduction.
-     Determine what state that goes to,
-     based on the state we popped back to
-     and the rule number reduced by.  */
+    /* Now "shift" the result of the reduction.
+       Determine what state that goes to,
+       based on the state we popped back to
+       and the rule number reduced by.  */
 
-  yyn = yyr1[yyn];
+    yyn = yyr1[yyn];
 
-  yystate = yypgoto[yyn - YYNTBASE] + *yyssp;
-  if (yystate >= 0 && yystate <= YYLAST && yycheck[yystate] == *yyssp)
-    yystate = yytable[yystate];
-  else
-    yystate = yydefgoto[yyn - YYNTBASE];
+    yystate = yypgoto[yyn - YYNTBASE] + *yyssp;
+    if (yystate >= 0 && yystate <= YYLAST && yycheck[yystate] == *yyssp)
+        yystate = yytable[yystate];
+    else
+        yystate = yydefgoto[yyn - YYNTBASE];
 
-  YYGOTO(yynewstate);
+    YYGOTO(yynewstate);
 
-YYLABEL(yyerrlab)   /* here on detecting error */
+    YYLABEL(yyerrlab)   /* here on detecting error */
 
-  if (! yyerrstatus)
-    /* If not already recovering from an error, report this error.  */
+    if (! yyerrstatus)
+        /* If not already recovering from an error, report this error.  */
     {
-      ++YY_AnsiCParser_NERRS;
+        ++YY_AnsiCParser_NERRS;
 
 #ifdef YY_AnsiCParser_ERROR_VERBOSE
-      yyn = yypact[yystate];
+        yyn = yypact[yystate];
 
-      if (yyn > YYFLAG && yyn < YYLAST)
-	{
-	  int size = 0;
-	  char *msg;
-	  int x, count;
+        if (yyn > YYFLAG && yyn < YYLAST)
+        {
+            int size = 0;
+            char *msg;
+            int x, count;
 
-	  count = 0;
-	  /* Start X at -yyn if nec to avoid negative indexes in yycheck.  */
-	  for (x = (yyn < 0 ? -yyn : 0);
-	       x < (sizeof(yytname) / sizeof(char *)); x++)
-	    if (yycheck[x + yyn] == x)
-	      size += strlen(yytname[x]) + 15, count++;
-	  msg = (char *) malloc(size + 15);
-	  if (msg != 0)
-	    {
-	      strcpy(msg, "parse error");
+            count = 0;
+            /* Start X at -yyn if nec to avoid negative indexes in yycheck.  */
+            for (x = (yyn < 0 ? -yyn : 0);
+            x < (sizeof(yytname) / sizeof(char *)); x++)
+                if (yycheck[x + yyn] == x)
+                    size += strlen(yytname[x]) + 15, count++;
+            msg = (char *) malloc(size + 15);
+            if (msg != 0)
+            {
+                strcpy(msg, "parse error");
 
-	      if (count < 5)
-		{
-		  count = 0;
-		  for (x = (yyn < 0 ? -yyn : 0);
-		       x < (sizeof(yytname) / sizeof(char *)); x++)
-		    if (yycheck[x + yyn] == x)
-		      {
-			strcat(msg, count == 0 ? ", expecting `" : " or `");
-			strcat(msg, yytname[x]);
-			strcat(msg, "'");
-			count++;
-		      }
-		}
-	      YY_AnsiCParser_ERROR(msg);
-	      free(msg);
-	    }
-	  else
-	    YY_AnsiCParser_ERROR ("parse error; also virtual memory exceeded");
-	}
-      else
+                if (count < 5)
+                {
+                    count = 0;
+                    for (x = (yyn < 0 ? -yyn : 0);
+                    x < (sizeof(yytname) / sizeof(char *)); x++)
+                        if (yycheck[x + yyn] == x)
+                        {
+                            strcat(msg, count == 0 ? ", expecting `" : " or `");
+                            strcat(msg, yytname[x]);
+                            strcat(msg, "'");
+                            count++;
+                        }
+                }
+                YY_AnsiCParser_ERROR(msg);
+                free(msg);
+            }
+            else
+                YY_AnsiCParser_ERROR ("parse error; also virtual memory exceeded");
+        }
+        else
 #endif /* YY_AnsiCParser_ERROR_VERBOSE */
-	YY_AnsiCParser_ERROR("parse error");
+            YY_AnsiCParser_ERROR("parse error");
     }
 
-  YYGOTO(yyerrlab1);
-YYLABEL(yyerrlab1)   /* here on error raised explicitly by an action */
+    YYGOTO(yyerrlab1);
+    YYLABEL(yyerrlab1)   /* here on error raised explicitly by an action */
 
-  if (yyerrstatus == 3)
+    if (yyerrstatus == 3)
     {
-      /* if just tried and failed to reuse lookahead token after an error, discard it.  */
+        /* if just tried and failed to reuse lookahead token after an error, discard it.  */
 
-      /* return failure if at end of input */
-      if (YY_AnsiCParser_CHAR == YYEOF)
-	YYABORT;
+        /* return failure if at end of input */
+        if (YY_AnsiCParser_CHAR == YYEOF)
+            YYABORT;
 
 #if YY_AnsiCParser_DEBUG != 0
-      if (YY_AnsiCParser_DEBUG_FLAG)
-	fprintf(stderr, "Discarding token %d (%s).\n", YY_AnsiCParser_CHAR, yytname[yychar1]);
+        if (YY_AnsiCParser_DEBUG_FLAG)
+            fprintf(stderr, "Discarding token %d (%s).\n", YY_AnsiCParser_CHAR, yytname[yychar1]);
 #endif
 
-      YY_AnsiCParser_CHAR = YYEMPTY;
+        YY_AnsiCParser_CHAR = YYEMPTY;
     }
 
-  /* Else will try to reuse lookahead token
-     after shifting the error token.  */
+    /* Else will try to reuse lookahead token
+       after shifting the error token.  */
 
-  yyerrstatus = 3;              /* Each real token shifted decrements this */
+    yyerrstatus = 3;              /* Each real token shifted decrements this */
 
-  YYGOTO(yyerrhandle);
+    YYGOTO(yyerrhandle);
 
-YYLABEL(yyerrdefault)  /* current state does not do anything special for the error token. */
+    YYLABEL(yyerrdefault)  /* current state does not do anything special for the error token. */
 
 #if 0
-  /* This is wrong; only states that explicitly want error tokens
-     should shift them.  */
-  yyn = yydefact[yystate];  /* If its default is to accept any token, ok.  Otherwise pop it.*/
-  if (yyn) YYGOTO(yydefault);
+    /* This is wrong; only states that explicitly want error tokens
+       should shift them.  */
+    yyn = yydefact[yystate];  /* If its default is to accept any token, ok.  Otherwise pop it.*/
+    if (yyn) YYGOTO(yydefault);
 #endif
 
-YYLABEL(yyerrpop)   /* pop the current state because it cannot handle the error token */
+    YYLABEL(yyerrpop)   /* pop the current state because it cannot handle the error token */
 
-  if (yyssp == yyss) YYABORT;
-  yyvsp--;
-  yystate = *--yyssp;
+    if (yyssp == yyss) YYABORT;
+    yyvsp--;
+    yystate = *--yyssp;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  yylsp--;
+    yylsp--;
 #endif
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
+    if (YY_AnsiCParser_DEBUG_FLAG)
     {
-      short *ssp1 = yyss - 1;
-      fprintf (stderr, "Error: state stack now");
-      while (ssp1 != yyssp)
-	fprintf (stderr, " %d", *++ssp1);
-      fprintf (stderr, "\n");
+        short *ssp1 = yyss - 1;
+        fprintf (stderr, "Error: state stack now");
+        while (ssp1 != yyssp)
+            fprintf (stderr, " %d", *++ssp1);
+        fprintf (stderr, "\n");
     }
 #endif
 
-YYLABEL(yyerrhandle)
+    YYLABEL(yyerrhandle)
 
-  yyn = yypact[yystate];
-  if (yyn == YYFLAG)
-    YYGOTO(yyerrdefault);
+    yyn = yypact[yystate];
+    if (yyn == YYFLAG)
+        YYGOTO(yyerrdefault);
 
-  yyn += YYTERROR;
-  if (yyn < 0 || yyn > YYLAST || yycheck[yyn] != YYTERROR)
-    YYGOTO(yyerrdefault);
+    yyn += YYTERROR;
+    if (yyn < 0 || yyn > YYLAST || yycheck[yyn] != YYTERROR)
+        YYGOTO(yyerrdefault);
 
-  yyn = yytable[yyn];
-  if (yyn < 0)
+    yyn = yytable[yyn];
+    if (yyn < 0)
     {
-      if (yyn == YYFLAG)
-	YYGOTO(yyerrpop);
-      yyn = -yyn;
-      YYGOTO(yyreduce);
+        if (yyn == YYFLAG)
+            YYGOTO(yyerrpop);
+        yyn = -yyn;
+        YYGOTO(yyreduce);
     }
-  else if (yyn == 0)
-    YYGOTO(yyerrpop);
+    else if (yyn == 0)
+        YYGOTO(yyerrpop);
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
+    if (yyn == YYFINAL)
+        YYACCEPT;
 
 #if YY_AnsiCParser_DEBUG != 0
-  if (YY_AnsiCParser_DEBUG_FLAG)
-    fprintf(stderr, "Shifting error token, ");
+    if (YY_AnsiCParser_DEBUG_FLAG)
+        fprintf(stderr, "Shifting error token, ");
 #endif
 
-  *++yyvsp = YY_AnsiCParser_LVAL;
+    *++yyvsp = YY_AnsiCParser_LVAL;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-  *++yylsp = YY_AnsiCParser_LLOC;
+    *++yylsp = YY_AnsiCParser_LLOC;
 #endif
 
-  yystate = yyn;
-  YYGOTO(yynewstate);
-/* end loop, in which YYGOTO may be used. */
-  YYENDGOTO
+    yystate = yyn;
+    YYGOTO(yynewstate);
+    /* end loop, in which YYGOTO may be used. */
+    YYENDGOTO
 }
 
 /* END */
@@ -1631,8 +1654,8 @@ int AnsiCParser::yylex()
 
 void AnsiCParser::yyerror(char *s)
 {
-	fflush(stdout);
-	printf("\n%*s\n%*s\n", theScanner->column, "^", theScanner->column, s);
+    fflush(stdout);
+    printf("\n%*s\n%*s\n", theScanner->column, "^", theScanner->column, s);
 }
 
 

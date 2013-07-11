@@ -8,9 +8,9 @@ class FrontEnd;
 class PentiumFrontEnd;
 
 class FrontPentTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     FrontPentTest(std::string name) : CppUnit::TestCase (name)
     {}
 

@@ -48,19 +48,27 @@ public:
     void make_isect(StatementSet& other);    // Set intersection
     bool isSubSetOf(StatementSet& other);    // subset relation
 
-    int size() {return sset.size();}        // Number of elements
+    int size() {
+        return sset.size();   // Number of elements
+    }
     Statement* getFirst(StmtSetIter& it);   // Get the first Statement
     Statement* getNext (StmtSetIter& it);   // Get next
-    void insert(Statement* s) {sset.insert(s);} // Insertion
+    void insert(Statement* s) {
+        sset.insert(s);   // Insertion
+    }
     bool remove(Statement* s);              // Removal; rets false if not found
     bool removeIfDefines(Exp* given);       // Remove if given exp is defined
     bool removeIfDefines(StatementSet& given);// Remove if any given is def'd
     bool exists(Statement* s);              // Search; returns false if !found
     bool defines(Exp* loc);                 // Search; returns true if any
-                                            // statement defines loc
-    void clear() {sset.clear();}            // Clear the set
+    // statement defines loc
+    void clear() {
+        sset.clear();   // Clear the set
+    }
     bool operator==(const StatementSet& o) const // Compare
-        { return sset == o.sset;}
+    {
+        return sset == o.sset;
+    }
     void print();                           // Print to std::cerr (for debug)
 };
 
@@ -71,19 +79,24 @@ class StatementList {
     std::list<Statement*> slist;          // For now, use use standard list
 
 public:
-    int size() {return slist.size();}        // Number of elements
+    int size() {
+        return slist.size();   // Number of elements
+    }
     Statement* getFirst(StmtListIter& it);   // Get the first Statement
     Statement* getNext (StmtListIter& it);   // Get next
     Statement* getLast (StmtListRevIter& it);// Get the last Statement
     Statement* getPrev (StmtListRevIter& it);// Get previous
-    void append(Statement* s) {slist.push_back(s);} // Insert at end
+    void append(Statement* s) {
+        slist.push_back(s);   // Insert at end
+    }
     void append(StatementList& sl);         // Append whole StatementList
     void append(StatementSet& sl);          // Append whole StatementSet
     bool remove(Statement* s);              // Removal; rets false if not found
     // This one is needed where you remove in the middle of a loop
     // Use like this: it = mystatementlist.remove(it);
     StmtListIter StatementList::remove(StmtListIter it) {
-        return slist.erase(it); }
+        return slist.erase(it);
+    }
     bool exists(Statement* s);  // Find; returns false if not found
 };
 
@@ -107,7 +120,9 @@ public:
     virtual ~Statement() {
     }
 
-    void setProc(UserProc *p) { proc = p; }
+    void setProc(UserProc *p) {
+        proc = p;
+    }
 
     // calculates the reaching definitions set after this statement
     virtual void calcReachOut(StatementSet &reachout);
@@ -170,26 +185,39 @@ public:
     // MVE: is this useful?
     virtual Statement *findDef(Exp *e);
 
-    // 
+    //
     // get my uses' definitions (ud chain)
-    // 
+    //
     void calcUses(StatementSet &uses, Cfg* cfg);
-    int getNumUses() { return uses.size(); }
-    StatementSet &getUses() { return uses; }
-    void clearUses() {uses.clear(); usedBy.clear();}
- 
-    // 
+    int getNumUses() {
+        return uses.size();
+    }
+    StatementSet &getUses() {
+        return uses;
+    }
+    void clearUses() {
+        uses.clear();
+        usedBy.clear();
+    }
+
+    //
     // usedBy: du chain (my def's uses)
     //
     void calcUsedBy(StatementSet &usedBy);
-    int getNumUsedBy() { return usedBy.size(); }
+    int getNumUsedBy() {
+        return usedBy.size();
+    }
 
     // update my data flow (I'm about to be deleted)
     void updateDfForErase();
 
     // get/set the enclosing BB
-    PBB getBB() { return pbb; }
-    void setBB(PBB bb) { pbb = bb; }
+    PBB getBB() {
+        return pbb;
+    }
+    void setBB(PBB bb) {
+        pbb = bb;
+    }
 
     // returns true if this statement can be propagated to all its
     // uses and removed

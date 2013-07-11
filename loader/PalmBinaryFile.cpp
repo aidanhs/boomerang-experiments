@@ -40,9 +40,9 @@ PalmBinaryFile::PalmBinaryFile()
 
 PalmBinaryFile::~PalmBinaryFile()
 {
-	for (int i=0; i < m_iNumSections; i++)
-		if (m_pSections[i].pSectionName != 0)
-			delete [] m_pSections[i].pSectionName;
+    for (int i=0; i < m_iNumSections; i++)
+        if (m_pSections[i].pSectionName != 0)
+            delete [] m_pSections[i].pSectionName;
     if (m_pImage) {
         delete [] m_pImage;
     }
@@ -80,8 +80,8 @@ bool PalmBinaryFile::RealLoad(const char* sName)
 
     // Check type at offset 0x3C; should be "appl" (or "palm"; ugh!)
     if ((strncmp((char*)(m_pImage+0x3C), "appl", 4) != 0) &&
-        (strncmp((char*)(m_pImage+0x3C), "panl", 4) != 0) &&
-        (strncmp((char*)(m_pImage+0x3C), "libr", 4) != 0)) {
+            (strncmp((char*)(m_pImage+0x3C), "panl", 4) != 0) &&
+            (strncmp((char*)(m_pImage+0x3C), "libr", 4) != 0)) {
         fprintf(stderr, "%s is not a standard .prc file\n", sName);
         return false;
     }
@@ -93,7 +93,7 @@ bool PalmBinaryFile::RealLoad(const char* sName)
     m_pSections = new SectionInfo[m_iNumSections];
     if (m_pSections == 0) {
         fprintf(stderr, "Could not allocate section info array of %d items\n",
-            m_iNumSections);
+                m_iNumSections);
         if (m_pImage) {
             delete m_pImage;
             m_pImage = 0;
@@ -134,7 +134,7 @@ bool PalmBinaryFile::RealLoad(const char* sName)
             m_pSections[i].bData = true;
 
     }
-        
+
     // Set the length for the last section
     m_pSections[m_iNumSections-1].uSectionSize = size - off;
 
@@ -162,7 +162,7 @@ bool PalmBinaryFile::RealLoad(const char* sName)
     m_pData = new unsigned char[sizeData];
     if (m_pData == 0) {
         fprintf(stderr, "Could not allocate %u bytes for data section\n",
-            sizeData);
+                sizeData);
     }
 
     // Uncompress the data. Skip first long (offset of CODE1 "xrefs")
@@ -172,7 +172,7 @@ bool PalmBinaryFile::RealLoad(const char* sName)
     unsigned char* q = (m_pData + m_SizeBelowA5 + start);
     bool done = false;
     while (!done && (p < (unsigned char*)(pData->uHostAddr +
-      pData->uSectionSize))) {
+                                          pData->uSectionSize))) {
         unsigned char rle = *p++;
         if (rle == 0) {
             done = true;
@@ -181,26 +181,50 @@ bool PalmBinaryFile::RealLoad(const char* sName)
         else if (rle == 1) {
             // 0x01 b_0 b_1
             // => 0x00 0x00 0x00 0x00 0xFF 0xFF b_0 b_1
-            *q++ = 0; *q++ = 0; *q++ = 0; *q++ = 0;
-            *q++ = 0xFF; *q++ = 0xFF; *q++ = *p++; *q++ = *p++;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = 0xFF;
+            *q++ = 0xFF;
+            *q++ = *p++;
+            *q++ = *p++;
         }
         else if (rle == 2) {
             // 0x02 b_0 b_1 b_2
             // => 0x00 0x00 0x00 0x00 0xFF b_0 b_1 b_2
-            *q++ = 0; *q++ = 0; *q++ = 0; *q++ = 0;
-            *q++ = 0xFF; *q++ = *p++; *q++ = *p++; *q++ = *p++;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = 0xFF;
+            *q++ = *p++;
+            *q++ = *p++;
+            *q++ = *p++;
         }
         else if (rle == 3) {
             // 0x03 b_0 b_1 b_2
             // => 0xA9 0xF0 0x00 0x00 b_0 b_1 0x00 b_2
-            *q++ = 0xA9; *q++ = 0xF0; *q++ = 0; *q++ = 0;
-            *q++ = *p++; *q++ = *p++; *q++ = 0; *q++ = *p++; 
+            *q++ = 0xA9;
+            *q++ = 0xF0;
+            *q++ = 0;
+            *q++ = 0;
+            *q++ = *p++;
+            *q++ = *p++;
+            *q++ = 0;
+            *q++ = *p++;
         }
         else if (rle == 4) {
             // 0x04 b_0 b_1 b_2 b_3
             // => 0xA9 axF0 0x00 b_0 b_1 b_3 0x00 b_3
-            *q++ = 0xA9; *q++ = 0xF0; *q++ = 0; *q++ = *p++;
-            *q++ = *p++; *q++ = *p++; *q++ = 0; *q++ = *p++;
+            *q++ = 0xA9;
+            *q++ = 0xF0;
+            *q++ = 0;
+            *q++ = *p++;
+            *q++ = *p++;
+            *q++ = *p++;
+            *q++ = 0;
+            *q++ = *p++;
         }
         else if (rle < 0x10) {
             // 5-0xF are invalid.
@@ -254,7 +278,7 @@ void PalmBinaryFile::UnLoad()
 
 // This is provided for completeness only...
 std::list<SectionInfo*>& PalmBinaryFile::GetEntryPoints(const char* pEntry
- /* = "main" */)
+        /* = "main" */)
 {
     std::list<SectionInfo*>* ret = new std::list<SectionInfo*>;
     SectionInfo* pSect = GetSectionInfoByName("code1");
@@ -278,7 +302,7 @@ bool PalmBinaryFile::Open(const char* sName)
 void PalmBinaryFile::Close()
 {
     // Not implemented yet
-    return; 
+    return;
 }
 bool PalmBinaryFile::PostLoad(void* handle)
 {
@@ -362,7 +386,7 @@ int PalmBinaryFile::GetAppID() const
         return 0;
     // Beware the endianness (large)
 #define OFFSET_ID 0x40
-    return (m_pImage[OFFSET_ID  ] << 24) + (m_pImage[OFFSET_ID+1] << 16) + 
+    return (m_pImage[OFFSET_ID  ] << 24) + (m_pImage[OFFSET_ID+1] << 16) +
            (m_pImage[OFFSET_ID+2] <<  8) + (m_pImage[OFFSET_ID+3]);
 }
 
@@ -372,20 +396,23 @@ static SWord CWFirstJump[] = {
     0x0, 0x1,           // ? All Pilot programs seem to start with this
     0x487a, 0x4,        // pea 4(pc)
     0x0697, WILD, WILD, // addil #number, (a7)
-    0x4e75};            // rts
+    0x4e75
+};            // rts
 static SWord CWCallMain[] = {
     0x487a, 14,         // pea 14(pc)
     0x487a, 4,          // pea 4(pc)
     0x0697, WILD, WILD, // addil #number, (a7)
-    0x4e75};            // rts
+    0x4e75
+};            // rts
 static SWord GccCallMain[] = {
     0x3F04,             // movew d4, -(a7)
     0x6100, WILD,       // bsr xxxx
     0x3F04,             // movew d4, -(a7)
     0x2F05,             // movel d5, -(a7)
     0x3F06,             // movew d6, -(a7)
-    0x6100, WILD};      // bsr PilotMain
-    
+    0x6100, WILD
+};      // bsr PilotMain
+
 /*==============================================================================
  * FUNCTION:      findPattern
  * OVERVIEW:      Try to find a pattern
@@ -428,14 +455,14 @@ ADDRESS PalmBinaryFile::GetMainEntryPoint()
 
     // First try the CW first jump pattern
     SWord* res = findPattern(startCode, CWFirstJump,
-        sizeof(CWFirstJump) / sizeof(SWord), 1);
+                             sizeof(CWFirstJump) / sizeof(SWord), 1);
     if (res) {
         // We have the code warrior first jump. Get the addil operand
         int addilOp = (startCode[5] << 16) + startCode[6];
         SWord* startupCode = (SWord*)((int)startCode + 10 + addilOp);
         // Now check the next 60 SWords for the call to PilotMain
         res = findPattern(startupCode, CWCallMain,
-            sizeof(CWCallMain) / sizeof(SWord), 60);
+                          sizeof(CWCallMain) / sizeof(SWord), 60);
         if (res) {
             // Get the addil operand
             addilOp = (res[5] << 16) + res[6];
@@ -449,7 +476,7 @@ ADDRESS PalmBinaryFile::GetMainEntryPoint()
     }
     // Check for gcc call to main
     res = findPattern(startCode, GccCallMain,
-        sizeof(GccCallMain) / sizeof(SWord), 75);
+                      sizeof(GccCallMain) / sizeof(SWord), 75);
     if (res) {
         // Get the operand to the bsr
         SWord bsrOp = res[7];
@@ -465,7 +492,7 @@ void PalmBinaryFile::GenerateBinFiles(const std::string& path) const
     for (int i=0; i < m_iNumSections; i++) {
         SectionInfo* pSect = m_pSections + i;
         if ((strncmp(pSect->pSectionName, "code", 4) != 0) &&
-            (strncmp(pSect->pSectionName, "data", 4) != 0)) {
+                (strncmp(pSect->pSectionName, "data", 4) != 0)) {
             // Save this section in a file
             // First construct the file name
             char name[20];
@@ -483,8 +510,8 @@ void PalmBinaryFile::GenerateBinFiles(const std::string& path) const
             fwrite((void*)pSect->uHostAddr, pSect->uSectionSize, 1, f);
             fclose(f);
         }
-   }
-} 
+    }
+}
 
 #ifndef WIN32
 // This function is called via dlopen/dlsym; it returns a new BinaryFile
@@ -495,6 +522,6 @@ extern "C" {
     BinaryFile* construct()
     {
         return new PalmBinaryFile;
-    }    
+    }
 }
 #endif

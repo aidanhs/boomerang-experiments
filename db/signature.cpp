@@ -14,7 +14,7 @@
 
 /*
  * $Revision: 1.26.2.2 $
- * 
+ *
  * 15 Jul 02 - Trent: Created.
  * 18 Jul 02 - Mike: Changed addParameter's last param to deflt to "", not NULL
  * 02 Jan 03 - Mike: Fixed SPARC getParamExp and getArgExp
@@ -23,7 +23,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <string>
 #include <sstream>
@@ -43,72 +43,72 @@
 
 namespace CallingConvention {
 
-    class Win32Signature : public Signature {
-    public:
-        Win32Signature(const char *nam);
-        Win32Signature(Signature &old);
-        virtual ~Win32Signature() { }
-        virtual Signature *clone();
-        virtual bool operator==(const Signature& other) const;
-        static bool qualified(UserProc *p, Signature &candidate);
+class Win32Signature : public Signature {
+public:
+    Win32Signature(const char *nam);
+    Win32Signature(Signature &old);
+    virtual ~Win32Signature() { }
+    virtual Signature *clone();
+    virtual bool operator==(const Signature& other) const;
+    static bool qualified(UserProc *p, Signature &candidate);
 
-        virtual bool serialize(std::ostream &ouf, int len);
-        virtual bool deserialize_fid(std::istream &inf, int fid);
+    virtual bool serialize(std::ostream &ouf, int len);
+    virtual bool deserialize_fid(std::istream &inf, int fid);
 
-        virtual Exp *getReturnExp();
+    virtual Exp *getReturnExp();
 
-        virtual Exp *getParamExp(int n);
-        virtual Exp *getArgumentExp(int n);
+    virtual Exp *getParamExp(int n);
+    virtual Exp *getArgumentExp(int n);
 
-        virtual Signature *promote(UserProc *p);
-        virtual void getInternalStatements(StatementList &stmts);
-	virtual Exp *getStackWildcard();
-    };
+    virtual Signature *promote(UserProc *p);
+    virtual void getInternalStatements(StatementList &stmts);
+    virtual Exp *getStackWildcard();
+};
 
-    namespace StdC {
-        class PentiumSignature : public Signature {
-        public:
-            PentiumSignature(const char *nam);
-            PentiumSignature(Signature &old);
-            virtual ~PentiumSignature() { }
-            virtual Signature *clone(); 
-            virtual bool operator==(const Signature& other) const;
-            static bool qualified(UserProc *p, Signature &candidate);
+namespace StdC {
+class PentiumSignature : public Signature {
+public:
+    PentiumSignature(const char *nam);
+    PentiumSignature(Signature &old);
+    virtual ~PentiumSignature() { }
+    virtual Signature *clone();
+    virtual bool operator==(const Signature& other) const;
+    static bool qualified(UserProc *p, Signature &candidate);
 
-            virtual bool serialize(std::ostream &ouf, int len);
-            virtual bool deserialize_fid(std::istream &inf, int fid);
+    virtual bool serialize(std::ostream &ouf, int len);
+    virtual bool deserialize_fid(std::istream &inf, int fid);
 
-            virtual Exp *getReturnExp();
+    virtual Exp *getReturnExp();
 
-            virtual Exp *getParamExp(int n);
-            virtual Exp *getArgumentExp(int n);
+    virtual Exp *getParamExp(int n);
+    virtual Exp *getArgumentExp(int n);
 
-            virtual Signature *promote(UserProc *p);
-            virtual void getInternalStatements(StatementList &stmts);
-	    virtual Exp *getStackWildcard();
-        };      
+    virtual Signature *promote(UserProc *p);
+    virtual void getInternalStatements(StatementList &stmts);
+    virtual Exp *getStackWildcard();
+};
 
-        class SparcSignature : public Signature {
-        public:
-            SparcSignature(const char *nam);
-            SparcSignature(Signature &old);
-            virtual ~SparcSignature() { }
-            virtual Signature *clone();
-            virtual bool operator==(const Signature& other) const;
-            static bool qualified(UserProc *p, Signature &candidate);
+class SparcSignature : public Signature {
+public:
+    SparcSignature(const char *nam);
+    SparcSignature(Signature &old);
+    virtual ~SparcSignature() { }
+    virtual Signature *clone();
+    virtual bool operator==(const Signature& other) const;
+    static bool qualified(UserProc *p, Signature &candidate);
 
-            virtual bool serialize(std::ostream &ouf, int len);
-            virtual bool deserialize_fid(std::istream &inf, int fid);
+    virtual bool serialize(std::ostream &ouf, int len);
+    virtual bool deserialize_fid(std::istream &inf, int fid);
 
-            virtual Exp *getReturnExp();
+    virtual Exp *getReturnExp();
 
-            virtual Exp *getParamExp(int n);
-            virtual Exp *getArgumentExp(int n);
+    virtual Exp *getParamExp(int n);
+    virtual Exp *getArgumentExp(int n);
 
-            virtual Signature *promote(UserProc *p);
-	    virtual Exp *getStackWildcard();
-        };
-    };
+    virtual Signature *promote(UserProc *p);
+    virtual Exp *getStackWildcard();
+};
+};
 };
 
 CallingConvention::Win32Signature::Win32Signature(const char *nam) : Signature(nam)
@@ -159,25 +159,25 @@ bool CallingConvention::Win32Signature::qualified(UserProc *p, Signature &candid
             std::cerr << std::endl;
         }
         if (e->getLeft()->getOper() == opPC) {
-            if (e->getRight()->isMemOf() && 
-              e->getRight()->getSubExp1()->isRegOf() &&
-              e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-              ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-              == 28) {
+            if (e->getRight()->isMemOf() &&
+                    e->getRight()->getSubExp1()->isRegOf() &&
+                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                    == 28) {
                 if (VERBOSE)
                     std::cerr << "got pc = m[r[28]]" << std::endl;
                 gotcorrectret1 = true;
             }
-        } else if (e->getLeft()->isRegOf() && 
+        } else if (e->getLeft()->isRegOf() &&
                    e->getLeft()->getSubExp1()->isIntConst() &&
                    ((Const*)e->getLeft()->getSubExp1())->getInt() == 28) {
             if (e->getRight()->getOper() == opPlus &&
-              e->getRight()->getSubExp1()->isRegOf() &&
-              e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-              ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-              == 28 &&
-              e->getRight()->getSubExp2()->isIntConst() &&
-              ((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
+                    e->getRight()->getSubExp1()->isRegOf() &&
+                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                    == 28 &&
+                    e->getRight()->getSubExp2()->isIntConst() &&
+                    ((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
                 if (VERBOSE)
                     std::cerr << "got r[28] = r[28] + 4" << std::endl;
                 gotcorrectret2 = true;
@@ -217,32 +217,32 @@ bool CallingConvention::Win32Signature::serialize(std::ostream &ouf, int len)
     saveLen(ouf, 0);
 
     len = ouf.tellp() - st;
-    return true;    
+    return true;
 }
 
 bool CallingConvention::Win32Signature::deserialize_fid(std::istream &inf, int fid)
 {
     switch(fid) {
-        case FID_SIGNATURE_PARAM:
-            {
-                std::streampos pos = inf.tellg();
-                int len = loadLen(inf);
-                std::string nam;
-                loadString(inf, nam);
-                Type *t = Type::deserialize(inf);
-                params.push_back(new Parameter(t, nam.c_str()));
-                std::streampos now = inf.tellg();
-                assert(len == (now - pos));
-            }
-            break;
-        default:
-            return Signature::deserialize_fid(inf, fid);
+    case FID_SIGNATURE_PARAM:
+    {
+        std::streampos pos = inf.tellg();
+        int len = loadLen(inf);
+        std::string nam;
+        loadString(inf, nam);
+        Type *t = Type::deserialize(inf);
+        params.push_back(new Parameter(t, nam.c_str()));
+        std::streampos now = inf.tellg();
+        assert(len == (now - pos));
+    }
+    break;
+    default:
+        return Signature::deserialize_fid(inf, fid);
     }
     return true;
 }
 
 Exp *CallingConvention::Win32Signature::getReturnExp()
-{   
+{
     return new Unary(opRegOf, new Const(24));
 }
 
@@ -267,17 +267,17 @@ Signature *CallingConvention::Win32Signature::promote(UserProc *p)
 
 Exp *CallingConvention::Win32Signature::getStackWildcard()
 {
-    return new Unary(opMemOf, new Binary(opPlus, new Unary(opRegOf, 
-               new Const(28)), new Terminal(opWild)));
+    return new Unary(opMemOf, new Binary(opPlus, new Unary(opRegOf,
+                                         new Const(28)), new Terminal(opWild)));
 }
 
 void CallingConvention::Win32Signature::getInternalStatements(StatementList &stmts)
 {
     static AssignExp *fixpc = new AssignExp(new Terminal(opPC),
-            new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
+                                            new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
     static AssignExp *fixesp = new AssignExp(new Unary(opRegOf, new Const(28)),
             new Binary(opPlus, new Unary(opRegOf, new Const(28)),
-                new Const(4 + params.size()*4)));
+                       new Const(4 + params.size()*4)));
     stmts.append((AssignExp*)fixpc->clone());
     stmts.append((AssignExp*)fixesp->clone());
 }
@@ -326,25 +326,25 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p, Signature
         AssignExp *e = dynamic_cast<AssignExp*>(s);
         if (e == NULL) continue;
         if (e->getLeft()->getOper() == opPC) {
-            if (e->getRight()->isMemOf() && 
-              e->getRight()->getSubExp1()->isRegOf() &&
-              e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-              ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-              == 28) {
+            if (e->getRight()->isMemOf() &&
+                    e->getRight()->getSubExp1()->isRegOf() &&
+                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                    == 28) {
                 if (VERBOSE)
                     std::cerr << "got pc = m[r[28]]" << std::endl;
                 gotcorrectret1 = true;
             }
-        } else if (e->getLeft()->isRegOf() && 
-          e->getLeft()->getSubExp1()->isIntConst() &&
-          ((Const*)e->getLeft()->getSubExp1())->getInt() == 28) {
+        } else if (e->getLeft()->isRegOf() &&
+                   e->getLeft()->getSubExp1()->isIntConst() &&
+                   ((Const*)e->getLeft()->getSubExp1())->getInt() == 28) {
             if (e->getRight()->getOper() == opPlus &&
-              e->getRight()->getSubExp1()->isRegOf() &&
-              e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-              ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-              == 28 &&
-              e->getRight()->getSubExp2()->isIntConst() &&
-              ((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
+                    e->getRight()->getSubExp1()->isRegOf() &&
+                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                    == 28 &&
+                    e->getRight()->getSubExp2()->isIntConst() &&
+                    ((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
                 if (VERBOSE)
                     std::cerr << "got r[28] = r[28] + 4" << std::endl;
                 gotcorrectret2 = true;
@@ -384,26 +384,26 @@ bool CallingConvention::StdC::PentiumSignature::serialize(std::ostream &ouf, int
     saveLen(ouf, 0);
 
     len = ouf.tellp() - st;
-    return true;    
+    return true;
 }
 
 bool CallingConvention::StdC::PentiumSignature::deserialize_fid(std::istream &inf, int fid)
 {
     switch(fid) {
-        case FID_SIGNATURE_PARAM:
-            {
-                std::streampos pos = inf.tellg();
-                int len = loadLen(inf);
-                std::string nam;
-                loadString(inf, nam);
-                Type *t = Type::deserialize(inf);
-                params.push_back(new Parameter(t, nam.c_str()));
-                std::streampos now = inf.tellg();
-                assert(len == (now - pos));
-            }
-            break;
-        default:
-            return Signature::deserialize_fid(inf, fid);
+    case FID_SIGNATURE_PARAM:
+    {
+        std::streampos pos = inf.tellg();
+        int len = loadLen(inf);
+        std::string nam;
+        loadString(inf, nam);
+        Type *t = Type::deserialize(inf);
+        params.push_back(new Parameter(t, nam.c_str()));
+        std::streampos now = inf.tellg();
+        assert(len == (now - pos));
+    }
+    break;
+    default:
+        return Signature::deserialize_fid(inf, fid);
     }
     return true;
 }
@@ -422,42 +422,42 @@ Exp *CallingConvention::StdC::PentiumSignature::getParamExp(int n)
 Exp *CallingConvention::StdC::PentiumSignature::getArgumentExp(int n)
 {
     Exp *esp = new Unary(opRegOf, new Const(28));
-        //if (n == 0)
+    //if (n == 0)
     //    return new Unary(opMemOf, esp);
-    return new Unary(opMemOf, new Binary(opPlus, esp, 
-                new Const((int)((n+1) * 4))));
+    return new Unary(opMemOf, new Binary(opPlus, esp,
+                                         new Const((int)((n+1) * 4))));
 }
 
 Signature *CallingConvention::StdC::PentiumSignature::promote(UserProc *p)
 {
-    // No promotions from here up, obvious idea would be c++ name mangling  
+    // No promotions from here up, obvious idea would be c++ name mangling
     return this;
 }
 
 Exp *CallingConvention::StdC::PentiumSignature::getStackWildcard()
 {
-    return new Unary(opMemOf, new Binary(opPlus, new Unary(opRegOf, 
-               new Const(28)), new Terminal(opWild)));
+    return new Unary(opMemOf, new Binary(opPlus, new Unary(opRegOf,
+                                         new Const(28)), new Terminal(opWild)));
 }
 
 
 void CallingConvention::StdC::PentiumSignature::getInternalStatements(
-  StatementList &stmts) {
+    StatementList &stmts) {
     static AssignExp *fixpc = new AssignExp(new Terminal(opPC),
-            new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
+                                            new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
     static AssignExp *fixesp = new AssignExp(new Unary(opRegOf, new Const(28)),
             new Binary(opPlus, new Unary(opRegOf, new Const(28)),
-                new Const(4)));
+                       new Const(4)));
     stmts.append((AssignExp*)fixpc->clone());
     stmts.append((AssignExp*)fixesp->clone());
 }
 
 CallingConvention::StdC::SparcSignature::SparcSignature(const char *nam) :
-  Signature(nam) {
+    Signature(nam) {
 }
 
 CallingConvention::StdC::SparcSignature::SparcSignature(Signature &old) :
-  Signature(old) {
+    Signature(old) {
 }
 
 Signature *CallingConvention::StdC::SparcSignature::clone() {
@@ -469,23 +469,23 @@ Signature *CallingConvention::StdC::SparcSignature::clone() {
 }
 
 bool CallingConvention::StdC::SparcSignature::operator==(const Signature&
-  other) const {
+        other) const {
     // TODO
     return false;
 }
 
 bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p,
-  Signature &candidate) {
+        Signature &candidate) {
     std::string feid(p->getProg()->getFrontEndId());
     if (feid != "sparc") return false;
 
     // is there other constraints?
-    
+
     return true;
 }
 
 bool CallingConvention::StdC::SparcSignature::serialize(std::ostream &ouf,
-  int len) {
+        int len) {
     std::streampos st = ouf.tellp();
 
     char type = 0;
@@ -514,26 +514,26 @@ bool CallingConvention::StdC::SparcSignature::serialize(std::ostream &ouf,
     saveLen(ouf, 0);
 
     len = ouf.tellp() - st;
-    return true;    
+    return true;
 }
 
 bool CallingConvention::StdC::SparcSignature::deserialize_fid(std::istream &inf, int fid)
 {
     switch(fid) {
-        case FID_SIGNATURE_PARAM:
-            {
-                std::streampos pos = inf.tellg();
-                int len = loadLen(inf);
-                std::string nam;
-                loadString(inf, nam);
-                Type *t = Type::deserialize(inf);
-                params.push_back(new Parameter(t, nam.c_str()));
-                std::streampos now = inf.tellg();
-                assert(len == (now - pos));
-            }
-            break;
-        default:
-            return Signature::deserialize_fid(inf, fid);
+    case FID_SIGNATURE_PARAM:
+    {
+        std::streampos pos = inf.tellg();
+        int len = loadLen(inf);
+        std::string nam;
+        loadString(inf, nam);
+        Type *t = Type::deserialize(inf);
+        params.push_back(new Parameter(t, nam.c_str()));
+        std::streampos now = inf.tellg();
+        assert(len == (now - pos));
+    }
+    break;
+    default:
+        return Signature::deserialize_fid(inf, fid);
     }
     return true;
 }
@@ -562,9 +562,9 @@ Exp *CallingConvention::StdC::SparcSignature::getParamExp(int n)
         // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
         // m[%esp+96], etc.
         return new Unary(opMemOf,
-            new Binary(opPlus,
-                new Unary(opRegOf, new Const(14)),      // %o6 == %sp
-                new Const(92 + (n-6)*4)));
+                         new Binary(opPlus,
+                                    new Unary(opRegOf, new Const(14)),      // %o6 == %sp
+                                    new Const(92 + (n-6)*4)));
     }
     return new Unary(opRegOf, new Const((int)(8 + n)));
 }
@@ -575,9 +575,9 @@ Exp *CallingConvention::StdC::SparcSignature::getArgumentExp(int n)
         // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
         // m[%esp+96], etc.
         return new Unary(opMemOf,
-            new Binary(opPlus,
-                new Unary(opRegOf, new Const(14)),      // %o6 == %sp
-                new Const(92 + (n-6)*4)));
+                         new Binary(opPlus,
+                                    new Unary(opRegOf, new Const(14)),      // %o6 == %sp
+                                    new Const(92 + (n-6)*4)));
     }
     return new Unary(opRegOf, new Const((int)(8 + n)));
 }
@@ -590,13 +590,13 @@ Signature *CallingConvention::StdC::SparcSignature::promote(UserProc *p)
 
 Exp *CallingConvention::StdC::SparcSignature::getStackWildcard()
 {
-    return new Unary(opMemOf, new Binary(opPlus, new Unary(opRegOf, 
-               new Const(14)), new Terminal(opWild)));
+    return new Unary(opMemOf, new Binary(opPlus, new Unary(opRegOf,
+                                         new Const(14)), new Terminal(opWild)));
 }
 
 Signature::Signature(const char *nam) : rettype(new VoidType()), ellipsis(false)
 {
-    if (nam == NULL) 
+    if (nam == NULL)
         name = "<ANON>";
     else
         name = nam;
@@ -662,21 +662,21 @@ Signature *Signature::deserialize(std::istream &inf)
     loadString(inf, nam);
 
     switch(type) {
-        case 0:
-            sig = new Signature(nam.c_str());
-            break;
-        case 1:
-            sig = new CallingConvention::Win32Signature(nam.c_str());
-            break;
-        case 2:
-            sig = new CallingConvention::StdC::PentiumSignature(nam.c_str());
-            break;
-        case 3:
-            sig = new CallingConvention::StdC::SparcSignature(nam.c_str());
-            break;
+    case 0:
+        sig = new Signature(nam.c_str());
+        break;
+    case 1:
+        sig = new CallingConvention::Win32Signature(nam.c_str());
+        break;
+    case 2:
+        sig = new CallingConvention::StdC::PentiumSignature(nam.c_str());
+        break;
+    case 3:
+        sig = new CallingConvention::StdC::SparcSignature(nam.c_str());
+        break;
     }
     assert(sig);
-    
+
     int fid;
     while ((fid = loadFID(inf)) != -1 && fid != FID_SIGNATURE_END)
         sig->deserialize_fid(inf, fid);
@@ -688,20 +688,20 @@ Signature *Signature::deserialize(std::istream &inf)
 bool Signature::deserialize_fid(std::istream &inf, int fid)
 {
     switch(fid) {
-        case FID_SIGNATURE_PARAM:
-            {
-                std::streampos pos = inf.tellg();
-                int len = loadLen(inf);
-                std::string nam;
-                loadString(inf, nam);
-                Type *t = Type::deserialize(inf);
-                params.push_back(new Parameter(t, nam.c_str()));
-                std::streampos now = inf.tellg();
-                assert(len == (now - pos));
-            }
-            break;
-        default:
-            return Signature::deserialize_fid(inf, fid);
+    case FID_SIGNATURE_PARAM:
+    {
+        std::streampos pos = inf.tellg();
+        int len = loadLen(inf);
+        std::string nam;
+        loadString(inf, nam);
+        Type *t = Type::deserialize(inf);
+        params.push_back(new Parameter(t, nam.c_str()));
+        std::streampos now = inf.tellg();
+        assert(len == (now - pos));
+    }
+    break;
+    default:
+        return Signature::deserialize_fid(inf, fid);
     }
     return true;
 }
@@ -756,7 +756,7 @@ void Signature::setNumParams(int n)
         params.erase(params.begin() + n, params.end());
     } else {
         for (int i = params.size(); i < n; i++)
-            addParameter();     
+            addParameter();
     }
 }
 
@@ -863,7 +863,7 @@ void Signature::analyse(UserProc *p)
     StmtListIter it;
     for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
         if (s->getLeft() && *s->getLeft() == *getReturnExp() &&
-            s->getRight() && !(*s->getLeft() == *s->getRight())) {
+                s->getRight() && !(*s->getLeft() == *s->getRight())) {
             if (VERBOSE) {
                 std::cerr << "found: ";
                 s->printAsUse(std::cerr);
@@ -904,11 +904,11 @@ void Signature::analyse(UserProc *p)
         if (VERBOSE) std::cerr << "updateParameters for " << s << std::endl;
         updateParams(p, s);
     }
-/*    std::cerr << "searching for arguments in internals" << std::endl;
-    internal.clear();
-    p->getInternalStatements(internal);
-    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
-    updateParams(p, s, false); */
+    /*    std::cerr << "searching for arguments in internals" << std::endl;
+        internal.clear();
+        p->getInternalStatements(internal);
+        for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
+        updateParams(p, s, false); */
 }
 
 void Signature::updateParams(UserProc *p, Statement *stmt, bool checkreach)
@@ -916,17 +916,17 @@ void Signature::updateParams(UserProc *p, Statement *stmt, bool checkreach)
     int i;
     if (usesNewParam(p, stmt, checkreach, i)) {
         int n = getNumParams();
-            setNumParams(i+1);
+        setNumParams(i+1);
         for (; n < getNumParams(); n++) {
             if (VERBOSE) std::cerr << "found param " << n << std::endl;
-            p->getCFG()->searchAndReplace(getParamExp(n), 
-                new Unary(opParam, new Const((char *)getParamName(n))));
+            p->getCFG()->searchAndReplace(getParamExp(n),
+                                          new Unary(opParam, new Const((char *)getParamName(n))));
         }
     }
 }
 
 bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach,
-  int &n) {
+                             int &n) {
     n = getNumParams() - 1;
     if (VERBOSE) {
         std::cerr << "searching ";
@@ -940,14 +940,15 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach,
             bool ok = true;
             if (checkreach) {
                 bool hasDef = false;
-                    StmtSetIter it1;
-                    for (Statement* s1 = reachin.getFirst(it1); s1;
-                      s1 = reachin.getNext(it1)) {
-                        if (*s1->getLeft() == *getParamExp(i)) {
-                            hasDef = true; break; 
-                        }
+                StmtSetIter it1;
+                for (Statement* s1 = reachin.getFirst(it1); s1;
+                        s1 = reachin.getNext(it1)) {
+                    if (*s1->getLeft() == *getParamExp(i)) {
+                        hasDef = true;
+                        break;
                     }
-                    if (hasDef) ok = false;
+                }
+                if (hasDef) ok = false;
             }
             if (ok) {
                 n = i;
@@ -961,21 +962,21 @@ bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach,
 Exp* Signature::getFirstArgLoc(Prog* prog) {
     MACHINE mach = prog->getMachine();
     switch (mach) {
-        case MACHINE_SPARC: {
-            CallingConvention::StdC::SparcSignature sig("");
-            return sig.getArgumentExp(0);
-        }
-        case MACHINE_PENTIUM: {
-            //CallingConvention::StdC::PentiumSignature sig("");
-            //Exp* e = sig.getArgumentExp(0);
-            // For now, need to work around how the above appears to be the
-            // wrong thing!
-Exp* e = new Unary(opMemOf, new Unary(opRegOf, new Const(28)));
-            return e;
-        }
-        default:
-            std::cerr << "Signature::getFirstArgLoc: machine not handled\n";
-            assert(0);
+    case MACHINE_SPARC: {
+        CallingConvention::StdC::SparcSignature sig("");
+        return sig.getArgumentExp(0);
+    }
+    case MACHINE_PENTIUM: {
+        //CallingConvention::StdC::PentiumSignature sig("");
+        //Exp* e = sig.getArgumentExp(0);
+        // For now, need to work around how the above appears to be the
+        // wrong thing!
+        Exp* e = new Unary(opMemOf, new Unary(opRegOf, new Const(28)));
+        return e;
+    }
+    default:
+        std::cerr << "Signature::getFirstArgLoc: machine not handled\n";
+        assert(0);
     }
     return 0;
 }
@@ -985,13 +986,13 @@ Exp* e = new Unary(opMemOf, new Unary(opRegOf, new Const(28)));
 // logic, that happens way too late. So for now, we have this cludge.
 /*static*/ Exp* Signature::getReturnExp2(BinaryFile* pBF) {
     switch (pBF->GetMachine()) {
-        case MACHINE_SPARC: 
-            return new Unary(opRegOf, new Const(8));
-        case MACHINE_PENTIUM:
-            return new Unary(opRegOf, new Const(24));
-        default:
-            std::cerr << "getReturnSig2: machine not handled\n";
-            return NULL;
+    case MACHINE_SPARC:
+        return new Unary(opRegOf, new Const(8));
+    case MACHINE_PENTIUM:
+        return new Unary(opRegOf, new Const(24));
+    default:
+        std::cerr << "getReturnSig2: machine not handled\n";
+        return NULL;
     }
 }
 

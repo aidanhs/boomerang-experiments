@@ -35,9 +35,9 @@
  */
 
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER <= 1200 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <string>
 #include <sstream>
@@ -57,11 +57,11 @@
  *============================================================================*/
 std::string operator+(const std::string& s, int i)
 {
-	static char buf[50];
-	std::string ret(s);
+    static char buf[50];
+    std::string ret(s);
 
-	sprintf(buf,"%d",i);
-	return ret.append(buf);
+    sprintf(buf,"%d",i);
+    return ret.append(buf);
 }
 
 /*==============================================================================
@@ -73,9 +73,9 @@ std::string operator+(const std::string& s, int i)
  *============================================================================*/
 std::string initCapital(const std::string& s)
 {
-	std::string res(s);
+    std::string res(s);
     res[0] = toupper(res[0]);
-	return res;
+    return res;
 }
 
 /*==============================================================================
@@ -154,7 +154,7 @@ void upperStr(const char* s, char* d)
 {
     int len = strlen(s);
     for (int i=0; i < len; i++)
-       d[i] = toupper(s[i]);
+        d[i] = toupper(s[i]);
     d[len] = '\0';
 }
 
@@ -162,7 +162,7 @@ void upperStr(const char* s, char* d)
 /*==============================================================================
  * FUNCTION:      load
  * OVERVIEW:      Load a project at a given location
- * PARAMETERS:    location: string to the project file 
+ * PARAMETERS:    location: string to the project file
  * RETURNS:       Nothing; the prog is modified as a side effect
  *============================================================================*/
 void load(Prog *prog, std::string &location)
@@ -181,7 +181,7 @@ void load(Prog *prog, std::string &location)
     // panic if compatibility is bad.
     assert(fid == FID_VERSION);
 
-	prog->deserialize(inf);
+    prog->deserialize(inf);
 
     inf.close();
 }
@@ -189,7 +189,7 @@ void load(Prog *prog, std::string &location)
 /*==============================================================================
  * FUNCTION:      save
  * OVERVIEW:      Save a project at a given location
- * PARAMETERS:    location: string to the project file 
+ * PARAMETERS:    location: string to the project file
  * RETURNS:       Nothing
  *============================================================================*/
 void save(Prog *prog, std::string &location)
@@ -205,8 +205,8 @@ void save(Prog *prog, std::string &location)
     fid = FID_VERSION;
     saveValue(ouf, fid, false);
 
-	int len;
-	prog->serialize(ouf, len);
+    int len;
+    prog->serialize(ouf, len);
 
     ouf.close();
 }
@@ -295,7 +295,7 @@ void saveLen(std::ostream &os, int len, bool large)
         sh[2] = (len >> 16) & 255;
         sh[3] = (len >> 24) & 255;
         os.write((char *)sh, 4);
-    } else {    
+    } else {
         unsigned char ch = len;
         assert(ch != 255);
         os.write((char *)&ch, 1);

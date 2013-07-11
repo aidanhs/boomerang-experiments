@@ -14,51 +14,51 @@ class CEditBBDialog : public CDialog
 {
 // Construction
 public:
-	CEditBBDialog(CWnd* pParent = NULL, Cfg *pcfg = NULL, PBB pbb = NULL);   // standard constructor
+    CEditBBDialog(CWnd* pParent = NULL, Cfg *pcfg = NULL, PBB pbb = NULL);   // standard constructor
 
-	void graphicalSelect(PBB pbb);
-	BasicBlock *lastsel;
+    void graphicalSelect(PBB pbb);
+    BasicBlock *lastsel;
 
 // Dialog Data
-	//{{AFX_DATA(CEditBBDialog)
-	enum { IDD = IDD_EDITBB };
-	CComboBox	m_type;
-	CComboBox	m_loophead;
-	CComboBox	m_loopfollow;
-	CComboBox	m_latchnode;
-	CComboBox	m_condtype;
-	CComboBox	m_condfollow;
-	CComboBox	m_casehead;
-	//}}AFX_DATA
+    //{{AFX_DATA(CEditBBDialog)
+    enum { IDD = IDD_EDITBB };
+    CComboBox	m_type;
+    CComboBox	m_loophead;
+    CComboBox	m_loopfollow;
+    CComboBox	m_latchnode;
+    CComboBox	m_condtype;
+    CComboBox	m_condfollow;
+    CComboBox	m_casehead;
+    //}}AFX_DATA
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CEditBBDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CEditBBDialog)
+protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
-	BasicBlock *bb;
-	Cfg *cfg;
-	std::map<int, BasicBlock*> ntobb;
-	std::map<BasicBlock*, int> bbton;
-	CComboBox *lastfocus;
+    BasicBlock *bb;
+    Cfg *cfg;
+    std::map<int, BasicBlock*> ntobb;
+    std::map<BasicBlock*, int> bbton;
+    CComboBox *lastfocus;
 
-	// Generated message map functions
-	//{{AFX_MSG(CEditBBDialog)
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
-	afx_msg void OnKillfocusCondfollow();
-	afx_msg void OnSelchangeCasehead();
-	afx_msg void OnSelchangeCondfollow();
-	afx_msg void OnSelchangeLatchnode();
-	afx_msg void OnSelchangeLoopfollow();
-	afx_msg void OnSelchangeLoophead();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CEditBBDialog)
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
+    afx_msg void OnKillfocusCondfollow();
+    afx_msg void OnSelchangeCasehead();
+    afx_msg void OnSelchangeCondfollow();
+    afx_msg void OnSelchangeLatchnode();
+    afx_msg void OnSelchangeLoopfollow();
+    afx_msg void OnSelchangeLoophead();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

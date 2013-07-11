@@ -34,7 +34,9 @@ void AnalysisTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int AnalysisTest::countTestCases () const
-{ return 1; }   // ? What's this for?
+{
+    return 1;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        AnalysisTest::setUp
@@ -45,8 +47,8 @@ int AnalysisTest::countTestCases () const
  *============================================================================*/
 void AnalysisTest::setUp () {
     BinaryFile *pBF = BinaryFile::Load(CCX_SPARC);
-    if (pBF == NULL) 
-	   pBF = new BinaryFileStub();
+    if (pBF == NULL)
+        pBF = new BinaryFileStub();
     CPPUNIT_ASSERT(pBF != 0);
     CPPUNIT_ASSERT (pBF->GetMachine() == MACHINE_SPARC);
 

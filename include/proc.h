@@ -90,7 +90,9 @@ public:
      * Get/Set the first procedure that calls this procedure (or null for main/start).
      */
     Proc *getFirstCaller();
-    void setFirstCaller(Proc *p) { if (m_firstCaller == NULL) m_firstCaller = p; }
+    void setFirstCaller(Proc *p) {
+        if (m_firstCaller == NULL) m_firstCaller = p;
+    }
 
     /*
      * Returns a poiner to the Signature
@@ -165,26 +167,32 @@ public:
      * Set the number of bytes popped off the caller stack by this procedure
      */
     void setBytesPopped(int n);
-    int getBytesPopped() { return bytesPopped; }
+    int getBytesPopped() {
+        return bytesPopped;
+    }
 
     /*
      * Return true if this is a library proc
      */
-    virtual bool isLib() {return false;}
+    virtual bool isLib() {
+        return false;
+    }
 
     /*
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {return false;}
+    virtual bool isAggregateUsed() {
+        return false;
+    }
 
     /*
      * OutPut operator for a Proc object.
      */
     friend std::ostream& operator<<(std::ostream& os, Proc& proc);
-    
+
     /*
-     * Stores a list of reg to the procedure used for 
+     * Stores a list of reg to the procedure used for
      * type propagation
      */
     std::list<int> regParams;
@@ -229,40 +237,46 @@ protected:
     int bytesPopped;
 
 
-}; 
+};
 
 /*==============================================================================
  * LibProc class.
  *============================================================================*/
 class LibProc : public Proc {
 public:
-    
+
     LibProc(Prog *prog, std::string& name, ADDRESS address);
     virtual ~LibProc();
 
     /*
      * Return the coverage of this procedure in bytes.
      */
-    unsigned getCoverage() { return 0; }
+    unsigned getCoverage() {
+        return 0;
+    }
 
 #if 0
     /*
      * See comment for Proc::matchParams.
      */
     void matchParams(std::list<Exp*>& actuals, UserProc& caller,
-        const Parameters* outgoing, const Exp** intRetLoc) const;
+                     const Parameters* outgoing, const Exp** intRetLoc) const;
 #endif
 
     /*
      * Return true, since is a library proc
      */
-    bool isLib() {return true;}
+    bool isLib() {
+        return true;
+    }
 
     /*
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {return false;}
+    virtual bool isAggregateUsed() {
+        return false;
+    }
 
     /*
      * Prints this procedure to an output stream.
@@ -292,7 +306,7 @@ public:
     void setDecoded();
 
     /*
-     * Removes the decoded bit and throws away all the current information 
+     * Removes the decoded bit and throws away all the current information
      * about this procedure.
      */
     void unDecode();
@@ -317,8 +331,12 @@ public:
     /*
      * Is this procedure decompiled or partly decompiled
      */
-    bool isDecompiled() {return decompiled;}
-    bool isPartDecompiled() {return decompiled_down;}
+    bool isDecompiled() {
+        return decompiled;
+    }
+    bool isPartDecompiled() {
+        return decompiled_down;
+    }
 
     /*
      * Return the number of bytes allocated for locals on the stack.
@@ -381,7 +399,9 @@ public:
 
     // get internal statements
     // Note: assignment causes shallow copy of list
-    virtual void getInternalStatements(StatementList &sl) {sl = internal;}
+    virtual void getInternalStatements(StatementList &sl) {
+        sl = internal;
+    }
 
 private:
     /*
@@ -441,12 +461,12 @@ public:
      * Return the index of the last symbolic local for the procedure.
      */
     int getLastLocalIndex();
-    
+
     /*
      * Return the list of symbolic locals for the procedure.
      */
     std::vector<TypedExp*>& getSymbolicLocals();
-    
+
     /*
      * Replace each instance of a location in this procedure with its symbolic
      * representation if it has one.
@@ -476,7 +496,7 @@ public:
     /*
      * Add to the set of callees
      */
-    void setCallee(Proc* callee); 
+    void setCallee(Proc* callee);
 
     /*
      * return true if this procedure contains the given address
@@ -487,7 +507,9 @@ public:
      * Return true if this proc uses the special aggregate pointer as the
      * first parameter
      */
-    virtual bool isAggregateUsed() {return aggregateUsed;}
+    virtual bool isAggregateUsed() {
+        return aggregateUsed;
+    }
 
 
 private:
@@ -530,7 +552,7 @@ private:
      * symbolic form, e.g. r[8]->v2. This is only done once, by a call to
      * propagateSymbolics(). We need to know that this has happened if we
      * later determine a different return location, and it happens not to
-     * have been converted to symbolic as yet 
+     * have been converted to symbolic as yet
      */
     bool isSymbolic;
 
@@ -571,7 +593,7 @@ private:
      */
     std::set<Proc*> calleeSet;
     std::set<ADDRESS> calleeAddrSet;  // used in serialization
- 
+
     /*
      * Internal statements for this procedure
      * See Proc::moveInternalStatements

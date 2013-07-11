@@ -38,7 +38,9 @@ void ProgTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int ProgTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        ProgTest::setUp
@@ -48,7 +50,7 @@ int ProgTest::countTestCases () const
  * RETURNS:         <nothing>
  *============================================================================*/
 void ProgTest::setUp () {
-	//prog.setName("default name");
+    //prog.setName("default name");
 }
 
 /*==============================================================================
@@ -66,12 +68,12 @@ void ProgTest::tearDown () {
  * OVERVIEW:        Test setting and reading name
  *============================================================================*/
 void ProgTest::testName () {
-/*    std::string actual(prog.getName());
-    CPPUNIT_ASSERT_EQUAL(std::string("default name"), actual);
-    std::string name("Happy prog");
-    prog.setName(name.c_str());
-    actual =  prog.getName();
-    CPPUNIT_ASSERT_EQUAL(name, actual); */
+    /*    std::string actual(prog.getName());
+        CPPUNIT_ASSERT_EQUAL(std::string("default name"), actual);
+        std::string name("Happy prog");
+        prog.setName(name.c_str());
+        actual =  prog.getName();
+        CPPUNIT_ASSERT_EQUAL(name, actual); */
 }
 
 /*==============================================================================
@@ -79,24 +81,24 @@ void ProgTest::testName () {
  * OVERVIEW:        Test loading of the library parameters
  *============================================================================*/
 void ProgTest::testLibParams () {
-	// Read the library parameter information
-	// Oops - now have to set up a frontend before calling this
-/*    prog.clear();
-    prog.pBF = BinaryFile::Load(HELLO_PENTIUM);
-    CPPUNIT_ASSERT(prog.pBF != 0);
-    // Set the text limits
-    prog.getTextLimits();
+    // Read the library parameter information
+    // Oops - now have to set up a frontend before calling this
+    /*    prog.clear();
+        prog.pBF = BinaryFile::Load(HELLO_PENTIUM);
+        CPPUNIT_ASSERT(prog.pBF != 0);
+        // Set the text limits
+        prog.getTextLimits();
 
-	prog.pFE = new PentiumFrontEnd(prog.textDelta, prog.limitTextHigh);
+    	prog.pFE = new PentiumFrontEnd(prog.textDelta, prog.limitTextHigh);
 
-    prog.readLibParams();        // Read library signatures
-	// The test is that it doesn't fall over, really
-	CPPUNIT_ASSERT(prog.mapLibParam.size() != 0);
+        prog.readLibParams();        // Read library signatures
+    	// The test is that it doesn't fall over, really
+    	CPPUNIT_ASSERT(prog.mapLibParam.size() != 0);
 
-	prog.pBF->UnLoad();
-	delete prog.pBF;
-	prog.pBF = NULL;
-	delete prog.pFE;
-	prog.pFE = NULL; */
+    	prog.pBF->UnLoad();
+    	delete prog.pBF;
+    	prog.pBF = NULL;
+    	delete prog.pFE;
+    	prog.pFE = NULL; */
 }
 

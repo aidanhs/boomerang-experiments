@@ -124,7 +124,7 @@ bool ElfBinaryFile::RealLoad(const char* sName)
     m_pImage = new char[m_lImageSize];
     if (m_pImage == 0) {
         fprintf(stderr, "Could not allocate %ld bytes for program image\n",
-          m_lImageSize);
+                m_lImageSize);
         return false;
     }
     Elf32_Ehdr* pHeader = (Elf32_Ehdr*)m_pImage;    // Save a lot of casts
@@ -134,17 +134,17 @@ bool ElfBinaryFile::RealLoad(const char* sName)
     size_t size = fread(m_pImage, 1, m_lImageSize, m_fd);
     if (size != (size_t)m_lImageSize)
         fprintf(stderr, "WARNING! Only read %ud of %ld bytes of binary file!\n",
-          size, m_lImageSize);
+                size, m_lImageSize);
 
     // Basic checks
     if (strncmp(m_pImage, "\x7F""ELF", 4) != 0) {
         fprintf(stderr, "Incorrect header: %02X %02X %02X %02X\n",
-          pHeader->e_ident[0], pHeader->e_ident[1], pHeader->e_ident[2],
-          pHeader->e_ident[3]);
+                pHeader->e_ident[0], pHeader->e_ident[1], pHeader->e_ident[2],
+                pHeader->e_ident[3]);
         return 0;
     }
     if ((pHeader->endianness != 1) &&
-        (pHeader->endianness != 2)) {
+            (pHeader->endianness != 2)) {
         fprintf(stderr, "Unknown endianness %02X\n", pHeader->endianness);
         return 0;
     }
@@ -212,8 +212,8 @@ bool ElfBinaryFile::RealLoad(const char* sName)
         // NOTE: this ASSUMES that sections appear in a sensible order in
         // the input binary file: junk, code, rodata, data, bss
         if (bGotCode &&
-          ((elfRead4(&pShdr->sh_flags) & (SHF_EXECINSTR | SHF_ALLOC)) ==
-          SHF_ALLOC) && (elfRead4(&pShdr->sh_type) != SHT_NOBITS))
+                ((elfRead4(&pShdr->sh_flags) & (SHF_EXECINSTR | SHF_ALLOC)) ==
+                 SHF_ALLOC) && (elfRead4(&pShdr->sh_type) != SHT_NOBITS))
             m_pSections[i].bData = true;
     }
 
@@ -224,7 +224,7 @@ bool ElfBinaryFile::RealLoad(const char* sName)
     AddSyms(".dynsym", ".dynstr");
 
     // Save the relocation to symbol table info
-    PSectionInfo pRel = GetSectionInfoByName(".rela.text"); 
+    PSectionInfo pRel = GetSectionInfoByName(".rela.text");
     if (pRel) {
         m_bAddend = true;               // Remember its a relA table
         m_pReloc = pRel->uHostAddr;     // Save pointer to reloc table
@@ -272,7 +272,7 @@ void ElfBinaryFile::UnLoad()
     if (m_pImage) delete [] m_pImage;
     fclose (m_fd);
     Init();                     // Set all internal state to 0
-} 
+}
 
 // Like a replacement for elf_strptr()
 char* ElfBinaryFile::GetStrPtr(int idx, int offset)
@@ -317,8 +317,8 @@ void ElfBinaryFile::AddSyms(const char* sSymSect, const char* sStrSect)
             str.erase(pos);
         std::map<ADDRESS, std::string>::iterator aa = m_SymA.find(val);
         // Ensure no overwriting (except functions)
-        if (aa == m_SymA.end() || 
-            ELF32_ST_TYPE(m_pSym[i].st_info) == STT_FUNC) {
+        if (aa == m_SymA.end() ||
+                ELF32_ST_TYPE(m_pSym[i].st_info) == STT_FUNC) {
             //std::cerr << "Elf AddSym: about to add " << str << " to address " << std::hex << val << std::dec << std::endl;
             m_SymA[val] = str;
         }
@@ -353,7 +353,7 @@ char* ElfBinaryFile::SymbolByAddress(const ADDRESS dwAddr)
 }
 
 bool ElfBinaryFile::ValueByName(const char* pName, SymValue* pVal,
-    bool bNoTypeOK /* = false */)
+                                bool bNoTypeOK /* = false */)
 {
     int  hash, numBucket, numChain, y;
     int  *pBuckets, *pChains;   // For symbol table work
@@ -380,7 +380,7 @@ bool ElfBinaryFile::ValueByName(const char* pName, SymValue* pVal,
     if (pSect == 0) return false;
     pHash = (int*) pSect->uHostAddr;
     iStr = GetSectionIndexByName(".dynstr");
-    
+
     // First organise the hash table
     numBucket = elfRead4(&pHash[0]);
     numChain  = elfRead4(&pHash[1]);
@@ -408,8 +408,8 @@ bool ElfBinaryFile::ValueByName(const char* pName, SymValue* pVal,
     // Beware of symbols with STT_NOTYPE, e.g. "open" in libstdc++ !
     // But sometimes "main" has the STT_NOTYPE attribute, so if bNoTypeOK
     // is passed as true, return true
-    if (found && 
-        (bNoTypeOK || (ELF32_ST_TYPE(pSym[y].st_info) != STT_NOTYPE))) {
+    if (found &&
+            (bNoTypeOK || (ELF32_ST_TYPE(pSym[y].st_info) != STT_NOTYPE))) {
         pVal->uSymAddr = elfRead4((int*)&pSym[y].st_value);
         pVal->iSymSize = elfRead4(&pSym[y].st_size);
         return true;
@@ -425,7 +425,7 @@ bool ElfBinaryFile::ValueByName(const char* pName, SymValue* pVal,
 // Lookup the symbol table using linear searching. See comments above
 // about why this appears to be needed.
 bool ElfBinaryFile::SearchValueByName(const char* pName, SymValue* pVal,
-    const char* pSectName, const char* pStrName)
+                                      const char* pSectName, const char* pStrName)
 {
     // Note: this assumes .symtab. Many files don't have this section!!!
     PSectionInfo pSect, pStrSect;
@@ -463,7 +463,7 @@ bool ElfBinaryFile::SearchValueByName(const char* pName, SymValue* pVal)
 
 
 ADDRESS ElfBinaryFile::GetAddressByName(const char* pName,
-    bool bNoTypeOK /* = false */) {
+                                        bool bNoTypeOK /* = false */) {
     if (pName == m_pLastName)
         return m_uLastAddr;
     SymValue Val;
@@ -479,7 +479,7 @@ ADDRESS ElfBinaryFile::GetAddressByName(const char* pName,
 }
 
 int ElfBinaryFile::GetSizeByName(const char* pName,
-    bool bNoTypeOK /* = false */)
+                                 bool bNoTypeOK /* = false */)
 {
     if (pName == m_pLastName)
         return m_iLastSize;
@@ -587,13 +587,13 @@ void ElfBinaryFile::SetRelocInfo(PSectionInfo pSect)
     Elf32_Sym* pSym = (Elf32_Sym*) pSymSect->uHostAddr;
     // Get index to string table
     int idx = GetSectionIndexByName(".strtab");
- 
+
     // Allocate the symbols
     int res = m_Reloc.Init(nRelocs);
     if (res == 0)
     {
         fprintf(stderr, "Could not allocate space for %d relocations\n",
-            nRelocs);
+                nRelocs);
         return;
     }
     for (int i = 0; i < nRelocs; i++)
@@ -624,7 +624,7 @@ const char* ElfBinaryFile::GetRelocSym(ADDRESS uNative)
     if (p[0] == '\0') return 0;
     return p;
 }
-    
+
 bool ElfBinaryFile::IsAddressRelocatable(ADDRESS uNative)
 {
     if (m_pReloc == 0) return false;
@@ -653,7 +653,7 @@ std::list<SectionInfo*>& ElfBinaryFile::GetEntryPoints(
     pSect->uNativeAddr += delta;
     pSect->uHostAddr += delta;
     // Adjust uSectionSize so uNativeAddr + uSectionSize still is end of sect
-    pSect->uSectionSize -= delta;       
+    pSect->uSectionSize -= delta;
     m_EntryPoint.push_back(pSect);
     // .init and .fini sections
     pSect = GetSectionInfoByName(".init");
@@ -682,7 +682,7 @@ ADDRESS ElfBinaryFile::GetEntryPoint()
 ADDRESS ElfBinaryFile::NativeToHostAddress(ADDRESS uNative)
 {
     if (m_iNumSections == 0) return 0;
-    return m_pSections[1].uHostAddr - m_pSections[1].uNativeAddr + uNative; 
+    return m_pSections[1].uHostAddr - m_pSections[1].uNativeAddr + uNative;
 }
 
 // This is not complete. Need to decide what to do about things like G
@@ -699,98 +699,98 @@ WORD ElfBinaryFile::ApplyRelocation(ADDRESS uNative, WORD wWord)
     int machine = elfRead4(&((Elf32_Ehdr*)m_pImage)->e_machine);
     switch (machine)
     {
-        case EM_SPARC:
+    case EM_SPARC:
+    {
+        Elf32_Rela* pRel = (Elf32_Rela*)m_pReloc + idx;
+        int iType = ELF32_R_TYPE(pRel->r_info);
+        int idxSym = ELF32_R_SYM(pRel->r_info);
+        ADDRESS SplusA = (ADDRESS)m_pSym[idxSym].st_value + pRel->r_addend;
+        switch (iType)
         {
-            Elf32_Rela* pRel = (Elf32_Rela*)m_pReloc + idx;
-            int iType = ELF32_R_TYPE(pRel->r_info);
-            int idxSym = ELF32_R_SYM(pRel->r_info);
-            ADDRESS SplusA = (ADDRESS)m_pSym[idxSym].st_value + pRel->r_addend;
-            switch (iType)
-            {
-                case R_SPARC_NONE:
-                case R_SPARC_COPY:
-                    return 0;
-
-                case R_SPARC_8:
-                    wRes = wWord | (SplusA & 0xFF);
-                    break;
-                case R_SPARC_16:
-                    wRes = wWord | (SplusA & 0xFFFF);
-                    break;
-                case R_SPARC_32:
-                    wRes = SplusA;
-                    break;
-                case R_SPARC_DISP8:
-                    wRes = wWord | ((SplusA - uNative) & 0xFF);
-                    break;
-                case R_SPARC_DISP16:
-                    wRes = wWord | ((SplusA - uNative) & 0xFFFF);
-                    break;
-                case R_SPARC_DISP32:
-                    wRes = SplusA - uNative;
-                    break;
-                case R_SPARC_WDISP30:
-                    wRes = wWord | ((SplusA - uNative) >> 2);
-                    break;
-                case R_SPARC_WDISP22:
-                    wRes = wWord | (((SplusA - uNative) >> 2) & 0x3FFFFF);
-                    break;
-                case R_SPARC_HI22:
-                    wRes = wWord | ((SplusA >> 10) & 0x3FFFFF);
-                    break;
-                case R_SPARC_22:
-                    wRes = wWord | (SplusA & 0x3FFFFF);
-                    break;
-                case R_SPARC_13:
-                    wRes = wWord | (SplusA & 0x1FFF);
-                    break;
-                case R_SPARC_LO10:
-                    wRes = wWord | (SplusA & 0x3FF);
-                    break;
-                case R_SPARC_GOT10:
-                case R_SPARC_GOT13:
-                case R_SPARC_GOT22:
-                case R_SPARC_PC10:
-                case R_SPARC_PC22:
-                case R_SPARC_WPLT30:
-                case R_SPARC_GLOB_DAT:
-                case R_SPARC_JMP_SLOT:
-                case R_SPARC_RELATIVE:
-                case R_SPARC_UA32:
-                case R_SPARC_PLT32:
-                case R_SPARC_HIPLT22:
-                case R_SPARC_LOPLT10:
-                case R_SPARC_PCPLT32:
-                case R_SPARC_PCPLT22:
-                case R_SPARC_PCPLT10:
-                case R_SPARC_10:
-                case R_SPARC_11:
-                case R_SPARC_WDISP16:
-                case R_SPARC_WDISP19:
-                case R_SPARC_7:
-                case R_SPARC_5:
-                case R_SPARC_6:
-                default:
-                    return 0;
-            }
-            break;
-        }
-
-
-        case EM_386:
-        {
-            Elf32_Rel* pRel = (Elf32_Rel*)m_pReloc + idx;
-            int iType = ELF32_R_TYPE(pRel->r_info);
-            switch (iType)
-            {
-            }
-            break;
-        }
-
-        default:
-            fprintf(stderr, "Machine type %d not implemented for relocation\n",
-                machine);
+        case R_SPARC_NONE:
+        case R_SPARC_COPY:
             return 0;
+
+        case R_SPARC_8:
+            wRes = wWord | (SplusA & 0xFF);
+            break;
+        case R_SPARC_16:
+            wRes = wWord | (SplusA & 0xFFFF);
+            break;
+        case R_SPARC_32:
+            wRes = SplusA;
+            break;
+        case R_SPARC_DISP8:
+            wRes = wWord | ((SplusA - uNative) & 0xFF);
+            break;
+        case R_SPARC_DISP16:
+            wRes = wWord | ((SplusA - uNative) & 0xFFFF);
+            break;
+        case R_SPARC_DISP32:
+            wRes = SplusA - uNative;
+            break;
+        case R_SPARC_WDISP30:
+            wRes = wWord | ((SplusA - uNative) >> 2);
+            break;
+        case R_SPARC_WDISP22:
+            wRes = wWord | (((SplusA - uNative) >> 2) & 0x3FFFFF);
+            break;
+        case R_SPARC_HI22:
+            wRes = wWord | ((SplusA >> 10) & 0x3FFFFF);
+            break;
+        case R_SPARC_22:
+            wRes = wWord | (SplusA & 0x3FFFFF);
+            break;
+        case R_SPARC_13:
+            wRes = wWord | (SplusA & 0x1FFF);
+            break;
+        case R_SPARC_LO10:
+            wRes = wWord | (SplusA & 0x3FF);
+            break;
+        case R_SPARC_GOT10:
+        case R_SPARC_GOT13:
+        case R_SPARC_GOT22:
+        case R_SPARC_PC10:
+        case R_SPARC_PC22:
+        case R_SPARC_WPLT30:
+        case R_SPARC_GLOB_DAT:
+        case R_SPARC_JMP_SLOT:
+        case R_SPARC_RELATIVE:
+        case R_SPARC_UA32:
+        case R_SPARC_PLT32:
+        case R_SPARC_HIPLT22:
+        case R_SPARC_LOPLT10:
+        case R_SPARC_PCPLT32:
+        case R_SPARC_PCPLT22:
+        case R_SPARC_PCPLT10:
+        case R_SPARC_10:
+        case R_SPARC_11:
+        case R_SPARC_WDISP16:
+        case R_SPARC_WDISP19:
+        case R_SPARC_7:
+        case R_SPARC_5:
+        case R_SPARC_6:
+        default:
+            return 0;
+        }
+        break;
+    }
+
+
+    case EM_386:
+    {
+        Elf32_Rel* pRel = (Elf32_Rel*)m_pReloc + idx;
+        int iType = ELF32_R_TYPE(pRel->r_info);
+        switch (iType)
+        {
+        }
+        break;
+    }
+
+    default:
+        fprintf(stderr, "Machine type %d not implemented for relocation\n",
+                machine);
+        return 0;
     }
     return wRes;
 }
@@ -831,7 +831,7 @@ bool ElfBinaryFile::Open(const char* sName)
     m_fd = open (sName, O_RDWR);
     if (m_fd == -1) return 0;
 
-    if (elf_version (EV_CURRENT) == EV_NONE) 
+    if (elf_version (EV_CURRENT) == EV_NONE)
     {
         fprintf (stderr, "Library out of date\n");
         exit (-1);
@@ -856,7 +856,7 @@ bool ElfBinaryFile::Open(const char* sName)
     }
     return ProcessElfFile();
 #endif
-return false;
+    return false;
 }
 
 
@@ -892,8 +892,8 @@ LOAD_FMT ElfBinaryFile::GetFormat() const
 MACHINE ElfBinaryFile::GetMachine() const
 {
     int machine = elfRead2(&((Elf32_Ehdr*)m_pImage)->e_machine);
-         if ((machine == EM_SPARC) ||
-             (machine == EM_SPARC32PLUS)) return MACHINE_SPARC;
+    if ((machine == EM_SPARC) ||
+            (machine == EM_SPARC32PLUS)) return MACHINE_SPARC;
     else if (machine == EM_386)   return MACHINE_PENTIUM;
     else if (machine == EM_PA_RISC)return MACHINE_HPRISC;
     else if (machine == EM_68K)   return MACHINE_PALM;  // Unlikely
@@ -917,19 +917,19 @@ std::list<const char *> ElfBinaryFile::getDependencyList()
         return result; /* no dynamic section = statically linked */
 
     for( Elf32_Dyn *dyn = (Elf32_Dyn *)dynsect->uHostAddr;
-         dyn->d_tag != DT_NULL; dyn++ ) {
+            dyn->d_tag != DT_NULL; dyn++ ) {
         if( dyn->d_tag == DT_STRTAB ) {
             stringtab = (ADDRESS)dyn->d_un.d_ptr;
             break;
         }
     }
-    
+
     if( stringtab == NO_ADDRESS ) /* No string table = no names */
         return result;
     stringtab = NativeToHostAddress( stringtab );
-    
+
     for( Elf32_Dyn *dyn = (Elf32_Dyn *)dynsect->uHostAddr;
-         dyn->d_tag != DT_NULL; dyn++ ) {
+            dyn->d_tag != DT_NULL; dyn++ ) {
         if( dyn->d_tag == DT_NEEDED ) {
             const char *need = (char *)stringtab + dyn->d_un.d_val;
             if( need != NULL )
@@ -1015,16 +1015,16 @@ void new_section(Elf *elf, Elf_Scn **scn, Elf32_Shdr **hdr, Elf_Data **data)
     (*hdr)->sh_addralign = 1;
     (*hdr)->sh_entsize   = 0;
 
-    // Get data & initialize to zeroes 
+    // Get data & initialize to zeroes
     *data = elf_newdata(*scn);
     (*data)->d_buf = NULL;
     (*data)->d_size = 0;
     (*data)->d_off = 0;
-    // Char level alignment by default 
+    // Char level alignment by default
     (*data)->d_align = 1;
 }
 #endif
- 
+
 /*==============================================================================
  * FUNCTION:    ElfBinaryFile::writeObjectFile
  * OVERVIEW:    Writes an ELF object file.
@@ -1038,7 +1038,7 @@ void new_section(Elf *elf, Elf_Scn **scn, Elf32_Shdr **hdr, Elf_Data **data)
  *============================================================================*/
 #if 0
 void ElfBinaryFile::writeObjectFile
-    (std::string &path, const char* name, void *ptxt, int txtsz, RelocMap& reloc)
+(std::string &path, const char* name, void *ptxt, int txtsz, RelocMap& reloc)
 {
 // Special section names
 #define SHSTRTAB    ".shstrtab"
@@ -1079,11 +1079,11 @@ void ElfBinaryFile::writeObjectFile
     ehdr->e_ident[EI_MAG3]    = 'F';
     ehdr->e_ident[EI_CLASS]   = ELFCLASS32;
     ehdr->e_ident[EI_DATA]    = ELFDATA2MSB;
-    ehdr->e_ident[EI_VERSION] = EV_CURRENT;  
+    ehdr->e_ident[EI_VERSION] = EV_CURRENT;
 
     // Frequently accessed section indices:
     int next_idx      = 0;              // Section [0] is always NULL!
-    int shstrtab_idx  = ++next_idx;     // String table for section names 
+    int shstrtab_idx  = ++next_idx;     // String table for section names
     int text_idx      = ++next_idx;     // Text section
     int strtab_idx    = ++next_idx;     // String table
     int symtab_idx    = ++next_idx;     // Symbol table
@@ -1095,7 +1095,7 @@ void ElfBinaryFile::writeObjectFile
     ehdr->e_version   = EV_CURRENT;
     ehdr->e_entry     = 0;
     ehdr->e_phoff     = 0;
-    ehdr->e_shoff     = sizeof(Elf32_Ehdr);        
+    ehdr->e_shoff     = sizeof(Elf32_Ehdr);
     ehdr->e_flags     = 0;
     ehdr->e_ehsize    = sizeof(Elf32_Ehdr);
     ehdr->e_phentsize = 0;
@@ -1145,7 +1145,7 @@ void ElfBinaryFile::writeObjectFile
     sdata->d_buf = ptxt;
     sdata->d_size = txtsz;
     sdata->d_align = SIZEOF_INT;   // Instr alignment (from config.h)
-    
+
     // Fill header section
     shdr->sh_name = text_ofs;       // Offset to name
     shdr->sh_type = SHT_PROGBITS;   // Text section
@@ -1161,7 +1161,7 @@ void ElfBinaryFile::writeObjectFile
     // Mapping between symbols and string table offsets
     StrIntMap str_ofs;
     str_ofs.clear();
-    
+
     // Offset into string table from reloc info
     // Note: "+1" is for allocating the '\0' character
     next_ofs      = 0 + 1;              // Entry [0] is always NULL!
@@ -1177,7 +1177,7 @@ void ElfBinaryFile::writeObjectFile
         {
             // Compute offset
             str_ofs[rit->second] = next_ofs;
-            next_ofs += (rit->second).length() + 1; 
+            next_ofs += (rit->second).length() + 1;
         }
     }
     // At this point, 'next_ofs' is the size of string table
@@ -1189,7 +1189,7 @@ void ElfBinaryFile::writeObjectFile
     StrIntMap::const_iterator sit;
     for (sit = str_ofs.begin(); sit != str_ofs.end(); sit++)
         strcpy((char*)sdata->d_buf + sit->second, (sit->first).c_str());
-    
+
     // Fill header section
     shdr->sh_name  = strtab_ofs;    // Offset to name
     shdr->sh_type  = SHT_STRTAB;    // String table
@@ -1204,7 +1204,7 @@ void ElfBinaryFile::writeObjectFile
      * - Last entry is for current proc.
      */
     new_section(elf, &scn, &shdr, &sdata);
-    
+
     // Mapping between symbols and symbol table entry
     StrIntMap sym_ent;
     sym_ent.clear();
@@ -1285,7 +1285,7 @@ void ElfBinaryFile::writeObjectFile
 #else
             rel->r_info   = ELF32_R_INFO(sym_ent[rit->second],/*Fixme!*/0);
 #endif
-            rel->r_addend = 0; 
+            rel->r_addend = 0;
         }
 
         // Fill header section
@@ -1375,7 +1375,7 @@ int ElfBinaryFile::elfRead2(short* ps) const {
         return (int)(p[0] + (p[1] << 8));
     }
 }
-int ElfBinaryFile::elfRead4(int* pi) const{
+int ElfBinaryFile::elfRead4(int* pi) const {
     short* p = (short*)pi;
     if (m_elfEndianness) {
         return (int)((elfRead2(p) << 16) + elfRead2(p+1));
@@ -1407,5 +1407,5 @@ extern "C" {
     BinaryFile* construct()
     {
         return new ElfBinaryFile;
-    }    
+    }
 }

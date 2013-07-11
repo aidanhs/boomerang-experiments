@@ -64,11 +64,11 @@ int SymTab::Init(int iNumEnt)
 
 // The comparison function required by bsearch() and qsort()
 // Sorts by address
-int SymComp(const void* e1, const void* e2) 
+int SymComp(const void* e1, const void* e2)
 {
     PSYMTABENT p1 = (PSYMTABENT) e1;
     PSYMTABENT p2 = (PSYMTABENT) e2;
-         if (p1->dwValue < p2->dwValue) return -1;
+    if (p1->dwValue < p2->dwValue) return -1;
     else if (p1->dwValue > p2->dwValue) return 1;
     else return 0;
 }
@@ -80,8 +80,8 @@ int SymTab::FindIndex(ADDRESS dwAddr)
     if (m_iCurEnt == 0) return -1;      // Else may fault
     SymTabEnt ent;
     ent.dwValue = dwAddr;
-    SymTabEnt* p = (PSYMTABENT) bsearch(&ent, m_pEnt, m_iCurEnt, 
-        sizeof(SymTabEnt), SymComp);
+    SymTabEnt* p = (PSYMTABENT) bsearch(&ent, m_pEnt, m_iCurEnt,
+                                        sizeof(SymTabEnt), SymComp);
     if (p) return p - m_pEnt;
     else return -1;
 }

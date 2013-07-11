@@ -8,7 +8,7 @@
 
 Boomerang *Boomerang::boomerang = NULL;
 
-Boomerang::Boomerang() : vFlag(false), printRtl(false), 
+Boomerang::Boomerang() : vFlag(false), printRtl(false),
     noBranchSimplify(false), noRemoveInternal(false),
     noLocals(false), noRemoveLabels(false), traceDecoder(false), dotFile(NULL)
 {
@@ -37,7 +37,7 @@ void Boomerang::help() {
     std::cerr << "-nr: no removal of unnedded labels\n";
     exit(1);
 }
-        
+
 int Boomerang::commandLine(int argc, const char **argv) {
     if (argc < 2) usage();
     progPath = argv[0];
@@ -62,36 +62,44 @@ int Boomerang::commandLine(int argc, const char **argv) {
         if (argv[i][0] != '-')
             usage();
         switch (argv[i][1]) {
-            case 'h': help(); break;
-            case 'v': vFlag = true; break;
-            case 'r': printRtl = true; break;
-            case 't': traceDecoder = true; break;
-            case 'g': 
-                dotFile = argv[++i];
+        case 'h':
+            help();
+            break;
+        case 'v':
+            vFlag = true;
+            break;
+        case 'r':
+            printRtl = true;
+            break;
+        case 't':
+            traceDecoder = true;
+            break;
+        case 'g':
+            dotFile = argv[++i];
+            break;
+        case 'n':
+            switch(argv[i][2]) {
+            case 'b':
+                noBranchSimplify = true;
                 break;
-            case 'n':
-                switch(argv[i][2]) {
-                    case 'b':
-                        noBranchSimplify = true;
-                        break;
-                    case 'i':
-                        noRemoveInternal = true;
-                        break;
-                    case 'l':
-                        noLocals = true;
-                        break;
-                    case 'r':
-                        noRemoveLabels = true;
-                        break;
-                    default:
-                        help();
-                }
+            case 'i':
+                noRemoveInternal = true;
+                break;
+            case 'l':
+                noLocals = true;
+                break;
+            case 'r':
+                noRemoveLabels = true;
                 break;
             default:
                 help();
+            }
+            break;
+        default:
+            help();
         }
     }
-    
+
     std::cerr << "loading..." << std::endl;
     FrontEnd *fe = FrontEnd::Load(argv[argc-1]);
     if (fe == NULL) {

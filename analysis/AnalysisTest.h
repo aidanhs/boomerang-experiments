@@ -19,7 +19,7 @@ class AnalysisTest : public CppUnit::TestCase {
     // the program
     Prog *prog;
 
-  public:
+public:
     AnalysisTest(std::string name) : CppUnit::TestCase (name)
     {}
 

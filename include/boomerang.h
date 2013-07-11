@@ -34,17 +34,21 @@ private:
 
     Boomerang();
 public:
-    static Boomerang *get() { 
-        if (!boomerang) boomerang = new Boomerang(); 
-	return boomerang;
+    static Boomerang *get() {
+        if (!boomerang) boomerang = new Boomerang();
+        return boomerang;
     }
 
     static HLLCode *getHLLCode(UserProc *p);
 
     // performs command line operation
     int commandLine(int argc, const char **argv);
-    void setProgPath(const char* p) { progPath = p; }
-    const std::string& getProgPath() { return progPath; }
+    void setProgPath(const char* p) {
+        progPath = p;
+    }
+    const std::string& getProgPath() {
+        return progPath;
+    }
 
     // Command line flags
     bool vFlag;

@@ -17,45 +17,45 @@ class CNewProjectDialog : public CDialog
 {
 // Construction
 public:
-	FrontEnd * getFrontEnd();
-	BinaryFile * getLoader();
-	CNewProjectDialog(CWnd* pParent = NULL);   // standard constructor
+    FrontEnd * getFrontEnd();
+    BinaryFile * getLoader();
+    CNewProjectDialog(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(CNewProjectDialog)
-	enum { IDD = IDD_NEW_PROJECT };
-	CEdit	m_location;
-	CEdit	m_name;
-	CEdit	m_filename;
-	CListBox	m_loader;
-	CListBox	m_frontend;
-	//}}AFX_DATA
-	CString m_filename_str;
-	CString m_name_str;
-	CString m_location_str;
-	int m_loader_n;
-	int m_frontend_n;
+    //{{AFX_DATA(CNewProjectDialog)
+    enum { IDD = IDD_NEW_PROJECT };
+    CEdit	m_location;
+    CEdit	m_name;
+    CEdit	m_filename;
+    CListBox	m_loader;
+    CListBox	m_frontend;
+    //}}AFX_DATA
+    CString m_filename_str;
+    CString m_name_str;
+    CString m_location_str;
+    int m_loader_n;
+    int m_frontend_n;
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CNewProjectDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CNewProjectDialog)
+protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CNewProjectDialog)
-	afx_msg void OnBrowseLocation();
-	afx_msg void OnBrowseFilename();
-	afx_msg void OnChangeFilename();
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CNewProjectDialog)
+    afx_msg void OnBrowseLocation();
+    afx_msg void OnBrowseFilename();
+    afx_msg void OnChangeFilename();
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -17,7 +17,7 @@
 
 /*
  * $Revision: 1.8 $
- * 
+ *
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  * 15 May 02 - Mike: Fixed a nasty bug in updateExp (when update with same
@@ -27,7 +27,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <iomanip>          // For setfill
 #include <sstream>
@@ -44,7 +44,7 @@
 #include "boomerang.h"
 /******************************************************************************
  * RTL methods.
- * Class RTL represents low-level register transfer lists. 
+ * Class RTL represents low-level register transfer lists.
  *****************************************************************************/
 
 /*==============================================================================
@@ -114,7 +114,7 @@ RTL& RTL::operator=(RTL& other) {
         std::list<Exp*>::iterator it;
         for (it = other.expList.begin(); it != other.expList.end(); it++)
             expList.push_back((*it)->clone());
-        
+
         kind = other.kind;
         nativeAddr = other.nativeAddr;
         numNativeBytes = other.numNativeBytes;
@@ -142,7 +142,7 @@ RTL* RTL::clone() {
     for (it = expList.begin(); it != expList.end(); it++) {
         le.push_back((*it)->clone());
     }
-    
+
     RTL* ret = new RTL(nativeAddr, &le);
     ret->kind = kind;
     ret->numNativeBytes = numNativeBytes;
@@ -254,7 +254,7 @@ void RTL::updateExp(Exp *exp, unsigned i) {
 
     // Find the position
     std::list<Exp*>::iterator pp = expList.begin();
-    for (; i > 0; i--, pp++);    
+    for (; i > 0; i--, pp++);
 
     // Note that sometimes we might update even when we don't know if it's
     // needed, e.g. after a searchReplace.
@@ -273,12 +273,12 @@ void RTL::deleteExp(unsigned i) {
 
     // find the position
     std::list<Exp*>::iterator pp = expList.begin();
-    for (; i > 0; i--, pp++);    
+    for (; i > 0; i--, pp++);
 
     // do the delete
     expList.erase(pp);
 }
-    
+
 /*==============================================================================
  * FUNCTION:        RTL::getNumExp
  * OVERVIEW:        Get the number of Exps in this RTL
@@ -387,7 +387,7 @@ bool RTL::getCommented() {
  *============================================================================*/
 void RTL::searchAndReplace(Exp* search, Exp* replace) {
     for (std::list<Exp*>::iterator it = expList.begin(); it != expList.end();
-      it++) {
+            it++) {
         Exp* pSrc = dynamic_cast<Exp*>(*it);
         if (pSrc == NULL) continue;
         bool ch;
@@ -409,7 +409,7 @@ bool RTL::searchAll(Exp* search, std::list<Exp *> &result)
 {
     bool found = false;
     for (std::list<Exp*>::iterator it = expList.begin(); it != expList.end();
-      it++) {
+            it++) {
         Exp *e = *it;
         if (e->searchAll(search, result)) {
             found = true;
@@ -492,7 +492,7 @@ void searchExprForUses(Exp* exp, LocationMap& locMap, LocationFilter* filter,
  * RETURNS:         <nothing>
  *============================================================================*/
 void RTL::insertAssign(Exp* pLhs, Exp* pRhs, bool prep,
-                        int size /*= -1*/) {
+                       int size /*= -1*/) {
     if (size == -1)
         size = 32;      // Ugh
 
@@ -526,7 +526,7 @@ void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, int size /* = -1 */) {
     std::list<Exp*>::iterator it;
     // First skip all assignments with temps on LHS
     for (it = expList.begin(); it != expList.end(); it++) {
-    Exp *e = *it;
+        Exp *e = *it;
         if (!e->isAssign())
             break;
         Exp* LHS = e->getSubExp1();
@@ -564,7 +564,7 @@ void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, int size /* = -1 */) {
 int RTL::getSize() {
     std::list<Exp*>::iterator it;
     for (it = expList.begin(); it != expList.end(); it++) {
-    Exp *e = *it;
+        Exp *e = *it;
         if (e->isAssign())
             return ((AssignExp*)e)->getSize();
     }
@@ -586,7 +586,7 @@ int RTL::getSize() {
 void RTL::forwardSubs()
 {
     std::map<Exp*, Exp*> temps;   // A map from left hand sides to right hand
-                             // sides, suitable for substition
+    // sides, suitable for substition
     std::map<Exp*, Exp*>::iterator mm;
     Exp* result;             // Result of a search
     std::list<Exp*> results;      // Another dummy for results
@@ -613,8 +613,8 @@ void RTL::forwardSubs()
                 lhs = lhs->searchReplaceAll(srch, mm->second, change);
         }
         if (
-          ((*it)->getGuard() == 0) &&     // Must not be guarded!
-          lhs->isTemp()) {
+            ((*it)->getGuard() == 0) &&     // Must not be guarded!
+            lhs->isTemp()) {
             // We have a temp. Add it to the map. (If it already exists,
             // then the mapping is updated rather than added)
             // The map has to be of Exp, not Exp*, for this to work.
@@ -656,7 +656,7 @@ void RTL::forwardSubs()
                 // ignore direct assignment to it (i.e. *lhs == *mm->first)
                 Exp* lhs = (*it)->getSubExp2();
                 if ((!(*lhs == *mm->first)) &&
-                  (lhs->search(mm->first, result))) {
+                        (lhs->search(mm->first, result))) {
                     temps.erase(mm);
                     break;
                 }
@@ -675,7 +675,10 @@ void RTL::forwardSubs()
     // Any entries left in the map can have their assignments deleted
     for (mm = temps.begin(); mm != temps.end(); mm++) {
         for (it = expList.begin(); it != expList.end(); ) {
-            if (!(*it)->isAssign()) {it++; continue;}
+            if (!(*it)->isAssign()) {
+                it++;
+                continue;
+            }
             Exp* lhs = (*it)->getSubExp1();
             if (*lhs == *mm->first) {
                 // Delete the assignment
@@ -722,7 +725,7 @@ bool RTL::serialize(std::ostream &ouf, int &len)
     saveValue(ouf, numNativeBytes);
 
     for (std::list<Exp*>::iterator it = expList.begin(); it != expList.end();
-      it++) {
+            it++) {
         saveFID(ouf, FID_RTL_EXP);
         std::streampos pos = ouf.tellp();
         int len = -1;
@@ -761,31 +764,31 @@ RTL *RTL::deserialize(std::istream &inf)
     loadValue(inf, ch, false);
     loadValue(inf, a, false);
     switch(ch) {
-        case HL_NONE:
-            rtl = new RTL(a);
-            break;
-        case CALL_RTL:
-            rtl = new HLCall(a);
-            break;
-        case RET_RTL:
-            rtl = new HLReturn(a);
-            break;
-        case JCOND_RTL:
-            rtl = new HLJcond(a);
-            break;
-        case JUMP_RTL:
-            rtl = new HLJump(a);
-            break;
-        case SCOND_RTL:
-            rtl = new HLScond(a);
-            break;
-        case NWAYJUMP_RTL:
-            rtl = new HLNwayJump(a);
-            break;
-        default:
-            std::cerr <<
-              "WARNING: unknown rtl type!  ignoring, data will be lost!" <<
-              std::endl;
+    case HL_NONE:
+        rtl = new RTL(a);
+        break;
+    case CALL_RTL:
+        rtl = new HLCall(a);
+        break;
+    case RET_RTL:
+        rtl = new HLReturn(a);
+        break;
+    case JCOND_RTL:
+        rtl = new HLJcond(a);
+        break;
+    case JUMP_RTL:
+        rtl = new HLJump(a);
+        break;
+    case SCOND_RTL:
+        rtl = new HLScond(a);
+        break;
+    case NWAYJUMP_RTL:
+        rtl = new HLNwayJump(a);
+        break;
+    default:
+        std::cerr <<
+                  "WARNING: unknown rtl type!  ignoring, data will be lost!" <<
+                  std::endl;
     }
     if (rtl) {
         int fid;
@@ -801,26 +804,26 @@ RTL *RTL::deserialize(std::istream &inf)
 bool RTL::deserialize_fid(std::istream &inf, int fid)
 {
     switch (fid) {
-        case FID_RTL_NUMNATIVEBYTES:
-            loadValue(inf, numNativeBytes);
-            break;
-        case FID_RTL_EXP:
-            {
-                int len = loadLen(inf);
-                std::streampos pos = inf.tellg();
-                Exp *exp = Exp::deserialize(inf);
-                if (exp) {
-                    assert((int)(inf.tellg() - pos) == len);
-                    expList.push_back(exp);
-                } else {
-                    // unknown exp type, skip it
-                    inf.seekg(pos + (std::streamoff)len);
-                }
-            }
-            break;
-        default:
-            skipFID(inf, fid);
-            return false;
+    case FID_RTL_NUMNATIVEBYTES:
+        loadValue(inf, numNativeBytes);
+        break;
+    case FID_RTL_EXP:
+    {
+        int len = loadLen(inf);
+        std::streampos pos = inf.tellg();
+        Exp *exp = Exp::deserialize(inf);
+        if (exp) {
+            assert((int)(inf.tellg() - pos) == len);
+            expList.push_back(exp);
+        } else {
+            // unknown exp type, skip it
+            inf.seekg(pos + (std::streamoff)len);
+        }
+    }
+    break;
+    default:
+        skipFID(inf, fid);
+        return false;
     }
 
     return true;
@@ -828,7 +831,7 @@ bool RTL::deserialize_fid(std::istream &inf, int fid)
 
 void RTL::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
     for (std::list<Exp*>::iterator it = expList.begin(); it != expList.end();
-      it++) {
+            it++) {
         AssignExp *e = dynamic_cast<AssignExp*>(*it);
         if (e != NULL)
             hll->AddAssignmentStatement(indLevel, e);
@@ -837,15 +840,15 @@ void RTL::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
 
 void RTL::simplify() {
     for (std::list<Exp*>::iterator it = expList.begin(); it != expList.end();
-      it++) {
+            it++) {
         // simplify arithmetic of assignment
         Exp *e = *it;
         if (!e->isAssign()) continue;
         if (Boomerang::get()->noBranchSimplify) {
             if (e->getSubExp1()->getOper() == opZF ||
-                e->getSubExp1()->getOper() == opCF ||
-                e->getSubExp1()->getOper() == opOF ||
-                e->getSubExp1()->getOper() == opNF)
+                    e->getSubExp1()->getOper() == opCF ||
+                    e->getSubExp1()->getOper() == opOF ||
+                    e->getSubExp1()->getOper() == opNF)
                 return;
         }
         Exp *e1 = e->getSubExp1()->simplifyArith()->clone();
@@ -853,7 +856,7 @@ void RTL::simplify() {
         e->setSubExp1(e1);
         e->setSubExp2(e2);
         // simplify the resultant expression
-        *it = e->simplify();        
+        *it = e->simplify();
     }
 }
 

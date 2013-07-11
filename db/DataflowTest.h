@@ -17,9 +17,9 @@
 #include "prog.h"
 
 class DataflowTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     DataflowTest(std::string name) : CppUnit::TestCase (name)
     {}
 

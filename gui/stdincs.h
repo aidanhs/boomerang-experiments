@@ -7,12 +7,12 @@
 #include "wx/wxprec.h"
 
 #ifdef __BORLANDC__
-    #pragma hdrstop
+#pragma hdrstop
 #endif
 
 #ifndef WX_PRECOMP
-    #include "wx/wx.h"
-    #include "wx/mdi.h"
+#include "wx/wx.h"
+#include "wx/mdi.h"
 #endif
 
 #include "wx/config.h"

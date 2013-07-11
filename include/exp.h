@@ -55,115 +55,153 @@ protected:
     OPER   op;             // The operator (e.g. opPlus)
 
     // Constructor, with ID
-            Exp(OPER op) : op(op) {}
+    Exp(OPER op) : op(op) {}
 public:
-	// Virtual destructor
-virtual		~Exp() {}
+    // Virtual destructor
+    virtual		~Exp() {}
 
     // Return the index. Note: I'd like to make this protected, but then
     // subclasses don't seem to be able to use it (at least, for subexpressions)
-    OPER    getOper() const {return op;}
-    void    setOper(OPER x) {op = x;}     // A few simplifications use this
+    OPER    getOper() const {
+        return op;
+    }
+    void    setOper(OPER x) {
+        op = x;   // A few simplifications use this
+    }
 
     // Print the expression to the given stream
-	// Don't default to std::cout because it makes debugging harder
-virtual void print(std::ostream& os) = 0;
-	void	 print() {print(std::cout);}
+    // Don't default to std::cout because it makes debugging harder
+    virtual void print(std::ostream& os) = 0;
+    void	 print() {
+        print(std::cout);
+    }
     void     printt(std::ostream& os = std::cout);    // Print with <type>
     void     printAsHL(std::ostream& os = std::cout); // Print with v[5] as v5
     char*    prints();      // Print to string (for debugging)
-             // Recursive print: don't want parens at the top level
-virtual void printr(std::ostream& os) = 0;    // Recursive print
+    // Recursive print: don't want parens at the top level
+    virtual void printr(std::ostream& os) = 0;    // Recursive print
 
     // Display as a dotty graph
     void    createDotFile(char* name);
-virtual void appendDotFile(std::ofstream& os) = 0;
+    virtual void appendDotFile(std::ofstream& os) = 0;
 
     // Clone (make copy of self that can be deleted without affecting self)
-virtual Exp* clone() = 0;
+    virtual Exp* clone() = 0;
 
     // Comparison
 // Type sensitive equality
-virtual bool operator==(const Exp& o) const = 0;
+    virtual bool operator==(const Exp& o) const = 0;
 // NOTE: All these type insensitive comparisons may go away because only
 // assignments, parameters, and return locations will be typed
 // They are still here in case they are still needed, and because it makes
 // the port from UQBT code easier
 // Type insensitive equality
-virtual bool operator%=(const Exp& o) const;
+    virtual bool operator%=(const Exp& o) const;
 // Sign insensitive equality
-virtual bool operator-=(const Exp& o) const;
+    virtual bool operator-=(const Exp& o) const;
 // Type sensitive less than
-virtual bool operator< (const Exp& o)  const= 0;
+    virtual bool operator< (const Exp& o)  const= 0;
 // Type insensitive less than. Class TypedExp overrides
-virtual bool operator<<(const Exp& o) const
-    {return (*this < o);}
+    virtual bool operator<<(const Exp& o) const
+    {
+        return (*this < o);
+    }
 
 // Return the number of subexpressions. This is only needed in rare cases,
 // Could use polymorphism for all those cases, but this is easier
-virtual int getArity() {return 0;}      // Overridden for Unary, Binary, etc
+    virtual int getArity() {
+        return 0;   // Overridden for Unary, Binary, etc
+    }
 
     //  //  //  //  //  //  //
     //   Enquiry functions  //
     //  //  //  //  //  //  //
 
     // True if this is a call to a flag function
-    bool isFlagCall() {return op == opFlagCall;}
+    bool isFlagCall() {
+        return op == opFlagCall;
+    }
     // True if this is an assignment to the "flags" abstract location
     bool isFlagAssgn();
     // True if this is an ordinary (non flags) assignment
     bool isAssign();
     // True if this is a register location
-    bool isRegOf() {return op == opRegOf;}
+    bool isRegOf() {
+        return op == opRegOf;
+    }
     // True if this is a register location with a constant index
     bool isRegOfK();
     // True if this is a specific numeric register
     bool isRegN(int n);
     // True if this is a memory location
-    bool isMemOf() {return op == opMemOf;}
+    bool isMemOf() {
+        return op == opMemOf;
+    }
     // True if this is an address of
-    bool isAddrOf() {return op == opAddrOf;}
+    bool isAddrOf() {
+        return op == opAddrOf;
+    }
     // True if this is a temporary
-    bool isTemp() {return op == opTemp;}
+    bool isTemp() {
+        return op == opTemp;
+    }
     // True if this is the anull Terminal (anulls next instruction)
-    bool isAnull() {return op == opAnull;}
+    bool isAnull() {
+        return op == opAnull;
+    }
     // True if this is the Nil Terminal (terminates lists; "NOP" expression)
-    bool isNil() {return op == opNil;}
+    bool isNil() {
+        return op == opNil;
+    }
     // True if is %afp, %afp+k, %afp-k, or a[m[<any of these]]
     bool isAfpTerm();
     // True if is int const
-    bool isIntConst() {return op == opIntConst;}
+    bool isIntConst() {
+        return op == opIntConst;
+    }
     // True if is string const
-    bool isStrConst() {return op == opStrConst;}
+    bool isStrConst() {
+        return op == opStrConst;
+    }
     // True if is flt point const
-    bool isFltConst() {return op == opFltConst;}
+    bool isFltConst() {
+        return op == opFltConst;
+    }
     // True if is a post-var expression (var_op' in SSL file)
-    bool isPostVar() {return op == opPostVar;}
+    bool isPostVar() {
+        return op == opPostVar;
+    }
     // True if this is an opSize (size case; deprecated)
-    bool isSizeCast() { return op == opSize;}
+    bool isSizeCast() {
+        return op == opSize;
+    }
     // Get the index for this var
     int getVarIndex();
     // True if this is a terminal
-    virtual bool isTerminal() { return false; }
+    virtual bool isTerminal() {
+        return false;
+    }
     // True if this is a comparison
-    bool isComparison() { return op == opEquals || op == opNotEqual ||
-                                 op == opGtr || op == opLess ||
-                                 op == opGtrUns || op == opLessUns ||
-                                 op == opGtrEq || op == opLessEq ||
-                                 op == opGtrEqUns || op == opLessEqUns; }
-           
-                 
+    bool isComparison() {
+        return op == opEquals || op == opNotEqual ||
+               op == opGtr || op == opLess ||
+               op == opGtrUns || op == opLessUns ||
+               op == opGtrEq || op == opLessEq ||
+               op == opGtrEqUns || op == opLessEqUns;
+    }
+
+
 
     //  //  //  //  //  //  //
     //  Search and Replace  //
     //  //  //  //  //  //  //
-    
+
     // Search for Exp *search in this Exp. If found, return true and return
     // a ref to the matching expression in result (useful with wildcards).
     virtual bool search(Exp* search, Exp*& result);
 
     // Search for Exp search in this Exp. For each found, add
-    // a ptr to the matching expression in result (useful with wildcards).    
+    // a ptr to the matching expression in result (useful with wildcards).
     bool    searchAll(Exp* search, std::list<Exp*>& result);
 
     // Search this Exp for *search; if found, replace with *replace
@@ -171,63 +209,78 @@ virtual int getArity() {return 0;}      // Overridden for Unary, Binary, etc
 
     // Search *pSrc for *search; for all occurrences, replace with *replace
     Exp* searchReplaceAll(Exp* search, Exp* replace, bool& change,
-        bool once = false);
+                          bool once = false);
 
     // Not for public use. Search for subexpression matches.
-static void doSearch(Exp* search, Exp*& pSrc, std::list<Exp**>& li,
-        bool once);
+    static void doSearch(Exp* search, Exp*& pSrc, std::list<Exp**>& li,
+                         bool once);
 
     // As above.
-virtual void doSearchChildren(Exp* search, std::list<Exp**>& li,
-          bool once);
+    virtual void doSearchChildren(Exp* search, std::list<Exp**>& li,
+                                  bool once);
 
     //  //  //  //  //  //  //
     //    Sub expressions   //
     //  //  //  //  //  //  //
-    
+
     // These are here so we can (optionally) prevent code clutter.
     // Using a *Exp (that is known to be a Binary* say), you can just
     // directly call getSubExp2.
     // However, you can still choose to cast from Exp* to Binary* etc.
     // and avoid the virtual call
-virtual Exp*  getSubExp1() {return 0;}
-virtual Exp*  getSubExp2() {return 0;}
-virtual Exp*  getSubExp3() {return 0;}
-virtual Exp*& refSubExp1();
-virtual Exp*& refSubExp2();
-virtual Exp*& refSubExp3();
-virtual void  setSubExp1(Exp* e) {};
-virtual void  setSubExp2(Exp* e) {};
-virtual void  setSubExp3(Exp* e) {};
+    virtual Exp*  getSubExp1() {
+        return 0;
+    }
+    virtual Exp*  getSubExp2() {
+        return 0;
+    }
+    virtual Exp*  getSubExp3() {
+        return 0;
+    }
+    virtual Exp*& refSubExp1();
+    virtual Exp*& refSubExp2();
+    virtual Exp*& refSubExp3();
+    virtual void  setSubExp1(Exp* e) {};
+    virtual void  setSubExp2(Exp* e) {};
+    virtual void  setSubExp3(Exp* e) {};
 
     //  //  //  //  //  //  //
     //  Guarded assignment  //
     //  //  //  //  //  //  //
     Exp*    getGuard();         // Get the guard expression, or 0 if not
-    
+
     //  //  //  //  //  //  //  //  //
     //  Expression Simplification   //
     //  //  //  //  //  //  //  //  //
-    
+
     void    partitionTerms(std::list<Exp*>& positives, std::list<Exp*>& negatives,
-        std::vector<int>& integers, bool negate);
-virtual Exp*    simplifyArith() {return this;}
-static Exp* Accumulate(std::list<Exp*> exprs);
+                           std::vector<int>& integers, bool negate);
+    virtual Exp*    simplifyArith() {
+        return this;
+    }
+    static Exp* Accumulate(std::list<Exp*> exprs);
     // Simplify the expression
     Exp*    simplify();
-virtual Exp* polySimplify(bool& bMod) {bMod = false; return this;}
+    virtual Exp* polySimplify(bool& bMod) {
+        bMod = false;
+        return this;
+    }
     // Just the address simplification a[ m[ any ]]
-virtual Exp* simplifyAddr() {return this;}
-virtual Exp* fixSuccessor() {return this;}
-		// Kill any zero fill, sign extend, or truncates
-		Exp* killFill();
+    virtual Exp* simplifyAddr() {
+        return this;
+    }
+    virtual Exp* fixSuccessor() {
+        return this;
+    }
+    // Kill any zero fill, sign extend, or truncates
+    Exp* killFill();
 
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used) {};
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len) = 0;
-	static Exp *deserialize(std::istream &inf);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len) = 0;
+    static Exp *deserialize(std::istream &inf);
 
 };
 
@@ -247,13 +300,13 @@ class Const : public Exp {
     } u;
 public:
     // Special constructors overloaded for the various constants
-            Const(int i);
-            Const(ADDRESS a);
-            Const(double d);
-            Const(char* p);
+    Const(int i);
+    Const(ADDRESS a);
+    Const(double d);
+    Const(char* p);
     // Copy constructor
-            Const(Const& o);
-            
+    Const(Const& o);
+
     // Clone
     virtual Exp* clone();
 
@@ -262,26 +315,44 @@ public:
     bool    operator< (const Exp& o) const;
 
     // Get the constant
-    int     getInt() {return u.i;}
-    double  getFlt() {return u.d;}
-    char*   getStr() {return u.p;}
-    ADDRESS getAddr(){return u.a;}
+    int     getInt() {
+        return u.i;
+    }
+    double  getFlt() {
+        return u.d;
+    }
+    char*   getStr() {
+        return u.p;
+    }
+    ADDRESS getAddr() {
+        return u.a;
+    }
 
     // Set the constant
-    void setInt(int i)      {u.i = i;}
-    void setFlt(double d)   {u.d = d;}
-    void setStr(char* p)    {u.p = p;}
-    void setAddr(ADDRESS a) {u.a = a;}
+    void setInt(int i)      {
+        u.i = i;
+    }
+    void setFlt(double d)   {
+        u.d = d;
+    }
+    void setStr(char* p)    {
+        u.p = p;
+    }
+    void setAddr(ADDRESS a) {
+        u.a = a;
+    }
 
     void    print(std::ostream& os);
     void    printNoQuotes(std::ostream& os);
-    void    printr(std::ostream& os) {print (os);}
+    void    printr(std::ostream& os) {
+        print (os);
+    }
     // Nothing to destruct: Don't deallocate the string passed to constructor
 
     void    appendDotFile(std::ofstream& of);
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
 };
 
@@ -292,8 +363,8 @@ public:
 class Terminal : public Exp {
 public:
     // Constructors
-        Terminal(OPER op);
-        Terminal(Terminal& o);      // Copy constructor
+    Terminal(OPER op);
+    Terminal(Terminal& o);      // Copy constructor
 
     // Clone
     virtual Exp* clone();
@@ -303,13 +374,17 @@ public:
     bool    operator< (const Exp& o) const;
 
     void    print(std::ostream& os);
-    void    printr(std::ostream& os) {print (os);}
+    void    printr(std::ostream& os) {
+        print (os);
+    }
     void    appendDotFile(std::ofstream& of);
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
-    virtual bool isTerminal() { return true; }
+    virtual bool isTerminal() {
+        return true;
+    }
 };
 
 /*==============================================================================
@@ -320,11 +395,11 @@ protected:
     Exp*        subExp1;    // One subexpression pointer
 public:
     // Constructor, with just ID
-            Unary(OPER op);
+    Unary(OPER op);
     // Constructor, with ID and subexpression
-            Unary(OPER op, Exp* e);
+    Unary(OPER op, Exp* e);
     // Copy constructor
-            Unary(Unary& o);
+    Unary(Unary& o);
 
     // Clone
     virtual Exp* clone();
@@ -334,15 +409,19 @@ public:
     bool    operator< (const Exp& o) const;
 
     // Destructor
-virtual     ~Unary();
+    virtual     ~Unary();
 
     // Arity
-    int getArity() {return 1;}
+    int getArity() {
+        return 1;
+    }
 
     // Print
     void    print(std::ostream& os);
     // Only binary and higher arity get parentheses, so printr == print
-    void    printr(std::ostream& os) {print (os);}
+    void    printr(std::ostream& os) {
+        print (os);
+    }
     void    appendDotFile(std::ofstream& of);
 
     // Set first subexpression
@@ -353,11 +432,11 @@ virtual     ~Unary();
     Exp*    becomeSubExp1();
     // Get a reference to subexpression 1
     Exp*&   refSubExp1();
-virtual Exp* fixSuccessor();
+    virtual Exp* fixSuccessor();
 
     // Search children
     void doSearchChildren(Exp* search,
-      std::list<Exp**>& li, bool once);
+                          std::list<Exp**>& li, bool once);
 
     // Do the work of simplifying this expression
     Exp* polySimplify(bool& bMod);
@@ -367,8 +446,8 @@ virtual Exp* fixSuccessor();
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used);
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
 };
 
@@ -380,13 +459,13 @@ protected:
     Exp*        subExp2;    // Second subexpression pointer
 public:
     // Constructor, with ID
-            Binary(OPER op);
+    Binary(OPER op);
     // Constructor, with ID and subexpressions
-            Binary(OPER op, Exp* e1, Exp* e2);
+    Binary(OPER op, Exp* e1, Exp* e2);
     // Copy constructor
-            Binary(Binary& o);
+    Binary(Binary& o);
 
-	// Clone
+    // Clone
     virtual Exp* clone();
 
     // Compare
@@ -394,10 +473,12 @@ public:
     bool    operator< (const Exp& o) const ;
 
     // Destructor
-virtual     ~Binary();
+    virtual     ~Binary();
 
     // Arity
-    int getArity() {return 2;}
+    int getArity() {
+        return 2;
+    }
 
     // Print
     void    print(std::ostream& os);
@@ -416,8 +497,8 @@ virtual     ~Binary();
     Exp*&   refSubExp2();
 
     // Search children
-    void doSearchChildren(Exp* search, 
-      std::list<Exp**>& li, bool once);
+    void doSearchChildren(Exp* search,
+                          std::list<Exp**>& li, bool once);
 
     // Do the work of simplifying this expression
     Exp* polySimplify(bool& bMod);
@@ -427,8 +508,8 @@ virtual     ~Binary();
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used);
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
 };
 
@@ -439,11 +520,11 @@ class Ternary : public Binary {
     Exp*        subExp3;    // Third subexpression pointer
 public:
     // Constructor, with operator
-            Ternary(OPER op);
+    Ternary(OPER op);
     // Constructor, with operator and subexpressions
-            Ternary(OPER op, Exp* e1, Exp* e2, Exp* e3);
+    Ternary(OPER op, Exp* e1, Exp* e2, Exp* e3);
     // Copy constructor
-            Ternary(Ternary& o);
+    Ternary(Ternary& o);
 
     // Clone
     virtual Exp* clone();
@@ -453,10 +534,12 @@ public:
     bool    operator< (const Exp& o) const ;
 
     // Destructor
-virtual     ~Ternary();
+    virtual     ~Ternary();
 
     // Arity
-    int getArity() {return 3;}
+    int getArity() {
+        return 3;
+    }
 
     // Print
     void    print(std::ostream& os);
@@ -473,8 +556,8 @@ virtual     ~Ternary();
     Exp*&   refSubExp3();
 
     // Search children
-    void doSearchChildren(Exp* search, 
-      std::list<Exp**>& li, bool once);
+    void doSearchChildren(Exp* search,
+                          std::list<Exp**>& li, bool once);
 
     Exp* polySimplify(bool& bMod);
     Exp* simplifyArith();
@@ -483,8 +566,8 @@ virtual     ~Ternary();
     // Do the work of finding used locations
     virtual void addUsedLocs(LocationSet& used);
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
 };
 
@@ -495,15 +578,15 @@ class TypedExp : public Unary {
     Type   *type;
 public:
     // Constructor
-            TypedExp();
+    TypedExp();
     // Constructor, subexpression
-            TypedExp(Exp* e1);
+    TypedExp(Exp* e1);
     // Constructor, type, and subexpression.
     // A rare const parameter allows the common case of providing a temporary,
     // e.g. foo = new TypedExp(Type(INTEGER), ...);
-            TypedExp(Type* ty, Exp* e1);
+    TypedExp(Type* ty, Exp* e1);
     // Copy constructor
-            TypedExp(TypedExp& o);
+    TypedExp(TypedExp& o);
 
     // Clone
     virtual Exp* clone();
@@ -517,7 +600,9 @@ public:
 
 
     void    print(std::ostream& os);
-    void    printr(std::ostream& os) {print(os);}     // Printr same as print
+    void    printr(std::ostream& os) {
+        print(os);   // Printr same as print
+    }
     void    appendDotFile(std::ofstream& of);
 
     // Get and set the type
@@ -525,15 +610,15 @@ public:
     void    setType(Type* ty);
 
     // Search children
-    void doSearchChildren(Exp* search, 
-      std::list<Exp**>& li, bool once);
+    void doSearchChildren(Exp* search,
+                          std::list<Exp**>& li, bool once);
 
     // Do the work of simplifying this expression
     Exp* polySimplify(bool& bMod);
     Exp* simplifyAddr();
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
 };
 
@@ -544,13 +629,13 @@ class AssignExp : public Binary, public Statement {
     int size;
 public:
     // Constructor
-            AssignExp();
+    AssignExp();
     // Constructor, subexpression
-            AssignExp(Exp* lhs, Exp* rhs);
+    AssignExp(Exp* lhs, Exp* rhs);
     // Constructor, size, and subexpressions.
-            AssignExp(int sz, Exp* lhs, Exp* rhs);
+    AssignExp(int sz, Exp* lhs, Exp* rhs);
     // Copy constructor
-            AssignExp(AssignExp& o);
+    AssignExp(AssignExp& o);
 
     // Clone
     virtual Exp* clone();
@@ -560,7 +645,9 @@ public:
     bool    operator< (const Exp& o) const;
 
     virtual void print(std::ostream& os);
-    void    printr(std::ostream& os) {print(os);}     // Printr same as print
+    void    printr(std::ostream& os) {
+        print(os);   // Printr same as print
+    }
     void    appendDotFile(std::ofstream& of);
 
     // Get and set the size
@@ -568,58 +655,65 @@ public:
     void    setSize(int sz);
 
     // Search children
-    void doSearchChildren(Exp* search, 
-      std::list<Exp**>& li, bool once);
+    void doSearchChildren(Exp* search,
+                          std::list<Exp**>& li, bool once);
 
     // Do the work of simplifying this expression
     Exp* polySimplify(bool& bMod);
     Exp* simplifyArith();
     Exp* simplifyAddr();
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 
-	// new dataflow analysis
+    // new dataflow analysis
     virtual void killReach(StatementSet &reach);
     virtual void killAvail(StatementSet &avail)
-        { // Same as kill for reaching definitions
-          killReach(avail); }
+    {   // Same as kill for reaching definitions
+        killReach(avail);
+    }
     virtual void killLive(LocationSet &live);
     virtual void getDeadStatements(StatementSet &dead);
-	virtual bool usesExp(Exp *e);
+    virtual bool usesExp(Exp *e);
     virtual void addUsedLocs(LocationSet& used);
 
-        // get how to access this value
-        virtual Exp* getLeft() { return subExp1; }
-	virtual Type* getLeftType() { return NULL; }
+    // get how to access this value
+    virtual Exp* getLeft() {
+        return subExp1;
+    }
+    virtual Type* getLeftType() {
+        return NULL;
+    }
 
-        // get how to replace this statement in a use
-        virtual Exp* getRight() { return subExp2; }
+    // get how to replace this statement in a use
+    virtual Exp* getRight() {
+        return subExp2;
+    }
 
-	// special print functions
-        virtual void printAsUse(std::ostream &os);
-        virtual void printAsUseBy(std::ostream &os);
+    // special print functions
+    virtual void printAsUse(std::ostream &os);
+    virtual void printAsUseBy(std::ostream &os);
 
-	// inline any constants in the statement
-	virtual void inlineConstants(Prog *prog);
+    // inline any constants in the statement
+    virtual void inlineConstants(Prog *prog);
 
-        // general search
-        virtual bool search(Exp* search, Exp*& result) {
-            return Exp::search(search, result);
-        }
+    // general search
+    virtual bool search(Exp* search, Exp*& result) {
+        return Exp::search(search, result);
+    }
 
-	// general search and replace
-	virtual void searchAndReplace(Exp *search, Exp *replace) {
-	    bool change;
-	    Exp *e = searchReplaceAll(search, replace, change);
-	    assert(e == this);
-	}
- 
-        // update type for expression
-        virtual Type *updateType(Exp *e, Type *curType);
+    // general search and replace
+    virtual void searchAndReplace(Exp *search, Exp *replace) {
+        bool change;
+        Exp *e = searchReplaceAll(search, replace, change);
+        assert(e == this);
+    }
+
+    // update type for expression
+    virtual Type *updateType(Exp *e, Type *curType);
 
 protected:
-	virtual void doReplaceUse(Statement *use);
+    virtual void doReplaceUse(Statement *use);
 };
 
 /*==============================================================================
@@ -629,14 +723,18 @@ protected:
 class FlagDef : public Unary {
     RTL*    rtl;
 public:
-            FlagDef(Exp* params, RTL* rtl);     // Constructor
-virtual     ~FlagDef();                         // Destructor
+    FlagDef(Exp* params, RTL* rtl);     // Constructor
+    virtual     ~FlagDef();                         // Destructor
     void    appendDotFile(std::ofstream& of);
-	RTL*	getRtl() { return rtl; }
-	void	setRtl(RTL* r) { rtl = r; }
+    RTL*	getRtl() {
+        return rtl;
+    }
+    void	setRtl(RTL* r) {
+        rtl = r;
+    }
 
-	// serialization
-	virtual bool serialize(std::ostream &ouf, int &len);
+    // serialization
+    virtual bool serialize(std::ostream &ouf, int &len);
 };
 
 /*
@@ -646,9 +744,9 @@ virtual     ~FlagDef();                         // Destructor
 class lessExpStar : public std::binary_function<Exp*, Exp*, bool> {
 public:
     bool operator()(const Exp* x, const Exp* y) const
-        {
-            return (*x < *y);       // Compare the actual Exps
-        }
+    {
+        return (*x < *y);       // Compare the actual Exps
+    }
 };
 
 /*
@@ -658,9 +756,9 @@ public:
 class lessTI : public std::binary_function<Exp*, Exp*, bool> {
 public:
     bool operator()(const Exp* x, const Exp* y) const
-        {
-            return (*x << *y);      // Compare the actual Exps
-        }
+    {
+        return (*x << *y);      // Compare the actual Exps
+    }
 };
 
 // This should be in dataflow.h; here because of #include ordering issues
@@ -671,22 +769,28 @@ class LocationSet {
     // so that the sets are ordered by expression value. If this is not done,
     // then two expressions with the same value (say r[10]) but that happen to
     // have different addresses (because they came from different statements)
-    // would both be stored in the set (instead of the required set 
+    // would both be stored in the set (instead of the required set
     // behaviour, where only one is stored)
-    std::set<Exp*, lessExpStar> sset; 
+    std::set<Exp*, lessExpStar> sset;
 public:
     LocationSet() {}                        // Default constructor
     LocationSet(const LocationSet& o);      // Copy constructor
     LocationSet& operator=(const LocationSet& o); // Assignment
     void make_union(LocationSet& other);    // Set union
-    void clear() {sset.clear();}            // Clear the set
+    void clear() {
+        sset.clear();   // Clear the set
+    }
     Exp* getFirst(LocSetIter& it);          // Get the first Statement
     Exp* getNext (LocSetIter& it);          // Get next
-    void insert(Exp* loc) {sset.insert(loc);}// Insert the given location
+    void insert(Exp* loc) {
+        sset.insert(loc);   // Insert the given location
+    }
     void remove(Exp* loc);                  // Remove the given location
     void remove(LocSetIter ll);             // Remove location, given iterator
     void removeIfDefines(StatementSet& given);// Remove locs defined in given
-    int  size() const {return sset.size();}  // Number of elements
+    int  size() const {
+        return sset.size();   // Number of elements
+    }
     bool operator==(const LocationSet& o) const; // Compare
     void print();                           // Print to cerr for debugging
     bool find(Exp* e);                      // Return true if the location exists in the set

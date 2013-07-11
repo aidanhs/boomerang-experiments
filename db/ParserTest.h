@@ -5,9 +5,9 @@
 #include "prog.h"
 
 class ParserTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     ParserTest(std::string name) : CppUnit::TestCase (name)
     {}
 

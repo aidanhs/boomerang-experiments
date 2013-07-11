@@ -26,7 +26,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include "dataflow.h"
 #include "exp.h"
@@ -104,7 +104,7 @@ void Statement::calcUsedBy(StatementSet &usedBy) {
 }
 
 /* Goes through the definitions which reach this expression and creates a
-   link from any definition that is used by this expression to this 
+   link from any definition that is used by this expression to this
    expression.
  */
 void Statement::calcUseLinks(Cfg* cfg) {
@@ -137,7 +137,7 @@ void Statement::replaceUse(Statement *use) {
     // propogated in the replacement, we have to remove these later - trent
     uses.make_union(use->uses);
     // Fix the du chains that pointed in to the statement that will
-    // be removed; they now point to this 
+    // be removed; they now point to this
     StmtSetIter ii;
     StatementSet& useUses = use->uses;
     for (Statement* s = useUses.getFirst(ii); s; s = useUses.getNext(ii)) {
@@ -155,10 +155,10 @@ void Statement::replaceUse(Statement *use) {
         change = false;
         for (Statement* s = uses.getFirst(ii); s; s = uses.getNext(ii)) {
             if (!s->getLeft() || !usesExp(s->getLeft())) {
-                assert(s); 
+                assert(s);
                 s->usedBy.remove(this);
                 uses.remove(s);
-                change = true; 
+                change = true;
                 break;
             }
         }
@@ -188,10 +188,10 @@ void Statement::getLiveOut(LocationSet &liveout) {
     pbb->getLiveOutAt(this, liveout);
 }
 
-bool Statement::mayAlias(Exp *e1, Exp *e2, int size) { 
+bool Statement::mayAlias(Exp *e1, Exp *e2, int size) {
     if (*e1 == *e2) return true;
 
-    bool b = (calcAlias(e1, e2, size) && calcAlias(e2, e1, size)); 
+    bool b = (calcAlias(e1, e2, size) && calcAlias(e2, e1, size));
     if (b && 0) {           // ??
         if (VERBOSE) {
             std::cerr << "mayAlias: *" << size << "* ";
@@ -213,8 +213,8 @@ bool Statement::calcAlias(Exp *e1, Exp *e2, int size) {
     Exp *e1a = e1->getSubExp1();
     Exp *e2a = e2->getSubExp1();
     // constant memory accesses
-    if (e1a->isIntConst() && 
-        e2a->isIntConst()) {
+    if (e1a->isIntConst() &&
+            e2a->isIntConst()) {
         ADDRESS a1 = ((Const*)e1a)->getAddr();
         ADDRESS a2 = ((Const*)e2a)->getAddr();
         int diff = a1 - a2;
@@ -223,11 +223,11 @@ bool Statement::calcAlias(Exp *e1, Exp *e2, int size) {
     }
     // same left op constant memory accesses
     if (
-      e1a->getArity() == 2 &&
-      e1a->getOper() == e2a->getOper() &&
-      e1a->getSubExp2()->isIntConst() &&
-      e2a->getSubExp2()->isIntConst() &&
-      *e1a->getSubExp1() == *e2a->getSubExp1()) {
+        e1a->getArity() == 2 &&
+        e1a->getOper() == e2a->getOper() &&
+        e1a->getSubExp2()->isIntConst() &&
+        e2a->getSubExp2()->isIntConst() &&
+        *e1a->getSubExp1() == *e2a->getSubExp1()) {
         int i1 = ((Const*)e1a->getSubExp2())->getInt();
         int i2 = ((Const*)e2a->getSubExp2())->getInt();
         int diff = i1 - i2;
@@ -236,9 +236,9 @@ bool Statement::calcAlias(Exp *e1, Exp *e2, int size) {
     }
     // [left] vs [left +/- constant] memory accesses
     if (
-      (e2a->getOper() == opPlus || e2a->getOper() == opMinus) &&
-      *e1a == *e2a->getSubExp1() &&
-      e2a->getSubExp2()->isIntConst()) {
+        (e2a->getOper() == opPlus || e2a->getOper() == opMinus) &&
+        *e1a == *e2a->getSubExp1() &&
+        e2a->getSubExp2()->isIntConst()) {
         int i1 = 0;
         int i2 = ((Const*)e2a->getSubExp2())->getInt();
         int diff = i1 - i2;
@@ -297,7 +297,7 @@ void Statement::calcLiveIn(LocationSet &live) {
 
 
 
-/* 
+/*
  * Returns true if the statement can be propagated to all uses (and
  * therefore can be removed).
  * Returns false otherwise.
@@ -307,15 +307,15 @@ void Statement::calcLiveIn(LocationSet &live) {
  * of the statement are available at the expression to be propagated to
  * (the above is for condition 2 of the Dragon book, p636).
  *
- * A statement that kills one or more of its own uses is slightly more 
+ * A statement that kills one or more of its own uses is slightly more
  * complicated.  All the uses that are not killed must still have their
  * definitions available at the expression to be propagated to, but the
  * uses that were killed must have their definitions available at the
- * expression to be propagated to after the statement is 
- * removed.  This is clearly the case if the only use killed by a 
+ * expression to be propagated to after the statement is
+ * removed.  This is clearly the case if the only use killed by a
  * statement is the same as the left hand side, however, if multiple uses
  * are killed a search must be conducted to ensure that no statement between
- * the source and the destination kills the other uses. 
+ * the source and the destination kills the other uses.
  * Example: *32* m[2] := m[0] + m[4]
  * This is considered too complex a task and is therefore defered for
  * later experimentation.
@@ -343,7 +343,7 @@ bool Statement::canPropagateToAll() {
     StmtSetIter it;
     // We would like to propagate to each dest
     for (Statement* sdest = usedBy.getFirst(it); sdest;
-      sdest = usedBy.getNext(it)) {
+            sdest = usedBy.getNext(it)) {
         // all locations on the RHS must not be defined on any path from this
         // statement to the destination
         // This is the condition 2 in the Dragon book, p636
@@ -357,24 +357,25 @@ bool Statement::canPropagateToAll() {
         // Must be only one definition (this statement) of thisLhs that reaches
         // each destination (Dragon book p636 condition 1)
         // sdest->uses is a set of statements defining various things that
-        // sdest uses (not all of them define thisLhs, e.g. if sdest is 
+        // sdest uses (not all of them define thisLhs, e.g. if sdest is
         // foo := thisLhs + z, some of them define z)
         int defThisLhs = 0;
         StmtSetIter dui;
         for (Statement* du = sdest->uses.getFirst(dui); du;
-          du = sdest->uses.getNext(dui)) {
+                du = sdest->uses.getNext(dui)) {
             Exp* lhs = du->getLeft();
             if (*lhs == *thisLhs) defThisLhs++;
         }
         assert(defThisLhs);         // Should at least find one (this)
         if (defThisLhs > 1) {
 #if 0
-  std::cerr << "Can't propagate " << this << " because there are " << defThisLhs
-    << " uses for destination " << sdest << "; they include: ";
-  StmtSetIter xx;
-  for (Statement* ss = sdest->uses.getFirst(xx); ss;
-    ss = sdest->uses.getNext(xx))
-      std::cerr << ss << ", "; std::cerr << "\n";   // HACK!
+            std::cerr << "Can't propagate " << this << " because there are " << defThisLhs
+                      << " uses for destination " << sdest << "; they include: ";
+            StmtSetIter xx;
+            for (Statement* ss = sdest->uses.getFirst(xx); ss;
+                    ss = sdest->uses.getNext(xx))
+                std::cerr << ss << ", ";
+            std::cerr << "\n";   // HACK!
 #endif
             return false;
         }
@@ -394,7 +395,7 @@ void Statement::propagateToAll() {
 // Update the dataflow for this stmt. This stmt is about to be deleted.
 // Don't assume the statement being erased has no dataflow; it could be
 // of the form x := x
-// 
+//
 //   Before           After
 //     (1)             (1)
 //     ^ |usedBy       ^ |
@@ -414,7 +415,7 @@ void Statement::updateDfForErase() {
         ss->usedBy.remove(this);
         // The use from this (1) to each (3) comes next
         for (Statement* su = usedBy.getFirst(uu); su;
-          su = usedBy.getNext(uu))
+                su = usedBy.getNext(uu))
             ss->usedBy.insert(su);        // This (3) usedby this (1)
     }
     // Next, fix the up arrows (uses)
@@ -462,7 +463,10 @@ void Statement::printWithUses(std::ostream& os) {
  * RETURNS:         copy of os (for concatenation)
  *============================================================================*/
 std::ostream& operator<<(std::ostream& os, Statement* s) {
-    if (s == NULL) {os << "NULL "; return os;}
+    if (s == NULL) {
+        os << "NULL ";
+        return os;
+    }
     s->print(os);
     return os;
 }
@@ -669,7 +673,7 @@ bool LocationSet::operator==(const LocationSet& o) const {
     if (size() != o.size()) return false;
     std::set<Exp*, lessExpStar>::const_iterator it1, it2;
     for (it1 = sset.begin(), it2 = o.sset.begin(); it1 != sset.end();
-      it1++, it2++) {
+            it1++, it2++) {
         if (!(**it1 == **it2)) return false;
     }
     return true;

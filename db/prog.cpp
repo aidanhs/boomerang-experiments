@@ -33,9 +33,9 @@
  *============================================================================*/
 
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER <= 1200 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <assert.h>
 #include <fstream>
@@ -87,7 +87,7 @@ Prog::~Prog() {
     if (pBF) delete pBF;
     if (pFE) delete pFE;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         if (*it)
             delete *it;
     }
@@ -107,7 +107,7 @@ bool Prog::wellForm() {
     bool wellformed = true;
 
     for (std::list<Proc *>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (!(*it)->isLib()) {
             UserProc *u = (UserProc*)*it;
             wellformed &= u->getCFG()->wellFormCfg();
@@ -119,7 +119,7 @@ bool Prog::wellForm() {
 void Prog::analyse() {
     Analysis *analysis = new Analysis();
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -136,20 +136,20 @@ void Prog::analyse() {
 // Do decompilation
 void Prog::decompile() {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
         if (!p->isDecoded()) continue;
 
-        // decoded userproc.. decompile it          
+        // decoded userproc.. decompile it
         p->decompile();
     }
 }
 
 void Prog::generateDotFile() {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -160,7 +160,7 @@ void Prog::generateDotFile() {
 
 void Prog::generateCode(std::ostream &os) {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -175,7 +175,7 @@ void Prog::generateCode(std::ostream &os) {
 // Print this program, mainly for debugging
 void Prog::print(std::ostream &out, bool withDF) {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -200,39 +200,39 @@ void Prog::deserialize(std::istream &inf) {
 //            case FID_FILENAME:
 //                loadString(inf, filename);
 //                break;
-         case FID_FRONTEND:
-                {
-                    len = loadLen(inf);
-                    std::streampos pos = inf.tellg();
+        case FID_FRONTEND:
+        {
+            len = loadLen(inf);
+            std::streampos pos = inf.tellg();
 
-                    //loadValue(inf, limitTextLow, false);
-                    //loadValue(inf, limitTextHigh, false);
-                    //loadValue(inf, textDelta, false);
+            //loadValue(inf, limitTextLow, false);
+            //loadValue(inf, limitTextHigh, false);
+            //loadValue(inf, textDelta, false);
 
-                    std::string frontend;
-                    loadString(inf, frontend);
-                    pFE = FrontEnd::createById(frontend, pBF);
-                    assert(pFE);
+            std::string frontend;
+            loadString(inf, frontend);
+            pFE = FrontEnd::createById(frontend, pBF);
+            assert(pFE);
 
-                    assert((int)(inf.tellg() - pos) == len);
-                }
-                break;
-            case FID_PROC:
-                {
-                    len = loadLen(inf);
-                    std::streampos pos = inf.tellg();
-                    Proc *pProc = Proc::deserialize(this, inf);
-                    assert((int)(inf.tellg() - pos) == len);
-                    assert(pProc);
-                    m_procs.push_back(pProc);   // Append this to list of procs
-                    m_procLabels[pProc->getNativeAddress()] = pProc;
-                    // alert the watcher of a new proc
-                    if (m_watcher) m_watcher->alert_new(pProc);
-                    cProcs++;
-                }
-                break;
-            default:
-                skipFID(inf, fid);
+            assert((int)(inf.tellg() - pos) == len);
+        }
+        break;
+        case FID_PROC:
+        {
+            len = loadLen(inf);
+            std::streampos pos = inf.tellg();
+            Proc *pProc = Proc::deserialize(this, inf);
+            assert((int)(inf.tellg() - pos) == len);
+            assert(pProc);
+            m_procs.push_back(pProc);   // Append this to list of procs
+            m_procLabels[pProc->getNativeAddress()] = pProc;
+            // alert the watcher of a new proc
+            if (m_watcher) m_watcher->alert_new(pProc);
+            cProcs++;
+        }
+        break;
+        default:
+            skipFID(inf, fid);
         }
 
         if (m_watcher) {
@@ -247,11 +247,11 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
 
     int nProcs = 0, cProcs = 0;
     for (std::list<Proc *>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         nProcs++;
     saveValue(ouf, nProcs, false);
 
-    // write information about Prog    
+    // write information about Prog
 //    saveFID(ouf, FID_PROJECT_NAME);
 //    saveString(ouf, project);
 //    saveFID(ouf, FID_FILENAME);
@@ -283,9 +283,9 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
     // write information about each proc
     for (
 #ifndef WIN32
-      std::list<Proc *>::iterator 
+        std::list<Proc *>::iterator
 #endif
-      it = m_procs.begin(); it != m_procs.end(); it++) {
+        it = m_procs.begin(); it != m_procs.end(); it++) {
         Proc *p = *it;
 
         fid = FID_PROC;
@@ -316,10 +316,10 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
 
 
 // clear the current project
-void Prog::clear() {   
+void Prog::clear() {
     m_name = std::string("");
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (*it)
             delete *it;
     m_procs.clear();
@@ -406,7 +406,7 @@ void Prog::remProc(UserProc* uProc) {
     m_procLabels[uProc->getNativeAddress()] = (Proc*)-1;
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (*it == uProc) {
             m_procs.erase(it);
             break;
@@ -462,7 +462,7 @@ Proc* Prog::findProc(ADDRESS uAddr) const {
         return (*it).second;
 }
 
-Proc* Prog::findProc(const char *name) const {   
+Proc* Prog::findProc(const char *name) const {
     std::list<Proc *>::const_iterator it;
     for (it = m_procs.begin(); it != m_procs.end(); it++)
         if (!strcmp((*it)->getName(), name))
@@ -497,9 +497,9 @@ const char *Prog::getGlobal(ADDRESS uaddr)
 
 void Prog::makeGlobal(ADDRESS uaddr, const char *name)
 {
-/*    if (globalMap == NULL) globalMap = pBF->GetDynamicGlobalMap();
-    assert(globalMap && globalMap->find(uaddr) == globalMap->end());
-    (*globalMap)[uaddr] = strdup(name);*/
+    /*    if (globalMap == NULL) globalMap = pBF->GetDynamicGlobalMap();
+        assert(globalMap && globalMap->find(uaddr) == globalMap->end());
+        (*globalMap)[uaddr] = strdup(name);*/
 }
 
 // get a string constant at a given address if appropriate
@@ -518,7 +518,7 @@ char *Prog::getStringConstant(ADDRESS uaddr) {
  *============================================================================*/
 Proc* Prog::findContainingProc(ADDRESS uAddr) const {
     for (std::list<Proc*>::const_iterator it = m_procs.begin();
-      it != m_procs.end(); it++) {
+            it != m_procs.end(); it++) {
         Proc *p = (*it);
         if (p->getNativeAddress() == uAddr)
             return p;
@@ -617,7 +617,7 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
         if ((!pSect->bCode) && (!pSect->bReadOnly))
             continue;
         if ((uAddr < pSect->uNativeAddr) ||
-          (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
+                (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
             continue;           // Try the next section
         delta = pSect->uHostAddr - pSect->uNativeAddr;
         last = (const char*) (pSect->uHostAddr + pSect->uSectionSize);

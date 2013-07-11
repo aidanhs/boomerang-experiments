@@ -27,7 +27,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <iomanip>          // For setfill
 #include <sstream>
@@ -183,7 +183,7 @@ void HLJump::searchAndReplace(Exp* search, Exp* replace) {
  *============================================================================*/
 bool HLJump::searchAll(Exp* search, std::list<Exp*> &result) {
     return RTL::searchAll(search, result) ||
-        ( pDest && pDest->searchAll(search, result) );
+           ( pDest && pDest->searchAll(search, result) );
 }
 
 /*==============================================================================
@@ -208,7 +208,7 @@ void HLJump::print(std::ostream& os /*= cout*/, bool withDF) {
     if (pDest == NULL)
         os << "*no dest*";
     else if (pDest->getOper() != opIntConst)
-         pDest->print(os);
+        pDest->print(os);
     else
         os << "0x" << std::hex << getFixedDest();
     os << std::endl;
@@ -277,10 +277,10 @@ bool HLJump::accept(RTLVisitor* visitor) {
  * RETURNS:         <nothing>
  *============================================================================*/
 void HLJump::getUseDefLocations(LocationMap& locMap, LocationFilter* filter,
-    BITSET& defSet, BITSET& useSet, BITSET& useUndefSet, Proc* proc) const {
+                                BITSET& defSet, BITSET& useSet, BITSET& useUndefSet, Proc* proc) const {
     // If jumps ever have semantics, then this call would be needed
     // RTL::getUseDefLocations(locMap, filter, defSet, useSet, useUndefSet,
-        // proc);
+    // proc);
 
     if (pDest)
         searchExprForUses(pDest, locMap, filter, defSet, useSet, useUndefSet);
@@ -304,24 +304,24 @@ bool HLJump::serialize_rest(std::ostream &ouf) {
 // deserialize an rtl
 bool HLJump::deserialize_fid(std::istream &inf, int fid) {
     switch (fid) {
-        case FID_RTL_FIXDEST:
-            {
-                ADDRESS a;
-                loadValue(inf, a);
-                pDest = new Const(a);
-            }
-            break;
-        case FID_RTL_JDEST:
-            {
-                pDest = Exp::deserialize(inf);
-                if (pDest->getOper() != opIntConst)
-                    m_isComputed = true;
-                else
-                    m_isComputed = false;
-            }
-            break;
-        default:
-            return RTL::deserialize_fid(inf, fid);
+    case FID_RTL_FIXDEST:
+    {
+        ADDRESS a;
+        loadValue(inf, a);
+        pDest = new Const(a);
+    }
+    break;
+    case FID_RTL_JDEST:
+    {
+        pDest = Exp::deserialize(inf);
+        if (pDest->getOper() != opIntConst)
+            m_isComputed = true;
+        else
+            m_isComputed = false;
+    }
+    break;
+    default:
+        return RTL::deserialize_fid(inf, fid);
     }
 
     return true;
@@ -351,8 +351,8 @@ void HLJump::simplify() {
  * RETURNS:         N/a
  *============================================================================*/
 HLJcond::HLJcond(ADDRESS instNativeAddr, std::list<Exp*>* le /*= NULL*/) :
-  HLJump(instNativeAddr, le), jtCond((JCOND_TYPE)0), pCond(NULL),
-  bFloat(false) {
+    HLJump(instNativeAddr, le), jtCond((JCOND_TYPE)0), pCond(NULL),
+    bFloat(false) {
     kind = JCOND_RTL;
 }
 
@@ -387,75 +387,75 @@ void HLJcond::setCondType(JCOND_TYPE cond, bool usesFloat /*= false*/) {
     Exp* p = NULL;
 #if 0
     switch(cond) {
-        case HLJCOND_JE:
-            p = new Terminal(opZF);
-            break;
-        case HLJCOND_JNE:
-            p = new Unary(opNot, new Terminal(opZF));
-            break;
-        case HLJCOND_JSL:
-            // N xor V
-            p = new Binary(opNotEqual, new Terminal(opNF), new Terminal(opOF));
-            break;
-        case HLJCOND_JSLE:
-            // Z or (N xor V)
-            p = new Binary(opOr,
-                new Terminal(opZF),
-                new Binary(opNotEqual, new Terminal(opNF), new Terminal(opOF)));
-            break;
-        case HLJCOND_JSGE:
-            // not (N xor V) same as (N == V)
-            p = new Binary(opEquals, new Terminal(opNF), new Terminal(opOF));
-            break;
-        case HLJCOND_JSG:
-            // not (Z or (N xor V))
-            p = new Unary(opNot,
-                new Binary(opOr,
-                    new Terminal(opZF),
-                    new Binary(opNotEqual,
-                        new Terminal(opNF), new Terminal(opOF))));
-            break;
-        case HLJCOND_JUL:
-            // C
-            p = new Terminal(opCF);
-            break;
-        case HLJCOND_JULE:
-            // C or Z
-            p = new Binary(opOr, new Terminal(opCF), 
-                                 new Terminal(opZF));
-            break;
-        case HLJCOND_JUGE:
-            // not C
-            p = new Unary(opNot, new Terminal(opCF));
-            break;
-        case HLJCOND_JUG:
-            // not (C or Z)
-            p = new Unary(opNot,
-                new Binary(opOr,
-                    new Terminal(opCF),
-                    new Terminal(opZF)));
-            break;
-        case HLJCOND_JMI:
-            // N
-            p = new Terminal(opNF);
-            break;
-        case HLJCOND_JPOS:
-            // not N
-            p = new Unary(opNot, new Terminal(opNF));
-            break;
-        case HLJCOND_JOF:
-            // V
-            p = new Terminal(opOF);
-            break;
-        case HLJCOND_JNOF:
-            // not V
-            p = new Unary(opNot, new Terminal(opOF));
-            break;
-        case HLJCOND_JPAR:
-            // Can't handle (could happen as a result of a failure of Pentium
-            // floating point analysis)
-            assert(false);
-            break;
+    case HLJCOND_JE:
+        p = new Terminal(opZF);
+        break;
+    case HLJCOND_JNE:
+        p = new Unary(opNot, new Terminal(opZF));
+        break;
+    case HLJCOND_JSL:
+        // N xor V
+        p = new Binary(opNotEqual, new Terminal(opNF), new Terminal(opOF));
+        break;
+    case HLJCOND_JSLE:
+        // Z or (N xor V)
+        p = new Binary(opOr,
+                       new Terminal(opZF),
+                       new Binary(opNotEqual, new Terminal(opNF), new Terminal(opOF)));
+        break;
+    case HLJCOND_JSGE:
+        // not (N xor V) same as (N == V)
+        p = new Binary(opEquals, new Terminal(opNF), new Terminal(opOF));
+        break;
+    case HLJCOND_JSG:
+        // not (Z or (N xor V))
+        p = new Unary(opNot,
+                      new Binary(opOr,
+                                 new Terminal(opZF),
+                                 new Binary(opNotEqual,
+                                            new Terminal(opNF), new Terminal(opOF))));
+        break;
+    case HLJCOND_JUL:
+        // C
+        p = new Terminal(opCF);
+        break;
+    case HLJCOND_JULE:
+        // C or Z
+        p = new Binary(opOr, new Terminal(opCF),
+                       new Terminal(opZF));
+        break;
+    case HLJCOND_JUGE:
+        // not C
+        p = new Unary(opNot, new Terminal(opCF));
+        break;
+    case HLJCOND_JUG:
+        // not (C or Z)
+        p = new Unary(opNot,
+                      new Binary(opOr,
+                                 new Terminal(opCF),
+                                 new Terminal(opZF)));
+        break;
+    case HLJCOND_JMI:
+        // N
+        p = new Terminal(opNF);
+        break;
+    case HLJCOND_JPOS:
+        // not N
+        p = new Unary(opNot, new Terminal(opNF));
+        break;
+    case HLJCOND_JOF:
+        // V
+        p = new Terminal(opOF);
+        break;
+    case HLJCOND_JNOF:
+        // not V
+        p = new Unary(opNot, new Terminal(opOF));
+        break;
+    case HLJCOND_JPAR:
+        // Can't handle (could happen as a result of a failure of Pentium
+        // floating point analysis)
+        assert(false);
+        break;
     }
 #else
     p = new Terminal(opFlags);
@@ -474,13 +474,21 @@ void HLJcond::makeSigned() {
     // Make this into a signed branch
     switch (jtCond)
     {
-        case HLJCOND_JUL : jtCond = HLJCOND_JSL;  break;
-        case HLJCOND_JULE: jtCond = HLJCOND_JSLE; break;
-        case HLJCOND_JUGE: jtCond = HLJCOND_JSGE; break;
-        case HLJCOND_JUG : jtCond = HLJCOND_JSG;  break;
-        default:
-            // Do nothing for other cases
-            break;
+    case HLJCOND_JUL :
+        jtCond = HLJCOND_JSL;
+        break;
+    case HLJCOND_JULE:
+        jtCond = HLJCOND_JSLE;
+        break;
+    case HLJCOND_JUGE:
+        jtCond = HLJCOND_JSGE;
+        break;
+    case HLJCOND_JUG :
+        jtCond = HLJCOND_JSG;
+        break;
+    default:
+        // Do nothing for other cases
+        break;
     }
 }
 
@@ -528,8 +536,8 @@ void HLJcond::searchAndReplace(Exp* search, Exp* replace) {
 // update type for expression
 Type *HLJcond::updateType(Exp *e, Type *curType) {
     if (jtCond == HLJCOND_JUGE || jtCond == HLJCOND_JULE ||
-        jtCond == HLJCOND_JUG || jtCond == HLJCOND_JUL && 
-        curType->isInteger()) {
+            jtCond == HLJCOND_JUG || jtCond == HLJCOND_JUL &&
+            curType->isInteger()) {
         ((IntegerType*)curType)->setSigned(false);
     }
     return curType;
@@ -545,7 +553,7 @@ Type *HLJcond::updateType(Exp *e, Type *curType) {
  *============================================================================*/
 bool HLJcond::searchAll(Exp* search, std::list<Exp*> &result) {
     return RTL::searchAll(search, result) ||
-      (pCond && (pCond->searchAll(search, result)));
+           (pCond && (pCond->searchAll(search, result)));
 }
 
 
@@ -573,21 +581,51 @@ void HLJcond::print(std::ostream& os /*= cout*/, bool withDF) {
     os << ", condition ";
     switch (jtCond)
     {
-        case HLJCOND_JE:    os << "equals"; break;
-        case HLJCOND_JNE:   os << "not equals"; break;
-        case HLJCOND_JSL:   os << "signed less"; break;
-        case HLJCOND_JSLE:  os << "signed less or equals"; break;
-        case HLJCOND_JSGE:  os << "signed greater or equals"; break;
-        case HLJCOND_JSG:   os << "signed greater"; break;
-        case HLJCOND_JUL:   os << "unsigned less"; break;
-        case HLJCOND_JULE:  os << "unsigned less or equals"; break;
-        case HLJCOND_JUGE:  os << "unsigned greater or equals"; break;
-        case HLJCOND_JUG:   os << "unsigned greater"; break;
-        case HLJCOND_JMI:   os << "minus"; break;
-        case HLJCOND_JPOS:  os << "plus"; break;
-        case HLJCOND_JOF:   os << "overflow"; break;
-        case HLJCOND_JNOF:  os << "no overflow"; break;
-        case HLJCOND_JPAR:  os << "parity"; break;
+    case HLJCOND_JE:
+        os << "equals";
+        break;
+    case HLJCOND_JNE:
+        os << "not equals";
+        break;
+    case HLJCOND_JSL:
+        os << "signed less";
+        break;
+    case HLJCOND_JSLE:
+        os << "signed less or equals";
+        break;
+    case HLJCOND_JSGE:
+        os << "signed greater or equals";
+        break;
+    case HLJCOND_JSG:
+        os << "signed greater";
+        break;
+    case HLJCOND_JUL:
+        os << "unsigned less";
+        break;
+    case HLJCOND_JULE:
+        os << "unsigned less or equals";
+        break;
+    case HLJCOND_JUGE:
+        os << "unsigned greater or equals";
+        break;
+    case HLJCOND_JUG:
+        os << "unsigned greater";
+        break;
+    case HLJCOND_JMI:
+        os << "minus";
+        break;
+    case HLJCOND_JPOS:
+        os << "plus";
+        break;
+    case HLJCOND_JOF:
+        os << "overflow";
+        break;
+    case HLJCOND_JNOF:
+        os << "no overflow";
+        break;
+    case HLJCOND_JPAR:
+        os << "parity";
+        break;
     }
     if (bFloat) os << " float";
     os << std::endl;
@@ -648,18 +686,18 @@ bool HLJcond::deserialize_fid(std::istream &inf, int fid) {
     char ch;
 
     switch (fid) {
-        case FID_RTL_JCONDTYPE:             
-            loadValue(inf, ch);
-            jtCond = (JCOND_TYPE)ch;
-            break;
-        case FID_RTL_USESFLOATCC:
-            loadValue(inf, bFloat);
-            break;
-        case FID_RTL_JCOND:
-            pCond = Exp::deserialize(inf);
-            break;
-        default:
-            return HLJump::deserialize_fid(inf, fid);
+    case FID_RTL_JCONDTYPE:
+        loadValue(inf, ch);
+        jtCond = (JCOND_TYPE)ch;
+        break;
+    case FID_RTL_USESFLOATCC:
+        loadValue(inf, bFloat);
+        break;
+    case FID_RTL_JCOND:
+        pCond = Exp::deserialize(inf);
+        break;
+    default:
+        return HLJump::deserialize_fid(inf, fid);
     }
 
     return true;
@@ -712,76 +750,96 @@ void HLJcond::simplify() {
         pCond->print(os);
         std::string s = os.str();
 
-        if (pCond->getOper() == opFlagCall && 
-            !strncmp(((Const*)pCond->getSubExp1())->getStr(), 
-                    "SUBFLAGS", 8)) {
+        if (pCond->getOper() == opFlagCall &&
+                !strncmp(((Const*)pCond->getSubExp1())->getStr(),
+                         "SUBFLAGS", 8)) {
             Exp *e = pCond;
             OPER op = opWild;
             switch (jtCond) {
-                case HLJCOND_JE:    op = opEquals; break;
-                case HLJCOND_JNE:   op = opNotEqual; break;
-                case HLJCOND_JSL:   op = opLess; break;
-                case HLJCOND_JSLE:  op = opLessEq; break;
-                case HLJCOND_JSGE:  op = opGtrEq; break;
-                case HLJCOND_JSG:   op = opGtr; break;
-                case HLJCOND_JUL:   op = opLessUns; break;
-                case HLJCOND_JULE:  op = opLessEqUns; break;
-                case HLJCOND_JUGE:  op = opGtrEqUns; break;
-                case HLJCOND_JUG:   op = opGtrUns; break;
-                case HLJCOND_JMI:
-                    pCond = new Binary(opLess,
-                        pCond->getSubExp2()->getSubExp2()->getSubExp2()
-                            ->getSubExp1()->clone(), new Const(0));
-                    delete e;
-                    break;
-                case HLJCOND_JPOS:
-                    pCond = new Binary(opGtrEq,
-                        pCond->getSubExp2()->getSubExp2()->getSubExp2()
-                            ->getSubExp1()->clone(), new Const(0));
-                    delete e;
-                    break;
-                case HLJCOND_JOF:
-                case HLJCOND_JNOF:
-                case HLJCOND_JPAR:
-                    break;
+            case HLJCOND_JE:
+                op = opEquals;
+                break;
+            case HLJCOND_JNE:
+                op = opNotEqual;
+                break;
+            case HLJCOND_JSL:
+                op = opLess;
+                break;
+            case HLJCOND_JSLE:
+                op = opLessEq;
+                break;
+            case HLJCOND_JSGE:
+                op = opGtrEq;
+                break;
+            case HLJCOND_JSG:
+                op = opGtr;
+                break;
+            case HLJCOND_JUL:
+                op = opLessUns;
+                break;
+            case HLJCOND_JULE:
+                op = opLessEqUns;
+                break;
+            case HLJCOND_JUGE:
+                op = opGtrEqUns;
+                break;
+            case HLJCOND_JUG:
+                op = opGtrUns;
+                break;
+            case HLJCOND_JMI:
+                pCond = new Binary(opLess,
+                                   pCond->getSubExp2()->getSubExp2()->getSubExp2()
+                                   ->getSubExp1()->clone(), new Const(0));
+                delete e;
+                break;
+            case HLJCOND_JPOS:
+                pCond = new Binary(opGtrEq,
+                                   pCond->getSubExp2()->getSubExp2()->getSubExp2()
+                                   ->getSubExp1()->clone(), new Const(0));
+                delete e;
+                break;
+            case HLJCOND_JOF:
+            case HLJCOND_JNOF:
+            case HLJCOND_JPAR:
+                break;
             }
             if (op != opWild) {
                 pCond = new Binary(op,
-                    pCond->getSubExp2()->getSubExp1()->clone(), 
-                    pCond->getSubExp2()->getSubExp2()->getSubExp1()
-                        ->clone());
+                                   pCond->getSubExp2()->getSubExp1()->clone(),
+                                   pCond->getSubExp2()->getSubExp2()->getSubExp1()
+                                   ->clone());
                 delete e;
             }
         }
-        if (pCond->getOper() == opFlagCall && 
-            !strncmp(((Const*)pCond->getSubExp1())->getStr(), 
-                    "LOGICALFLAGS", 12)) {
+        if (pCond->getOper() == opFlagCall &&
+                !strncmp(((Const*)pCond->getSubExp1())->getStr(),
+                         "LOGICALFLAGS", 12)) {
             Exp *e = pCond;
             switch (jtCond) {
-                case HLJCOND_JE:
-                    pCond = new Binary(opEquals,
-                        pCond->getSubExp2()->getSubExp1()->clone(), 
-                        new Const(0));
-                    break;
-                case HLJCOND_JNE:
-                    pCond = new Binary(opNotEqual,
-                        pCond->getSubExp2()->getSubExp1()->clone(), 
-                        new Const(0));
-                    break;
-                case HLJCOND_JMI:
-                    pCond = new Binary(opLess,
-                        pCond->getSubExp2()->getSubExp1()->clone(), 
-                        new Const(0));
-                    delete e;
-                    break;
-                case HLJCOND_JPOS:
-                    pCond = new Binary(opGtrEq,
-                        pCond->getSubExp2()->getSubExp1()->clone(), 
-                        new Const(0));
-                    delete e;
-                    break;
-                default:
-                    break;
+            case HLJCOND_JE:
+                pCond = new Binary(opEquals,
+                                   pCond->getSubExp2()->getSubExp1()->clone(),
+                                   new Const(0));
+                break;
+            case HLJCOND_JNE:
+                pCond = new Binary(opNotEqual,
+                                   pCond->getSubExp2()->getSubExp1()->clone(),
+                                   new Const(0));
+                break;
+            case HLJCOND_JMI:
+                pCond = new Binary(opLess,
+                                   pCond->getSubExp2()->getSubExp1()->clone(),
+                                   new Const(0));
+                delete e;
+                break;
+            case HLJCOND_JPOS:
+                pCond = new Binary(opGtrEq,
+                                   pCond->getSubExp2()->getSubExp1()->clone(),
+                                   new Const(0));
+                delete e;
+                break;
+            default:
+                break;
             }
         }
     }
@@ -864,8 +922,8 @@ void HLNwayJump::searchAndReplace(Exp* search, Exp* replace) {
  *============================================================================*/
 bool HLNwayJump::searchAll(Exp* search, std::list<Exp*> &result) {
     return HLJump::searchAll(search, result) ||
-        ( pSwitchInfo && pSwitchInfo->pSwitchVar &&
-          pSwitchInfo->pSwitchVar->searchAll(search, result) );
+           ( pSwitchInfo && pSwitchInfo->pSwitchVar &&
+             pSwitchInfo->pSwitchVar->searchAll(search, result) );
 }
 
 /*==============================================================================
@@ -922,8 +980,8 @@ bool HLNwayJump::serialize_rest(std::ostream &ouf) {
 // deserialize an rtl
 bool HLNwayJump::deserialize_fid(std::istream &inf, int fid) {
     switch (fid) {
-        default:
-            return RTL::deserialize_fid(inf, fid);
+    default:
+        return RTL::deserialize_fid(inf, fid);
     }
 
     return true;
@@ -949,10 +1007,10 @@ void HLNwayJump::simplify() {
  * RETURNS:          <nothing>
  *============================================================================*/
 HLCall::HLCall(ADDRESS instNativeAddr, int returnTypeSize /*= 0*/,
-  std::list<Exp*>* le /*= NULL*/):
+               std::list<Exp*>* le /*= NULL*/):
 
     HLJump(instNativeAddr, le),returnTypeSize(returnTypeSize),
-      returnAfterCall(false), returnLoc(NULL) {
+    returnAfterCall(false), returnLoc(NULL) {
     kind = CALL_RTL;
     postCallExpList = NULL;
     procDest = NULL;
@@ -1015,7 +1073,10 @@ Exp* HLCall::getReturnLoc() {
 }
 
 void HLCall::setIgnoreReturnLoc(bool b) {
-    if (b) { returnLoc = NULL; return; }
+    if (b) {
+        returnLoc = NULL;
+        return;
+    }
     assert(procDest);
     returnLoc = procDest->getSignature()->getReturnExp()->clone();
 }
@@ -1041,23 +1102,23 @@ Type* HLCall::getLeftType() {
  * RETURNS:         <nothing>
  *============================================================================*/
 void HLCall::getUseDefLocations(LocationMap& locMap,
-    LocationFilter* filter, BITSET& defSet, BITSET& useSet,
-    BITSET& useUndefSet, Proc* proc) const {
+                                LocationFilter* filter, BITSET& defSet, BITSET& useSet,
+                                BITSET& useUndefSet, Proc* proc) const {
     // Note: calls can have semantics now (mainly from restore instructions
     // in their delay slots).
     // So process the semantics (assignments) for this HLCall
     RTL::getUseDefLocations(locMap, filter, defSet, useSet, useUndefSet,
-        proc);
+                            proc);
 
     // Calls are also jumps; the destination expression may use some locations
     HLJump::getUseDefLocations(locMap, filter, defSet, useSet, useUndefSet,
-        proc);
+                               proc);
 
     // Get the set of locations that are parameters for the call
     // Use a type insensitive set
     setSgiExp params_set;
     for (std::list<Exp>::const_iterator it = params.begin();
-      it != params.end(); it++)
+            it != params.end(); it++)
         // We should not have vars here at this stage. These uses will be needed
         // for things like return location analysis, and the ReturnLocation
         // object will have strings like r[8], not v0
@@ -1089,8 +1150,8 @@ bool HLCall::search(Exp* search, Exp*& result) {
     for (unsigned i = 0; i < arguments.size(); i++)
         if (arguments[i]->search(search, result)) return true;
     if (postCallExpList) {
-        for (std::list<Exp*>::iterator it = postCallExpList->begin(); 
-          it != postCallExpList->end(); it++)
+        for (std::list<Exp*>::iterator it = postCallExpList->begin();
+                it != postCallExpList->end(); it++)
             if ((*it)->search(search, result)) return true;
     }
     return false;
@@ -1113,7 +1174,7 @@ void HLCall::searchAndReplace(Exp* search, Exp* replace) {
     // Also replace the postCall rtls, if any
     if (postCallExpList) {
         for (std::list<Exp*>::iterator it = postCallExpList->begin();
-          it != postCallExpList->end(); it++)
+                it != postCallExpList->end(); it++)
             *it = (*it)->searchReplaceAll(search, replace, change);
     }
 }
@@ -1160,12 +1221,12 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
     // Print the return location if there is one
     if (getReturnLoc() != NULL)
         os << " " << getReturnLoc() << " := ";
- 
+
     os << "CALL ";
     if (procDest)
         os << procDest->getName();
     else if (pDest == NULL)
-            os << "*no dest*";
+        os << "*no dest*";
     else {
         // But Trent hacked out the opAddrConst (opCodeAddr) stuff... Sigh.
         // I'd like to retain the 0xHEX notation, if only to retaing the
@@ -1177,7 +1238,7 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
     }
 
     // Print the actual arguments of the call
-    os << "(";    
+    os << "(";
     for (unsigned i = 0; i < arguments.size(); i++) {
         if (i != 0)
             os << ", ";
@@ -1202,13 +1263,13 @@ void HLCall::print(std::ostream& os /*= cout*/, bool withDF) {
     // Print the post call RTLs, if any
     if (postCallExpList) {
         for (std::list<Exp*>::iterator it = postCallExpList->begin();
-          it != postCallExpList->end(); it++) {
+                it != postCallExpList->end(); it++) {
             os << " ";
             (*it)->print(os);
             os << "\n";
         }
     }
-    
+
     if (withDF) {
         StatementList &internal = getInternalStatements();
         StmtListIter it;
@@ -1305,21 +1366,21 @@ bool HLCall::serialize_rest(std::ostream &ouf) {
 // deserialize an rtl
 bool HLCall::deserialize_fid(std::istream &inf, int fid) {
     switch (fid) {
-        case FID_RTL_CALLDESTSTR:
-            loadString(inf, destStr);           
-            break;
-        default:
-            return HLJump::deserialize_fid(inf, fid);
+    case FID_RTL_CALLDESTSTR:
+        loadString(inf, destStr);
+        break;
+    default:
+        return HLJump::deserialize_fid(inf, fid);
     }
 
     return true;
 }
 
 Proc* HLCall::getDestProc() {
-    return procDest; 
+    return procDest;
 }
 
-void HLCall::setDestProc(Proc* dest) { 
+void HLCall::setDestProc(Proc* dest) {
     assert(dest);
     assert(procDest == NULL);
     procDest = dest;
@@ -1348,7 +1409,7 @@ void HLCall::simplify() {
 }
 
 void HLCall::decompile() {
-    if (procDest) { 
+    if (procDest) {
         UserProc *p = dynamic_cast<UserProc*>(procDest);
         if (p != NULL)
             p->decompile();
@@ -1372,12 +1433,12 @@ void HLCall::decompile() {
             arguments.resize(procDest->getSignature()->getNumParams());
             for (int i = 0; i < procDest->getSignature()->getNumParams(); i++)
                 arguments[i] = procDest->getSignature()->getArgumentExp(i)->
-                  clone();
+                               clone();
             if (procDest->getSignature()->hasEllipsis()) {
                 // Just guess 10 parameters for now
                 //for (int i = 0; i < 10; i++)
                 arguments.push_back(procDest->getSignature()->
-                  getArgumentExp(arguments.size())->clone());
+                                    getArgumentExp(arguments.size())->clone());
             }
             // init return location
             returnLoc = procDest->getSignature()->getReturnExp();
@@ -1400,7 +1461,9 @@ void HLCall::decompile() {
             // We want the parameters that coincide with conventional parameter
             // locations first
             Prog* prog = uproc->getProg();
-            LocSetIter ll; int i=0; bool found = true;
+            LocSetIter ll;
+            int i=0;
+            bool found = true;
             while (found) {
                 Exp* stdloc = uproc->getSignature()->getEarlyParamExp(i, prog);
                 if (le.find(stdloc)) {
@@ -1411,10 +1474,10 @@ void HLCall::decompile() {
             }
             // Whatever is left can go in any order, presumably
             for (Exp* loc = le.getFirst(ll); loc; loc = le.getNext(ll))
-               arguments[i++] = loc;
+                arguments[i++] = loc;
         }
     } else {
-    // TODO: indirect call
+        // TODO: indirect call
     }
 }
 
@@ -1439,8 +1502,9 @@ void HLCall::truncateArguments() {
     assert(li);
     // This is a bit of a hack, and there is the issue of ordering parameters
     // when the standard calling convention is not used
-std::cerr << "Parameters " << uproc->getSignature()->getNumParams() << " and live set is " << li->size() << ", arguments " << arguments.size() << "\n";
-std::cerr << "Live set: "; li->print();
+    std::cerr << "Parameters " << uproc->getSignature()->getNumParams() << " and live set is " << li->size() << ", arguments " << arguments.size() << "\n";
+    std::cerr << "Live set: ";
+    li->print();
 // Ugh - for now, we just chop the arguments to the same size as the parameters
     //int n = uproc->getSignature()->getNumParams() - arguments.size();
     // This is the number of parameters that have "disappeared" after we have
@@ -1454,7 +1518,7 @@ std::cerr << "Live set: "; li->print();
     while (it != arguments.end()) {
         if (VERBOSE)
             std::cerr << "Removing argument " << *it << " from proc " <<
-              procDest->getName() << std::endl;
+                      procDest->getName() << std::endl;
         it = arguments.erase(it);
     }
 }
@@ -1463,18 +1527,18 @@ void HLCall::printAsUse(std::ostream &os) {
     // Print the return location if there is one
     if (getReturnLoc() != NULL)
         os << " " << getReturnLoc() << " := ";
- 
+
     os << "CALL ";
     if (procDest)
         os << procDest->getName();
     else if (pDest == NULL)
-            os << "*no dest*";
+        os << "*no dest*";
     else {
         pDest->print(os);
     }
 
     // Print the actual arguments of the call
-    os << "(";    
+    os << "(";
     for (unsigned i = 0; i < arguments.size(); i++) {
         if (i != 0)
             os << ", ";
@@ -1581,13 +1645,13 @@ void HLCall::getDeadStatements(StatementSet &dead) {
         for (Statement* s = reach.getFirst(it); s; s = reach.getNext(it)) {
             bool isKilled = false;
             if (getReturnLoc() && s->getLeft() &&
-            *s->getLeft() == *getReturnLoc())
+                    *s->getLeft() == *getReturnLoc())
                 isKilled = true;
-            if (s->getLeft() && getReturnLoc() && 
-                s->getLeft()->isMemOf() && getReturnLoc()->isMemOf())
+            if (s->getLeft() && getReturnLoc() &&
+                    s->getLeft()->isMemOf() && getReturnLoc()->isMemOf())
                 isKilled = true; // might alias, very conservative
             if (isKilled && s->getNumUsedBy() == 0)
-            dead.insert(s);
+                dead.insert(s);
         }
     } else  {
         for (Statement* s = reach.getFirst(it); s; s = reach.getNext(it)) {
@@ -1689,7 +1753,7 @@ void HLCall::doReplaceUse(Statement *use) {
         // functions like printf almost always have too many args
         std::string name(getDestProc()->getName());
         if ((name == "printf" || name == "scanf") &&
-          getArgumentExp(0)->isStrConst()) {
+                getArgumentExp(0)->isStrConst()) {
             char *str = ((Const*)getArgumentExp(0))->getStr();
             // actually have to parse it
             int n = 1;      // Number of %s plus 1 = number of args
@@ -1697,16 +1761,16 @@ void HLCall::doReplaceUse(Statement *use) {
             while ((p = strchr(p, '%'))) {
                 // special hack for scanf
                 if (name == "scanf") {
-                    setArgumentExp(n, new Unary(opAddrOf, 
-                        new Unary(opMemOf, getArgumentExp(n))));
+                    setArgumentExp(n, new Unary(opAddrOf,
+                                                new Unary(opMemOf, getArgumentExp(n))));
                 }
                 p++;
                 switch(*p) {
-                    case '%':
-                        break;
-                        // TODO: there's type information here
-                    default: 
-                        n++;
+                case '%':
+                    break;
+                    // TODO: there's type information here
+                default:
+                    n++;
                 }
                 p++;
             }
@@ -1728,10 +1792,10 @@ void HLCall::inlineConstants(Prog *prog) {
     for (unsigned i = 0; i < arguments.size(); i++) {
         Type *t = getArgumentType(i);
         // char* and a constant
-        if ((arguments[i]->isIntConst()) && t && t->isPointer() && 
-          ((PointerType*)t)->getPointsTo()->isChar()) {
-            char *str = 
-              prog->getStringConstant(((Const*)arguments[i])->getAddr());
+        if ((arguments[i]->isIntConst()) && t && t->isPointer() &&
+                ((PointerType*)t)->getPointsTo()->isChar()) {
+            char *str =
+                prog->getStringConstant(((Const*)arguments[i])->getAddr());
             if (str) {
                 std::string s(str);
                 while (s.find('\n') != (unsigned)-1)
@@ -1811,12 +1875,12 @@ bool HLReturn::accept(RTLVisitor* visitor) {
  * RETURNS:         <nothing>
  *============================================================================*/
 void HLReturn::getUseDefLocations(LocationMap& locMap,
-    LocationFilter* filter, BITSET& defSet, BITSET& useSet,
-    BITSET& useUndefSet, Proc* proc) const {
+                                  LocationFilter* filter, BITSET& defSet, BITSET& useSet,
+                                  BITSET& useUndefSet, Proc* proc) const {
     // It is possible that any RTL, including a HLReturn, has semantics
     // So process the semantics (assignments) for this HLCall
     RTL::getUseDefLocations(locMap, filter, defSet, useSet, useUndefSet,
-        proc);
+                            proc);
 
     // Register a use for the return location. It may not be used anywhere
     // else; e.g. in the Sparc returnparam test, an empty procedure whose
@@ -1842,8 +1906,8 @@ bool HLReturn::serialize_rest(std::ostream &ouf) {
 // deserialize an rtl
 bool HLReturn::deserialize_fid(std::istream &inf, int fid) {
     switch (fid) {
-        default:
-            return HLJump::deserialize_fid(inf, fid);
+    default:
+        return HLJump::deserialize_fid(inf, fid);
     }
 
     return true;
@@ -1874,7 +1938,7 @@ void HLReturn::simplify() {
  * RETURNS:          <N/a>
  *============================================================================*/
 HLScond::HLScond(ADDRESS instNativeAddr, std::list<Exp*>* le /*= NULL*/):
-  RTL(instNativeAddr, le), jtCond((JCOND_TYPE)0), pCond(NULL) {
+    RTL(instNativeAddr, le), jtCond((JCOND_TYPE)0), pCond(NULL) {
     kind = SCOND_RTL;
 }
 
@@ -1915,13 +1979,21 @@ void HLScond::makeSigned() {
     // Make this into a signed branch
     switch (jtCond)
     {
-        case HLJCOND_JUL : jtCond = HLJCOND_JSL;  break;
-        case HLJCOND_JULE: jtCond = HLJCOND_JSLE; break;
-        case HLJCOND_JUGE: jtCond = HLJCOND_JSGE; break;
-        case HLJCOND_JUG : jtCond = HLJCOND_JSG;  break;
-        default:
-            // Do nothing for other cases
-            break;
+    case HLJCOND_JUL :
+        jtCond = HLJCOND_JSL;
+        break;
+    case HLJCOND_JULE:
+        jtCond = HLJCOND_JSLE;
+        break;
+    case HLJCOND_JUGE:
+        jtCond = HLJCOND_JSGE;
+        break;
+    case HLJCOND_JUG :
+        jtCond = HLJCOND_JSG;
+        break;
+    default:
+        // Do nothing for other cases
+        break;
     }
 }
 
@@ -1960,21 +2032,51 @@ void HLScond::print(std::ostream& os /*= cout*/, bool withDF) {
     os << " := CC(";
     switch (jtCond)
     {
-        case HLJCOND_JE:    os << "equals"; break;
-        case HLJCOND_JNE:   os << "not equals"; break;
-        case HLJCOND_JSL:   os << "signed less"; break;
-        case HLJCOND_JSLE:  os << "signed less or equals"; break;
-        case HLJCOND_JSGE:  os << "signed greater or equals"; break;
-        case HLJCOND_JSG:   os << "signed greater"; break;
-        case HLJCOND_JUL:   os << "unsigned less"; break;
-        case HLJCOND_JULE:  os << "unsigned less or equals"; break;
-        case HLJCOND_JUGE:  os << "unsigned greater or equals"; break;
-        case HLJCOND_JUG:   os << "unsigned greater"; break;
-        case HLJCOND_JMI:   os << "minus"; break;
-        case HLJCOND_JPOS:  os << "plus"; break;
-        case HLJCOND_JOF:   os << "overflow"; break;
-        case HLJCOND_JNOF:  os << "no overflow"; break;
-        case HLJCOND_JPAR:  os << "parity"; break;
+    case HLJCOND_JE:
+        os << "equals";
+        break;
+    case HLJCOND_JNE:
+        os << "not equals";
+        break;
+    case HLJCOND_JSL:
+        os << "signed less";
+        break;
+    case HLJCOND_JSLE:
+        os << "signed less or equals";
+        break;
+    case HLJCOND_JSGE:
+        os << "signed greater or equals";
+        break;
+    case HLJCOND_JSG:
+        os << "signed greater";
+        break;
+    case HLJCOND_JUL:
+        os << "unsigned less";
+        break;
+    case HLJCOND_JULE:
+        os << "unsigned less or equals";
+        break;
+    case HLJCOND_JUGE:
+        os << "unsigned greater or equals";
+        break;
+    case HLJCOND_JUG:
+        os << "unsigned greater";
+        break;
+    case HLJCOND_JMI:
+        os << "minus";
+        break;
+    case HLJCOND_JPOS:
+        os << "plus";
+        break;
+    case HLJCOND_JOF:
+        os << "overflow";
+        break;
+    case HLJCOND_JNOF:
+        os << "no overflow";
+        break;
+    case HLJCOND_JPAR:
+        os << "parity";
+        break;
     }
     os << ")";
     if (bFloat) os << ", float";
@@ -2047,8 +2149,8 @@ bool HLScond::serialize_rest(std::ostream &ouf) {
 // deserialize an rtl
 bool HLScond::deserialize_fid(std::istream &inf, int fid) {
     switch (fid) {
-        default:
-            return RTL::deserialize_fid(inf, fid);
+    default:
+        return RTL::deserialize_fid(inf, fid);
     }
 
     return true;

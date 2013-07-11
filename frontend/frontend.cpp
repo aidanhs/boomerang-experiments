@@ -68,7 +68,7 @@
  * RETURNS:       <N/a>
  *============================================================================*/
 FrontEnd::FrontEnd(BinaryFile *pBF)
- : pBF(pBF)
+    : pBF(pBF)
 {}
 
 FrontEnd* FrontEnd::instantiate(BinaryFile *pBF) {
@@ -119,11 +119,11 @@ void FrontEnd::readLibraryCatalog(const char *sPath, bool win32) {
         size_t j = sFile.find('#');
         if (j != (size_t)-1)
             sFile = sFile.substr(0, j);
-	if (sFile.size() > 0 && sFile[sFile.size()-1] == '\n')
-	    sFile = sFile.substr(0, sFile.size()-1);
+        if (sFile.size() > 0 && sFile[sFile.size()-1] == '\n')
+            sFile = sFile.substr(0, sFile.size()-1);
         if (sFile == "") continue;
         std::string sPath = Boomerang::get()->getProgPath() + "signatures/"
-          + sFile;
+                            + sFile;
         readLibrarySignatures(sPath.c_str(), win32);
     }
     inf.close();
@@ -131,10 +131,10 @@ void FrontEnd::readLibraryCatalog(const char *sPath, bool win32) {
 
 void FrontEnd::readLibraryCatalog() {
     std::string sList = Boomerang::get()->getProgPath() +
-      "signatures/common.hs";
+                        "signatures/common.hs";
     readLibraryCatalog(sList.c_str());
     sList = Boomerang::get()->getProgPath() + "signatures/" + getFrontEndId()
-      + ".hs";
+            + ".hs";
     readLibraryCatalog(sList.c_str());
     if (isWin32()) {
         sList = Boomerang::get()->getProgPath() + "signatures/win32.hs";
@@ -157,13 +157,13 @@ Prog *FrontEnd::decode() {
     while (change) {
         change = false;
         PROGMAP::const_iterator it;
-        for (Proc *pProc = prog->getFirstProc(it); pProc != NULL; 
-          pProc = prog->getNextProc(it)) {
+        for (Proc *pProc = prog->getFirstProc(it); pProc != NULL;
+                pProc = prog->getNextProc(it)) {
             if (pProc->isLib()) continue;
             UserProc *p = (UserProc*)pProc;
             if (p->isDecoded()) continue;
 
-            // undecoded userproc.. decode it           
+            // undecoded userproc.. decode it
             change = true;
             std::ofstream os;
             int res = processProc(p->getNativeAddress(), p, os);
@@ -204,7 +204,7 @@ void FrontEnd::readLibrarySignatures(const char *sPath, bool win32) {
     p->yyparse(s.c_str());
 
     for (std::list<Signature*>::iterator it = p->signatures.begin();
-     it != p->signatures.end(); it++)
+            it != p->signatures.end(); it++)
         librarySignatures[(*it)->getName()] = *it;
 
     delete p;
@@ -226,7 +226,7 @@ Signature *FrontEnd::getLibSignature(const char *name) {
             std::string s = "-stdc-";
             s += getFrontEndId();
             signature = Signature::instantiate(s.c_str(), name);
-        } 
+        }
     }
     else {
         signature = (*it).second->clone();
@@ -285,7 +285,7 @@ Proc* FrontEnd::newProc(Prog *prog, ADDRESS uAddr) {
  * RETURNS:       true for a good decode (no illegal instructions)
  *============================================================================*/
 bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
-  bool spec /* = false */, PHELPER helperFunc) {
+                           bool spec /* = false */, PHELPER helperFunc) {
     PBB pBB;                    // Pointer to the current basic block
     INSTTYPE type;              // Cfg type of instruction (e.g. IRET)
 
@@ -349,17 +349,19 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
 
                 if (p == pProc) {
                     std::cerr << "Warning: attempt to redecode already decoded "
-                      "outedge at " << std::hex << uAddr;
+                              "outedge at " << std::hex << uAddr;
                     std::cerr << std::endl;
                 } else {
                     std::cerr << "Warning: interprocedural outedge at " <<
-                      std::hex << uAddr;
+                              std::hex << uAddr;
                     std::cerr << std::endl;
                 }
 
-                BB_rtls->push_back(new RTL(uAddr));  
+                BB_rtls->push_back(new RTL(uAddr));
                 pBB = pCfg->newBB(BB_rtls, INVALID, 0);
-                sequentialDecode = false; BB_rtls = NULL; continue;
+                sequentialDecode = false;
+                BB_rtls = NULL;
+                continue;
             }
 
             processed[uAddr] = pProc;
@@ -387,21 +389,23 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
                 // not return (e.g. call _exit()), etc. Best thing is to
                 // emit a INVALID BB, and continue with valid instructions
                 std::cerr << "Warning: invalid instruction at " << std::hex
-                  << uAddr;
+                          << uAddr;
                 std::cerr << std::endl;
                 // Emit the RTL anyway, so we have the address and maybe
                 // some other clues
-                BB_rtls->push_back(new RTL(uAddr));  
+                BB_rtls->push_back(new RTL(uAddr));
                 pBB = pCfg->newBB(BB_rtls, INVALID, 0);
-                sequentialDecode = false; BB_rtls = NULL; continue;
+                sequentialDecode = false;
+                BB_rtls = NULL;
+                continue;
             }
 
             // alert the watcher that we have decoded an instruction
             //ProgWatcher *w = prog->getWatcher();
             //if (w)
             //    w->alert_decode(uAddr, inst.numBytes);
-            nTotalBytes += inst.numBytes;           
-    
+            nTotalBytes += inst.numBytes;
+
             if (pRtl == 0) {
                 // This can happen if an instruction is "cancelled", e.g.
                 // call to __main in a hppa program
@@ -415,11 +419,11 @@ bool FrontEnd::processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
             // Display RTL representation if asked
             // FIXME: Settings
 //            if (progOptions.rtl) {
-if (0) {
+            if (0) {
                 pRtl->print(os);
                 os << std::flush;        // Handy when the translator crashes
             }
-    
+
             ADDRESS uDest;
 
             switch (pRtl->getKind())
@@ -428,7 +432,7 @@ if (0) {
             case JUMP_RTL:
             {
                 uDest = rtl_jump->getFixedDest();
-    
+
                 // Handle one way jumps and computed jumps separately
                 if (uDest != NO_ADDRESS) {
 
@@ -443,7 +447,7 @@ if (0) {
                             BB_rtls->push_back(call);
                             pBB = pCfg->newBB(BB_rtls, CALL, 1);
                             HLReturn *ret = new HLReturn(rtl_jump->getAddress()
-                              +1);
+                                                         +1);
                             std::list<RTL*> *ret_rtls = new std::list<RTL*>();
                             ret_rtls->push_back(ret);
                             PBB pret = pCfg->newBB(ret_rtls, RET, 0);
@@ -477,8 +481,8 @@ if (0) {
                     }
                     else {
                         std::cerr << "Error: Instruction at " << std::hex <<
-                          uAddr << " branches beyond end of section, to "
-                          << uDest << std::endl;
+                                  uAddr << " branches beyond end of section, to "
+                                  << uDest << std::endl;
                     }
                 }
                 break;
@@ -486,17 +490,17 @@ if (0) {
 
             case NWAYJUMP_RTL: {
                 if (rtl_jump->getDest()->getOper() == opMemOf &&
-                    rtl_jump->getDest()->getSubExp1()->getOper() == opIntConst && 
-                    pBF->IsDynamicLinkedProcPointer(((Const*)rtl_jump->
-                      getDest()->getSubExp1())->getAddr())) {
+                        rtl_jump->getDest()->getSubExp1()->getOper() == opIntConst &&
+                        pBF->IsDynamicLinkedProcPointer(((Const*)rtl_jump->
+                                                        getDest()->getSubExp1())->getAddr())) {
                     // jump to a library function
                     // replace with a call ret
                     std::string func = pBF->GetDynamicProcName(
-                      ((Const*)rtl_jump->getDest()->getSubExp1())->getAddr());
+                                           ((Const*)rtl_jump->getDest()->getSubExp1())->getAddr());
                     HLCall *call = new HLCall(rtl_jump->getAddress());
                     call->setDest(rtl_jump->getDest()->clone());
                     LibProc *lp = pProc->getProg()->getLibraryProc(
-                      func.c_str());
+                                      func.c_str());
                     assert(lp);
                     call->setDestProc(lp);
                     BB_rtls->push_back(call);
@@ -517,7 +521,7 @@ if (0) {
                         lp->setName(func.c_str());
                     }
                     callSet.insert(call);
-                    continue;                   
+                    continue;
                 }
                 BB_rtls->push_back(pRtl);
                 // We create the BB as a COMPJUMP type, then change
@@ -527,18 +531,18 @@ if (0) {
                 // function
                 if (isSwitch(pBB, rtl_jump->getDest(), pProc, pBF)) {
                     processSwitch(pBB, pBF->getTextDelta(), pCfg, targetQueue,
-                      pBF);
+                                  pBF);
                 }
                 else { // Computed jump
                     // Not a switch statement
                     std::string sKind("JUMP");
                     if (type == I_COMPCALL) sKind = "CALL";
                     std::cerr << "Warning: COMPUTED " << sKind << " at "
-                      << std::hex << uAddr << std::endl;
+                              << std::hex << uAddr << std::endl;
                     BB_rtls = NULL;    // New RTLList for next BB
                 }
                 sequentialDecode = false;
-                break;     
+                break;
             }
 
 
@@ -563,12 +567,12 @@ if (0) {
                     }
                     else {
                         std::cerr << "Error: Instruction at " << std::hex <<
-                          uAddr << " branches beyond end of section, to "
-                          << uDest << std::endl;
+                                  uAddr << " branches beyond end of section, to "
+                                  << uDest << std::endl;
                     }
 
                     // Add the fall-through outedge
-                    pCfg->addOutEdge(pBB, uAddr + inst.numBytes); 
+                    pCfg->addOutEdge(pBB, uAddr + inst.numBytes);
                 }
 
                 // Create the list of RTLs for the next basic block and continue
@@ -582,12 +586,12 @@ if (0) {
                 HLCall* call = static_cast<HLCall*>(pRtl);
 
                 if (call->getDest()->getOper() == opMemOf &&
-                  call->getDest()->getSubExp1()->getOper() == opIntConst &&
-                  pBF->IsDynamicLinkedProcPointer(((Const*)call->getDest()
-                  ->getSubExp1())->getAddr())) {
+                        call->getDest()->getSubExp1()->getOper() == opIntConst &&
+                        pBF->IsDynamicLinkedProcPointer(((Const*)call->getDest()
+                                                        ->getSubExp1())->getAddr())) {
                     // dynamic linked proc pointers are assumed to be static.
                     const char *nam = pBF->GetDynamicProcName(
-                      ((Const*)call->getDest()->getSubExp1())->getAddr());
+                                          ((Const*)call->getDest()->getSubExp1())->getAddr());
                     Proc *p = pProc->getProg()->getLibraryProc(nam);
                     call->setDestProc(p);
                 }
@@ -649,11 +653,11 @@ if (0) {
                             // remove this procedure's instructions from the map
                             std::list<ADDRESS> l;
                             for (std::map<ADDRESS, Proc*>::iterator it =
-                              processed.begin(); it != processed.end(); it++)
+                                        processed.begin(); it != processed.end(); it++)
                                 if ((*it).second == p)
                                     l.push_back((*it).first);
                             for (std::list<ADDRESS>::iterator itl = l.begin();
-                              itl != l.end(); itl++)
+                                    itl != l.end(); itl++)
                                 processed[*itl] = NULL;
                             // create a new procedure in the same program
                             //newProc(pProc->getProg(), uNewAddr);
@@ -673,7 +677,7 @@ if (0) {
                         //newProc(pProc->getProg(), uNewAddr);
                         if (Boomerang::get()->traceDecoder)
                             std::cout << "p" << std::hex << uNewAddr << "\t"
-                              << std::flush; 
+                                      << std::flush;
                     }
 
                     // Check if this is the _exit or exit function. May prevent
@@ -698,7 +702,7 @@ if (0) {
                             // The only RTL in the basic block is a high level
                             // return that doesn't have any RTs.
                             rtls->push_back(new HLReturn(0, NULL));
-        
+
                             BasicBlock* returnBB = pCfg->newBB(rtls, RET, 0);
                             // Add out edge from call to return
                             pCfg->addOutEdge(pBB, returnBB);
@@ -723,33 +727,33 @@ if (0) {
                 // Create the list of RTLs for the next basic block and continue
                 // with the next instruction.
                 BB_rtls = NULL;
-                break;  
+                break;
             }
 
             case RET_RTL:
-                {
-                    // Stop decoding sequentially
-                    sequentialDecode = false;
+            {
+                // Stop decoding sequentially
+                sequentialDecode = false;
 
-                    // Add the RTL to the list
-                    BB_rtls->push_back(pRtl);
-                    // Create the basic block
-                    pBB = pCfg->newBB(BB_rtls, RET, 0);
+                // Add the RTL to the list
+                BB_rtls->push_back(pRtl);
+                // Create the basic block
+                pBB = pCfg->newBB(BB_rtls, RET, 0);
 
-                    // If this ret pops anything other than the return address,
-                    // this information can be useful in the proc
-                    int popped = ((HLReturn*)pRtl)->getNumBytesPopped(); 
-                    if (popped != 0) {
-                        // this also gives us information about the calling
-                        // convention
-                        pProc->setBytesPopped(popped);
-                    }
-
-                    // Create the list of RTLs for the next basic block and
-                    // continue with the next instruction.
-                    BB_rtls = NULL;    // New RTLList for next BB
+                // If this ret pops anything other than the return address,
+                // this information can be useful in the proc
+                int popped = ((HLReturn*)pRtl)->getNumBytesPopped();
+                if (popped != 0) {
+                    // this also gives us information about the calling
+                    // convention
+                    pProc->setBytesPopped(popped);
                 }
-                break;
+
+                // Create the list of RTLs for the next basic block and
+                // continue with the next instruction.
+                BB_rtls = NULL;    // New RTLList for next BB
+            }
+            break;
 
             case SCOND_RTL:
                 // This is just an ordinary instruction; no control transfer
@@ -760,7 +764,7 @@ if (0) {
                 // Just emit the current instr to the current BB
                 BB_rtls->push_back(pRtl);
                 break;
-        
+
             } // switch (pRtl->getKind())
 
             uAddr += inst.numBytes;
@@ -847,7 +851,7 @@ if (0) {
         // Don't speculatively decode procs that are outside of the main text
         // section, apart from dynamically linked ones (in the .plt)
         if (pBF->IsDynamicLinkedProc(dest) || !spec ||
-          (dest < pBF->getLimitTextHigh())) {
+                (dest < pBF->getLimitTextHigh())) {
             pCfg->addCall(*it);
             // Don't visit the destination of a register call
             Proc *np = (*it)->getDestProc();
@@ -858,7 +862,7 @@ if (0) {
             if (np != NULL) {
                 np->setFirstCaller(pProc);
                 pProc->setCallee(np);
-            }           
+            }
         }
     }
 
@@ -952,7 +956,7 @@ ADDRESS TargetQueue::nextAddress(Cfg* cfg) {
  * RETURNS:       a pointer to the decoded RTL
  *============================================================================*/
 RTL* decodeRtl(ADDRESS address, int delta, NJMCDecoder* decoder) {
-    DecodeResult inst = 
+    DecodeResult inst =
         decoder->decodeInstruction(address, delta);
 
     // Define aliases to the RTLs so that they can be treated as a high
@@ -1046,7 +1050,7 @@ bool is286Push(const HRTL* pRTL)
 
 bool isSwitch(PBB pbb, Exp* e, UserProc* p);
 void processSwitch(PBB pbb, int delta, Cfg* cfg, TargetQueue& tq,
-  BinaryFile* pBF);
+                   BinaryFile* pBF);
 
 /*==============================================================================
  * FUNCTION:    getInstanceFor
@@ -1063,7 +1067,7 @@ typedef FrontEnd* (*constructFcn)(int, ADDRESS, NJMCDecoder**);
 #define TESTMAGIC4(buf,off,a,b,c,d) (buf[off] == a && buf[off+1] == b && \
                                      buf[off+2] == c && buf[off+3] == d)
 FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
-  BinaryFile *pBF, NJMCDecoder*& decoder) {
+                                    BinaryFile *pBF, NJMCDecoder*& decoder) {
     FILE *f;
     char buf[64];
     std::string libName, machName;
@@ -1081,7 +1085,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
     if( TESTMAGIC4(buf,0, '\x7F','E','L','F') ) {
         // ELF Binary; they have an enum for the machine!
         if (buf[0x13] == 2) {       // Sparc, big endian
-            machName = "sparc"; 
+            machName = "sparc";
 #ifndef DYNAMIC
             {
                 SparcFrontEnd *fe = new SparcFrontEnd(pBF);
@@ -1091,7 +1095,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
 #endif
         }
         else if (buf[0x12] == 3) {
-            machName = "pentium"; 
+            machName = "pentium";
 #ifndef DYNAMIC
             {
                 PentiumFrontEnd *fe = new PentiumFrontEnd(pBF);
@@ -1101,7 +1105,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
 #endif
         } else {
             std::cerr << "Unknown ELF machine type " << std::hex <<
-              (int)buf[0x12] << (int)buf[0x13] << std::endl;
+                      (int)buf[0x12] << (int)buf[0x13] << std::endl;
             return NULL;
         }
     } else if( TESTMAGIC2( buf,0, 'M','Z' ) ) { /* DOS-based file */
@@ -1123,7 +1127,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
         libName = "hppa";
     } else {
         std::cerr << "FrontEnd::getInstanceFor: unrecognised binary file" <<
-            sName << std::endl;
+                  sName << std::endl;
         return NULL;
     }
 
@@ -1133,7 +1137,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
     dlHandle = dlopen(libName.c_str(), RTLD_LAZY);
     if (dlHandle == NULL) {
         std::cerr << "Could not open dynamic loader library " << libName <<
-          std::endl;
+                  std::endl;
         std::cerr << "dlerror is " << dlerror() << std::endl;
         return NULL;
     }
@@ -1141,7 +1145,7 @@ FrontEnd* FrontEnd::getInstanceFor( const char *sName, void*& dlHandle,
     constructFcn pFcn = (constructFcn) dlsym(dlHandle, "construct");
     if (pFcn == NULL) {
         std::cerr << "Front end library " << libName <<
-            " does not have a construct function\n";
+                  " does not have a construct function\n";
         return NULL;
     }
 

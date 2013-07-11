@@ -16,7 +16,7 @@
  * OVERVIEW:   This file defines the classes used to represent the semantic
  *             definitions of instructions and given in a .ssl file.
  *============================================================================*/
- 
+
 /*
  * $Revision: 1.8 $
  *
@@ -32,7 +32,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <algorithm>    // For remove()
 #include "types.h"
@@ -52,7 +52,9 @@
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-TableEntry::TableEntry() { flags = 0; }
+TableEntry::TableEntry() {
+    flags = 0;
+}
 
 /*==============================================================================
  * FUNCTION:        TableEntry::TableEntry
@@ -63,7 +65,9 @@ TableEntry::TableEntry() { flags = 0; }
  *============================================================================*/
 TableEntry::TableEntry(std::list<std::string>& p, RTL& r) :
     params(p), rtl(r)
-{ flags = 0; }
+{
+    flags = 0;
+}
 
 /*==============================================================================
  * FUNCTION:        TableEntry::setParam
@@ -71,7 +75,9 @@ TableEntry::TableEntry(std::list<std::string>& p, RTL& r) :
  * PARAMETERS:      p - a list of strings
  * RETURNS:         <nothing>
  *============================================================================*/
-void TableEntry::setParam(std::list<std::string>& p) { params = p; }
+void TableEntry::setParam(std::list<std::string>& p) {
+    params = p;
+}
 
 /*==============================================================================
  * FUNCTION:        TableEntry::setRTL
@@ -109,8 +115,8 @@ int TableEntry::appendRTL(std::list<std::string>& p, RTL& r) {
     bool match = (p.size() == params.size());
     std::list<std::string>::iterator a, b;
     for (a = params.begin(), b = p.begin();
-      match && (a != params.end()) && (b != p.end());
-      match = (*a == *b), a++, b++)
+            match && (a != params.end()) && (b != p.end());
+            match = (*a == *b), a++, b++)
         ;
     if (match) {
         rtl.appendRTL(r);
@@ -135,7 +141,7 @@ int RTLInstDict::appendToDict(std::string &n, std::list<std::string>& p, RTL& r)
     std::remove(opcode, opcode+strlen(opcode)+1,'.');
     std::string s(opcode);
     delete [] opcode;
-   
+
     if (idict.find(s) == idict.end())
         idict[s] = TableEntry(p, r);
     else
@@ -168,20 +174,20 @@ bool RTLInstDict::readSSLFile(const std::string& SSLFileName, bool bPrint /*= fa
     idict.erase(idict.begin(),idict.end());
     // Clear all state
     reset();
-    
+
     // Attempt to Parse the SSL file
     SSLParser theParser(SSLFileName,
 #ifdef DEBUG_SSLPARSER
-    true
+                        true
 #else
-    false
+                        false
 #endif
-);
+                       );
     if (theParser.theScanner == NULL)
-    return false;
+        return false;
     addRegister( "%CTI", -1, 1, false );
     addRegister( "%NEXT", -1, 32, false );
-    
+
     theParser.yyparse(*this);
 
     fixupParams();
@@ -191,14 +197,14 @@ bool RTLInstDict::readSSLFile(const std::string& SSLFileName, bool bPrint /*= fa
         print();
         std::cout << "\n==============================================" << std::endl;
     }
-    
+
     return true;
 }
 
 /*==============================================================================
  * FUNCTION:        RTLInstDict::addRegister
  * OVERVIEW:        Add a new register definition to the dictionary
- * PARAMETERS:      
+ * PARAMETERS:
  * RETURNS:         <nothing>
  *============================================================================*/
 void RTLInstDict::addRegister( const char *name, int id, int size, bool flt )
@@ -218,7 +224,7 @@ void RTLInstDict::addRegister( const char *name, int id, int size, bool flt )
         DetRegMap[id].s_address(NULL);
         DetRegMap[id].s_mappedIndex(-1);
         DetRegMap[id].s_mappedOffset(-1);
-    }    
+    }
 }
 
 
@@ -231,23 +237,23 @@ void RTLInstDict::addRegister( const char *name, int id, int size, bool flt )
 void RTLInstDict::print(std::ostream& os /*= std::cout*/)
 {
     for (std::map<std::string, TableEntry>::iterator p = idict.begin();
-      p != idict.end(); p++) {
+            p != idict.end(); p++) {
         // print the instruction name
         os << (*p).first << "  ";
 
         // print the parameters
         std::list<std::string>& params = (*p).second.params;
         int i = params.size();
-        for (std::list<std::string>::iterator s = params.begin();s != params.end();
+        for (std::list<std::string>::iterator s = params.begin(); s != params.end();
                 s++,i--)
             os << *s << (i != 1 ? "," : "");
         os << "\n";
-    
+
         // print the RTL
         RTL& rtlist = (*p).second.rtl;
         rtlist.print(os);
         os << "\n";
-    }   
+    }
 }
 
 /*==============================================================================
@@ -274,22 +280,22 @@ void RTLInstDict::fixupParams( )
 }
 
 void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcParams,
-  bool& haveCount, int mark )
+                                  bool& haveCount, int mark )
 {
     ParamEntry &param = DetParamMap[s];
 
     if( param.params.size() == 0 ) {
         std::cerr << "Error in SSL File: Variant operand "
-             << s << " has no branches. Well that's really useful...\n";
+                  << s << " has no branches. Well that's really useful...\n";
         return;
     }
     if( param.mark == mark )
         return; /* Already seen this round. May indicate a cycle, but may not */
-    
+
     param.mark = mark;
-    
+
     for( std::list<std::string>::iterator it = param.params.begin();
-         it != param.params.end(); it++ ) {
+            it != param.params.end(); it++ ) {
         ParamEntry &sub = DetParamMap[*it];
         if (sub.kind == PARAM_VARIANT ) {
             fixupParamsSub(*it, funcParams, haveCount, mark );
@@ -307,14 +313,14 @@ void RTLInstDict::fixupParamsSub( std::string s, std::list<std::string>& funcPar
 
         if (funcParams.size() != sub.funcParams.size() ) {
             std::cerr << "Error in SSL File: Variant operand " << s
-                 << " does not have a fixed number of functional parameters:\n"
-                 << "Expected " << funcParams.size() << ", but branch "
-                 << *it << " has " << sub.funcParams.size() << ".\n";
+                      << " does not have a fixed number of functional parameters:\n"
+                      << "Expected " << funcParams.size() << ", but branch "
+                      << *it << " has " << sub.funcParams.size() << ".\n";
         } else if (funcParams != sub.funcParams && sub.exp != NULL ) {
             /* Rename so all the parameter names match */
             std::list<std::string>::iterator i,j;
             for( i = funcParams.begin(), j = sub.funcParams.begin();
-              i != funcParams.end(); i++, j++ ) {
+                    i != funcParams.end(); i++, j++ ) {
                 Exp* match = new Unary(opParam, new Const((char*)j->c_str()));
                 Exp* replace = new Unary(opParam, new Const((char*)i->c_str()));
                 bool ch;        // Indicates a change; not used
@@ -350,7 +356,7 @@ std::pair<std::string,unsigned> RTLInstDict::getSignature(const char* name)
     {
         std::cerr << "Error: no entry for `" << name << "' in RTL dictionary\n";
         it = idict.find("NOP");     // At least, don't cause segfault
-    } 
+    }
 
     return std::pair<std::string,unsigned>(opcode,(it->second).params.size());
 }
@@ -389,14 +395,14 @@ bool RTLInstDict::partialType(Exp* exp, Type& ty)
  * RETURNS:          the instantiated list of Exps
  *============================================================================*/
 std::list<Exp*>* RTLInstDict::instantiateRTL(std::string& name,
-  std::vector<Exp*>& actuals) { 
+        std::vector<Exp*>& actuals) {
     // If -f is in force, use the fast (but not as precise) name instead
     const std::string* lname = &name;
     // FIXME: settings
 //    if (progOptions.fastInstr) {
-if (0) {
+    if (0) {
         std::map<std::string, std::string>::iterator itf = fastMap.find(name);
-        if (itf != fastMap.end()) 
+        if (itf != fastMap.end())
             lname = &itf->second;
     }
     // Retrieve the dictionary entry for the named instruction
@@ -416,7 +422,7 @@ if (0) {
  *                   actuals - the actual parameter values
  * RETURNS:          the instantiated list of Exps
  *============================================================================*/
-std::list<Exp*>* RTLInstDict::instantiateRTL(RTL& rtl, 
+std::list<Exp*>* RTLInstDict::instantiateRTL(RTL& rtl,
         std::list<std::string>& params, std::vector<Exp*>& actuals)
 {
     assert(params.size() == actuals.size());
@@ -426,7 +432,7 @@ std::list<Exp*>* RTLInstDict::instantiateRTL(RTL& rtl,
     rtl.deepCopyList(*newList);
 
     for (std::list<Exp*>::iterator it = newList->begin();
-         it != newList->end(); it++) 
+            it != newList->end(); it++)
         if ((*it)->isFlagCall()) {
             // remove the flag call
             *it = new AssignExp(new Terminal(opFlags), *it);
@@ -434,11 +440,11 @@ std::list<Exp*>* RTLInstDict::instantiateRTL(RTL& rtl,
 
     // Iterate through each Exp of the new list of Exps
     for (std::list<Exp*>::iterator rt = newList->begin();
-      rt != newList->end(); rt++) {
+            rt != newList->end(); rt++) {
         if ((*rt)->isFlagCall()) {
             std::cerr << "weird, flag call not replaced!" << std::endl;
             for (std::list<Exp*>::iterator rt1 = newList->begin();
-                 rt1 != newList->end(); rt1++) {
+                    rt1 != newList->end(); rt1++) {
                 if (rt == rt1)
                     std::cerr << "-> ";
                 else
@@ -453,9 +459,9 @@ std::list<Exp*>* RTLInstDict::instantiateRTL(RTL& rtl,
         std::vector<Exp*>::const_iterator actual = actuals.begin();
         for (; param != params.end(); param++, actual++) {
             /* Simple parameter - just construct the formal to search for */
-            Exp* formal = new Unary(opParam, 
-            new Const((char*)(param->c_str())));
-                
+            Exp* formal = new Unary(opParam,
+                                    new Const((char*)(param->c_str())));
+
             bool ch;        // Result of search: unused
             *rt = (*rt)->searchReplaceAll(formal, *actual, ch);
             *rt = (*rt)->fixSuccessor();
@@ -471,8 +477,8 @@ std::list<Exp*>* RTLInstDict::instantiateRTL(RTL& rtl,
 class transPost {
 public:
     bool used;      // If the base expression (e.g. r[0]) is used
-                    // Important because if not, we don't have to make any
-                    // substitutions at all
+    // Important because if not, we don't have to make any
+    // substitutions at all
     bool isNew;     // Not sure (MVE)
     Exp* tmp;       // The temp to replace r[0]' with
     Exp* post;      // The whole postvar expression. e.g. r[0]'
@@ -508,11 +514,11 @@ std::list<Exp*>* RTLInstDict::transformPostVars(std::list<Exp*>* rts, bool optim
         std::cout << "\n";
     }
 #endif
-    
+
     // First pass: Scan for post-variables and usages of their referents
     for( rt = rts->begin(); rt != rts->end(); rt++ ) {
         // ss appears to be a list of expressions to be searched
-        // It is either the LHS and RHS of an assignment, 
+        // It is either the LHS and RHS of an assignment,
         // or it's the parameters of a flag call
         Binary* ss;
         if( (*rt)->isAssign()) {
@@ -526,13 +532,13 @@ std::list<Exp*>* RTLInstDict::transformPostVars(std::list<Exp*>* rts, bool optim
                     transPost& el = vars[lhs];
                     el.used = false;
                     el.type = new IntegerType(((AssignExp*)*rt)->getSize());
-                    
+
                     // Constuct a temporary. We should probably be smarter
                     // and actually check that it's not otherwise used here.
                     std::string tmpname = el.type->getTempName() + (tmpcount++)
-                      + "post" ;
+                                          + "post" ;
                     el.tmp = new Unary(opTemp,
-                      new Const((char*)tmpname.c_str()));
+                                       new Const((char*)tmpname.c_str()));
 
                     // Keep a copy of the referrent. For example, if the
                     // lhs is r[0]', base is r[0]
@@ -546,14 +552,14 @@ std::list<Exp*>* RTLInstDict::transformPostVars(std::list<Exp*>* rts, bool optim
                         el.used = true;
                         el.isNew = false;
                     }
-                    
+
                 }
             }
             // For an assignment, the two expressions to search are the
             // left and right hand sides (could just put the whole assignment
             // on, I suppose)
             ss = new Binary(opList, lhs->clone(),
-                    new Binary(opList, rhs->clone(), new Terminal(opNil)));
+                            new Binary(opList, rhs->clone(), new Terminal(opNil)));
         } else if( (*rt)->isFlagCall()) {
             // An opFlagCall is assumed to be a Binary with a string and an
             // opList of parameters
@@ -571,7 +577,7 @@ std::list<Exp*>* RTLInstDict::transformPostVars(std::list<Exp*>* rts, bool optim
          * former, then we have a use of the base (consider r[0] + r[0]')
          */
         for (std::map<Exp*,transPost,lessExpStar>::iterator sr = vars.begin();
-             sr != vars.end(); sr++ ) {
+                sr != vars.end(); sr++ ) {
             if( sr->second.isNew ) {
                 // Make sure we don't match a var in its defining statement
                 sr->second.isNew = false;
@@ -603,7 +609,7 @@ std::list<Exp*>* RTLInstDict::transformPostVars(std::list<Exp*>* rts, bool optim
     bool ch;            // Set if changed (not used)
     for ( rt = rts->begin(); rt != rts->end(); rt++ ) {
         for (std::map<Exp*,transPost,lessExpStar>::iterator sr = vars.begin();
-          sr != vars.end(); sr++ ) {
+                sr != vars.end(); sr++ ) {
             if( sr->second.used ) {
                 *rt = (*rt)->searchReplaceAll(sr->first, sr->second.tmp, ch);
             } else {
@@ -617,11 +623,11 @@ std::list<Exp*>* RTLInstDict::transformPostVars(std::list<Exp*>* rts, bool optim
     // all the esp' are replaced with say tmp1,
     // you need a "esp = tmp1" at the end to actually make the change
     for( std::map<Exp*,transPost,lessExpStar>::iterator sr = vars.begin();
-      sr != vars.end(); sr++ ) {
+            sr != vars.end(); sr++ ) {
         if( sr->second.used ) {
             AssignExp* te = new AssignExp(sr->second.type->getSize(),
-                    sr->second.base->clone(),
-                    sr->second.tmp);
+                                          sr->second.base->clone(),
+                                          sr->second.tmp);
             rts->push_back( te );
         } else {
             // The temp is either used (uncloned) in the assignment, or is

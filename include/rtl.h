@@ -17,7 +17,7 @@
  *             a control transfer instruction (CTI) in the source program.
  *             analysis code adds information to existing higher-level
  *             RTLs and sometimes creates new higher-level RTLs (e.g., for
- *             switch statements). 
+ *             switch statements).
  *============================================================================*/
 
 /*
@@ -60,7 +60,7 @@ enum RTL_KIND {
     JCOND_RTL,
     JUMP_RTL,
     SCOND_RTL,                 // For "setCC" instructions that set destination
-                                // to 1 or 0 depending on the condition codes.
+    // to 1 or 0 depending on the condition codes.
     NWAYJUMP_RTL,              // Used to represent switch statements.
 };
 
@@ -110,12 +110,16 @@ public:
     virtual bool accept(RTLVisitor* visitor);
 
     // Common enquiry methods
-    RTL_KIND getKind() { return kind; };
+    RTL_KIND getKind() {
+        return kind;
+    };
     ADDRESS getAddress();               // Return RTL's native address
     bool getCommented();                // Return whether to comment in HL C.
     int getSize();                      // Return size in bits of first Exp.
     unsigned getNumBytes()              // Return number of bytes in instr
-        {return numNativeBytes;}
+    {
+        return numNativeBytes;
+    }
     ADDRESS getOutAddr(int idx);        // Return the specified out edge addr
     ADDRESS getFallthrough();           // Return the fall through address
     bool    areFlagsAffected();         // True if flags are affected
@@ -123,7 +127,7 @@ public:
     // Expression list enquiry methods
     int getNumExp();                    // Return the number of Exps in RTL.
     Exp* elementAt(unsigned i);         // Return the i'th element in RTL.
-    
+
     // Expression list editing methods
     void appendExp(Exp *e);             // Add e to end of RTL.
     void prependExp(Exp *rt);           // Add rt to start of RTL.
@@ -134,9 +138,11 @@ public:
     void appendListExp(std::list<Exp*>& le); // Append list of exps to end.
     void appendRTL(RTL& rtl);           // Append Statements from other RTL to end
     void deepCopyList(std::list<Exp*>& dest);// Make a deep copy of the list of Exp*
-    std::list<Exp*> &getList() { return expList; } // direct access to the list of expressions
+    std::list<Exp*> &getList() {
+        return expList;    // direct access to the list of expressions
+    }
 
-     // Print RTL to a stream.
+    // Print RTL to a stream.
     virtual void print(std::ostream& os = std::cout, bool withDF = false);
 
     // Set the RTL's source address
@@ -148,7 +154,9 @@ public:
 
     // Set the number of bytes in the instruction.
     void updateNumBytes(unsigned uNumBytes)
-        {numNativeBytes = uNumBytes;}
+    {
+        numNativeBytes = uNumBytes;
+    }
 
     // Is this RTL a compare instruction? If so, the passed register and
     // compared value (a semantic string) are set.
@@ -186,7 +194,7 @@ public:
 
     // Replace all instances of "search" with "replace".
     virtual void searchAndReplace(Exp* search, Exp* replace);
-    
+
     // Searches for all instances of "search" and adds them to "result" in
     // reverse nesting order. The search is optionally type sensitive.
     virtual bool searchAll(Exp* search, std::list<Exp*> &result);
@@ -209,8 +217,8 @@ protected:
     RTL_KIND kind;
     ADDRESS nativeAddr;         // RTL's source program instruction address
     unsigned numNativeBytes;    // Number of source code bytes from which this
-                                // RTL was constructed. Used in coverage
-                                // analysis.
+    // RTL was constructed. Used in coverage
+    // analysis.
     std::list<Exp*> expList;    // List of expressions in this RTL.
     bool isCommented;           // If true, RTL should be emitted as a comment.
 
@@ -256,7 +264,7 @@ public:
 
     // Adjust the fixed destination by a given amount. Invalid for dynamic CTIs.
     void adjustFixedDest(int delta);
-    
+
     // Set and return whether the destination of this CTI is computed.
     // NOTE: These should really be removed, once HLNwayJump and HLNwayCall
     // are implemented properly.
@@ -267,16 +275,16 @@ public:
 
     // Replace all instances of "search" with "replace".
     virtual void searchAndReplace(Exp* search, Exp* replace);
-    
+
     // Searches for all instances of a given subexpression within this
-    // expression and adds them to a given list in reverse nesting order.    
-    virtual bool searchAll(Exp* search, std::list<Exp*> &result);                           
+    // expression and adds them to a given list in reverse nesting order.
+    virtual bool searchAll(Exp* search, std::list<Exp*> &result);
 
 #if 0
     // Used for type analysis. Stores type information that
     // can be gathered from the RTL instruction inside a
     // data structure within BBBlock inBlock
-    virtual void storeUseDefineStruct(BBBlock& inBlock);               
+    virtual void storeUseDefineStruct(BBBlock& inBlock);
 #endif
 
     // serialize this rtl
@@ -293,12 +301,12 @@ public:
 
 protected:
     Exp* pDest;              // Destination of a jump or call. This is the
-                                // absolute destination for both static and
-                                // dynamic CTIs.
+    // absolute destination for both static and
+    // dynamic CTIs.
     bool m_isComputed;          // True if this is a CTI with a computed
-                                // destination address. NOTE: This should be
-                                // removed, once HLNwayJump and HLNwayCall
-                                // are implemented properly.
+    // destination address. NOTE: This should be
+    // removed, once HLNwayJump and HLNwayCall
+    // are implemented properly.
 };
 
 
@@ -319,27 +327,35 @@ public:
     // Set and return the JCOND_TYPE of this jcond as well as whether the
     // floating point condition codes are used.
     void setCondType(JCOND_TYPE cond, bool usesFloat = false);
-    JCOND_TYPE getCond(){ return jtCond; }
-    bool isFloat(){ return bFloat; }
-    void setFloat(bool b)      { bFloat = b; }
+    JCOND_TYPE getCond() {
+        return jtCond;
+    }
+    bool isFloat() {
+        return bFloat;
+    }
+    void setFloat(bool b)      {
+        bFloat = b;
+    }
 
     // Set and return the Exp representing the HL condition
     Exp* getCondExpr();
     void setCondExpr(Exp* pe);
-    
+
     // Probably only used in front386.cc: convert this from an unsigned to a
     // signed conditional branch
     void makeSigned();
 
     virtual void print(std::ostream& os = std::cout, bool withDF = false);
-    virtual void print(std::ostream& os) { print(os, true); }
+    virtual void print(std::ostream& os) {
+        print(os, true);
+    }
 
     // general search
     virtual bool search(Exp *search, Exp *&result);
 
     // Replace all instances of "search" with "replace".
     virtual void searchAndReplace(Exp* search, Exp* replace);
-    
+
     // Searches for all instances of a given subexpression within this
     // expression and adds them to a given list in reverse nesting order.
     virtual bool searchAll(Exp* search, std::list<Exp*> &result);
@@ -348,7 +364,7 @@ public:
     // Used for type analysis. Stores type information that
     // can be gathered from the RTL instruction inside a
     // data structure within BBBlock inBlock
-    void storeUseDefineStruct(BBBlock& inBlock);   
+    void storeUseDefineStruct(BBBlock& inBlock);
 #endif
 
     // serialize this rtl
@@ -369,15 +385,25 @@ public:
     virtual void addUsedLocs(LocationSet& used);
 
     // dataflow related functions
-    virtual bool canPropagateToAll() { return false; }
-    virtual void propagateToAll() { assert(false); }
+    virtual bool canPropagateToAll() {
+        return false;
+    }
+    virtual void propagateToAll() {
+        assert(false);
+    }
 
     // get how to access this value
-    virtual Exp* getLeft() { return NULL; }
-    virtual Type* getLeftType() { return NULL; }
+    virtual Exp* getLeft() {
+        return NULL;
+    }
+    virtual Type* getLeftType() {
+        return NULL;
+    }
 
     // get how to replace this statement in a use
-    virtual Exp* getRight() { return pCond; }
+    virtual Exp* getRight() {
+        return pCond;
+    }
 
     // special print functions
     virtual void printAsUse(std::ostream &os);
@@ -398,7 +424,7 @@ protected:
 private:
     JCOND_TYPE jtCond;          // The condition for jumping
     Exp* pCond;              // The Exp representation of the high level
-                                // condition: e.g., r[8] == 5
+    // condition: e.g., r[8] == 5
     bool bFloat;                // True if uses floating point CC
 
 };
@@ -430,24 +456,24 @@ public:
     virtual bool accept(RTLVisitor* visitor);
 
     // Set and return the Exp representing the switch variable
-    SWITCH_INFO* getSwitchInfo(); 
+    SWITCH_INFO* getSwitchInfo();
     void setSwitchInfo(SWITCH_INFO* pss);
-    
+
     virtual void print(std::ostream& os = std::cout, bool withDF = false);
 
     // Replace all instances of "search" with "replace".
     virtual void searchAndReplace(Exp* search, Exp* replace);
-    
+
     // Searches for all instances of a given subexpression within this
     // expression and adds them to a given list in reverse nesting order.
     virtual bool searchAll(Exp* search, std::list<Exp*> &result);
-    
+
 #if 0
     // Used for type analysis. Stores type information that
     // can be gathered from the RTL instruction inside a
     // data structure within BBBlock inBlock
-    void storeUseDefineStruct(BBBlock& inBlock);   
-#endif     
+    void storeUseDefineStruct(BBBlock& inBlock);
+#endif
 
     // serialize this rtl
     virtual bool serialize_rest(std::ostream &ouf);
@@ -457,13 +483,13 @@ public:
 
     // code generation
     virtual void generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
-    
+
     // simplify all the uses/defs in this RTL
     virtual void simplify();
 
-private:    
+private:
     SWITCH_INFO* pSwitchInfo;   // Exp representation of the switch variable:
-                                // e.g., r[8]
+    // e.g., r[8]
 };
 
 /*==============================================================================
@@ -488,9 +514,15 @@ public:
 
     void setArguments(std::vector<Exp*>& arguments); // Set call's arguments
     std::vector<Exp*>& getArguments();            // Return call's arguments
-    Exp* getArgumentExp(int i) { return arguments[i]; }
-    void setArgumentExp(int i, Exp *e) { arguments[i] = e; }
-    int getNumArguments() { return arguments.size(); }
+    Exp* getArgumentExp(int i) {
+        return arguments[i];
+    }
+    void setArgumentExp(int i, Exp *e) {
+        arguments[i] = e;
+    }
+    int getNumArguments() {
+        return arguments.size();
+    }
     void setNumArguments(int i);
     Type *getArgumentType(int i);
     void truncateArguments();
@@ -499,14 +531,16 @@ public:
     Exp* getReturnLoc();                // Get location used for return value
 
     virtual void print(std::ostream& os = std::cout, bool withDF = false);
-    virtual void print(std::ostream& os = std::cout) { print(os, false); }
+    virtual void print(std::ostream& os = std::cout) {
+        print(os, false);
+    }
 
     // general search
     virtual bool search(Exp *search, Exp *&result);
 
     // Replace all instances of "search" with "replace".
     virtual void searchAndReplace(Exp* search, Exp* replace);
-    
+
     // Searches for all instances of a given subexpression within this
     // expression and adds them to a given list in reverse nesting order.
     virtual bool searchAll(Exp* search, std::list<Exp*> &result);
@@ -543,15 +577,23 @@ public:
     virtual void addUsedLocs(LocationSet& used);
 
     // dataflow related functions
-    virtual bool canPropagateToAll() { return false; }
-    virtual void propagateToAll() { assert(false); }
+    virtual bool canPropagateToAll() {
+        return false;
+    }
+    virtual void propagateToAll() {
+        assert(false);
+    }
 
     // get how to access this value
-    virtual Exp* getLeft() { return getReturnLoc(); }
+    virtual Exp* getLeft() {
+        return getReturnLoc();
+    }
     virtual Type* getLeftType();
 
     // get how to replace this statement in a use
-    virtual Exp* getRight() { return NULL; }
+    virtual Exp* getRight() {
+        return NULL;
+    }
 
     // special print functions
     virtual void printAsUse(std::ostream &os);
@@ -568,7 +610,9 @@ public:
 
     // add statements internal to the called procedure
     // for interprocedural analysis
-    StatementList &getInternalStatements() { return internal; }
+    StatementList &getInternalStatements() {
+        return internal;
+    }
 
     void setIgnoreReturnLoc(bool b);
 
@@ -582,10 +626,10 @@ protected:
 
 private:
     int returnTypeSize;         // Size in bytes of the struct, union or quad FP
-                                // value returned by the called function.
+    // value returned by the called function.
     bool returnAfterCall;       // True if call is effectively followed by
-                                // a return.
-    
+    // a return.
+
     // The list of locations that reach this call. This list may be
     // refined at a later stage to match the number of parameters declared
     // for the called procedure.
@@ -626,7 +670,7 @@ public:
     // Used for type analysis. Stores type information that
     // can be gathered from the RTL instruction inside a
     // data structure within BBBlock inBlock
-    void storeUseDefineStruct(BBBlock& inBlock);                    
+    void storeUseDefineStruct(BBBlock& inBlock);
 #endif
 
     // serialize this rtl
@@ -641,12 +685,19 @@ public:
     // simplify all the uses/defs in this RTL
     virtual void simplify();
 
-    int getNumBytesPopped() { return nBytesPopped; }
-    void setNumBytesPopped(int n) { nBytesPopped = n; }
+    int getNumBytesPopped() {
+        return nBytesPopped;
+    }
+    void setNumBytesPopped(int n) {
+        nBytesPopped = n;
+    }
 
-    Exp *getReturnValue() { return returnVal; }
-    void setReturnValue(Exp *e) { 
-        if (returnVal) delete returnVal; returnVal = e; 
+    Exp *getReturnValue() {
+        return returnVal;
+    }
+    void setReturnValue(Exp *e) {
+        if (returnVal) delete returnVal;
+        returnVal = e;
     }
 
 protected:
@@ -677,9 +728,15 @@ public:
     // Set and return the JCOND_TYPE of this scond as well as whether the
     // floating point condition codes are used.
     void setCondType(JCOND_TYPE cond, bool usesFloat = false);
-    JCOND_TYPE getCond(){return jtCond;}
-    bool isFloat(){return bFloat;}
-    void setFloat(bool b) { bFloat = b; }
+    JCOND_TYPE getCond() {
+        return jtCond;
+    }
+    bool isFloat() {
+        return bFloat;
+    }
+    void setFloat(bool b) {
+        bFloat = b;
+    }
 
     // Set and return the Exp representing the HL condition
     Exp* getCondExpr();
@@ -696,7 +753,7 @@ public:
     // Used for type analysis. Stores type information that
     // can be gathered from the RTL instruction inside a
     // data structure within BBBlock inBlock
-    void storeUseDefineStruct(BBBlock& inBlock);       
+    void storeUseDefineStruct(BBBlock& inBlock);
 #endif
 
     // serialize this rtl
@@ -714,13 +771,13 @@ public:
 private:
     JCOND_TYPE jtCond;             // the condition for jumping
     Exp* pCond;                 // Exp representation of the high level
-                                   // condition: e.g. r[8] == 5
+    // condition: e.g. r[8] == 5
     bool bFloat;                   // True if condition uses floating point CC
 };
 
-/* 
- * The RTLVisitor class is used to iterate over all rtls in a basic 
- * block. It contains methods for each kind of RTL and can be used 
+/*
+ * The RTLVisitor class is used to iterate over all rtls in a basic
+ * block. It contains methods for each kind of RTL and can be used
  * to eliminate switch statements.
  */
 class RTLVisitor {
@@ -729,14 +786,20 @@ private:
     PBB pBB;
 
 public:
-    RTLVisitor() { pBB = NULL; }
+    RTLVisitor() {
+        pBB = NULL;
+    }
     virtual ~RTLVisitor() { }
 
     // allows the container being iteratorated over to identify itself
-    PBB getBasicBlock() { return pBB; }
-    void setBasicBlock(PBB bb) { pBB = bb; }
+    PBB getBasicBlock() {
+        return pBB;
+    }
+    void setBasicBlock(PBB bb) {
+        pBB = bb;
+    }
 
-    // visitor functions, 
+    // visitor functions,
     // returns true to continue iteratoring the container
     virtual bool visit(RTL *rtl) = 0;
     virtual bool visit(HLJump *rtl) = 0;
@@ -763,16 +826,16 @@ public:
 
     void setParam(std::list<std::string>& p);
     void setRTL(RTL& rtl);
-    
+
     // non-zero return indicates failure
     int appendRTL(std::list<std::string>& p, RTL& rtl);
-    
+
 public:
     std::list<std::string> params;
     RTL rtl;
 
-#define TEF_NEXTPC 1        
-    int flags;                  // aka required capabilities. Init. to 0 
+#define TEF_NEXTPC 1
+    int flags;                  // aka required capabilities. Init. to 0
 };
 
 
@@ -782,7 +845,7 @@ public:
 typedef enum {PARAM_SIMPLE, PARAM_EXPR, PARAM_LAMBDA, PARAM_VARIANT} ParamKind;
 
 class ParamEntry {
- public:
+public:
     ParamEntry() {
         exp = NULL;
         kind = PARAM_SIMPLE;
@@ -795,7 +858,7 @@ class ParamEntry {
         if (type) delete type;
         if (regType) delete regType;
     }
-    
+
     std::list<std::string> params;        /* PARAM_VARIANT & PARAM_EXPR only */
     std::list<std::string> funcParams;    /* PARAM_LAMBDA - late bound params */
     Exp* exp;                   /* PARAM_EXPR only */
@@ -817,7 +880,7 @@ class PartialType;
  * parameters they take and a template for the Exp list describing their
  * semantics. It handles both the parsing of the SSL file that fills in
  * the dictionary entries as well as instantiation of an Exp list for a given
- * instruction name and list of actual parameters. 
+ * instruction name and list of actual parameters.
  *============================================================================*/
 
 class RTLInstDict {
@@ -838,14 +901,14 @@ public:
     // Appends an RTL to an idict entry, or Adds it to idict if an
     // entry does not already exist. A non-zero return indicates failure.
     int appendToDict(std::string &n, std::list<std::string>& p, RTL& rtl);
-    
+
     // Given an instruction name and list of actual parameters, return an
     // instantiated RTL for the corresponding instruction entry.
     std::list<Exp*>* instantiateRTL(std::string& name, std::vector<Exp*>& actuals);
     // As above, but takes an RTL & param list directly rather than doing
     // a table lookup by name.
     std::list<Exp*>* instantiateRTL(RTL& rtls, std::list<std::string> &params,
-                              std::vector<Exp*>& actuals);
+                                    std::vector<Exp*>& actuals);
 
     // Transform the given list into another list which doesn't have
     // post-variables, by either adding temporaries or just removing them
@@ -857,7 +920,7 @@ public:
     std::list<Exp*>* transformPostVars(std::list <Exp*> *rts, bool optimize);
 
     void print(std::ostream& os = std::cout);
-    
+
     // Add a new register to the machine
     void addRegister(const char *name, int id, int size, bool flt);
 
@@ -874,7 +937,7 @@ public:
     std::vector<Type> computeLHSTypes(Exp &ss) const;
     std::vector<Type> computeRTAssgnTypes(RTAssgn &rta) const;
 #endif
-    
+
     // Go through the params and fixup any lambda functions
     void fixupParams();
 
@@ -919,9 +982,9 @@ public:
 #if 0           // Only used for the type checker?
 protected:
     int evaluateExp(const Exp &ss, std::map<int,int> &params,
-                       std::map<int,int> &regs) const;
+                    std::map<int,int> &regs) const;
     int evaluateExp(SSCIT &it, SSCIT &end, std::map<int,int> &params,
-                       std::map<int,int> &regs) const;
+                    std::map<int,int> &regs) const;
     PartialType computeTypes(Exp &ss, const PartialType &in,
                              std::vector<PartialType> &types) const;
     PartialType computeTypes(Exp &ss, SSIT &it, SSIT &end,
@@ -934,11 +997,11 @@ protected:
                          std::vector<PartialType>::iterator &type,
                          std::vector<Type> &out) const;
     std::set<int> evaluateExp(const std::list<Exp> &lss,
-                            int (*callback)(std::list<int> &)) const;
-    
+                              int (*callback)(std::list<int> &)) const;
+
 #endif
     void fixupParamsSub(std::string s, std::list<std::string>& funcParams,
-      bool& haveCount, int mark);
+                        bool& haveCount, int mark);
 };
 
 #endif /*__RTL_H__*/

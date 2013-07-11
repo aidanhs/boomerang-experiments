@@ -17,11 +17,11 @@
 #include "prog.h"
 
 class ProcTest : public CppUnit::TestCase {
-  protected:
+protected:
     Proc*  m_proc;
-    
 
-  public:
+
+public:
     ProcTest(std::string name) : CppUnit::TestCase (name)
     {}
 
