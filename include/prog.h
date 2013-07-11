@@ -40,7 +40,8 @@ class XMLProgParser;
 
 typedef std::map<ADDRESS, Proc*, std::less<ADDRESS> > PROGMAP;
 
-class Global {
+class Global
+{
 private:
     Type *type;
     ADDRESS uaddr;
@@ -50,17 +51,21 @@ public:
     Global(Type *type, ADDRESS uaddr, const char *nam) : type(type), uaddr(uaddr), nam(nam) { }
     virtual				~Global();
 
-    Type		*getType() {
+    Type		*getType()
+    {
         return type;
     }
-    void  		setType(Type* ty) {
+    void  		setType(Type* ty)
+    {
         type = ty;
     }
     void  		meetType(Type* ty);
-    ADDRESS		getAddress() {
+    ADDRESS		getAddress()
+    {
         return uaddr;
     }
-    const char *getName() {
+    const char *getName()
+    {
         return nam.c_str();
     }
     Exp*		getInitialValue(Prog* prog);	// Get the initial value as an expression
@@ -72,7 +77,8 @@ protected:
     friend class XMLProgParser;
 };		// class Global
 
-class Prog {
+class Prog
+{
 public:
     Prog();							// Default constructor
     virtual				~Prog();
@@ -85,10 +91,12 @@ public:
     void		remProc(UserProc* proc);		// Remove the given UserProc
     void        removeProc(const char *name);
     char*		getName();						// Get the name of this program
-    const char *getPath() {
+    const char *getPath()
+    {
         return m_path.c_str();
     }
-    const char *getPathAndName() {
+    const char *getPathAndName()
+    {
         return (m_path+m_name).c_str();
     }
     int			getNumProcs();					// # of procedures stored in prog
@@ -126,10 +134,12 @@ public:
     // address
     const void* getCodeInfo(ADDRESS uAddr, const char*& last, int& delta);
 
-    const char *getRegName(int idx) {
+    const char *getRegName(int idx)
+    {
         return pFE->getRegName(idx);
     }
-    int getRegSize(int idx) {
+    int getRegSize(int idx)
+    {
         return pFE->getRegSize(idx);
     }
 
@@ -251,7 +261,8 @@ public:
     double		getFloatConstant(ADDRESS uaddr, bool &ok, int bits = 64);
 
     // Hacks for Mike
-    MACHINE		getMachine() {			// Get a code for the machine
+    MACHINE		getMachine()  			// Get a code for the machine
+    {
         return pBF->GetMachine();    // e.g. MACHINE_SPARC
     }
     const char*		symbolByAddress(ADDRESS dest); // Get a symbol from an address;
@@ -262,44 +273,55 @@ public:
     bool			isStringConstant(ADDRESS a);
     bool			isCFStringConstant(ADDRESS a);
     // Read 2, 4, or 8 bytes given a native address
-    int			readNative1(ADDRESS a) {
+    int			readNative1(ADDRESS a)
+    {
         return pBF->readNative1(a);
     }
-    int			readNative2(ADDRESS a) {
+    int			readNative2(ADDRESS a)
+    {
         return pBF->readNative2(a);
     }
-    int			readNative4(ADDRESS a) {
+    int			readNative4(ADDRESS a)
+    {
         return pBF->readNative4(a);
     }
-    float		readNativeFloat4(ADDRESS a) {
+    float		readNativeFloat4(ADDRESS a)
+    {
         return pBF->readNativeFloat4(a);
     }
-    double		readNativeFloat8(ADDRESS a) {
+    double		readNativeFloat8(ADDRESS a)
+    {
         return pBF->readNativeFloat8(a);
     }
-    QWord		readNative8(ADDRESS a) {
+    QWord		readNative8(ADDRESS a)
+    {
         return pBF->readNative8(a);
     }
     Exp	  		*readNativeAs(ADDRESS uaddr, Type *type);
-    int			getTextDelta() {
+    int			getTextDelta()
+    {
         return pBF->getTextDelta();
     }
 
-    bool		isDynamicLinkedProcPointer(ADDRESS dest) {
+    bool		isDynamicLinkedProcPointer(ADDRESS dest)
+    {
         return pBF->IsDynamicLinkedProcPointer(dest);
     }
     const char*	GetDynamicProcName(ADDRESS uNative);
 
-    bool		processProc(int addr, UserProc* proc) {	// Decode a proc
+    bool		processProc(int addr, UserProc* proc)  	// Decode a proc
+    {
         std::ofstream os;
         return pFE->processProc((unsigned)addr, proc, os);
     }
 
     void		readSymbolFile(const char *fname);
-    unsigned	getImageSize() {
+    unsigned	getImageSize()
+    {
         return pBF->getImageSize();
     }
-    ADDRESS		getImageBase() {
+    ADDRESS		getImageBase()
+    {
         return pBF->getImageBase();
     }
 
@@ -312,17 +334,20 @@ public:
     void		printCallGraph();
     void		printCallGraphXML();
 
-    Cluster		*getRootCluster() {
+    Cluster		*getRootCluster()
+    {
         return m_rootCluster;
     }
-    Cluster		*findCluster(const char *name) {
+    Cluster		*findCluster(const char *name)
+    {
         return m_rootCluster->find(name);
     }
     Cluster		*getDefaultCluster(const char *name);
     bool		clusterUsed(Cluster *c);
 
     // Add the given RTL to the front end's map from address to aldready-decoded-RTL
-    void		addDecodedRtl(ADDRESS a, RTL* rtl) {
+    void		addDecodedRtl(ADDRESS a, RTL* rtl)
+    {
         pFE->addDecodedRtl(a, rtl);
     }
 

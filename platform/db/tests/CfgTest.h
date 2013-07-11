@@ -2,7 +2,8 @@
 
 #include "cfg.h"
 
-class CfgTest : public CPPUNIT_NS::TestFixture {
+class CfgTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( CfgTest );
     CPPUNIT_TEST( testDominators );
     CPPUNIT_TEST( testSemiDominators );

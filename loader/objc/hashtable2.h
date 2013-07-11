@@ -42,7 +42,8 @@
 The objective C class HashTable is preferred when dealing with (key, values) associations because it is easier to use in that situation.
 As well-behaved scalable data structures, hash tables double in size when they start becoming full, thus guaranteeing both average constant time access and linear size. */
 
-typedef struct {
+typedef struct
+{
     uarith_t	(*hash)(const void *info, const void *data);
     int		(*isEqual)(const void *info, const void *data1, const void *data2);
     void	(*free)(const void *info, void *data);
@@ -57,7 +58,8 @@ typedef struct {
 	2- isEqual (data1, data2) => data1= data2
  */
 
-typedef struct {
+typedef struct
+{
     const NXHashTablePrototype	*prototype;
     unsigned			count;
     unsigned			nbBuckets;
@@ -130,7 +132,8 @@ OBJC_EXPORT void *NXHashRemove (NXHashTable *table, const void *data);
     }
 */
 
-typedef struct {
+typedef struct
+{
     int i;
     int j;
 } NXHashState;

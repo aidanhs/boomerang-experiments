@@ -1,14 +1,17 @@
-typedef struct {
+typedef struct
+{
     short e_termination;
     short e_exit;
 } exit_status;
 
-typedef struct {
+typedef struct
+{
     int tv_sec;
     int tv_usec;
 } timeval;
 
-typedef struct {
+typedef struct
+{
     short ut_type;
     pid_t ut_pid;
     char ut_line[32];

@@ -80,7 +80,8 @@ Log &Log::operator<<(int i)
     return *this;
 }
 
-Log &Log::operator<<(char c) {
+Log &Log::operator<<(char c)
+{
     std::ostringstream st;
     st << c;
     *this << st.str().c_str();
@@ -113,10 +114,12 @@ Log &Log::operator<<(size_t s)
 }
 #endif
 
-void Log::tail() {
+void Log::tail()
+{
 }
 
-void FileLogger::tail() {
+void FileLogger::tail()
+{
     out.seekp(-200, std::ios::end);
     std::cerr << out;
 }

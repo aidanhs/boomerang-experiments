@@ -15,7 +15,8 @@ typedef unsigned short USHORT;
 typedef unsigned short WCHAR;
 typedef unsigned char UCHAR;
 
-struct UNICODE_STRING {
+struct UNICODE_STRING
+{
     USHORT  Length;
     USHORT  MaximumLength;
     PWSTR	 Buffer;
@@ -23,7 +24,8 @@ struct UNICODE_STRING {
 
 typedef UNICODE_STRING *PUNICODE_STRING;
 
-struct RTL_OSVERSIONINFOEXW {
+struct RTL_OSVERSIONINFOEXW
+{
     ULONG	 dwOSVersionInfoSize;
     ULONG	 dwMajorVersion;
     ULONG	 dwMinorVersion;
@@ -37,7 +39,8 @@ struct RTL_OSVERSIONINFOEXW {
     UCHAR	 wReserved;
 };
 
-struct IO_SECURITY_CONTEXT {
+struct IO_SECURITY_CONTEXT
+{
     PSECURITY_QUALITY_OF_SERVICE SecurityQos;
     PACCESS_STATE AccessState;
     ACCESS_MASK DesiredAccess;
@@ -45,7 +48,8 @@ struct IO_SECURITY_CONTEXT {
 };
 typedef IO_SECURITY_CONTEXT *PIO_SECURITY_CONTEXT;
 
-struct WAIT_CONTEXT_BLOCK {
+struct WAIT_CONTEXT_BLOCK
+{
     KDEVICE_QUEUE_ENTRY WaitQueueEntry;
     PDRIVER_CONTROL DeviceRoutine;
     PVOID DeviceContext;
@@ -56,7 +60,8 @@ struct WAIT_CONTEXT_BLOCK {
 };
 typedef WAIT_CONTEXT_BLOCK *PWAIT_CONTEXT_BLOCK;
 
-struct DEVICE_OBJECT {
+struct DEVICE_OBJECT
+{
     CSHORT Type;
     USHORT Size;
     LONG ReferenceCount;
@@ -86,7 +91,8 @@ struct DEVICE_OBJECT {
 typedef DEVICE_OBJECT *PDEVICE_OBJECT;
 
 
-struct DEVOBJ_EXTENSION {
+struct DEVOBJ_EXTENSION
+{
 
     CSHORT          Type;
     USHORT          Size;
@@ -94,7 +100,8 @@ struct DEVOBJ_EXTENSION {
 };
 typedef DEVOBJ_EXTENSION *PDEVOBJ_EXTENSION;
 
-struct DRIVER_EXTENSION {
+struct DRIVER_EXTENSION
+{
 
     DRIVER_OBJECT *DriverObject;
     PDRIVER_ADD_DEVICE AddDevice;
@@ -103,7 +110,8 @@ struct DRIVER_EXTENSION {
 };
 typedef DRIVER_EXTENSION *PDRIVER_EXTENSION;
 
-struct DRIVER_OBJECT {
+struct DRIVER_OBJECT
+{
     CSHORT Type;
     CSHORT Size;
     PDEVICE_OBJECT DeviceObject;
@@ -248,7 +256,8 @@ RtlSetDaclSecurityDescriptor(
 
 typedef unsigned int ACCESS_MASK;
 
-struct GENERIC_MAPPING {
+struct GENERIC_MAPPING
+{
     ACCESS_MASK GenericRead;
     ACCESS_MASK GenericWrite;
     ACCESS_MASK GenericExecute;
@@ -482,7 +491,8 @@ IoReportResourceUsage(
     PBOOLEAN  ConflictDetected
 );
 
-struct CONFIGURATION_INFORMATION {
+struct CONFIGURATION_INFORMATION
+{
     ULONG DiskCount;
     ULONG FloppyCount;
     ULONG CDRomCount;

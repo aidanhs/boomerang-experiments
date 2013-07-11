@@ -30,7 +30,8 @@
 #include <map>
 #include <string>
 
-class SymTab {
+class SymTab
+{
     // The map indexed by address.
     std::map<ADDRESS, std::string> amap;
     // The map indexed by string. Note that the strings are stored twice.
@@ -47,7 +48,8 @@ public:
     int			FindIndex(ADDRESS dwAddr);      // Find index for entry
     ADDRESS		FindSym(char* pName);           // Linear search for addr from name
 #endif
-    std::map<ADDRESS, std::string>& getAll() {
+    std::map<ADDRESS, std::string>& getAll()
+    {
         return amap;
     }
 };

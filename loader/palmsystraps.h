@@ -30,7 +30,8 @@
 //	"sysTrapMemInit",		// = sysTrapBase
 
 
-const char *trapNames[] = {
+const char *trapNames[] =
+{
     "MemInit",
     "MemInitHeapTable",
     "MemStoreInit",

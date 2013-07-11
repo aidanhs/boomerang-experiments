@@ -29,13 +29,15 @@
 #include "SymTab.h"					// For SymTab (probably unused)
 typedef std::map<ADDRESS,std::string,std::less<ADDRESS> >  RelocMap;
 
-typedef struct {
+typedef struct
+{
     ADDRESS		uSymAddr;			// Symbol native address
     int			iSymSize;			// Size associated with symbol
 } SymValue;
 
 // Internal elf info
-typedef struct {
+typedef struct
+{
     char  e_ident[4];
     char  e_class;
     char  endianness;
@@ -73,7 +75,8 @@ typedef struct {
 #define R_386_PC32 2
 
 // Program header
-typedef struct {
+typedef struct
+{
     int	 p_type;	 /* entry type */
     int	 p_offset;	 /* file offset */
     int	 p_vaddr;	 /* virtual address */
@@ -85,7 +88,8 @@ typedef struct {
 } Elf32_Phdr;
 
 // Section header
-typedef struct {
+typedef struct
+{
     int	sh_name;
     int	sh_type;
     int	sh_flags;
@@ -108,7 +112,8 @@ typedef struct {
 #define SHT_SYMTAB		2		// Symbol table
 #define SHT_DYNSYM		11		// Dynamic symbol table
 
-typedef struct {
+typedef struct
+{
     int				st_name;
     unsigned		st_value;
     int				st_size;
@@ -117,7 +122,8 @@ typedef struct {
     short			st_shndx;
 } Elf32_Sym;
 
-typedef struct {
+typedef struct
+{
     unsigned r_offset;
     int r_info;
 } Elf32_Rel;
@@ -133,9 +139,11 @@ typedef struct {
 #define STB_GLOBAL	1
 #define STB_WEAK	2
 
-typedef struct {
+typedef struct
+{
     short d_tag;				/* how to interpret value */
-    union {
+    union
+    {
         int	 d_val;
         int	 d_ptr;
         int	 d_off;
@@ -149,7 +157,8 @@ typedef struct {
 
 #define E_REL		1		// Relocatable file type
 
-class ElfBinaryFile : public BinaryFile {
+class ElfBinaryFile : public BinaryFile
+{
 public:
     ElfBinaryFile(bool bArchive = false);	// Constructor
     virtual void		UnLoad();						// Unload the image
@@ -159,7 +168,8 @@ public:
     virtual void		Close();						// Close file opened with Open()
     virtual LOAD_FMT	GetFormat() const;			// Get format (e.g. LOADFMT_ELF)
     virtual MACHINE		GetMachine() const;			// Get machine (e.g. MACHINE_SPARC)
-    virtual const char*	getFilename() const {
+    virtual const char*	getFilename() const
+    {
         return m_pFileName;
     }
     virtual bool		isLibrary() const;
@@ -232,7 +242,8 @@ public:
     // The ADDRESS is the native address of a pointer to the real dynamic data object.
     virtual std::map<ADDRESS, const char*>* GetDynamicGlobalMap();
 
-    virtual std::map<ADDRESS, std::string> &getSymbols() {
+    virtual std::map<ADDRESS, std::string> &getSymbols()
+    {
         return m_SymTab;
     }
 

@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-class UtilTest : public CPPUNIT_NS::TestFixture {
+class UtilTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( UtilTest );
     CPPUNIT_TEST( test_hasExt );
     CPPUNIT_TEST( test_changeExt );

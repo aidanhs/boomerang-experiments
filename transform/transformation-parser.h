@@ -50,7 +50,8 @@ public: \
 class TransformationScanner;
 
 #line 69 "transformation.y"
-typedef union {
+typedef union
+{
     int ival;
     char *str;
     Type *type;

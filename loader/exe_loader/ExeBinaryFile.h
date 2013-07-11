@@ -42,17 +42,17 @@ public:
         m_invokeService = par->platformServices->invokeService;
         LoaderWrapper<Wrapped,Interface> * result = new LoaderWrapper<Wrapped,Interface>;
         try
-        {
-            result->m_instance = new Wrapped(par);
-        }
+            {
+                result->m_instance = new Wrapped(par);
+            }
         catch (const StreamingException &e)
-        {
-            reportError(0, e.filename_.c_str(), e.line_, e.what());
-        }
+            {
+                reportError(0, e.filename_.c_str(), e.line_, e.what());
+            }
         catch (const std::runtime_error & e)
-        {
-            reportError(0,__FILE__,__LINE__,e.what());
-        }
+            {
+                reportError(0,__FILE__,__LINE__,e.what());
+            }
         return result;
     };
     static int32_t destroy(void *ptr)
@@ -86,7 +86,8 @@ protected:
 };
 typedef intptr_t ADDRESS;
 #define NO_ADDRESS ((ADDRESS)-1)
-typedef struct {				/*        PSP structure                 */
+typedef struct  				/*        PSP structure                 */
+{
     uint16_t	int20h;			/* interrupt 20h                        */
     uint16_t	eof;			/* segment, end of allocation block     */
     uint8_t		res1;			/* reserved                             */
@@ -105,7 +106,8 @@ typedef struct {				/*        PSP structure                 */
     uint8_t		cmdTail[0x80];	/* command tail and disk transfer area  */
 } PSP;
 
-typedef struct {            /*      EXE file header          */
+typedef struct              /*      EXE file header          */
+{
     uint8_t   sigLo;          /* .EXE signature: 0x4D 0x5A     */
     uint8_t   sigHi;
     uint16_t  lastPageSize;   /* Size of the last page         */
@@ -123,7 +125,8 @@ typedef struct {            /*      EXE file header          */
     uint16_t  overlayNum;     /* Overlay number                */
 } exeHeader;
 
-class ExeBinaryFile : public ILoader {
+class ExeBinaryFile : public ILoader
+{
 public:
     ExeBinaryFile(PF_ObjectParams *par);		// Default constructor
     virtual void  UnLoad();						// Unload the image
@@ -132,7 +135,8 @@ public:
     virtual bool  PostLoad(void* handle);		// For archive files only
     virtual LOAD_FMT GetFormat() const;			// Get format (i.e. LOADFMT_EXE)
     virtual MACHINE GetMachine() const;			// Get machine (i.e. MACHINE_PENTIUM)
-    virtual const char *getFilename() const {
+    virtual const char *getFilename() const
+    {
         return m_pFileName;
     }
 

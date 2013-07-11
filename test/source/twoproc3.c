@@ -1,7 +1,8 @@
 
 #include <stdio.h>
 
-typedef struct {
+typedef struct
+{
     int                 vendor;
     int                 chipType;
     int                 chipRev;
@@ -19,7 +20,8 @@ typedef pciVideoRec *pciVideoPtr;
 
 pciVideoPtr *xf86GetPciVideoInfo(void);
 
-int getDevice(pciVideoPtr p) {
+int getDevice(pciVideoPtr p)
+{
     return p->device;
 }
 

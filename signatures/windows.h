@@ -69,7 +69,8 @@ LPWSTR CharNextW(
 LPSTR GetCommandLineA(void);
 LPWSTR GetCommandLineW(void);
 
-typedef struct {
+typedef struct
+{
     UINT cbSize;
     UINT style;
     WNDPROC lpfnWndProc;
@@ -83,7 +84,8 @@ typedef struct {
     LPCSTR lpszClassName;
     HICON hIconSm;
 } WNDCLASSEX;
-typedef struct {
+typedef struct
+{
     UINT cbSize;
     UINT style;
     WNDPROC lpfnWndProc;
@@ -126,18 +128,21 @@ HACCEL LoadAcceleratorsW(
     LPCWSTR lpTableName
 );
 
-typedef struct {
+typedef struct
+{
     int x;
     int y;
 } POINT;
 typedef POINT *LPPOINT;
 
-typedef struct {
+typedef struct
+{
     int cx;
     int cy;
 } SIZE;
 
-typedef struct {
+typedef struct
+{
     HWND hwnd;
     UINT message;
     WPARAM wParam;
@@ -326,7 +331,8 @@ void PostQuitMessage(
     int nExitCode
 );
 
-typedef struct {
+typedef struct
+{
     LONG left;
     LONG top;
     LONG right;
@@ -334,7 +340,8 @@ typedef struct {
 } RECT;
 typedef RECT *LPRECT;
 
-typedef struct {
+typedef struct
+{
     HDC  hdc;
     BOOL fErase;
     RECT rcPaint;
@@ -585,7 +592,8 @@ int FillRect(
     HBRUSH hbr		// handle to brush
 );
 
-struct SLIST_ENTRY {
+struct SLIST_ENTRY
+{
     SLIST_ENTRY *Next;
 };
 
@@ -616,7 +624,8 @@ DWORD GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer);
 DWORD SizeofResource(HMODULE hModule, HRSRC hResInfo);
 HINSTANCE ShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd);
 
-typedef struct {
+typedef struct
+{
     DWORD dwOSVersionInfoSize;
     DWORD dwMajorVersion;
     DWORD dwMinorVersion;
@@ -625,7 +634,8 @@ typedef struct {
     CHAR  szCSDVersion[128];
 } OSVERSIONINFOA;
 
-typedef struct {
+typedef struct
+{
     DWORD dwOSVersionInfoSize;
     DWORD dwMajorVersion;
     DWORD dwMinorVersion;
@@ -637,7 +647,8 @@ typedef struct {
 BOOL GetVersionExA(OSVERSIONINFOA *v);
 BOOL GetVersionExW(OSVERSIONINFOW *v);
 
-typedef struct {
+typedef struct
+{
     DWORD  dwOemId;
     DWORD  dwPageSize;
     LPVOID lpMinimumApplicationAddress;
@@ -651,7 +662,8 @@ typedef struct {
 
 void GetSystemInfo(SYSTEM_INFO *sinf);
 
-typedef struct {
+typedef struct
+{
     DWORD dwLength;      // sizeof(MEMORYSTATUS)
     DWORD dwMemoryLoad;  // % in use
     DWORD dwTotalPhys;
@@ -664,7 +676,8 @@ typedef struct {
 
 void GlobalMemoryStatus(MEMORYSTATUS *mst);
 
-typedef struct {
+typedef struct
+{
     UINT MaxCharSize;
     BYTE DefaultChar[2]; // MAX_DEFAULTCHAR
     BYTE LeadByte[12];   // MAX_LEADBYTES
@@ -808,7 +821,8 @@ void InitializeCriticalSection(
     LPCRITICAL_SECTION lpCriticalSection
 );
 
-typedef struct {
+typedef struct
+{
     DWORD cb;
     LPSTR lpReserved;
     LPSTR lpDesktop;
@@ -830,7 +844,8 @@ typedef struct {
 } STARTUPINFO;
 typedef STARTUPINFO *LPSTARTUPINFO;
 
-typedef struct {
+typedef struct
+{
     DWORD cb;
     LPWSTR lpReserved;
     LPWSTR lpDesktop;

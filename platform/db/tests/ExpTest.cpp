@@ -27,7 +27,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION( ExpTest );
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ExpTest::setUp () {
+void ExpTest::setUp ()
+{
     m_99 = new Const(99);
     m_rof2 = new Location(opRegOf, new Const(2), NULL);
 }
@@ -39,7 +40,8 @@ void ExpTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ExpTest::tearDown () {
+void ExpTest::tearDown ()
+{
     delete m_99;
     delete m_rof2;
 }
@@ -48,7 +50,8 @@ void ExpTest::tearDown () {
  * FUNCTION:		ExpTest::test99
  * OVERVIEW:		Test integer constant
  *============================================================================*/
-void ExpTest::test99 () {
+void ExpTest::test99 ()
+{
     std::ostringstream ost;
     m_99->print(ost);
     CPPUNIT_ASSERT (std::string("99") == std::string(ost.str()));
@@ -58,7 +61,8 @@ void ExpTest::test99 () {
  * FUNCTION:		ExpTest::testFlt
  * OVERVIEW:		Test float constant
  *============================================================================*/
-void ExpTest::testFlt () {
+void ExpTest::testFlt ()
+{
     std::ostringstream ost;
     Const *c = new Const(3.14);
     c->print(ost);
@@ -72,7 +76,8 @@ void ExpTest::testFlt () {
  *					and ostream::operator&(Exp*)
  * NOTE:			r[2] prints as r2, as of June 2003
  *============================================================================*/
-void ExpTest::testRegOf2 () {
+void ExpTest::testRegOf2 ()
+{
     std::ostringstream ost;
     ost << m_rof2;
     CPPUNIT_ASSERT_EQUAL (std::string("r2"), std::string(ost.str()));
@@ -82,7 +87,8 @@ void ExpTest::testRegOf2 () {
  * FUNCTION:		ExpTest::testBinaries
  * OVERVIEW:		Test opPlus, opMinus, etc
  *============================================================================*/
-void ExpTest::testBinaries () {
+void ExpTest::testBinaries ()
+{
     std::ostringstream ost1;
     Binary* b = new Binary(opPlus, m_99->clone(), m_rof2->clone());
     b->print(ost1);
@@ -136,7 +142,8 @@ void ExpTest::testBinaries () {
  * FUNCTION:		ExpTest::testUnaries
  * OVERVIEW:		Test LNot, unary minus, etc
  *============================================================================*/
-void ExpTest::testUnaries () {
+void ExpTest::testUnaries ()
+{
     std::ostringstream ost1;
     Unary* u = new Unary(opNot, new Terminal(opZF));
     u->print(ost1);
@@ -160,7 +167,8 @@ void ExpTest::testUnaries () {
  * FUNCTION:		ExpTest::testIsAfpTerm
  * OVERVIEW:		Test [ a[m[ ] %afp [+|- const]
  *============================================================================*/
-void ExpTest::testIsAfpTerm () {
+void ExpTest::testIsAfpTerm ()
+{
     Terminal afp(opAFP);
     Binary plus(opPlus,	  afp.clone(), new Const(-99));
     Binary minus(opMinus, afp.clone(), m_99->clone());
@@ -183,27 +191,33 @@ void ExpTest::testIsAfpTerm () {
  * FUNCTION:		ExpTest::testCompare1-6
  * OVERVIEW:		Test the operator== function
  *============================================================================*/
-void ExpTest::testCompare1 () {
+void ExpTest::testCompare1 ()
+{
     CPPUNIT_ASSERT(! (*m_99 == *m_rof2));
 }
-void ExpTest::testCompare2 () {
+void ExpTest::testCompare2 ()
+{
     Const nineNine(99);
     CPPUNIT_ASSERT(*m_99 == nineNine);
 }
-void ExpTest::testCompare3 () {
+void ExpTest::testCompare3 ()
+{
     Const minus(-99);
     CPPUNIT_ASSERT(! (*m_99 == minus));
 }
-void ExpTest::testCompare4 () {
+void ExpTest::testCompare4 ()
+{
     Location regOf2(opRegOf, new Const(2), NULL);
     CPPUNIT_ASSERT(regOf2 == *m_rof2);
 }
-void ExpTest::testCompare5 () {
+void ExpTest::testCompare5 ()
+{
     Binary one(opMult, m_99->clone(), m_rof2->clone());
     Binary two(opMult, m_rof2->clone(), m_99->clone());
     CPPUNIT_ASSERT(! (one == two) );
 }
-void ExpTest::testCompare6 () {
+void ExpTest::testCompare6 ()
+{
     Binary one(opMult, m_99->clone(), m_rof2->clone());
     Binary two(opMult, m_99->clone(), m_rof2->clone());
     CPPUNIT_ASSERT(	 (one == two) );
@@ -213,7 +227,8 @@ void ExpTest::testCompare6 () {
  * FUNCTION:		ExpTest::testSearchReplace1-4
  * OVERVIEW:		Test the searchReplace function
  *============================================================================*/
-void ExpTest::testSearchReplace1() {
+void ExpTest::testSearchReplace1()
+{
     // Null test: should not replace. Also tests Ternary class
     Exp* p;
     bool change;
@@ -231,7 +246,8 @@ void ExpTest::testSearchReplace1() {
     delete p;
 }
 
-void ExpTest::testSearchReplace2() {
+void ExpTest::testSearchReplace2()
+{
     // Whole expression replacements
     bool change;
     Exp* p1 = new Const (55);
@@ -245,7 +261,8 @@ void ExpTest::testSearchReplace2() {
     delete p1;
 }
 
-void ExpTest::testSearchReplace3() {
+void ExpTest::testSearchReplace3()
+{
     // Subexpression replacement
     bool change;
     Const two(2);
@@ -259,7 +276,8 @@ void ExpTest::testSearchReplace3() {
     CPPUNIT_ASSERT_EQUAL(expected, actual);
     delete p;
 }
-void ExpTest::testSearchReplace4() {
+void ExpTest::testSearchReplace4()
+{
     // Subexpression replacement with different subexpression form
     bool change;
     Const two(2);
@@ -279,7 +297,8 @@ void ExpTest::testSearchReplace4() {
  * FUNCTION:		ExpTest::testSearch1-4
  * OVERVIEW:		Test the search function, including wildcards
  *============================================================================*/
-void ExpTest::testSearch1() {
+void ExpTest::testSearch1()
+{
     Const two(2);
     Exp* result;
     // Search inside r2 for const 2
@@ -296,7 +315,8 @@ void ExpTest::testSearch1() {
     CPPUNIT_ASSERT(! e.search(&three, result));
 }
 
-void ExpTest::testSearch2() {
+void ExpTest::testSearch2()
+{
     // Search using wildcards
     Binary e(opDivs, m_rof2->clone(), m_99->clone());	// r2 /! 99
     Exp* result;
@@ -309,7 +329,8 @@ void ExpTest::testSearch2() {
     CPPUNIT_ASSERT(e.search(m_99, result));
 }
 
-void ExpTest::testSearch3() {
+void ExpTest::testSearch3()
+{
     // A more complex expression:
     // (r2 * 99) + (m[1000] * 4)
     Exp* result;
@@ -328,7 +349,8 @@ void ExpTest::testSearch3() {
     CPPUNIT_ASSERT(! e.search(&three, result));
 }
 
-void ExpTest::testSearchAll() {
+void ExpTest::testSearchAll()
+{
     // A more complex expression:
     // (r2 * 99) + (r8 * 4)
     Location search(opRegOf, new Terminal(opWild), NULL);	 // r[?]
@@ -347,7 +369,8 @@ void ExpTest::testSearchAll() {
  * FUNCTION:		ExpTest::testAccumulate
  * OVERVIEW:		Test the Accumulate function
  *============================================================================*/
-void ExpTest::testAccumulate () {
+void ExpTest::testAccumulate ()
+{
     Location rof2(opRegOf, new Const(2), NULL);
     Const nineNine(99);
     // Zero terms
@@ -395,7 +418,8 @@ void ExpTest::testAccumulate () {
  * FUNCTION:		ExpTest::testPartitionTerms
  * OVERVIEW:		Test the partitionTerms function
  *============================================================================*/
-void ExpTest::testPartitionTerms() {
+void ExpTest::testPartitionTerms()
+{
     std::ostringstream ost;
     // afp + 108 + n - (afp + 92)
     Binary e(opMinus,
@@ -427,7 +451,8 @@ void ExpTest::testPartitionTerms() {
  * FUNCTION:		ExpTest::testSimplifyArith
  * OVERVIEW:		Test the simplifyArith function
  *============================================================================*/
-void ExpTest::testSimplifyArith() {
+void ExpTest::testSimplifyArith()
+{
     std::ostringstream ost;
     // afp + 108 + n - (afp + 92)
     Exp* e = new Binary(opMinus,
@@ -477,7 +502,8 @@ void ExpTest::testSimplifyArith() {
  * FUNCTION:		ExpTest::testSimplifyUnary
  * OVERVIEW:		Test the simplifyArith function
  *============================================================================*/
-void ExpTest::testSimplifyUnary() {
+void ExpTest::testSimplifyUnary()
+{
     // Unaries with integer constant argument
     Exp* u = new Unary(opNeg, new Const (55));
     u = u->simplify();
@@ -514,7 +540,8 @@ void ExpTest::testSimplifyUnary() {
  * FUNCTION:		ExpTest::testSimplifyBinary
  * OVERVIEW:		Test the simplifyArith function
  *============================================================================*/
-void ExpTest::testSimplifyBinary() {
+void ExpTest::testSimplifyBinary()
+{
     // Add integer consts
     Exp* b = new Binary(opPlus, new Const(2), new Const(3));
     b = b->simplify();
@@ -667,7 +694,8 @@ void ExpTest::testSimplifyBinary() {
  * FUNCTION:		ExpTest::testSimplifyBinary
  * OVERVIEW:		Test the simplifyArith function
  *============================================================================*/
-void ExpTest::testSimplifyAddr() {
+void ExpTest::testSimplifyAddr()
+{
     // a[m[1000]] - a[m[r2]{64}]@0:15
     Exp* e = new Binary(opMinus,
                         new Unary(opAddrOf,
@@ -708,7 +736,8 @@ void ExpTest::testSimplifyAddr() {
  * FUNCTION:		ExpTest::testSimpConstr
  * OVERVIEW:		Test the simplifyConstraint functions
  *============================================================================*/
-void ExpTest::testSimpConstr() {
+void ExpTest::testSimpConstr()
+{
     // After
     //	 (T[local1{16}] = <int>) or (Tlocal1{16} = <alpha2*>)
     // gets substituted to
@@ -755,7 +784,8 @@ void ExpTest::testSimpConstr() {
  * FUNCTION:		ExpTest::testLess
  * OVERVIEW:		Various tests of the operator< function
  *============================================================================*/
-void ExpTest::testLess() {
+void ExpTest::testLess()
+{
     // Simple constants
     Const two(2), three(3), mThree(-3), twoPointTwo(2.2), threePointThree(3.3);
     Const mThreePointThree(-3.3);
@@ -789,7 +819,8 @@ void ExpTest::testLess() {
  * FUNCTION:		ExpTest::testMapOfExp
  * OVERVIEW:		Test maps of Exp*s; exercises some comparison operators
  *============================================================================*/
-void ExpTest::testMapOfExp() {
+void ExpTest::testMapOfExp()
+{
     std::map<Exp*, int, lessExpStar> m;
     m[m_rof2] = 200;
     m[m_99] = 99;
@@ -819,7 +850,8 @@ void ExpTest::testMapOfExp() {
  * FUNCTION:		Exp::testList
  * OVERVIEW:		Test the opList creating and printing
  *============================================================================*/
-void ExpTest::testList () {
+void ExpTest::testList ()
+{
     std::ostringstream o0, o1, o2, o3, o4;
     Exp *l0, *l1, *l2, *l3, *l4;
     // Empty list
@@ -887,7 +919,8 @@ void ExpTest::testList () {
  * FUNCTION:		ExpTest::testParens
  * OVERVIEW:		Test the printing of parentheses in complex expressions
  *============================================================================*/
-void ExpTest::testParen () {
+void ExpTest::testParen ()
+{
     Assign a(
         Location::regOf(
             new Location(opParam, new Const("rd"), NULL)),
@@ -911,7 +944,8 @@ void ExpTest::testParen () {
  * FUNCTION:		ExpTest::testFixSuccessor
  * OVERVIEW:		Test succ(r[k]) == r[k+1]
  *============================================================================*/
-void ExpTest::testFixSuccessor() {
+void ExpTest::testFixSuccessor()
+{
     // Trivial test (should not affect)
     Binary* b = new Binary(opMinus,
                            m_99->clone(),
@@ -939,7 +973,8 @@ void ExpTest::testFixSuccessor() {
  * FUNCTION:		ExpTest::testKillFill
  * OVERVIEW:		Test removal of zero fill, sign extend, truncates
  *============================================================================*/
-void ExpTest::testKillFill() {
+void ExpTest::testKillFill()
+{
     // r18 + sgnex(16,32,m[r16 + 16])
     Binary e(opPlus,
              Location::regOf(18),
@@ -977,7 +1012,8 @@ void ExpTest::testKillFill() {
  * FUNCTION:		ExpTest::testAssociativity
  * OVERVIEW:		Test that a+K+b is the same as a+b+K when each is simplified
  *============================================================================*/
-void ExpTest::testAssociativity() {
+void ExpTest::testAssociativity()
+{
 
     // (r8 + m[m[r8 + 12] + -12]) + 12
     Binary e1(opPlus,
@@ -1019,7 +1055,8 @@ void ExpTest::testAssociativity() {
  * FUNCTION:		ExpTest::testSubscriptVar
  * OVERVIEW:		Test Assign::subscriptVar and thereby Exp::expSubscriptVar
  *============================================================================*/
-void ExpTest::testSubscriptVar() {
+void ExpTest::testSubscriptVar()
+{
     // m[r28 - 4] := r28 + r29
     Exp* left = Location::memOf(
                     new Binary(opMinus,
@@ -1073,7 +1110,8 @@ void ExpTest::testSubscriptVar() {
  * FUNCTION:		ExpTest::testTypeOf
  * OVERVIEW:		Test opTypeOf and TypeVal (type values)
  *============================================================================*/
-void ExpTest::testTypeOf() {
+void ExpTest::testTypeOf()
+{
     // Tr24{5} = Tr25{9}
     std::string expected1("T[r24{5}] = T[r25{9}]");
     Statement* s5 = new Assign;
@@ -1105,7 +1143,8 @@ void ExpTest::testTypeOf() {
  * FUNCTION:		ExpTest::testSetConscript
  * OVERVIEW:		Test setting and printing of constant "subscripts"
  *============================================================================*/
-void ExpTest::testSetConscripts() {
+void ExpTest::testSetConscripts()
+{
     // m[1000] + 1000
     Exp* e = new Binary(opPlus,
                         Location::memOf(
@@ -1147,7 +1186,8 @@ void ExpTest::testSetConscripts() {
  * FUNCTION:		ExpTest::testAddUsedLocs
  * OVERVIEW:		Test finding the locations used by an expression
  *============================================================================*/
-void ExpTest::testAddUsedLocs() {
+void ExpTest::testAddUsedLocs()
+{
     // Null case
     Exp* e = new Terminal(opNil);
     LocationSet l;
@@ -1260,7 +1300,8 @@ void ExpTest::testAddUsedLocs() {
  * FUNCTION:		ExpTest::testSubscriptVars
  * OVERVIEW:		Test the subscripting of variables (locations)
  *============================================================================*/
-void ExpTest::testSubscriptVars() {
+void ExpTest::testSubscriptVars()
+{
     // Null case: %pc
     Assign s9(new Terminal(opNil), new Terminal(opNil));
     s9.setNumber(9);
@@ -1347,7 +1388,8 @@ void ExpTest::testSubscriptVars() {
  * FUNCTION:		ExpTest::testVisitors
  * OVERVIEW:		Test the FlagsFinder and BareMemofFinder visitors
  *============================================================================*/
-void ExpTest::testVisitors() {
+void ExpTest::testVisitors()
+{
     Assign s7(new Terminal(opNil), new Terminal(opNil));
     // m[SETTFLAGS(m[1000], r8)]{7}
     s7.setNumber(7);

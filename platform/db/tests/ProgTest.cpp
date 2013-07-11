@@ -25,7 +25,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION( ProgTest );
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ProgTest::setUp () {
+void ProgTest::setUp ()
+{
     //prog.setName("default name");
 }
 
@@ -36,14 +37,16 @@ void ProgTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ProgTest::tearDown () {
+void ProgTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		ProgTest::testName
  * OVERVIEW:		Test setting and reading name
  *============================================================================*/
-void ProgTest::testName () {
+void ProgTest::testName ()
+{
     BinaryFileFactory bff;
     BinaryFile *pBF = bff.Load(HELLO_PENTIUM);	// Don't actually use it
     Prog* prog = new Prog();

@@ -32,11 +32,13 @@ CPPUNIT_TEST_SUITE_REGISTRATION( CfgTest );
  * RETURNS:			<nothing>
  *============================================================================*/
 static bool logset = false;
-void CfgTest::setUp () {
-    if (!logset) {
-        logset = true;
-        Boomerang::get()->setLogger(new NullLogger());
-    }
+void CfgTest::setUp ()
+{
+    if (!logset)
+        {
+            logset = true;
+            Boomerang::get()->setLogger(new NullLogger());
+        }
 }
 
 /*==============================================================================
@@ -46,7 +48,8 @@ void CfgTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void CfgTest::tearDown () {
+void CfgTest::tearDown ()
+{
 }
 
 /*==============================================================================
@@ -58,7 +61,8 @@ void CfgTest::tearDown () {
 #define FRONTIER_TWELVE 0x080483b2
 #define FRONTIER_THIRTEEN 0x080483b9
 
-void CfgTest::testDominators () {
+void CfgTest::testDominators ()
+{
     BinaryFileFactory bff;
     BinaryFile *pBF = bff.Load(FRONTIER_PENTIUM);
     CPPUNIT_ASSERT(pBF != 0);
@@ -80,9 +84,10 @@ void CfgTest::testDominators () {
     // Find BB "5" (as per Appel, Figure 19.5).
     BB_IT it;
     PBB bb = cfg->getFirstBB(it);
-    while (bb && bb->getLowAddr() != FRONTIER_FIVE) {
-        bb = cfg->getNextBB(it);
-    }
+    while (bb && bb->getLowAddr() != FRONTIER_FIVE)
+        {
+            bb = cfg->getNextBB(it);
+        }
     CPPUNIT_ASSERT(bb);
 
     std::ostringstream expected, actual;
@@ -112,7 +117,8 @@ void CfgTest::testDominators () {
 #define SEMI_D	0x8048354
 #define SEMI_M	0x80483e2
 
-void CfgTest::testSemiDominators () {
+void CfgTest::testSemiDominators ()
+{
     BinaryFileFactory bff;
     BinaryFile* pBF = bff.Load(SEMI_PENTIUM);
     CPPUNIT_ASSERT(pBF != 0);
@@ -135,9 +141,10 @@ void CfgTest::testSemiDominators () {
     // Find BB "L (6)" (as per Appel, Figure 19.8).
     BB_IT it;
     PBB bb = cfg->getFirstBB(it);
-    while (bb && bb->getLowAddr() != SEMI_L) {
-        bb = cfg->getNextBB(it);
-    }
+    while (bb && bb->getLowAddr() != SEMI_L)
+        {
+            bb = cfg->getNextBB(it);
+        }
     CPPUNIT_ASSERT(bb);
     int nL = df->pbbToNode(bb);
 
@@ -163,7 +170,8 @@ void CfgTest::testSemiDominators () {
  * FUNCTION:		CfgTest::testPlacePhi
  * OVERVIEW:		Test the placing of phi functions
  *============================================================================*/
-void CfgTest::testPlacePhi () {
+void CfgTest::testPlacePhi ()
+{
     BinaryFileFactory bff;
     BinaryFile* pBF = bff.Load(FRONTIER_PENTIUM);
     CPPUNIT_ASSERT(pBF != 0);
@@ -204,7 +212,8 @@ void CfgTest::testPlacePhi () {
  * FUNCTION:		CfgTest::testPlacePhi2
  * OVERVIEW:		Test a case where a phi function is not needed
  *============================================================================*/
-void CfgTest::testPlacePhi2 () {
+void CfgTest::testPlacePhi2 ()
+{
     BinaryFileFactory bff;
     BinaryFile* pBF = bff.Load(IFTHEN_PENTIUM);
     CPPUNIT_ASSERT(pBF != 0);
@@ -264,7 +273,8 @@ void CfgTest::testPlacePhi2 () {
  * FUNCTION:		CfgTest::testRenameVars
  * OVERVIEW:		Test the renaming of variables
  *============================================================================*/
-void CfgTest::testRenameVars () {
+void CfgTest::testRenameVars ()
+{
     BinaryFileFactory bff;
     BinaryFile* pBF = bff.Load(FRONTIER_PENTIUM);
     CPPUNIT_ASSERT(pBF != 0);

@@ -33,23 +33,23 @@ public:
 
         // Version check
         try
-        {
-            CHECK (params_->version.major >= v.major)
-                    << "Version mismatch. PluginManager version must be "
-                    << "at least " << v.major << "." << v.minor;
+            {
+                CHECK (params_->version.major >= v.major)
+                        << "Version mismatch. PluginManager version must be "
+                        << "at least " << v.major << "." << v.minor;
 
-            RegisterParams rp(v, T::create, T::destroy, pl);
-            int32_t rc = params_->registerObject(objectType, &rp);
+                RegisterParams rp(v, T::create, T::destroy, pl);
+                int32_t rc = params_->registerObject(objectType, &rp);
 
-            CHECK (rc >= 0)
-                    << "Registration of object type "
-                    << objectType << "failed. "
-                    << "Error code=" << rc;
-        }
+                CHECK (rc >= 0)
+                        << "Registration of object type "
+                        << objectType << "failed. "
+                        << "Error code=" << rc;
+            }
         catch (...)
-        {
-            result_ = NULL;
-        }
+            {
+                result_ = NULL;
+            }
     }
 
     static int32_t exitPlugin()

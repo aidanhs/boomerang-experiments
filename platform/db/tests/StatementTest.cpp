@@ -36,11 +36,13 @@ CPPUNIT_TEST_SUITE_REGISTRATION( StatementTest );
  * RETURNS:			<nothing>
  *============================================================================*/
 static bool logset = false;
-void StatementTest::setUp () {
-    if (!logset) {
-        logset = true;
-        Boomerang::get()->setLogger(new NullLogger());
-    }
+void StatementTest::setUp ()
+{
+    if (!logset)
+        {
+            logset = true;
+            Boomerang::get()->setLogger(new NullLogger());
+        }
 }
 
 /*==============================================================================
@@ -50,14 +52,16 @@ void StatementTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void StatementTest::tearDown () {
+void StatementTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		StatementTest::testEmpty
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testEmpty () {
+void StatementTest::testEmpty ()
+{
     // Force "verbose" flag (-v)
     Boomerang* boo = Boomerang::get();
     boo->vFlag = true;
@@ -105,7 +109,8 @@ void StatementTest::testEmpty () {
  * FUNCTION:		StatementTest::testFlow
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testFlow () {
+void StatementTest::testFlow ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -174,7 +179,8 @@ void StatementTest::testFlow () {
  * FUNCTION:		StatementTest::testKill
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testKill () {
+void StatementTest::testKill ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -246,7 +252,8 @@ void StatementTest::testKill () {
  * FUNCTION:		StatementTest::testUse
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUse () {
+void StatementTest::testUse ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -316,7 +323,8 @@ void StatementTest::testUse () {
  * FUNCTION:		StatementTest::testUseOverKill
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUseOverKill () {
+void StatementTest::testUseOverKill ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -390,7 +398,8 @@ void StatementTest::testUseOverKill () {
  * FUNCTION:		StatementTest::testUseOverBB
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUseOverBB () {
+void StatementTest::testUseOverBB ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -467,7 +476,8 @@ void StatementTest::testUseOverBB () {
  * FUNCTION:		StatementTest::testUseKill
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUseKill () {
+void StatementTest::testUseKill ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -539,7 +549,8 @@ void StatementTest::testUseKill () {
  * FUNCTION:		StatementTest::testEndlessLoop
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testEndlessLoop () {
+void StatementTest::testEndlessLoop ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -603,7 +614,8 @@ void StatementTest::testEndlessLoop () {
  * FUNCTION:		StatementTest::testLocationSet
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testLocationSet () {
+void StatementTest::testLocationSet ()
+{
     Location rof(opRegOf, new Const(12), NULL);		// r12
     Const& theReg = *(Const*)rof.getSubExp1();
     LocationSet ls;
@@ -689,7 +701,8 @@ void StatementTest::testLocationSet () {
  * FUNCTION:		StatementTest::testWildLocationSet
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testWildLocationSet () {
+void StatementTest::testWildLocationSet ()
+{
     Location rof12(opRegOf, new Const(12), NULL);
     Location rof13(opRegOf, new Const(13), NULL);
     Assign a10, a20;
@@ -737,7 +750,8 @@ void StatementTest::testWildLocationSet () {
  * FUNCTION:		StatementTest::testRecursion
  * OVERVIEW:		Test push of argument (X86 style), then call self
  *============================================================================*/
-void StatementTest::testRecursion () {
+void StatementTest::testRecursion ()
+{
     // create Prog
     Prog* prog = new Prog;
     BinaryFileFactory bff;
@@ -875,7 +889,8 @@ void StatementTest::testRecursion () {
  * FUNCTION:		StatamentTest::testClone
  * OVERVIEW:		Test cloning of Assigns (and exps)
  *============================================================================*/
-void StatementTest::testClone () {
+void StatementTest::testClone ()
+{
     Assign* a1 = new Assign(
         Location::regOf(8),
         new Binary(opPlus,
@@ -910,7 +925,8 @@ void StatementTest::testClone () {
  * FUNCTION:		StatementTest::testIsAssign
  * OVERVIEW:		Test assignment test
  *============================================================================*/
-void StatementTest::testIsAssign () {
+void StatementTest::testIsAssign ()
+{
     std::ostringstream ost;
     // r2 := 99
     Assign a(
@@ -931,7 +947,8 @@ void StatementTest::testIsAssign () {
  * FUNCTION:		StatementTest::testIsFlagCall
  * OVERVIEW:		Test the isFlagAssgn function, and opFlagCall
  *============================================================================*/
-void StatementTest::testIsFlagAssgn () {
+void StatementTest::testIsFlagAssgn ()
+{
     std::ostringstream ost;
     // FLAG addFlags(r2 , 99)
     Assign fc(
@@ -964,7 +981,8 @@ void StatementTest::testIsFlagAssgn () {
  * FUNCTION:		StatementTest::testAddUsedLocsAssign .. testAddUsedLocsBool
  * OVERVIEW:		Test the finding of locations used by this statement
  *============================================================================*/
-void StatementTest::testAddUsedLocsAssign() {
+void StatementTest::testAddUsedLocsAssign()
+{
     // m[r28-4] := m[r28-8] * r26
     Assign* a = new Assign(
         Location::memOf(
@@ -998,7 +1016,8 @@ void StatementTest::testAddUsedLocsAssign() {
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
 
-void StatementTest::testAddUsedLocsBranch() {
+void StatementTest::testAddUsedLocsBranch()
+{
     // BranchStatement with dest m[r26{99}]{55}, condition %flags
     GotoStatement* g = new GotoStatement();
     g->setNumber(55);
@@ -1021,7 +1040,8 @@ void StatementTest::testAddUsedLocsBranch() {
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
 
-void StatementTest::testAddUsedLocsCase() {
+void StatementTest::testAddUsedLocsCase()
+{
     // CaseStatement with pDest = m[r26], switchVar = m[r28 - 12]
     LocationSet l;
     CaseStatement* c = new CaseStatement;
@@ -1040,7 +1060,8 @@ void StatementTest::testAddUsedLocsCase() {
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
 
-void StatementTest::testAddUsedLocsCall() {
+void StatementTest::testAddUsedLocsCall()
+{
     // CallStatement with pDest = m[r26], params = m[r27], r28{55}, defines r31, m[r24]
     LocationSet l;
     GotoStatement* g = new GotoStatement();
@@ -1072,7 +1093,8 @@ void StatementTest::testAddUsedLocsCall() {
 #endif
 }
 
-void StatementTest::testAddUsedLocsReturn() {
+void StatementTest::testAddUsedLocsReturn()
+{
     // ReturnStatement with returns r31, m[r24], m[r25]{55} + r[26]{99}]
     LocationSet l;
     GotoStatement* g = new GotoStatement();
@@ -1096,7 +1118,8 @@ void StatementTest::testAddUsedLocsReturn() {
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
 
-void StatementTest::testAddUsedLocsBool() {
+void StatementTest::testAddUsedLocsBool()
+{
     // Boolstatement with condition m[r24] = r25, dest m[r26]
     LocationSet l;
     BoolAssign* bs = new BoolAssign(8);
@@ -1154,7 +1177,8 @@ void StatementTest::testAddUsedLocsBool() {
  * FUNCTION:		StatementTest::testSubscriptVars
  * OVERVIEW:		Test the subscripting of locations in Statements
  *============================================================================*/
-void StatementTest::testSubscriptVars () {
+void StatementTest::testSubscriptVars ()
+{
     Exp* srch = Location::regOf(28);
     Assign s9(new Const(0), new Const(0));
     s9.setNumber(9);
@@ -1324,7 +1348,8 @@ void StatementTest::testSubscriptVars () {
  * FUNCTION:		StatementTest::testBypass
  * OVERVIEW:		Test the visitor code that fixes references that were to locations defined by calls
  *============================================================================*/
-void StatementTest::testBypass () {
+void StatementTest::testBypass ()
+{
     Prog* prog = new Prog;
     BinaryFileFactory bff;
     BinaryFile *pBF = bff.Load(GLOBAL1_PENTIUM);
@@ -1390,7 +1415,8 @@ void StatementTest::testBypass () {
  * FUNCTION:		StatementTest::testStripSizes
  * OVERVIEW:		Test the visitor code that strips out size casts
  *============================================================================*/
-void StatementTest::testStripSizes () {
+void StatementTest::testStripSizes ()
+{
     // *v* r24 := m[zfill(8,32,local5) + param6]*8**8* / 16
     // The double size casting happens as a result of substitution
     Exp* lhs = Location::regOf(24);
@@ -1422,7 +1448,8 @@ void StatementTest::testStripSizes () {
  * FUNCTION:		StatementTest::testFindConstants
  * OVERVIEW:		Test the visitor code that finds constants
  *============================================================================*/
-void StatementTest::testFindConstants () {
+void StatementTest::testFindConstants ()
+{
     Statement* a = new Assign(
         Location::regOf(24),
         new Binary(opPlus,
@@ -1432,11 +1459,12 @@ void StatementTest::testFindConstants () {
     a->findConstants(lc);
     std::list<Const*>::iterator it;
     std::ostringstream ost1;
-    for (it = lc.begin(); it != lc.end(); ) {
-        ost1 << *it;
-        if (++it != lc.end())
-            ost1 << ", ";
-    }
+    for (it = lc.begin(); it != lc.end(); )
+        {
+            ost1 << *it;
+            if (++it != lc.end())
+                ost1 << ", ";
+        }
     std::string actual = ost1.str();
     std::string expected("3, 4");
     CPPUNIT_ASSERT_EQUAL(expected, actual);

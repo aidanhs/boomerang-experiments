@@ -42,19 +42,22 @@ void j();
 void k();
 void l();
 
-int main(int argc) {
+int main(int argc)
+{
     b();
     printf("ecx is %d, edx is %d\n", 0, 0);
     printf("res is %d\n", res);
     return 0;
 }
 
-void b() {
+void b()
+{
     if (--b_c >= 0) c();
     res += 2;
 }
 
-void c() {
+void c()
+{
     if (--c_d >= 0) d();
     if (--c_f >= 0) f();
     if (--c_h >= 0) h();
@@ -63,46 +66,55 @@ void c() {
     res += 3;
 }
 
-void d() {
+void d()
+{
     if (--d_e >= 0) e();
     res += 5;
 }
 
-void e() {
+void e()
+{
     if (--e_c >= 0) c();
     res += 7;
 }
 
-void f() {
+void f()
+{
     if (--f_g >= 0) g();
     res += 11;
 }
 
-void g() {
+void g()
+{
     if (--g_f >= 0) f();
     res += 13;
 }
 
-void h() {
+void h()
+{
     if (--h_i >= 0) i();
     res += 17;
 }
 
-void i() {
+void i()
+{
     res += 19;
 }
 
-void j() {
+void j()
+{
     if (--j_k >= 0) k();
     res += 23;
 }
 
-void k() {
+void k()
+{
     if (--k_e >= 0) e();
     res += 27;
 }
 
-void l() {
+void l()
+{
     if (--l_b >= 0) b();
     res += 29;
 }

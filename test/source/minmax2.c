@@ -41,13 +41,15 @@
 */
 
 #include <stdio.h>
-int test(int i) {
+int test(int i)
+{
     if (i < -2) i = -2;
     if (i > 3) i = 3;
 
     printf("MinMax result %d\n", i);
 }
-int main(int argc) {
+int main(int argc)
+{
     test(-5);
     test(-2);
     test(0);

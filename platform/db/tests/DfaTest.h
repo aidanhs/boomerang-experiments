@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-class DfaTest : public CPPUNIT_NS::TestFixture {
+class DfaTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( DfaTest );
     CPPUNIT_TEST( testMeetInt );
     CPPUNIT_TEST( testMeetSize );

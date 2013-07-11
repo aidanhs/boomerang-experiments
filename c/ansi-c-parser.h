@@ -51,7 +51,8 @@ public: \
 
 class AnsiCScanner;
 
-class TypeIdent {
+class TypeIdent
+{
 public:
     Type *ty;
     std::string nam;
@@ -59,7 +60,8 @@ public:
 
 class SymbolMods;
 
-class Symbol {
+class Symbol
+{
 public:
     ADDRESS addr;
     std::string nam;
@@ -71,7 +73,8 @@ public:
         mods(NULL) { }
 };
 
-class SymbolMods {
+class SymbolMods
+{
 public:
     bool noDecode;
     bool incomplete;
@@ -79,7 +82,8 @@ public:
     SymbolMods() : noDecode(false), incomplete(false) { }
 };
 
-class CustomOptions {
+class CustomOptions
+{
 public:
     Exp *exp;
     int sp;
@@ -87,7 +91,8 @@ public:
     CustomOptions() : exp(NULL), sp(0) { }
 };
 
-class SymbolRef {
+class SymbolRef
+{
 public:
     ADDRESS addr;
     std::string nam;
@@ -95,7 +100,8 @@ public:
     SymbolRef(ADDRESS a, const char *nam) : addr(a), nam(nam) { }
 };
 
-class Bound {
+class Bound
+{
 public:
     int kind;
     std::string nam;
@@ -105,7 +111,8 @@ public:
 
 
 #line 129 "ansi-c.y"
-typedef union {
+typedef union
+{
     int ival;
     char *str;
     Type *type;

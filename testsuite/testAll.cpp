@@ -12,7 +12,8 @@
 #include <direct.h>
 #endif
 #ifndef USE_OLD_TESTING
-int main (int argc, char* argv[]) {
+int main (int argc, char* argv[])
+{
     if(argc>2)
         chdir(argv[1]);
     // Create the event manager and test controller
@@ -32,17 +33,17 @@ int main (int argc, char* argv[]) {
     // run all tests if none specified on command line
     CPPUNIT_NS::Test* test_to_run = registry.makeTest();
     if (argc>2)
-    {
-        try
         {
-            test_to_run = test_to_run->findTest(argv[2]);
+            try
+                {
+                    test_to_run = test_to_run->findTest(argv[2]);
+                }
+            catch(std::invalid_argument &inv_arg)
+                {
+                    fprintf(stderr,inv_arg.what());
+                    return -1;
+                }
         }
-        catch(std::invalid_argument &inv_arg)
-        {
-            fprintf(stderr,inv_arg.what());
-            return -1;
-        }
-    }
     runner.addTest( test_to_run );
     runner.run(controller, "");
     return result.wasSuccessful() ? 0 : -1;

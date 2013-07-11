@@ -11,7 +11,8 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-class StatementTest : public CPPUNIT_NS::TestFixture {
+class StatementTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( StatementTest );
     CPPUNIT_TEST( testEmpty );
     CPPUNIT_TEST( testFlow );

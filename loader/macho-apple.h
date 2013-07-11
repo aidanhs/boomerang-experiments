@@ -53,7 +53,8 @@
 /*
  * The mach header appears at the very beginning of the object file.
  */
-struct mach_header {
+struct mach_header
+{
     unsigned long	magic;		/* mach magic number identifier */
     cpu_type_t	cputype;	/* cpu specifier */
     cpu_subtype_t	cpusubtype;	/* machine specifier */
@@ -128,40 +129,41 @@ to use flat name space bindings */
 #define MH_NOMULTIDEFS	0x200		/* this umbrella guarantees no multiple
 defintions of symbols in its
 sub-images so the two-level namespace
-        hints can always be used. */
+    hints can always be used. */
 #define MH_NOFIXPREBINDING 0x400	/* do not have dyld notify the
-        prebinding agent about this
-        executable */
+    prebinding agent about this
+    executable */
 #define MH_PREBINDABLE  0x800           /* the binary is not prebound but can
-        have its prebinding redone. only used
-        when MH_PREBOUND is not set. */
+    have its prebinding redone. only used
+    when MH_PREBOUND is not set. */
 #define MH_ALLMODSBOUND 0x1000		/* indicates that this binary binds to
-        all two-level namespace modules of
-            its dependent libraries. only used
-            when MH_PREBINDABLE and MH_TWOLEVEL
-            are both set. */
+    all two-level namespace modules of
+    its dependent libraries. only used
+    when MH_PREBINDABLE and MH_TWOLEVEL
+    are both set. */
 #define MH_CANONICAL    0x4000		/* the binary has been canonicalized
-            via the unprebind operation */
-    /*
-     * The load commands directly follow the mach_header.  The total size of all
-     * of the commands is given by the sizeofcmds field in the mach_header.  All
-     * load commands must have as their first two fields cmd and cmdsize.  The cmd
-     * field is filled in with a constant for that command type.  Each command type
-     * has a structure specifically for it.  The cmdsize field is the size in bytes
-     * of the particular load command structure plus anything that follows it that
-     * is a part of the load command (i.e. section structures, strings, etc.).  To
-     * advance to the next load command the cmdsize can be added to the offset or
-     * pointer of the current load command.  The cmdsize MUST be a multiple of
-     * 4 bytes (this is forever the maximum alignment of any load commands).
-     * The padded bytes must be zero.  All tables in the object file must also
-     * follow these rules so the file can be memory mapped.  Otherwise the pointers
-     * to these tables will not work well or at all on some machines.  With all
-     * padding zeroed like objects will compare byte for byte.
-     */
-            struct load_command {
-            unsigned long cmd;		/* type of load command */
-            unsigned long cmdsize;		/* total size of command in bytes */
-        };
+    via the unprebind operation */
+/*
+ * The load commands directly follow the mach_header.  The total size of all
+ * of the commands is given by the sizeofcmds field in the mach_header.  All
+ * load commands must have as their first two fields cmd and cmdsize.  The cmd
+ * field is filled in with a constant for that command type.  Each command type
+ * has a structure specifically for it.  The cmdsize field is the size in bytes
+ * of the particular load command structure plus anything that follows it that
+ * is a part of the load command (i.e. section structures, strings, etc.).  To
+ * advance to the next load command the cmdsize can be added to the offset or
+ * pointer of the current load command.  The cmdsize MUST be a multiple of
+ * 4 bytes (this is forever the maximum alignment of any load commands).
+ * The padded bytes must be zero.  All tables in the object file must also
+ * follow these rules so the file can be memory mapped.  Otherwise the pointers
+ * to these tables will not work well or at all on some machines.  With all
+ * padding zeroed like objects will compare byte for byte.
+ */
+    struct load_command
+{
+    unsigned long cmd;		/* type of load command */
+    unsigned long cmdsize;		/* total size of command in bytes */
+};
 
 /*
  * After MacOS X 10.1 when a new load command is added that is required to be
@@ -213,7 +215,8 @@ sub-images so the two-level namespace
  * Once again any padded bytes to bring the cmdsize field to a multiple
  * of 4 bytes must be zero.
  */
-union lc_str {
+union lc_str
+{
     unsigned long	offset;	/* offset to the string */
     char		*ptr;	/* pointer to the string */
 };
@@ -230,7 +233,8 @@ union lc_str {
  * section structures directly follow the segment command and their size is
  * reflected in cmdsize.
  */
-struct segment_command {
+struct segment_command
+{
     unsigned long	cmd;		/* LC_SEGMENT */
     unsigned long	cmdsize;	/* includes sizeof section structs */
     char		segname[16];	/* segment name */
@@ -280,7 +284,8 @@ is zero filled (for stacks in core files) */
      * fields of the section structure for mach object files is described in the
      * header file <reloc.h>.
      */
-    struct section {
+    struct section
+    {
         char		sectname[16];	/* name of this section */
             char		segname[16];	/* segment this section goes in */
             unsigned long	addr;		/* memory address of this section */
@@ -421,7 +426,8 @@ pointers for termination */
      * minor version number.  The address of where the headers are loaded is in
      * header_addr.
      */
-    struct fvmlib {
+    struct fvmlib
+    {
         union lc_str	name;		/* library's target pathname */
         unsigned long	minor_version;	/* library's minor version number */
         unsigned long	header_addr;	/* library's header address */
@@ -433,7 +439,8 @@ pointers for termination */
  * An object that uses a fixed virtual shared library also contains a
  * fvmlib_command (cmd == LC_LOADFVMLIB) for each library it uses.
  */
-struct fvmlib_command {
+struct fvmlib_command
+{
 unsigned long	cmd;		/* LC_IDFVMLIB or LC_LOADFVMLIB */
 unsigned long	cmdsize;	/* includes pathname string */
 struct fvmlib	fvmlib;		/* the library identification */
@@ -448,7 +455,8 @@ struct fvmlib	fvmlib;		/* the library identification */
  * built and copied into user so it can be use to determined if the library used
  * at runtime is exactly the same as used to built the program.
  */
-struct dylib {
+struct dylib
+{
 union lc_str  name;			/* library's path name */
 unsigned long timestamp;		/* library's build time stamp */
 unsigned long current_version;	/* library's current version number */
@@ -462,7 +470,8 @@ unsigned long compatibility_version;/* library's compatibility vers number*/
  * dylib_command (cmd == LC_LOAD_DYLIB or cmd == LC_LOAD_WEAK_DYLIB) for each
  * library it uses.
  */
-struct dylib_command {
+struct dylib_command
+{
 unsigned long	cmd;		/* LC_ID_DYLIB, LC_LOAD_{,WEAK_}DYLIB */
 unsigned long	cmdsize;	/* includes pathname string */
 struct dylib	dylib;		/* the library identification */
@@ -478,7 +487,8 @@ struct dylib	dylib;		/* the library identification */
  * The name of the umbrella framework for subframeworks is recorded in the
  * following structure.
  */
-struct sub_framework_command {
+struct sub_framework_command
+{
 unsigned long	cmd;		/* LC_SUB_FRAMEWORK */
 unsigned long	cmdsize;	/* includes umbrella string */
 union lc_str 	umbrella;	/* the umbrella framework name */
@@ -493,7 +503,8 @@ union lc_str 	umbrella;	/* the umbrella framework name */
  * usually a framework name.  It can also be a name used for bundles clients
  * where the bundle is built with "-client_name client_name".
  */
-struct sub_client_command {
+struct sub_client_command
+{
 unsigned long	cmd;		/* LC_SUB_CLIENT */
 unsigned long	cmdsize;	/* includes client string */
 union lc_str 	client;		/* the client name */
@@ -512,7 +523,8 @@ union lc_str 	client;		/* the client name */
  * Zero or more sub_umbrella frameworks may be use by an umbrella framework.
  * The name of a sub_umbrella framework is recorded in the following structure.
  */
-struct sub_umbrella_command {
+struct sub_umbrella_command
+{
 unsigned long	cmd;		/* LC_SUB_UMBRELLA */
 unsigned long	cmdsize;	/* includes sub_umbrella string */
 union lc_str 	sub_umbrella;	/* the sub_umbrella framework name */
@@ -533,7 +545,8 @@ union lc_str 	sub_umbrella;	/* the sub_umbrella framework name */
  * The name of a sub_library framework is recorded in the following structure.
  * For example /usr/lib/libobjc_profile.A.dylib would be recorded as "libobjc".
  */
-struct sub_library_command {
+struct sub_library_command
+{
 unsigned long	cmd;		/* LC_SUB_LIBRARY */
 unsigned long	cmdsize;	/* includes sub_library string */
 union lc_str 	sub_library;	/* the sub_library name */
@@ -548,7 +561,8 @@ union lc_str 	sub_library;	/* the sub_library name */
  * of the first byte.  So the bit for the Nth module is:
  * (linked_modules[N/8] >> N%8) & 1
  */
-struct prebound_dylib_command {
+struct prebound_dylib_command
+{
 unsigned long	cmd;		/* LC_PREBOUND_DYLIB */
 unsigned long	cmdsize;	/* includes strings */
 union lc_str	name;		/* library's path name */
@@ -562,7 +576,8 @@ union lc_str	linked_modules;	/* bit vector of linked modules */
  * contains a dylinker_command to identify the dynamic linker (LC_ID_DYLINKER).
  * A file can have at most one of these.
  */
-struct dylinker_command {
+struct dylinker_command
+{
 unsigned long	cmd;		/* LC_ID_DYLINKER or LC_LOAD_DYLINKER */
 unsigned long	cmdsize;	/* includes pathname string */
 union lc_str    name;		/* dynamic linker's path name */
@@ -589,7 +604,8 @@ union lc_str    name;		/* dynamic linker's path name */
  * created (based on the shell's limit for the stack size).  Command arguments
  * and environment variables are copied onto that stack.
  */
-struct thread_command {
+struct thread_command
+{
 unsigned long	cmd;		/* LC_THREAD or  LC_UNIXTHREAD */
 unsigned long	cmdsize;	/* total size of this command */
 /* unsigned long flavor		   flavor of thread state */
@@ -606,7 +622,8 @@ unsigned long	cmdsize;	/* total size of this command */
  * and then calls it.  This gets called before any module initialization
  * routines (used for C++ static constructors) in the library.
  */
-struct routines_command {
+struct routines_command
+{
 unsigned long	cmd;		/* LC_ROUTINES */
 unsigned long	cmdsize;	/* total size of this command */
 unsigned long	init_address;	/* address of initialization routine */
@@ -625,7 +642,8 @@ unsigned long	reserved6;
  * "stab" style symbol table information as described in the header files
  * <nlist.h> and <stab.h>.
  */
-struct symtab_command {
+struct symtab_command
+{
 unsigned long	cmd;		/* LC_SYMTAB */
 unsigned long	cmdsize;	/* sizeof(struct symtab_command) */
 unsigned long	symoff;		/* symbol table offset */
@@ -674,7 +692,8 @@ unsigned long	strsize;	/* string table size in bytes */
  * For executable and object modules the relocation entries continue to hang
  * off the section structures.
  */
-struct dysymtab_command {
+struct dysymtab_command
+{
 unsigned long cmd;		/* LC_DYSYMTAB */
 unsigned long cmdsize;	/* sizeof(struct dysymtab_command) */
 
@@ -802,7 +821,8 @@ unsigned long nlocrel;	/* number of local relocation entries */
 
 
 /* a table of contents entry */
-struct dylib_table_of_contents {
+struct dylib_table_of_contents
+{
 unsigned long symbol_index;	/* the defined external symbol
 				   (index into the symbol table) */
 unsigned long module_index;	/* index into the module table this symbol
@@ -810,7 +830,8 @@ unsigned long module_index;	/* index into the module table this symbol
 };
 
 /* a module table entry */
-struct dylib_module {
+struct dylib_module
+{
 unsigned long module_name;	/* the module name (index into string table) */
 
 unsigned long iextdefsym;	/* index into externally defined symbols */
@@ -844,7 +865,8 @@ objc_module_info_size;	/*  the (__OBJC,__module_info) section */
  * reference that is being made.  The constants for the flags are defined in
  * <mach-o/nlist.h> as they are also used for symbol table entries.
  */
-struct dylib_reference {
+struct dylib_reference
+{
 unsigned long isym:
 24,	/* index into the symbol table */
 flags:
@@ -855,7 +877,8 @@ flags:
  * The twolevel_hints_command contains the offset and number of hints in the
  * two-level namespace lookup hints table.
  */
-struct twolevel_hints_command {
+struct twolevel_hints_command
+{
 unsigned long cmd;		/* LC_TWOLEVEL_HINTS */
 unsigned long cmdsize;	/* sizeof(struct twolevel_hints_command) */
 unsigned long offset;	/* offset to the hint table */
@@ -878,7 +901,8 @@ unsigned long nhints;	/* number of hints in the hint table */
  * library's table of contents.  This is used as the starting point of the
  * binary search or a directed linear search.
  */
-struct twolevel_hint {
+struct twolevel_hint
+{
 unsigned long
 isub_image:
 8,	/* index into the sub images */
@@ -896,7 +920,8 @@ itoc:
  * is re-done and the cksum field is non-zero it is left unchanged from the
  * input file.
  */
-struct prebind_cksum_command {
+struct prebind_cksum_command
+{
 unsigned long cmd;		/* LC_PREBIND_CKSUM */
 unsigned long cmdsize;	/* sizeof(struct prebind_cksum_command) */
 unsigned long cksum;	/* the check sum or zero */
@@ -911,7 +936,8 @@ unsigned long cksum;	/* the check sum or zero */
  * roots also being a multiple of a long.  Also the padding must again be
  * zeroed. (THIS IS OBSOLETE and no longer supported).
  */
-struct symseg_command {
+struct symseg_command
+{
 unsigned long	cmd;		/* LC_SYMSEG */
 unsigned long	cmdsize;	/* sizeof(struct symseg_command) */
 unsigned long	offset;		/* symbol segment offset */
@@ -924,7 +950,8 @@ unsigned long	size;		/* symbol segment size in bytes */
  * the command is padded out with zero bytes to a multiple of 4 bytes/
  * (THIS IS OBSOLETE and no longer supported).
  */
-struct ident_command {
+struct ident_command
+{
 unsigned long cmd;		/* LC_IDENT */
 unsigned long cmdsize;		/* strings that follow this command */
 };
@@ -935,7 +962,8 @@ unsigned long cmdsize;		/* strings that follow this command */
  * internal use.  The kernel ignores this command when loading a program into
  * memory).
  */
-struct fvmfile_command {
+struct fvmfile_command
+{
 unsigned long cmd;		/* LC_FVMFILE */
 unsigned long cmdsize;		/* includes pathname string */
 union lc_str	name;		/* files pathname */

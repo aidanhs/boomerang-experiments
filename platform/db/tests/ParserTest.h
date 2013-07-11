@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-class ParserTest : public CPPUNIT_NS::TestFixture {
+class ParserTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( ParserTest );
     CPPUNIT_TEST( testRead );
     CPPUNIT_TEST( testExp );

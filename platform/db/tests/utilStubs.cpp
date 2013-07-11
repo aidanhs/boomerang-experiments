@@ -5,10 +5,12 @@ void loadValue(std::istream &is, char &ch, bool wantlen) {}
 void loadValue(std::istream &is, int& i, bool wantlen) {}
 void loadValue(std::istream &is, double &d, bool wantlen) {}
 void loadString(std::istream &is, std::string &str) {}
-int loadFID(std::istream &is) {
+int loadFID(std::istream &is)
+{
     return 0;
 }
-int loadLen(std::istream &is) {
+int loadLen(std::istream &is)
+{
     return 0;
 }
 void saveValue(std::ostream &os, bool b, bool wantlen) {}

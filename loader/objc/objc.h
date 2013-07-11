@@ -33,7 +33,8 @@
 
 typedef struct objc_class *Class;
 
-typedef struct objc_object {
+typedef struct objc_object
+{
     Class isa;
 } *id;
 

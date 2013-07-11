@@ -57,7 +57,8 @@ Comma						left to right	,
 */
 
 /// Operator precedence
-enum PREC {
+enum PREC
+{
     PREC_NONE=0,			///< Outer level (no parens required)
     PREC_COMMA,				///< Comma
     PREC_ASSIGN,			///< Assignment
@@ -81,7 +82,8 @@ enum PREC {
 
 
 /// Outputs C code.
-class CHLLCode : public HLLCode {
+class CHLLCode : public HLLCode
+{
 private:
     /// The generated code.
     std::list<char *> lines;
@@ -91,11 +93,13 @@ private:
     void appendType(std::ostringstream& str, Type *typ);
     void appendTypeIdent(std::ostringstream& str, Type *typ, const char *ident);
     /// Adds: (
-    void openParen(std::ostringstream& str, PREC outer, PREC inner) {
+    void openParen(std::ostringstream& str, PREC outer, PREC inner)
+    {
         if (inner < outer) str << "(";
     }
     /// Adds: )
-    void closeParen(std::ostringstream& str, PREC outer, PREC inner) {
+    void closeParen(std::ostringstream& str, PREC outer, PREC inner)
+    {
         if (inner < outer) str << ")";
     }
 

@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-class RtlTest : public CPPUNIT_NS::TestFixture {
+class RtlTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( RtlTest );
     CPPUNIT_TEST( testAppend );
     CPPUNIT_TEST( testClone );

@@ -3,7 +3,8 @@ typedef unsigned int    tcflag_t;
 typedef unsigned char   cc_t;
 typedef unsigned int speed_t;
 
-typedef struct {
+typedef struct
+{
     tcflag_t        c_iflag;
     tcflag_t        c_oflag;
     tcflag_t        c_cflag;

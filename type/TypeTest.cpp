@@ -33,11 +33,13 @@ CPPUNIT_TEST_SUITE_REGISTRATION( TypeTest );
  * RETURNS:			<nothing>
  *============================================================================*/
 static bool logset = false;
-void TypeTest::setUp () {
-    if (!logset) {
-        logset = true;
-        Boomerang::get()->setLogger(new NullLogger());
-    }
+void TypeTest::setUp ()
+{
+    if (!logset)
+        {
+            logset = true;
+            Boomerang::get()->setLogger(new NullLogger());
+        }
 }
 
 /*==============================================================================
@@ -47,14 +49,16 @@ void TypeTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void TypeTest::tearDown () {
+void TypeTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		TypeTest::testTypeLong
  * OVERVIEW:		Test type unsigned long
  *============================================================================*/
-void TypeTest::testTypeLong () {
+void TypeTest::testTypeLong ()
+{
 
     std::string expected("unsigned long long");
     IntegerType t(64, -1);
@@ -66,7 +70,8 @@ void TypeTest::testTypeLong () {
  * FUNCTION:		TypeTest::testNotEqual
  * OVERVIEW:		Test type inequality
  *============================================================================*/
-void TypeTest::testNotEqual () {
+void TypeTest::testNotEqual ()
+{
 
     IntegerType t1(32, -1);
     IntegerType t2(32, -1);
@@ -79,7 +84,8 @@ void TypeTest::testNotEqual () {
  * FUNCTION:		TypeTest::testNotEqual
  * OVERVIEW:		Test type inequality
  *============================================================================*/
-void TypeTest::testCompound() {
+void TypeTest::testCompound()
+{
     BinaryFileFactory bff;
     BinaryFile *pBF = bff.Load(HELLO_WINDOWS);
     FrontEnd *pFE = new PentiumFrontEnd(pBF, new Prog, &bff);
@@ -143,7 +149,8 @@ void TypeTest::testCompound() {
  * FUNCTION:		TypeTest::testDataInterval
  * OVERVIEW:		Test the DataIntervalMap class
  *============================================================================*/
-void TypeTest::testDataInterval() {
+void TypeTest::testDataInterval()
+{
     DataIntervalMap dim;
 
     Prog* prog = new Prog;
@@ -228,7 +235,8 @@ void TypeTest::testDataInterval() {
  * FUNCTION:		TypeTest::testDataIntervalOverlaps
  * OVERVIEW:		Test the DataIntervalMap class with overlapping addItems
  *============================================================================*/
-void TypeTest::testDataIntervalOverlaps() {
+void TypeTest::testDataIntervalOverlaps()
+{
     DataIntervalMap dim;
 
     Prog* prog = new Prog;

@@ -41,7 +41,8 @@ class Type;
 
 typedef BasicBlock* PBB;
 
-class DataFlow {
+class DataFlow
+{
     /******************** Dominance Frontier Data *******************/
 
     /* These first two are not from Appel; they map PBBs to indices */
@@ -105,10 +106,12 @@ public:
     // Rename variables in basicblock n. Return true if any change made
     bool		renameBlockVars(UserProc* proc, int n, bool clearStacks = false);
     bool		doesDominate(int n, int w);
-    void		setRenameLocalsParams(bool b) {
+    void		setRenameLocalsParams(bool b)
+    {
         renameLocalsAndParams = b;
     }
-    bool		canRenameLocalsParams() {
+    bool		canRenameLocalsParams()
+    {
         return renameLocalsAndParams;
     }
     bool		canRename(Exp* e, UserProc* proc);
@@ -119,27 +122,34 @@ public:
 #if		USE_DOMINANCE_NUMS
     void		setDominanceNums(int n, int& currNum);		// Set the dominance statement number
 #endif
-    void		clearA_phi() {
+    void		clearA_phi()
+    {
         A_phi.clear();
     }
 
     // For testing:
-    int			pbbToNode(PBB bb) {
+    int			pbbToNode(PBB bb)
+    {
         return indices[bb];
     }
-    std::set<int>& getDF(int node) {
+    std::set<int>& getDF(int node)
+    {
         return DF[node];
     }
-    PBB			nodeToBB(int node) {
+    PBB			nodeToBB(int node)
+    {
         return BBs[node];
     }
-    int			getIdom(int node) {
+    int			getIdom(int node)
+    {
         return idom[node];
     }
-    int			getSemi(int node) {
+    int			getSemi(int node)
+    {
         return semi[node];
     }
-    std::set<int>& getA_phi(Exp* e) {
+    std::set<int>& getA_phi(Exp* e)
+    {
         return A_phi[e];
     }
 
@@ -160,7 +170,8 @@ public:
 /**
  * DefCollector class. This class collects all definitions that reach the statement that contains this collector.
  */
-class DefCollector {
+class DefCollector
+{
     /*
      * True if initialised. When not initialised, callees should not subscript parameters inserted into the
      * associated CallStatement
@@ -184,14 +195,16 @@ public:
     /*
      * Return true if initialised
      */
-    bool		isInitialised() {
+    bool		isInitialised()
+    {
         return initialised;
     }
 
     /*
      * Clear the location set
      */
-    void		clear() {
+    void		clear()
+    {
         defs.clear();
         initialised = false;
     }
@@ -216,13 +229,16 @@ public:
      * begin() and end() so we can iterate through the locations
      */
     typedef AssignSet::iterator iterator;
-    iterator	begin() {
+    iterator	begin()
+    {
         return defs.begin();
     }
-    iterator	end()	 {
+    iterator	end()
+    {
         return defs.end();
     }
-    bool		existsOnLeft(Exp* e) {
+    bool		existsOnLeft(Exp* e)
+    {
         return defs.definesLoc(e);
     }
 
@@ -248,7 +264,8 @@ public:
  * contains this collector (or the UserProc that contains it).
  * Typically the entries are not subscripted, like parameters or locations on the LHS of assignments
  */
-class UseCollector {
+class UseCollector
+{
     /*
      * True if initialised. When not initialised, callees should not subscript parameters inserted into the
      * associated CallStatement
@@ -272,14 +289,16 @@ public:
     /*
      * Return true if initialised
      */
-    bool		isInitialised() {
+    bool		isInitialised()
+    {
         return initialised;
     }
 
     /*
      * Clear the location set
      */
-    void		clear() {
+    void		clear()
+    {
         locs.clear();
         initialised = false;
     }
@@ -287,7 +306,8 @@ public:
     /*
      * Insert a new member
      */
-    void		insert(Exp* e) {
+    void		insert(Exp* e)
+    {
         locs.insert(e);
     }
     /*
@@ -305,16 +325,20 @@ public:
      * begin() and end() so we can iterate through the locations
      */
     typedef LocationSet::iterator iterator;
-    iterator	begin() {
+    iterator	begin()
+    {
         return locs.begin();
     }
-    iterator	end()	 {
+    iterator	end()
+    {
         return locs.end();
     }
-    bool		exists(Exp* e)	{
+    bool		exists(Exp* e)
+    {
         return locs.exists(e);    // True if e is in the collection
     }
-    LocationSet& getLocSet() {
+    LocationSet& getLocSet()
+    {
         return locs;
     }
 public:
@@ -322,10 +346,12 @@ public:
      * Add a new use from Statement u
      */
     void		updateLocs(Statement* u);
-    void		remove(Exp* loc) {							// Remove the given location
+    void		remove(Exp* loc)  							// Remove the given location
+    {
         locs.remove(loc);
     }
-    void		remove(iterator it) {						// Remove the current location
+    void		remove(iterator it)  						// Remove the current location
+    {
         locs.remove(it);
     }
     void		fromSSAform(UserProc* proc, Statement* def);	// Translate out of SSA form

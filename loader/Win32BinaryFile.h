@@ -41,7 +41,8 @@
 #define LMMH2(x) ((unsigned)((Byte *)(x))[0] + ((unsigned)((Byte *)(x))[1] << 8) + \
 	((unsigned)((Byte *)(x))[2] << 16) + ((unsigned)((Byte *)(x))[3] << 24))
 
-typedef struct {				/* exe file header, just the signature really */
+typedef struct  				/* exe file header, just the signature really */
+{
     Byte	sigLo;			/* .EXE signature: 0x4D 0x5A	 */
     Byte	sigHi;
 } Header;
@@ -50,7 +51,8 @@ typedef struct {				/* exe file header, just the signature really */
 #pragma pack(1)
 //#endif
 
-typedef struct {
+typedef struct
+{
     Byte sigLo;
     Byte sigHi;
     SWord sigver;
@@ -113,7 +115,8 @@ typedef struct {
     DWord TotalTLSSize;
 } PEHeader;
 
-typedef struct {	// The real Win32 name of this struct is IMAGE_SECTION_HEADER
+typedef struct  	// The real Win32 name of this struct is IMAGE_SECTION_HEADER
+{
     char ObjectName[8];	// Name
     DWord VirtualSize;
     DWord RVA;			// VirtualAddress
@@ -125,7 +128,8 @@ typedef struct {	// The real Win32 name of this struct is IMAGE_SECTION_HEADER
     DWord Flags;			// Characteristics
 } PEObject;
 
-typedef struct {
+typedef struct
+{
     DWord originalFirstThunk; // 0 for end of array; also ptr to hintNameArray
     DWord preSnapDate;		// Time and date the import data was pre-snapped
     // or zero if not pre-snapped
@@ -135,7 +139,8 @@ typedef struct {
     DWord firstThunk;		// RVA of start of import address table (IAT)
 } PEImportDtor;
 
-typedef struct {
+typedef struct
+{
     DWord	flags;			// Reserved; 0
     DWord	stamp;			// Time/date stamp export data was created
     SWord	verMajor;		// Version number can be ...
@@ -156,7 +161,8 @@ typedef struct {
 #pragma pack(4)
 //#endif
 
-class Win32BinaryFile : public BinaryFile {
+class Win32BinaryFile : public BinaryFile
+{
 public:
     Win32BinaryFile();		// Default constructor
     virtual				~Win32BinaryFile();		// Destructor
@@ -165,7 +171,8 @@ public:
     virtual void		UnLoad();				// Unload the image
     virtual LOAD_FMT	GetFormat() const;		// Get format (i.e. LOADFMT_Win32)
     virtual MACHINE		GetMachine() const;		// Get machine (i.e. MACHINE_Pentium)
-    virtual const char*	getFilename() const {
+    virtual const char*	getFilename() const
+    {
         return m_pFileName;
     }
     virtual bool		isLibrary() const;
@@ -214,11 +221,13 @@ public:
     bool		IsMinGWsCleanupSetup(ADDRESS uNative);
     bool		IsMinGWsMalloc(ADDRESS uNative);
 
-    virtual std::map<ADDRESS, std::string> &getSymbols() {
+    virtual std::map<ADDRESS, std::string> &getSymbols()
+    {
         return dlprocptrs;
     }
 
-    bool		hasDebugInfo() {
+    bool		hasDebugInfo()
+    {
         return haveDebugInfo;
     }
 

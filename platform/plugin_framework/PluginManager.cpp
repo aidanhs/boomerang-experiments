@@ -43,10 +43,10 @@ int32_t PluginManager::registerObject(const char * objectType, const PF_Register
     std::string key((const char *)objectType);
     // If it's a wild card registration just add it
     if (key == std::string("*"))
-    {
-        pm.wildCardVec_.push_back(*params);
-        return 0;
-    }
+        {
+            pm.wildCardVec_.push_back(*params);
+            return 0;
+        }
 
     // If item already exists in eactMatc fail (only one can handle)
     if (pm.exactMatchMap_.find(key) != pm.exactMatchMap_.end())
@@ -80,19 +80,19 @@ int32_t PluginManager::loadAll(const std::string & pluginDirectory, PF_InvokeSer
     boost::filesystem::directory_iterator dir_end;
     boost::filesystem::directory_iterator iter(dir_path);
     for( ; iter!=dir_end; ++iter)
-    {
-        // Skip directories
-        if( boost::filesystem::is_directory(*iter) )
-            continue;
-        // Skip files with the wrong extension
-        std::string  ext = boost::filesystem::extension(*iter);
-        if( boost::filesystem::extension(*iter) != dynamicLibraryExtension )
-            continue;
-        // Ignore return value
+        {
+            // Skip directories
+            if( boost::filesystem::is_directory(*iter) )
+                continue;
+            // Skip files with the wrong extension
+            std::string  ext = boost::filesystem::extension(*iter);
+            if( boost::filesystem::extension(*iter) != dynamicLibraryExtension )
+                continue;
+            // Ignore return value
 
-        /*int32_t res = */
-        loadByPath(boost::filesystem::complete(*iter).file_string());
-    }
+            /*int32_t res = */
+            loadByPath(boost::filesystem::complete(*iter).file_string());
+        }
     return 0;
 }
 
@@ -127,16 +127,16 @@ int32_t PluginManager::shutdown()
 {
     int32_t result = 0;
     for (ExitFuncVec::iterator func = exitFuncVec_.begin(); func != exitFuncVec_.end(); ++func)
-    {
-        try
         {
-            result = (*func)();
+            try
+                {
+                    result = (*func)();
+                }
+            catch (...)
+                {
+                    result = -1;
+                }
         }
-        catch (...)
-        {
-            result = -1;
-        }
-    }
 
 
     dynamicLibraryMap_.clear();
@@ -244,42 +244,42 @@ void * PluginManager::createObject(const std::string & objectType, IObjectAdapte
 
     // Exact match found
     if (exactMatchMap_.find(objectType) != exactMatchMap_.end())
-    {
-        PF_RegisterParams & rp = exactMatchMap_[objectType];
-        void * object = rp.createFunc(&np);
-        if (object) // great, there is an exact match
         {
-            // Adapt if necessary (wrap C objects using an adapter)
-            if (rp.programmingLanguage == PF_ProgrammingLanguage_C)
-                object = adapter.adapt(object, rp.destroyFunc);
+            PF_RegisterParams & rp = exactMatchMap_[objectType];
+            void * object = rp.createFunc(&np);
+            if (object) // great, there is an exact match
+                {
+                    // Adapt if necessary (wrap C objects using an adapter)
+                    if (rp.programmingLanguage == PF_ProgrammingLanguage_C)
+                        object = adapter.adapt(object, rp.destroyFunc);
 
-            return object;
+                    return object;
+                }
         }
-    }
 
     // Try to find a wild card match
     for (size_t i = 0; i < wildCardVec_.size(); ++i)
-    {
-        PF_RegisterParams & rp = wildCardVec_[i];
-        void * object = rp.createFunc(&np);
-        if (object) // great, it worked
         {
-            // Adapt if necessary (wrap C objects using an adapter)
-            if (rp.programmingLanguage == PF_ProgrammingLanguage_C)
-                object = adapter.adapt(object, rp.destroyFunc);
+            PF_RegisterParams & rp = wildCardVec_[i];
+            void * object = rp.createFunc(&np);
+            if (object) // great, it worked
+                {
+                    // Adapt if necessary (wrap C objects using an adapter)
+                    if (rp.programmingLanguage == PF_ProgrammingLanguage_C)
+                        object = adapter.adapt(object, rp.destroyFunc);
 
-            // promote registration to exactMatc_
-            // (but keep also the wild card registration for other object types)
-            int32_t res = registerObject(np.objectType, &rp);
-            if (res < 0)
-            {
-                // Serious framework should report or log it
-                rp.destroyFunc(object);
-                return NULL;
-            }
-            return object;
+                    // promote registration to exactMatc_
+                    // (but keep also the wild card registration for other object types)
+                    int32_t res = registerObject(np.objectType, &rp);
+                    if (res < 0)
+                        {
+                            // Serious framework should report or log it
+                            rp.destroyFunc(object);
+                            return NULL;
+                        }
+                    return object;
+                }
         }
-    }
 
     // Too bad no one can create this objectType
     return NULL;

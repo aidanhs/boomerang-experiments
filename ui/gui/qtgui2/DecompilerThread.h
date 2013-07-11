@@ -32,7 +32,8 @@ public:
     void rereadLibSignatures();
     void getCompoundMembers(const QString &name, QTableWidget *tbl);
 
-    void setDebugging(bool d) {
+    void setDebugging(bool d)
+    {
         debugging = d;
     }
     void setUseDFTA(bool d);

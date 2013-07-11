@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
-class LoaderTest : public CPPUNIT_NS::TestFixture {
+class LoaderTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( LoaderTest );
     CPPUNIT_TEST( testSparcLoad );
     CPPUNIT_TEST( testPentiumLoad );

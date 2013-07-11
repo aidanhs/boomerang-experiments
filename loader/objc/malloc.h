@@ -25,7 +25,8 @@
 
 /*********	Type definitions	************/
 
-typedef struct _malloc_zone_t {
+typedef struct _malloc_zone_t
+{
     /* Only zone implementors should depend on the layout of this structure;
     Regular callers should use the access functions below */
     void	*reserved1;
@@ -95,7 +96,8 @@ extern void malloc_set_zone_name(malloc_zone_t *zone, const char *name);
 extern const char *malloc_get_zone_name(malloc_zone_t *zone);
 /* Returns the name of a zone */
 
-typedef struct {
+typedef struct
+{
     vm_address_t	address;
     vm_size_t		size;
 } vm_range_t;
@@ -111,7 +113,8 @@ local_memory: set to a contiguous chunk of memory; validity of local_memory is a
 typedef void vm_range_recorder_t(task_t, void *, unsigned type, vm_range_t *, unsigned);
 /* given a task and context, "records" the specified addresses */
 
-typedef struct malloc_introspection_t {
+typedef struct malloc_introspection_t
+{
     kern_return_t (*enumerator)(task_t task, void *, unsigned type_mask, vm_address_t zone_address, memory_reader_t reader, vm_range_recorder_t recorder); /* enumerates all the malloc pointers in use */
     size_t	(*good_size)(malloc_zone_t *zone, size_t size);
     boolean_t 	(*check)(malloc_zone_t *zone); /* Consistency checker */

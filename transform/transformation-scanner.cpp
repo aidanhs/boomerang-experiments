@@ -338,22 +338,26 @@ static void yyunput YY_PROTO(( YY_TransformationScanner_CHAR c, YY_Transformatio
 /* c++ */
 #ifndef YY_TransformationScanner_ECHO_NOCODE
 void YY_TransformationScanner_CLASS::yy___echo()
-{   YY_TransformationScanner_ECHO_CODE
+{
+    YY_TransformationScanner_ECHO_CODE
 }
 #endif
 #ifndef YY_TransformationScanner_INPUT_NOCODE
 int  YY_TransformationScanner_CLASS::yy___input(char * buffer,int &result,int max_size)
-{   YY_TransformationScanner_INPUT_CODE
+{
+    YY_TransformationScanner_INPUT_CODE
 }
 #endif
 #ifndef YY_TransformationScanner_FATAL_ERROR_NOCODE
 void YY_TransformationScanner_CLASS::yy___fatal_error(char *msg)
-{   YY_TransformationScanner_FATAL_ERROR_CODE
+{
+    YY_TransformationScanner_FATAL_ERROR_CODE
 }
 #endif
 #ifndef YY_TransformationScanner_WRAP_NOCODE
 int  YY_TransformationScanner_CLASS::yy___wrap()
-{   YY_TransformationScanner_WRAP_CODE
+{
+    YY_TransformationScanner_WRAP_CODE
 }
 #endif
 void YY_TransformationScanner_CLASS::yy_initialize()
@@ -375,11 +379,13 @@ void YY_TransformationScanner_CLASS::yy_initialize()
 }
 
 YY_TransformationScanner_CLASS::YY_TransformationScanner_CLASS(YY_TransformationScanner_CONSTRUCTOR_PARAM) YY_TransformationScanner_CONSTRUCTOR_INIT
-{   yy_initialize();
+{
+    yy_initialize();
     YY_TransformationScanner_CONSTRUCTOR_CODE;
 }
 YY_TransformationScanner_CLASS::~YY_TransformationScanner_CLASS()
-{   YY_TransformationScanner_DESTRUCTOR_CODE;
+{
+    YY_TransformationScanner_DESTRUCTOR_CODE;
     if(YY_TransformationScanner_CURRENT_BUFFER)
         YY_TransformationScanner_DELETE_BUFFER(YY_TransformationScanner_CURRENT_BUFFER);
 }
@@ -399,7 +405,8 @@ YY_TransformationScanner_CLASS::~YY_TransformationScanner_CLASS()
 #define YY_END_OF_BUFFER 74
 typedef int yy_state_type;
 static const short int yy_accept[160] =
-{   0,
+{
+    0,
     0,    0,   74,   72,   71,   71,   59,   72,   65,   58,
     72,   53,   54,   63,   62,   50,   61,   57,   64,   19,
     19,   51,   47,   66,   52,   67,   16,   16,   16,   55,
@@ -420,7 +427,8 @@ static const short int yy_accept[160] =
 } ;
 
 static const YY_CHAR yy_ec[128] =
-{   0,
+{
+    0,
     1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
     2,    2,    1,    1,    1,    1,    1,    1,    1,    1,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -438,7 +446,8 @@ static const YY_CHAR yy_ec[128] =
 } ;
 
 static const YY_CHAR yy_meta[61] =
-{   0,
+{
+    0,
     1,    1,    1,    1,    1,    1,    1,    2,    3,    1,
     1,    1,    1,    1,    1,    1,    4,    4,    1,    1,
     1,    1,    1,    3,    3,    4,    4,    4,    3,    3,
@@ -448,7 +457,8 @@ static const YY_CHAR yy_meta[61] =
 } ;
 
 static const short int yy_base[164] =
-{   0,
+{
+    0,
     0,    0,  330,  331,  331,  331,  303,   56,  296,   55,
     284,  331,  331,  293,   51,  331,   52,   50,   58,   75,
     53,  331,  331,   57,  292,   59,  303,  301,   78,  331,
@@ -470,7 +480,8 @@ static const short int yy_base[164] =
 } ;
 
 static const short int yy_def[164] =
-{   0,
+{
+    0,
     159,    1,  159,  159,  159,  159,  159,  160,  159,  159,
     161,  159,  159,  159,  159,  159,  159,  159,  159,  159,
     20,  159,  159,  159,  159,  159,  162,  162,  162,  159,
@@ -492,7 +503,8 @@ static const short int yy_def[164] =
 } ;
 
 static const short int yy_nxt[392] =
-{   0,
+{
+    0,
     4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
     14,   15,   16,   17,   18,   19,   20,   21,   22,   23,
     24,   25,   26,   27,   28,   28,   28,   28,   29,   28,
@@ -540,7 +552,8 @@ static const short int yy_nxt[392] =
 } ;
 
 static const short int yy_chk[392] =
-{   0,
+{
+    0,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -592,7 +605,8 @@ static YY_CHAR *yy_last_accepting_cpos;
 
 #if YY_TransformationScanner_DEBUG != 0
 static const short int yy_rule_linenum[73] =
-{   0,
+{
+    0,
     56,   58,   59,   60,   61,   62,   63,   64,   65,   66,
     67,   68,   69,   70,   71,   73,   75,   76,   77,   78,
     80,   81,   82,   84,   86,   87,   88,   89,   90,   91,
@@ -644,541 +658,541 @@ YY_TransformationScanner_LEX_RETURN YY_TransformationScanner_CLASS::YY_Transform
     if ( yy_init )
 {
 
-{
-    YY_USER_INIT;
-}
-if ( ! yy_start )
-        yy_start = 1;       /* first start state */
+    {
+        YY_USER_INIT;
+    }
+    if ( ! yy_start )
+            yy_start = 1;       /* first start state */
 
-    if ( ! yy___in )
-        yy___in = YY_TransformationScanner_IFILE_DEFAULT;
+        if ( ! yy___in )
+            yy___in = YY_TransformationScanner_IFILE_DEFAULT;
 
-    if ( ! yy___out )
-        yy___out = YY_TransformationScanner_OFILE_DEFAULT;
+        if ( ! yy___out )
+            yy___out = YY_TransformationScanner_OFILE_DEFAULT;
 
-    if ( YY_TransformationScanner_CURRENT_BUFFER )
-        YY_TransformationScanner_INIT_BUFFER( YY_TransformationScanner_CURRENT_BUFFER, yy___in );
-    else
-        YY_TransformationScanner_CURRENT_BUFFER = YY_TransformationScanner_CREATE_BUFFER( yy___in, YY_BUF_SIZE );
+        if ( YY_TransformationScanner_CURRENT_BUFFER )
+            YY_TransformationScanner_INIT_BUFFER( YY_TransformationScanner_CURRENT_BUFFER, yy___in );
+        else
+            YY_TransformationScanner_CURRENT_BUFFER = YY_TransformationScanner_CREATE_BUFFER( yy___in, YY_BUF_SIZE );
 
-    YY_TransformationScanner_LOAD_BUFFER_STATE();
-    yy_init=0;
-}
+        YY_TransformationScanner_LOAD_BUFFER_STATE();
+        yy_init=0;
+    }
 
 while ( 1 )         /* loops until end-of-file is reached */
 {
-/* % yymore()-related code goes here */
+    /* % yymore()-related code goes here */
 #line 429 "//usr/local/lib/flexskel.cc"
-yy_cp = yy_c_buf_p;
+    yy_cp = yy_c_buf_p;
 
-/* support of yy___text */
-*yy_cp = yy_hold_char;
+    /* support of yy___text */
+    *yy_cp = yy_hold_char;
 
-/* yy_bp points to the position in yy_ch_buf of the start of the
- * current run.
- */
-yy_bp = yy_cp;
+    /* yy_bp points to the position in yy_ch_buf of the start of the
+     * current run.
+     */
+    yy_bp = yy_cp;
 
-/* % code to set up and find next match goes here */
-yy_current_state = yy_start;
+    /* % code to set up and find next match goes here */
+    yy_current_state = yy_start;
 yy_match:
-do
-{
-    register YY_CHAR yy_c = yy_ec[(unsigned char)*yy_cp];
-        if ( yy_accept[yy_current_state] )
+    do
         {
-            yy_last_accepting_state = yy_current_state;
-            yy_last_accepting_cpos = yy_cp;
-        }
-        while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
-        {
-            yy_current_state = yy_def[yy_current_state];
-            if ( yy_current_state >= 160 )
-                yy_c = yy_meta[(unsigned char)yy_c];
-        }
-        yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-        ++yy_cp;
-    }
-    while ( yy_current_state != 159 );
-    yy_cp = yy_last_accepting_cpos;
-    yy_current_state = yy_last_accepting_state;
+            register YY_CHAR yy_c = yy_ec[(unsigned char)*yy_cp];
+                if ( yy_accept[yy_current_state] )
+                    {
+                        yy_last_accepting_state = yy_current_state;
+                        yy_last_accepting_cpos = yy_cp;
+                    }
+                while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
+                    {
+                        yy_current_state = yy_def[yy_current_state];
+                        if ( yy_current_state >= 160 )
+                            yy_c = yy_meta[(unsigned char)yy_c];
+                    }
+                yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+                ++yy_cp;
+            }
+        while ( yy_current_state != 159 );
+        yy_cp = yy_last_accepting_cpos;
+        yy_current_state = yy_last_accepting_state;
 #line 440 "//usr/local/lib/flexskel.cc"
 
 yy_find_action:
-    /* % code to find the action number goes here */
-    yy_act = yy_accept[yy_current_state];
+        /* % code to find the action number goes here */
+        yy_act = yy_accept[yy_current_state];
 #line 443 "//usr/local/lib/flexskel.cc"
 
-    YY_DO_BEFORE_ACTION;
-    YY_USER_ACTION;
+        YY_DO_BEFORE_ACTION;
+        YY_USER_ACTION;
 
 do_action:      /* this label is used only to access EOF actions */
 #if YY_TransformationScanner_DEBUG != 0
-    if ( yy___flex_debug )
-    {
-        if ( yy_act == 0 )
-#ifndef YY_TransformationScanner_IOSTREAM
-            fprintf( yy___stderr , "--scanner backtracking\n" );
-#else
-            yy___stderr <<"--scanner backtracking"<<endl;
-#endif
-        else if ( yy_act < YY_END_OF_BUFFER -1 )
-#ifndef YY_TransformationScanner_IOSTREAM
-            fprintf( yy___stderr ,
-                     "--accepting rule at line %d (\"%s\")\n",
-                     yy_rule_linenum[yy_act], yy___text );
-#else
-            yy___stderr <<"--accepting rule at line "
-            <<(int)yy_rule_linenum[yy_act]
-            <<" (\""<<(char *)yy___text<<"\")"<<endl;
-#endif
-        else if ( yy_act == YY_END_OF_BUFFER -1 )
-#ifndef YY_TransformationScanner_IOSTREAM
-            fprintf( yy___stderr ,
-                     "--accepting default rule (\"%s\")\n",
-                     yy___text );
-#else
-            yy___stderr <<"--accepting default rule"
-            <<" (\""<<(char *)yy___text<<"\")"<<endl;
-#endif
-        else if ( yy_act == YY_END_OF_BUFFER )
-#ifndef YY_TransformationScanner_IOSTREAM
-            fprintf( yy___stderr , "--(end of buffer or a NUL)\n" );
-#else
-            yy___stderr <<"--(end of buffer or a NUL)"<<endl;
-#endif
-        else
-#ifndef YY_TransformationScanner_IOSTREAM
-            fprintf( yy___stderr , "--EOF\n" );
-#else
-            yy___stderr <<"--EOF"<<endl;
-#endif
-    }
-#endif
-    switch ( yy_act )
-    {
-        /* % actions go here */
-    case 0: /* must backtrack */
-        /* undo the effects of YY_DO_BEFORE_ACTION */
-        *yy_cp = yy_hold_char;
-        yy_cp = yy_last_accepting_cpos;
-        yy_current_state = yy_last_accepting_state;
-        goto yy_find_action;
-
-    case 1:
-#line 56 "transformation.l"
-    { comment(); }
-    YY_BREAK
-    case 2:
-#line 58 "transformation.l"
-    { count(); return TransformationParser::SIZEOF; }
-    YY_BREAK
-    case 3:
-#line 59 "transformation.l"
-    { count(); return TransformationParser::WHERE; }
-    YY_BREAK
-    case 4:
-#line 60 "transformation.l"
-    { count(); return TransformationParser::BECOMES; }
-    YY_BREAK
-    case 5:
-#line 61 "transformation.l"
-    { count(); return TransformationParser::KIND; }
-    YY_BREAK
-    case 6:
-#line 62 "transformation.l"
-    { count(); return TransformationParser::TYPE; }
-    YY_BREAK
-    case 7:
-#line 63 "transformation.l"
-    { count(); return TransformationParser::POINTER; }
-    YY_BREAK
-    case 8:
-#line 64 "transformation.l"
-    { count(); return TransformationParser::COMPOUND; }
-    YY_BREAK
-    case 9:
-#line 65 "transformation.l"
-    { count(); return TransformationParser::ARRAY; }
-    YY_BREAK
-    case 10:
-#line 66 "transformation.l"
-    { count(); return TransformationParser::REGOF; }
-    YY_BREAK
-    case 11:
-#line 67 "transformation.l"
-    { count(); return TransformationParser::MEMOF; }
-    YY_BREAK
-    case 12:
-#line 68 "transformation.l"
-    { count(); return TransformationParser::ADDROF; }
-    YY_BREAK
-    case 13:
-#line 69 "transformation.l"
-    { count(); return TransformationParser::BOOL_TRUE; }
-    YY_BREAK
-    case 14:
-#line 70 "transformation.l"
-    { count(); return TransformationParser::BOOL_FALSE; }
-    YY_BREAK
-    case 15:
-#line 71 "transformation.l"
-    { count(); yylval.str = strdup(yytext); yylval.str[strlen(yylval.str)-1] = 0; return TransformationParser::FUNC; }
-    YY_BREAK
-    case 16:
-#line 73 "transformation.l"
-    { count(); yylval.str = strdup(yytext); return TransformationParser::IDENTIFIER; }
-    YY_BREAK
-    case 17:
-#line 75 "transformation.l"
-    { count(); sscanf(yytext, "0x%x", &yylval.ival); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 18:
-#line 76 "transformation.l"
-    { count(); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 19:
-#line 77 "transformation.l"
-    { count(); sscanf(yytext, "%d", &yylval.ival); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 20:
-#line 78 "transformation.l"
-    { count(); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 21:
-#line 80 "transformation.l"
-    { count(); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 22:
-#line 81 "transformation.l"
-    { count(); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 23:
-#line 82 "transformation.l"
-    { count(); return TransformationParser::CONSTANT; }
-    YY_BREAK
-    case 24:
-#line 84 "transformation.l"
-    { count(); yylval.str = strdup(yytext); return TransformationParser::STRING_LITERAL; }
-    YY_BREAK
-    case 25:
-#line 86 "transformation.l"
-    { count(); return TransformationParser::ELLIPSIS; }
-    YY_BREAK
-    case 26:
-#line 87 "transformation.l"
-    { count(); return TransformationParser::RIGHT_ASSIGN; }
-    YY_BREAK
-    case 27:
-#line 88 "transformation.l"
-    { count(); return TransformationParser::LEFT_ASSIGN; }
-    YY_BREAK
-    case 28:
-#line 89 "transformation.l"
-    { count(); return TransformationParser::ADD_ASSIGN; }
-    YY_BREAK
-    case 29:
-#line 90 "transformation.l"
-    { count(); return TransformationParser::SUB_ASSIGN; }
-    YY_BREAK
-    case 30:
-#line 91 "transformation.l"
-    { count(); return TransformationParser::MUL_ASSIGN; }
-    YY_BREAK
-    case 31:
-#line 92 "transformation.l"
-    { count(); return TransformationParser::DIV_ASSIGN; }
-    YY_BREAK
-    case 32:
-#line 93 "transformation.l"
-    { count(); return TransformationParser::MOD_ASSIGN; }
-    YY_BREAK
-    case 33:
-#line 94 "transformation.l"
-    { count(); return TransformationParser::AND_ASSIGN; }
-    YY_BREAK
-    case 34:
-#line 95 "transformation.l"
-    { count(); return TransformationParser::XOR_ASSIGN; }
-    YY_BREAK
-    case 35:
-#line 96 "transformation.l"
-    { count(); return TransformationParser::OR_ASSIGN; }
-    YY_BREAK
-    case 36:
-#line 97 "transformation.l"
-    { count(); return TransformationParser::RIGHT_OP; }
-    YY_BREAK
-    case 37:
-#line 98 "transformation.l"
-    { count(); return TransformationParser::LEFT_OP; }
-    YY_BREAK
-    case 38:
-#line 99 "transformation.l"
-    { count(); return TransformationParser::INC_OP; }
-    YY_BREAK
-    case 39:
-#line 100 "transformation.l"
-    { count(); return TransformationParser::DEC_OP; }
-    YY_BREAK
-    case 40:
-#line 101 "transformation.l"
-    { count(); return TransformationParser::PTR_OP; }
-    YY_BREAK
-    case 41:
-#line 102 "transformation.l"
-    { count(); return TransformationParser::AND_OP; }
-    YY_BREAK
-    case 42:
-#line 103 "transformation.l"
-    { count(); return TransformationParser::OR_OP; }
-    YY_BREAK
-    case 43:
-#line 104 "transformation.l"
-    { count(); return TransformationParser::LE_OP; }
-    YY_BREAK
-    case 44:
-#line 105 "transformation.l"
-    { count(); return TransformationParser::GE_OP; }
-    YY_BREAK
-    case 45:
-#line 106 "transformation.l"
-    { count(); return TransformationParser::EQ_OP; }
-    YY_BREAK
-    case 46:
-#line 107 "transformation.l"
-    { count(); return TransformationParser::NE_OP; }
-    YY_BREAK
-    case 47:
-#line 108 "transformation.l"
-    { count(); return ';'; }
-    YY_BREAK
-    case 48:
-#line 109 "transformation.l"
-    { count(); return '{'; }
-    YY_BREAK
-    case 49:
-#line 110 "transformation.l"
-    { count(); return '}'; }
-    YY_BREAK
-    case 50:
-#line 111 "transformation.l"
-    { count(); return ','; }
-    YY_BREAK
-    case 51:
-#line 112 "transformation.l"
-    { count(); return ':'; }
-    YY_BREAK
-    case 52:
-#line 113 "transformation.l"
-    { count(); return '='; }
-    YY_BREAK
-    case 53:
-#line 114 "transformation.l"
-    { count(); return '('; }
-    YY_BREAK
-    case 54:
-#line 115 "transformation.l"
-    { count(); return ')'; }
-    YY_BREAK
-    case 55:
-#line 116 "transformation.l"
-    { count(); return '['; }
-    YY_BREAK
-    case 56:
-#line 117 "transformation.l"
-    { count(); return ']'; }
-    YY_BREAK
-    case 57:
-#line 118 "transformation.l"
-    { count(); return '.'; }
-    YY_BREAK
-    case 58:
-#line 119 "transformation.l"
-    { count(); return '&'; }
-    YY_BREAK
-    case 59:
-#line 120 "transformation.l"
-    { count(); return '!'; }
-    YY_BREAK
-    case 60:
-#line 121 "transformation.l"
-    { count(); return '~'; }
-    YY_BREAK
-    case 61:
-#line 122 "transformation.l"
-    { count(); return '-'; }
-    YY_BREAK
-    case 62:
-#line 123 "transformation.l"
-    { count(); return '+'; }
-    YY_BREAK
-    case 63:
-#line 124 "transformation.l"
-    { count(); return '*'; }
-    YY_BREAK
-    case 64:
-#line 125 "transformation.l"
-    { count(); return '/'; }
-    YY_BREAK
-    case 65:
-#line 126 "transformation.l"
-    { count(); return '%'; }
-    YY_BREAK
-    case 66:
-#line 127 "transformation.l"
-    { count(); return '<'; }
-    YY_BREAK
-    case 67:
-#line 128 "transformation.l"
-    { count(); return '>'; }
-    YY_BREAK
-    case 68:
-#line 129 "transformation.l"
-    { count(); return '^'; }
-    YY_BREAK
-    case 69:
-#line 130 "transformation.l"
-    { count(); return '|'; }
-    YY_BREAK
-    case 70:
-#line 131 "transformation.l"
-    { count(); return '?'; }
-    YY_BREAK
-    case 71:
-#line 133 "transformation.l"
-    { count(); }
-    YY_BREAK
-    case 72:
-#line 134 "transformation.l"
-    { /* ignore bad characters */ }
-    YY_BREAK
-    case 73:
-#line 136 "transformation.l"
-        ECHO;
-        YY_BREAK
-    case YY_STATE_EOF(INITIAL):
-        yyterminate();
-#line 493 "//usr/local/lib/flexskel.cc"
-
-    case YY_END_OF_BUFFER:
-    {
-        /* amount of text matched not including the EOB char */
-        int yy_amount_of_matched_text = yy_cp - yy___text - 1;
-
-        /* undo the effects of YY_DO_BEFORE_ACTION */
-        *yy_cp = yy_hold_char;
-
-        /* note that here we test for yy_c_buf_p "<=" to the position
-         * of the first EOB in the buffer, since yy_c_buf_p will
-         * already have been incremented past the NUL character
-         * (since all states make transitions on EOB to the end-
-         * of-buffer state).  Contrast this with the test in yyinput().
-         */
-        if ( yy_c_buf_p <= &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
-            /* this was really a NUL */
-        {
-            yy_state_type yy_next_state;
-
-            yy_c_buf_p = yy___text + yy_amount_of_matched_text;
-
-            yy_current_state = yy_get_previous_state();
-
-            /* okay, we're now positioned to make the
-             * NUL transition.  We couldn't have
-             * yy_get_previous_state() go ahead and do it
-             * for us because it doesn't know how to deal
-             * with the possibility of jamming (and we
-             * don't want to build jamming into it because
-             * then it will run more slowly)
-             */
-
-            yy_next_state = yy_try_NUL_trans( yy_current_state );
-
-            yy_bp = yy___text + YY_MORE_ADJ;
-
-            if ( yy_next_state )
+        if ( yy___flex_debug )
             {
-                /* consume the NUL */
-                yy_cp = ++yy_c_buf_p;
-                yy_current_state = yy_next_state;
-                goto yy_match;
+                if ( yy_act == 0 )
+#ifndef YY_TransformationScanner_IOSTREAM
+                    fprintf( yy___stderr , "--scanner backtracking\n" );
+#else
+                    yy___stderr <<"--scanner backtracking"<<endl;
+#endif
+                else if ( yy_act < YY_END_OF_BUFFER -1 )
+#ifndef YY_TransformationScanner_IOSTREAM
+                    fprintf( yy___stderr ,
+                             "--accepting rule at line %d (\"%s\")\n",
+                             yy_rule_linenum[yy_act], yy___text );
+#else
+                    yy___stderr <<"--accepting rule at line "
+                    <<(int)yy_rule_linenum[yy_act]
+                    <<" (\""<<(char *)yy___text<<"\")"<<endl;
+#endif
+                else if ( yy_act == YY_END_OF_BUFFER -1 )
+#ifndef YY_TransformationScanner_IOSTREAM
+                    fprintf( yy___stderr ,
+                             "--accepting default rule (\"%s\")\n",
+                             yy___text );
+#else
+                    yy___stderr <<"--accepting default rule"
+                    <<" (\""<<(char *)yy___text<<"\")"<<endl;
+#endif
+                else if ( yy_act == YY_END_OF_BUFFER )
+#ifndef YY_TransformationScanner_IOSTREAM
+                    fprintf( yy___stderr , "--(end of buffer or a NUL)\n" );
+#else
+                    yy___stderr <<"--(end of buffer or a NUL)"<<endl;
+#endif
+                else
+#ifndef YY_TransformationScanner_IOSTREAM
+                    fprintf( yy___stderr , "--EOF\n" );
+#else
+                    yy___stderr <<"--EOF"<<endl;
+#endif
             }
-
-            else
+#endif
+        switch ( yy_act )
             {
-                /* % code to do backtracking for compressed tables and set up yy_cp goes here */
+                /* % actions go here */
+            case 0: /* must backtrack */
+                /* undo the effects of YY_DO_BEFORE_ACTION */
+                *yy_cp = yy_hold_char;
                 yy_cp = yy_last_accepting_cpos;
                 yy_current_state = yy_last_accepting_state;
+                goto yy_find_action;
+
+            case 1:
+#line 56 "transformation.l"
+            { comment(); }
+            YY_BREAK
+            case 2:
+#line 58 "transformation.l"
+            { count(); return TransformationParser::SIZEOF; }
+            YY_BREAK
+            case 3:
+#line 59 "transformation.l"
+            { count(); return TransformationParser::WHERE; }
+            YY_BREAK
+            case 4:
+#line 60 "transformation.l"
+            { count(); return TransformationParser::BECOMES; }
+            YY_BREAK
+            case 5:
+#line 61 "transformation.l"
+            { count(); return TransformationParser::KIND; }
+            YY_BREAK
+            case 6:
+#line 62 "transformation.l"
+            { count(); return TransformationParser::TYPE; }
+            YY_BREAK
+            case 7:
+#line 63 "transformation.l"
+            { count(); return TransformationParser::POINTER; }
+            YY_BREAK
+            case 8:
+#line 64 "transformation.l"
+            { count(); return TransformationParser::COMPOUND; }
+            YY_BREAK
+            case 9:
+#line 65 "transformation.l"
+            { count(); return TransformationParser::ARRAY; }
+            YY_BREAK
+            case 10:
+#line 66 "transformation.l"
+            { count(); return TransformationParser::REGOF; }
+            YY_BREAK
+            case 11:
+#line 67 "transformation.l"
+            { count(); return TransformationParser::MEMOF; }
+            YY_BREAK
+            case 12:
+#line 68 "transformation.l"
+            { count(); return TransformationParser::ADDROF; }
+            YY_BREAK
+            case 13:
+#line 69 "transformation.l"
+            { count(); return TransformationParser::BOOL_TRUE; }
+            YY_BREAK
+            case 14:
+#line 70 "transformation.l"
+            { count(); return TransformationParser::BOOL_FALSE; }
+            YY_BREAK
+            case 15:
+#line 71 "transformation.l"
+            { count(); yylval.str = strdup(yytext); yylval.str[strlen(yylval.str)-1] = 0; return TransformationParser::FUNC; }
+            YY_BREAK
+            case 16:
+#line 73 "transformation.l"
+            { count(); yylval.str = strdup(yytext); return TransformationParser::IDENTIFIER; }
+            YY_BREAK
+            case 17:
+#line 75 "transformation.l"
+            { count(); sscanf(yytext, "0x%x", &yylval.ival); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 18:
+#line 76 "transformation.l"
+            { count(); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 19:
+#line 77 "transformation.l"
+            { count(); sscanf(yytext, "%d", &yylval.ival); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 20:
+#line 78 "transformation.l"
+            { count(); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 21:
+#line 80 "transformation.l"
+            { count(); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 22:
+#line 81 "transformation.l"
+            { count(); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 23:
+#line 82 "transformation.l"
+            { count(); return TransformationParser::CONSTANT; }
+            YY_BREAK
+            case 24:
+#line 84 "transformation.l"
+            { count(); yylval.str = strdup(yytext); return TransformationParser::STRING_LITERAL; }
+            YY_BREAK
+            case 25:
+#line 86 "transformation.l"
+            { count(); return TransformationParser::ELLIPSIS; }
+            YY_BREAK
+            case 26:
+#line 87 "transformation.l"
+            { count(); return TransformationParser::RIGHT_ASSIGN; }
+            YY_BREAK
+            case 27:
+#line 88 "transformation.l"
+            { count(); return TransformationParser::LEFT_ASSIGN; }
+            YY_BREAK
+            case 28:
+#line 89 "transformation.l"
+            { count(); return TransformationParser::ADD_ASSIGN; }
+            YY_BREAK
+            case 29:
+#line 90 "transformation.l"
+            { count(); return TransformationParser::SUB_ASSIGN; }
+            YY_BREAK
+            case 30:
+#line 91 "transformation.l"
+            { count(); return TransformationParser::MUL_ASSIGN; }
+            YY_BREAK
+            case 31:
+#line 92 "transformation.l"
+            { count(); return TransformationParser::DIV_ASSIGN; }
+            YY_BREAK
+            case 32:
+#line 93 "transformation.l"
+            { count(); return TransformationParser::MOD_ASSIGN; }
+            YY_BREAK
+            case 33:
+#line 94 "transformation.l"
+            { count(); return TransformationParser::AND_ASSIGN; }
+            YY_BREAK
+            case 34:
+#line 95 "transformation.l"
+            { count(); return TransformationParser::XOR_ASSIGN; }
+            YY_BREAK
+            case 35:
+#line 96 "transformation.l"
+            { count(); return TransformationParser::OR_ASSIGN; }
+            YY_BREAK
+            case 36:
+#line 97 "transformation.l"
+            { count(); return TransformationParser::RIGHT_OP; }
+            YY_BREAK
+            case 37:
+#line 98 "transformation.l"
+            { count(); return TransformationParser::LEFT_OP; }
+            YY_BREAK
+            case 38:
+#line 99 "transformation.l"
+            { count(); return TransformationParser::INC_OP; }
+            YY_BREAK
+            case 39:
+#line 100 "transformation.l"
+            { count(); return TransformationParser::DEC_OP; }
+            YY_BREAK
+            case 40:
+#line 101 "transformation.l"
+            { count(); return TransformationParser::PTR_OP; }
+            YY_BREAK
+            case 41:
+#line 102 "transformation.l"
+            { count(); return TransformationParser::AND_OP; }
+            YY_BREAK
+            case 42:
+#line 103 "transformation.l"
+            { count(); return TransformationParser::OR_OP; }
+            YY_BREAK
+            case 43:
+#line 104 "transformation.l"
+            { count(); return TransformationParser::LE_OP; }
+            YY_BREAK
+            case 44:
+#line 105 "transformation.l"
+            { count(); return TransformationParser::GE_OP; }
+            YY_BREAK
+            case 45:
+#line 106 "transformation.l"
+            { count(); return TransformationParser::EQ_OP; }
+            YY_BREAK
+            case 46:
+#line 107 "transformation.l"
+            { count(); return TransformationParser::NE_OP; }
+            YY_BREAK
+            case 47:
+#line 108 "transformation.l"
+            { count(); return ';'; }
+            YY_BREAK
+            case 48:
+#line 109 "transformation.l"
+            { count(); return '{'; }
+            YY_BREAK
+            case 49:
+#line 110 "transformation.l"
+            { count(); return '}'; }
+            YY_BREAK
+            case 50:
+#line 111 "transformation.l"
+            { count(); return ','; }
+            YY_BREAK
+            case 51:
+#line 112 "transformation.l"
+            { count(); return ':'; }
+            YY_BREAK
+            case 52:
+#line 113 "transformation.l"
+            { count(); return '='; }
+            YY_BREAK
+            case 53:
+#line 114 "transformation.l"
+            { count(); return '('; }
+            YY_BREAK
+            case 54:
+#line 115 "transformation.l"
+            { count(); return ')'; }
+            YY_BREAK
+            case 55:
+#line 116 "transformation.l"
+            { count(); return '['; }
+            YY_BREAK
+            case 56:
+#line 117 "transformation.l"
+            { count(); return ']'; }
+            YY_BREAK
+            case 57:
+#line 118 "transformation.l"
+            { count(); return '.'; }
+            YY_BREAK
+            case 58:
+#line 119 "transformation.l"
+            { count(); return '&'; }
+            YY_BREAK
+            case 59:
+#line 120 "transformation.l"
+            { count(); return '!'; }
+            YY_BREAK
+            case 60:
+#line 121 "transformation.l"
+            { count(); return '~'; }
+            YY_BREAK
+            case 61:
+#line 122 "transformation.l"
+            { count(); return '-'; }
+            YY_BREAK
+            case 62:
+#line 123 "transformation.l"
+            { count(); return '+'; }
+            YY_BREAK
+            case 63:
+#line 124 "transformation.l"
+            { count(); return '*'; }
+            YY_BREAK
+            case 64:
+#line 125 "transformation.l"
+            { count(); return '/'; }
+            YY_BREAK
+            case 65:
+#line 126 "transformation.l"
+            { count(); return '%'; }
+            YY_BREAK
+            case 66:
+#line 127 "transformation.l"
+            { count(); return '<'; }
+            YY_BREAK
+            case 67:
+#line 128 "transformation.l"
+            { count(); return '>'; }
+            YY_BREAK
+            case 68:
+#line 129 "transformation.l"
+            { count(); return '^'; }
+            YY_BREAK
+            case 69:
+#line 130 "transformation.l"
+            { count(); return '|'; }
+            YY_BREAK
+            case 70:
+#line 131 "transformation.l"
+            { count(); return '?'; }
+            YY_BREAK
+            case 71:
+#line 133 "transformation.l"
+            { count(); }
+            YY_BREAK
+            case 72:
+#line 134 "transformation.l"
+            { /* ignore bad characters */ }
+            YY_BREAK
+            case 73:
+#line 136 "transformation.l"
+                ECHO;
+                YY_BREAK
+            case YY_STATE_EOF(INITIAL):
+                yyterminate();
+#line 493 "//usr/local/lib/flexskel.cc"
+
+            case YY_END_OF_BUFFER:
+            {
+                /* amount of text matched not including the EOB char */
+                int yy_amount_of_matched_text = yy_cp - yy___text - 1;
+
+                /* undo the effects of YY_DO_BEFORE_ACTION */
+                *yy_cp = yy_hold_char;
+
+                /* note that here we test for yy_c_buf_p "<=" to the position
+                 * of the first EOB in the buffer, since yy_c_buf_p will
+                 * already have been incremented past the NUL character
+                 * (since all states make transitions on EOB to the end-
+                 * of-buffer state).  Contrast this with the test in yyinput().
+                 */
+                if ( yy_c_buf_p <= &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
+                    /* this was really a NUL */
+                    {
+                        yy_state_type yy_next_state;
+
+                        yy_c_buf_p = yy___text + yy_amount_of_matched_text;
+
+                        yy_current_state = yy_get_previous_state();
+
+                        /* okay, we're now positioned to make the
+                         * NUL transition.  We couldn't have
+                         * yy_get_previous_state() go ahead and do it
+                         * for us because it doesn't know how to deal
+                         * with the possibility of jamming (and we
+                         * don't want to build jamming into it because
+                         * then it will run more slowly)
+                         */
+
+                        yy_next_state = yy_try_NUL_trans( yy_current_state );
+
+                        yy_bp = yy___text + YY_MORE_ADJ;
+
+                        if ( yy_next_state )
+                            {
+                                /* consume the NUL */
+                                yy_cp = ++yy_c_buf_p;
+                                yy_current_state = yy_next_state;
+                                goto yy_match;
+                            }
+
+                        else
+                            {
+                                /* % code to do backtracking for compressed tables and set up yy_cp goes here */
+                                yy_cp = yy_last_accepting_cpos;
+                                yy_current_state = yy_last_accepting_state;
 #line 541 "//usr/local/lib/flexskel.cc"
-                goto yy_find_action;
+                                goto yy_find_action;
+                            }
+                    }
+
+                else switch ( yy_get_next_buffer() )
+                        {
+                        case EOB_ACT_END_OF_FILE:
+                        {
+                            yy_did_buffer_switch_on_eof = 0;
+
+                            if ( yywrap() )
+                                {
+                                    /* note: because we've taken care in
+                                     * yy_get_next_buffer() to have set up yy___text,
+                                     * we can now set up yy_c_buf_p so that if some
+                                     * total hoser (like flex itself) wants
+                                     * to call the scanner after we return the
+                                     * YY_NULL, it'll still work - another YY_NULL
+                                     * will get returned.
+                                     */
+                                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
+
+                                    yy_act = YY_STATE_EOF((yy_start - 1) / 2);
+                                    goto do_action;
+                                }
+
+                            else
+                                {
+                                    if ( ! yy_did_buffer_switch_on_eof )
+                                        YY_NEW_FILE;
+                                }
+                        }
+                        break;
+
+                        case EOB_ACT_CONTINUE_SCAN:
+                            yy_c_buf_p = yy___text + yy_amount_of_matched_text;
+
+                            yy_current_state = yy_get_previous_state();
+
+                            yy_cp = yy_c_buf_p;
+                            yy_bp = yy___text + YY_MORE_ADJ;
+                            goto yy_match;
+
+                        case EOB_ACT_LAST_MATCH:
+                            yy_c_buf_p =
+                                &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars];
+
+                            yy_current_state = yy_get_previous_state();
+
+                            yy_cp = yy_c_buf_p;
+                            yy_bp = yy___text + YY_MORE_ADJ;
+                            goto yy_find_action;
+                        }
+                break;
             }
-        }
 
-        else switch ( yy_get_next_buffer() )
-            {
-            case EOB_ACT_END_OF_FILE:
-            {
-                yy_did_buffer_switch_on_eof = 0;
-
-                if ( yywrap() )
-                {
-                    /* note: because we've taken care in
-                     * yy_get_next_buffer() to have set up yy___text,
-                     * we can now set up yy_c_buf_p so that if some
-                     * total hoser (like flex itself) wants
-                     * to call the scanner after we return the
-                     * YY_NULL, it'll still work - another YY_NULL
-                     * will get returned.
-                     */
-                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
-
-                    yy_act = YY_STATE_EOF((yy_start - 1) / 2);
-                    goto do_action;
-                }
-
-                else
-                {
-                    if ( ! yy_did_buffer_switch_on_eof )
-                        YY_NEW_FILE;
-                }
-            }
-            break;
-
-            case EOB_ACT_CONTINUE_SCAN:
-                yy_c_buf_p = yy___text + yy_amount_of_matched_text;
-
-                yy_current_state = yy_get_previous_state();
-
-                yy_cp = yy_c_buf_p;
-                yy_bp = yy___text + YY_MORE_ADJ;
-                goto yy_match;
-
-            case EOB_ACT_LAST_MATCH:
-                yy_c_buf_p =
-                    &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars];
-
-                yy_current_state = yy_get_previous_state();
-
-                yy_cp = yy_c_buf_p;
-                yy_bp = yy___text + YY_MORE_ADJ;
-                goto yy_find_action;
-            }
-        break;
-    }
-
-    default:
+            default:
 #if YY_TransformationScanner_DEBUG != 0
 #ifndef YY_TransformationScanner_IOSTREAM
-        fprintf(yy___stderr , "action # %d\n", yy_act );
+                fprintf(yy___stderr , "action # %d\n", yy_act );
 #else
-        yy___stderr <<"action # "<<(int)yy_act<<endl;
+                yy___stderr <<"action # "<<(int)yy_act<<endl;
 #endif
 #endif
-        YY_FATAL_ERROR(
-            "fatal flex scanner internal error--no action found" );
+                YY_FATAL_ERROR(
+                    "fatal flex scanner internal error--no action found" );
+            }
     }
-}
 yyterminate();/* avoid the no return value error message on MS-C7/dos */
 }
 
@@ -1223,34 +1237,34 @@ int YY_TransformationScanner_CLASS::yy_get_next_buffer()
         yy_n_chars = 0;
 
     else
-    {
-        int num_to_read = YY_TransformationScanner_CURRENT_BUFFER->yy_buf_size - number_to_move - 1;
+        {
+            int num_to_read = YY_TransformationScanner_CURRENT_BUFFER->yy_buf_size - number_to_move - 1;
 
-        if ( num_to_read > YY_READ_BUF_SIZE )
-            num_to_read = YY_READ_BUF_SIZE;
+            if ( num_to_read > YY_READ_BUF_SIZE )
+                num_to_read = YY_READ_BUF_SIZE;
 
-        else if ( num_to_read <= 0 )
-            YY_FATAL_ERROR( "fatal error - scanner input buffer overflow" );
+            else if ( num_to_read <= 0 )
+                YY_FATAL_ERROR( "fatal error - scanner input buffer overflow" );
 
-        /* read in more data */
-        YY_INPUT( (&YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move]),
-                  yy_n_chars, num_to_read );
-    }
+            /* read in more data */
+            YY_INPUT( (&YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move]),
+                      yy_n_chars, num_to_read );
+        }
 
     if ( yy_n_chars == 0 )
-    {
-        if ( number_to_move - YY_MORE_ADJ == 1 )
         {
-            ret_val = EOB_ACT_END_OF_FILE;
-            YY_TransformationScanner_CURRENT_BUFFER->yy_eof_status = EOF_DONE;
-        }
+            if ( number_to_move - YY_MORE_ADJ == 1 )
+                {
+                    ret_val = EOB_ACT_END_OF_FILE;
+                    YY_TransformationScanner_CURRENT_BUFFER->yy_eof_status = EOF_DONE;
+                }
 
-        else
-        {
-            ret_val = EOB_ACT_LAST_MATCH;
-            YY_TransformationScanner_CURRENT_BUFFER->yy_eof_status = EOF_PENDING;
+            else
+                {
+                    ret_val = EOB_ACT_LAST_MATCH;
+                    YY_TransformationScanner_CURRENT_BUFFER->yy_eof_status = EOF_PENDING;
+                }
         }
-    }
 
     else
         ret_val = EOB_ACT_CONTINUE_SCAN;
@@ -1291,23 +1305,23 @@ long YY_TransformationScanner_CLASS::yy_get_previous_state_()
 #line 717 "//usr/local/lib/flexskel.cc"
 
     for ( yy_cp = yy___text + YY_MORE_ADJ; yy_cp < yy_c_buf_p; ++yy_cp )
-    {
-        /* % code to find the next state goes here */
-        register YY_CHAR yy_c = (*yy_cp ? yy_ec[(unsigned char)*yy_cp] : 1);
-        if ( yy_accept[yy_current_state] )
         {
-            yy_last_accepting_state = yy_current_state;
-            yy_last_accepting_cpos = yy_cp;
-        }
-        while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
-        {
-            yy_current_state = yy_def[yy_current_state];
-            if ( yy_current_state >= 160 )
-                yy_c = yy_meta[(unsigned char)yy_c];
-        }
-        yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+            /* % code to find the next state goes here */
+            register YY_CHAR yy_c = (*yy_cp ? yy_ec[(unsigned char)*yy_cp] : 1);
+            if ( yy_accept[yy_current_state] )
+                {
+                    yy_last_accepting_state = yy_current_state;
+                    yy_last_accepting_cpos = yy_cp;
+                }
+            while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
+                {
+                    yy_current_state = yy_def[yy_current_state];
+                    if ( yy_current_state >= 160 )
+                        yy_c = yy_meta[(unsigned char)yy_c];
+                }
+            yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 #line 721 "//usr/local/lib/flexskel.cc"
-    }
+        }
 
 #ifndef YY_USE_CLASS
     return ( yy_current_state );
@@ -1345,16 +1359,16 @@ long YY_TransformationScanner_CLASS::yy_try_NUL_trans_(long yy_current_state_)
 
     register YY_CHAR yy_c = 1;
     if ( yy_accept[yy_current_state] )
-    {
-        yy_last_accepting_state = yy_current_state;
-        yy_last_accepting_cpos = yy_cp;
-    }
+        {
+            yy_last_accepting_state = yy_current_state;
+            yy_last_accepting_cpos = yy_cp;
+        }
     while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
-    {
-        yy_current_state = yy_def[yy_current_state];
-        if ( yy_current_state >= 160 )
-            yy_c = yy_meta[(unsigned char)yy_c];
-    }
+        {
+            yy_current_state = yy_def[yy_current_state];
+            if ( yy_current_state >= 160 )
+                yy_c = yy_meta[(unsigned char)yy_c];
+        }
     yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
     yy_is_jam = (yy_current_state == 159);
 #line 755 "//usr/local/lib/flexskel.cc"
@@ -1385,23 +1399,24 @@ void YY_TransformationScanner_CLASS::yyunput( YY_TransformationScanner_CHAR c, Y
     *yy_cp = yy_hold_char;
 
     if ( yy_cp < YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf + 2 )
-    {   /* need to shift things up to make room */
-        register int number_to_move = yy_n_chars + 2; /* +2 for EOB chars */
-        register YY_TransformationScanner_CHAR *dest =
-            &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[YY_TransformationScanner_CURRENT_BUFFER->yy_buf_size + 2];
-        register YY_TransformationScanner_CHAR *source =
-            &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move];
+        {
+            /* need to shift things up to make room */
+            register int number_to_move = yy_n_chars + 2; /* +2 for EOB chars */
+            register YY_TransformationScanner_CHAR *dest =
+                &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[YY_TransformationScanner_CURRENT_BUFFER->yy_buf_size + 2];
+            register YY_TransformationScanner_CHAR *source =
+                &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move];
 
-        while ( source > YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf )
-            *--dest = *--source;
+            while ( source > YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf )
+                *--dest = *--source;
 
-        yy_cp += dest - source;
-        yy_bp += dest - source;
-        yy_n_chars = YY_TransformationScanner_CURRENT_BUFFER->yy_buf_size;
+            yy_cp += dest - source;
+            yy_bp += dest - source;
+            yy_n_chars = YY_TransformationScanner_CURRENT_BUFFER->yy_buf_size;
 
-        if ( yy_cp < YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf + 2 )
-            YY_FATAL_ERROR( "flex scanner push-back overflow" );
-    }
+            if ( yy_cp < YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf + 2 )
+                YY_FATAL_ERROR( "flex scanner push-back overflow" );
+        }
 
     if ( yy_cp > yy_bp && yy_cp[-1] == '\n' )
         yy_cp[-2] = '\n';
@@ -1430,60 +1445,61 @@ int YY_TransformationScanner_CLASS::input()
     *yy_cp = yy_hold_char;
 
     if ( *yy_c_buf_p == YY_END_OF_BUFFER_CHAR )
-    {
-        /* yy_c_buf_p now points to the character we want to return.
-         * If this occurs *before* the EOB characters, then it's a
-         * valid NUL; if not, then we've hit the end of the buffer.
-         */
-        if ( yy_c_buf_p < &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
-            /* this was really a NUL */
-            *yy_c_buf_p = '\0';
+        {
+            /* yy_c_buf_p now points to the character we want to return.
+             * If this occurs *before* the EOB characters, then it's a
+             * valid NUL; if not, then we've hit the end of the buffer.
+             */
+            if ( yy_c_buf_p < &YY_TransformationScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
+                /* this was really a NUL */
+                *yy_c_buf_p = '\0';
 
-        else
-        {   /* need more input */
-            yy___text = yy_c_buf_p;
-            ++yy_c_buf_p;
-
-            switch ( yy_get_next_buffer() )
-            {
-            case EOB_ACT_END_OF_FILE:
-            {
-                if ( yywrap() )
+            else
                 {
-                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
-                    return ( EOF );
+                    /* need more input */
+                    yy___text = yy_c_buf_p;
+                    ++yy_c_buf_p;
+
+                    switch ( yy_get_next_buffer() )
+                        {
+                        case EOB_ACT_END_OF_FILE:
+                        {
+                            if ( yywrap() )
+                                {
+                                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
+                                    return ( EOF );
+                                }
+
+                            YY_NEW_FILE;
+#ifndef YY_USE_CLASS
+#ifdef __cplusplus
+                            return ( yyinput() );
+#else
+                            return ( input() );
+#endif
+#else
+                            return ( input() );
+#endif
+                        }
+                        break;
+
+                        case EOB_ACT_CONTINUE_SCAN:
+                            yy_c_buf_p = yy___text + YY_MORE_ADJ;
+                            break;
+
+                        case EOB_ACT_LAST_MATCH:
+#ifndef YY_USE_CLASS
+#ifdef __cplusplus
+                            YY_FATAL_ERROR( "unexpected last match in yyinput()" );
+#else
+                            YY_FATAL_ERROR( "unexpected last match in input()" );
+#endif
+#else
+                            YY_FATAL_ERROR( "unexpected last match in YY_TransformationScanner_CLASS::input()" );
+#endif
+                        }
                 }
-
-                YY_NEW_FILE;
-#ifndef YY_USE_CLASS
-#ifdef __cplusplus
-                return ( yyinput() );
-#else
-                return ( input() );
-#endif
-#else
-                return ( input() );
-#endif
-            }
-            break;
-
-            case EOB_ACT_CONTINUE_SCAN:
-                yy_c_buf_p = yy___text + YY_MORE_ADJ;
-                break;
-
-            case EOB_ACT_LAST_MATCH:
-#ifndef YY_USE_CLASS
-#ifdef __cplusplus
-                YY_FATAL_ERROR( "unexpected last match in yyinput()" );
-#else
-                YY_FATAL_ERROR( "unexpected last match in input()" );
-#endif
-#else
-                YY_FATAL_ERROR( "unexpected last match in YY_TransformationScanner_CLASS::input()" );
-#endif
-            }
         }
-    }
 
     c = *yy_c_buf_p;
     yy_hold_char = *++yy_c_buf_p;
@@ -1525,12 +1541,12 @@ void YY_TransformationScanner_CLASS::YY_TransformationScanner_SWITCH_TO_BUFFER( 
         return;
 
     if ( YY_TransformationScanner_CURRENT_BUFFER )
-    {
-        /* flush out information for old buffer */
-        *yy_c_buf_p = yy_hold_char;
-        YY_TransformationScanner_CURRENT_BUFFER->yy_buf_pos = yy_c_buf_p;
-        YY_TransformationScanner_CURRENT_BUFFER->yy_n_chars = yy_n_chars;
-    }
+        {
+            /* flush out information for old buffer */
+            *yy_c_buf_p = yy_hold_char;
+            YY_TransformationScanner_CURRENT_BUFFER->yy_buf_pos = yy_c_buf_p;
+            YY_TransformationScanner_CURRENT_BUFFER->yy_n_chars = yy_n_chars;
+        }
 
     YY_TransformationScanner_CURRENT_BUFFER = new_buffer;
     YY_TransformationScanner_LOAD_BUFFER_STATE();
@@ -1663,10 +1679,10 @@ loop:
         /*putchar(c)*/;
 
     if ((c1 = input()) != '/' && c != 0)
-    {
-        /*unput(c1);*/
-        goto loop;
-    }
+        {
+            /*unput(c1);*/
+            goto loop;
+        }
 
     if (c != 0)
         /*putchar(c1)*/;
@@ -1685,12 +1701,13 @@ void TransformationScanner::count()
             column++;
 
     strcat(lineBuf, yytext);
-    if (strchr(lineBuf, '\n')) {
-        char buf[MAX_LINE];
-        strcpy(buf, lineBuf);
-        strcpy(lineBuf, strchr(buf, '\n')+1);
-        theLine++;
-    }
+    if (strchr(lineBuf, '\n'))
+        {
+            char buf[MAX_LINE];
+            strcpy(buf, lineBuf);
+            strcpy(lineBuf, strchr(buf, '\n')+1);
+            theLine++;
+        }
 }
 
 

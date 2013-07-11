@@ -16,9 +16,11 @@
 
 CPPUNIT_TEST_SUITE_REGISTRATION( DfaTest );
 
-class ErrLogger : public Log {
+class ErrLogger : public Log
+{
 public:
-    virtual Log &operator<<(const char *str) {
+    virtual Log &operator<<(const char *str)
+    {
         std::cerr << str;
         return *this;
     }
@@ -33,11 +35,13 @@ public:
  * RETURNS:			<nothing>
  *============================================================================*/
 static bool logset = false;
-void DfaTest::setUp () {
-    if (!logset) {
-        logset = true;
-        Boomerang::get()->setLogger(new NullLogger());
-    }
+void DfaTest::setUp ()
+{
+    if (!logset)
+        {
+            logset = true;
+            Boomerang::get()->setLogger(new NullLogger());
+        }
 }
 
 /*==============================================================================
@@ -47,14 +51,16 @@ void DfaTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void DfaTest::tearDown () {
+void DfaTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		DfaTest::testMeetInt
  * OVERVIEW:		Test meeting IntegerTypes with various other types
  *============================================================================*/
-void DfaTest::testMeetInt () {
+void DfaTest::testMeetInt ()
+{
     IntegerType i32(32, 1);
     IntegerType j32(32, 0);
     IntegerType u32(32, -1);
@@ -144,7 +150,8 @@ void DfaTest::testMeetInt () {
  * FUNCTION:		DfaTest::testMeetSize
  * OVERVIEW:		Test meeting IntegerTypes with various other types
  *============================================================================*/
-void DfaTest::testMeetSize () {
+void DfaTest::testMeetSize ()
+{
     IntegerType i32(32, 1);
     SizeType s32(32);
     SizeType s16(16);
@@ -192,7 +199,8 @@ void DfaTest::testMeetSize () {
  * FUNCTION:		DfaTest::testMeetPointer
  * OVERVIEW:		Test meeting IntegerTypes with various other types
  *============================================================================*/
-void DfaTest::testMeetPointer() {
+void DfaTest::testMeetPointer()
+{
     IntegerType i32(32, 1);
     IntegerType u32(32, -1);
     PointerType pi32(&i32);
@@ -231,7 +239,8 @@ void DfaTest::testMeetPointer() {
  * FUNCTION:		DfaTest::testMeetUnion
  * OVERVIEW:		Test meeting IntegerTypes with various other types
  *============================================================================*/
-void DfaTest::testMeetUnion() {
+void DfaTest::testMeetUnion()
+{
     UnionType u1;
     IntegerType i32(32, 1);
     IntegerType j32(32, 0);

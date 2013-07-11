@@ -33,7 +33,8 @@
 /*
  *	Class Template
  */
-struct objc_class {
+struct objc_class
+{
     struct objc_class *isa;
     struct objc_class *super_class;
     const char *name;
@@ -112,7 +113,8 @@ struct objc_class {
  */
 typedef struct objc_category *Category;
 
-struct objc_category {
+struct objc_category
+{
     char *category_name;
     char *class_name;
     struct objc_method_list *instance_methods;
@@ -125,7 +127,8 @@ struct objc_category {
  */
 typedef struct objc_ivar *Ivar;
 
-struct objc_ivar {
+struct objc_ivar
+{
     char *ivar_name;
     char *ivar_type;
     int ivar_offset;
@@ -134,7 +137,8 @@ struct objc_ivar {
 #endif
 };
 
-struct objc_ivar_list {
+struct objc_ivar_list
+{
     int ivar_count;
 #ifdef __alpha__
     int space;
@@ -150,13 +154,15 @@ OBJC_EXPORT Ivar object_getInstanceVariable(id, const char *name, void **);
  */
 typedef struct objc_method *Method;
 
-struct objc_method {
+struct objc_method
+{
     SEL method_name;
     char *method_types;
     IMP method_imp;
 };
 
-struct objc_method_list {
+struct objc_method_list
+{
     struct objc_method_list *obsolete;
 
     int method_count;
@@ -171,7 +177,8 @@ struct objc_method_list {
 //@class Protocol;
 struct Protocol;
 
-struct objc_protocol_list {
+struct objc_protocol_list
+{
     struct objc_protocol_list *next;
     int count;
     Protocol *list[1];
@@ -212,7 +219,8 @@ typedef struct objc_cache *	Cache;
 #define CACHE_BUCKET_IMP(B)   ((B)->method_imp)
 #define CACHE_BUCKET_VALID(B) (B)
 #define CACHE_HASH(sel, mask) (((uarith_t)(sel)>>2) & (mask))
-struct objc_cache {
+struct objc_cache
+{
     unsigned int mask;            /* total = mask + 1 */
     unsigned int occupied;
     Method buckets[1];

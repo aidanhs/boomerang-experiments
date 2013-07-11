@@ -54,7 +54,8 @@ typedef unsigned long vm_prot_t;		// I guessed
 
 struct mach_header;
 
-class MachOBinaryFile : public BinaryFile {
+class MachOBinaryFile : public BinaryFile
+{
 public:
     MachOBinaryFile();				// Default constructor
     virtual		~MachOBinaryFile();				// Destructor
@@ -65,7 +66,8 @@ public:
     // LOADFMT_MACHO)
     virtual MACHINE GetMachine() const;			// Get machine (i.e.
     // MACHINE_PPC)
-    virtual const char	*getFilename() const {
+    virtual const char	*getFilename() const
+    {
         return m_pFileName;
     }
     virtual bool		isLibrary() const;
@@ -117,15 +119,18 @@ public:
     virtual float		readNativeFloat4(ADDRESS a);	// Read 4 bytes as float
     virtual double		readNativeFloat8(ADDRESS a); // Read 8 bytes as float
 
-    virtual bool		IsDynamicLinkedProc(ADDRESS uNative) {
+    virtual bool		IsDynamicLinkedProc(ADDRESS uNative)
+    {
         return dlprocs.find(uNative) != dlprocs.end();
     }
     virtual const char	*GetDynamicProcName(ADDRESS uNative);
 
-    virtual std::map<ADDRESS, std::string> &getSymbols() {
+    virtual std::map<ADDRESS, std::string> &getSymbols()
+    {
         return m_SymA;
     }
-    virtual std::map<std::string, ObjcModule> &getObjcModules() {
+    virtual std::map<std::string, ObjcModule> &getObjcModules()
+    {
         return modules;
     }
 

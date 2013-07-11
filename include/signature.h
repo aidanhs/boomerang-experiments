@@ -36,7 +36,8 @@ class StatementList;
 class BinaryFile;
 class XMLProgParser;
 
-class Parameter {
+class Parameter
+{
 private:
     Type *type;
     std::string name;
@@ -46,34 +47,42 @@ private:
 public:
     Parameter(Type *type, const char *name, Exp *exp = NULL, const char *boundMax = "") :
         type(type), name(name), exp(exp), boundMax(boundMax)	{ }
-    virtual				~Parameter() {
+    virtual				~Parameter()
+    {
         delete type;
         delete exp;
     }
     bool		operator==(Parameter& other);
     Parameter*	clone();
 
-    Type		*getType() {
+    Type		*getType()
+    {
         return type;
     }
-    void		setType(Type *ty) {
+    void		setType(Type *ty)
+    {
         type = ty;
     }
-    const char	*getName() {
+    const char	*getName()
+    {
         return name.c_str();
     }
-    void		setName(const char *nam) {
+    void		setName(const char *nam)
+    {
         name = nam;
     }
-    Exp			*getExp()		{
+    Exp			*getExp()
+    {
         return exp;
     }
-    void		setExp(Exp *e) {
+    void		setExp(Exp *e)
+    {
         exp = e;
     }
 
     // this parameter is the bound of another parameter with name nam
-    const char  *getBoundMax() {
+    const char  *getBoundMax()
+    {
         return boundMax.c_str();
     }
     void        setBoundMax(const char *nam);
@@ -83,7 +92,8 @@ protected:
     Parameter() : type(NULL), name(""), exp(NULL) { }
 };		// class Parameter
 
-class Return {
+class Return
+{
 public:
     Type		*type;
     Exp			*exp;
@@ -100,7 +110,8 @@ public:
 typedef std::vector<Return*> Returns;
 
 
-class Signature {
+class Signature
+{
 protected:
     std::string	name;		// name of procedure
     std::string sigFile;	// signature file this signature was read from (for libprocs)
@@ -135,46 +146,57 @@ public:
     // clone this signature
     virtual	Signature	*clone();
 
-    bool		isUnknown() {
+    bool		isUnknown()
+    {
         return unknown;
     }
-    void		setUnknown(bool b) {
+    void		setUnknown(bool b)
+    {
         unknown = b;
     }
 //		void		setFullSig(bool full) {bFullSig = full;}
-    bool		isForced() {
+    bool		isForced()
+    {
         return forced;
     }
-    void		setForced(bool f) {
+    void		setForced(bool f)
+    {
         forced = f;
     }
 
     // get the return location
     virtual void		addReturn(Type *type, Exp *e = NULL);
     virtual void		addReturn(Exp *e);
-    virtual void		addReturn(Return *ret) {
+    virtual void		addReturn(Return *ret)
+    {
         returns.push_back(ret);
     }
     virtual void		removeReturn(Exp *e);
-    virtual unsigned	getNumReturns() {
+    virtual unsigned	getNumReturns()
+    {
         return returns.size();
     }
-    virtual Exp			*getReturnExp(int n) {
+    virtual Exp			*getReturnExp(int n)
+    {
         return returns[n]->exp;
     }
-    void		setReturnExp(int n, Exp* e) {
+    void		setReturnExp(int n, Exp* e)
+    {
         returns[n]->exp = e;
     }
-    virtual Type		*getReturnType(int n) {
+    virtual Type		*getReturnType(int n)
+    {
         return returns[n]->type;
     }
     virtual void		setReturnType(int n, Type *ty);
     int			findReturn(Exp *e);
 //		void		fixReturnsWithParameters();			// Needs description
-    void		setRetType(Type *t) {
+    void		setRetType(Type *t)
+    {
         rettype = t;
     }
-    Returns&	getReturns() {
+    Returns&	getReturns()
+    {
         return returns;
     }
     Type*		getTypeFor(Exp* e);
@@ -183,10 +205,12 @@ public:
     virtual const char	*getName();
     virtual void		setName(const char *nam);
     // get/set the signature file
-    const char	*getSigFile() {
+    const char	*getSigFile()
+    {
         return sigFile.c_str();
     }
-    void		setSigFile(const char *nam) {
+    void		setSigFile(const char *nam)
+    {
         sigFile = nam;
     }
 
@@ -195,10 +219,12 @@ public:
     virtual void		addParameter(Type *type, const char *nam = NULL, Exp *e = NULL, const char *boundMax = "");
     virtual void		addParameter(Exp *e, Type* ty);
     virtual void		addParameter(Parameter *param);
-    void		addEllipsis() {
+    void		addEllipsis()
+    {
         ellipsis = true;
     }
-    void		killEllipsis() {
+    void		killEllipsis()
+    {
         ellipsis = false;
     }
     virtual void		removeParameter(Exp *e);
@@ -207,7 +233,8 @@ public:
     virtual void		setNumParams(int n);
 
     // accessors for parameters
-    virtual unsigned	getNumParams() {
+    virtual unsigned	getNumParams()
+    {
         return params.size();
     }
     virtual const char	*getParamName(int n);
@@ -223,7 +250,8 @@ public:
     virtual int			findParam(const char *nam);
     // accessor for argument expressions
     virtual Exp			*getArgumentExp(int n);
-    virtual bool		hasEllipsis() {
+    virtual bool		hasEllipsis()
+    {
         return ellipsis;
     }
 
@@ -250,10 +278,12 @@ public:
     Exp*		getEarlyParamExp(int n, Prog* prog);
 
     // Get a wildcard to find stack locations
-    virtual Exp			*getStackWildcard() {
+    virtual Exp			*getStackWildcard()
+    {
         return NULL;
     }
-    class StackRegisterNotDefinedException : public std::exception {
+    class StackRegisterNotDefinedException : public std::exception
+    {
     public:
         StackRegisterNotDefinedException() { }
     };
@@ -267,11 +297,13 @@ public:
     // Similar to the above, but checks for address of a local (i.e. sp{0} -/+ K)
     virtual	bool		isAddrOfStackLocal(Prog* prog, Exp* e);
     // For most machines, local variables are always NEGATIVE offsets from sp
-    virtual bool		isLocalOffsetNegative() {
+    virtual bool		isLocalOffsetNegative()
+    {
         return true;
     }
     // For most machines, local variables are not POSITIVE offsets from sp
-    virtual bool		isLocalOffsetPositive() {
+    virtual bool		isLocalOffsetPositive()
+    {
         return false;
     }
     // Is this operator (between the stack pointer and a constant) compatible with a stack local pattern?
@@ -282,17 +314,20 @@ public:
     static	StatementList& getStdRetStmt(Prog* prog);
 
     // get anything that can be proven as a result of the signature
-    virtual Exp			*getProven(Exp *left) {
+    virtual Exp			*getProven(Exp *left)
+    {
         return NULL;
     }
-    virtual	bool		isPreserved(Exp* e) {
+    virtual	bool		isPreserved(Exp* e)
+    {
         return false;    // Return whether e is preserved by this proc
     }
     virtual	void		setLibraryDefines(StatementList* defs) {}	// Set the locations defined by library calls
     static	void		setABIdefines(Prog* prog, StatementList* defs);
 
     // Return true if this is a known machine (e.g. SparcSignature as opposed to Signature)
-    virtual bool		isPromoted() {
+    virtual bool		isPromoted()
+    {
         return false;
     }
     // Return true if this has a full blown signature, e.g. main/WinMain etc.
@@ -302,33 +337,42 @@ public:
     // ascii versions of platform, calling convention name
     static const char* platformName(platform plat);
     static const char* conventionName(callconv cc);
-    virtual platform	getPlatform() {
+    virtual platform	getPlatform()
+    {
         return PLAT_GENERIC;
     }
-    virtual callconv	getConvention() {
+    virtual callconv	getConvention()
+    {
         return CONV_NONE;
     }
 
     // prefered format
-    void		setPreferedReturn(Type *ty) {
+    void		setPreferedReturn(Type *ty)
+    {
         preferedReturn = ty;
     }
-    void		setPreferedName(const char *nam) {
+    void		setPreferedName(const char *nam)
+    {
         preferedName = nam;
     }
-    void		addPreferedParameter(int n) {
+    void		addPreferedParameter(int n)
+    {
         preferedParams.push_back(n);
     }
-    Type		*getPreferedReturn() {
+    Type		*getPreferedReturn()
+    {
         return preferedReturn;
     }
-    const char	*getPreferedName() {
+    const char	*getPreferedName()
+    {
         return preferedName.c_str();
     }
-    unsigned int getNumPreferedParams() {
+    unsigned int getNumPreferedParams()
+    {
         return preferedParams.size();
     }
-    int			getPreferedParam(int n) {
+    int			getPreferedParam(int n)
+    {
         return preferedParams[n];
     }
 
@@ -340,27 +384,32 @@ public:
 protected:
     friend class XMLProgParser;
     Signature() : name(""), rettype(NULL), ellipsis(false), preferedReturn(NULL), preferedName("") { }
-    void		appendParameter(Parameter *p) {
+    void		appendParameter(Parameter *p)
+    {
         params.push_back(p);
     }
     //void		appendImplicitParameter(ImplicitParameter *p) { implicitParams.push_back(p); }
-    void		appendReturn(Return *r) {
+    void		appendReturn(Return *r)
+    {
         returns.push_back(r);
     }
 };	// class Signature
 
-class CustomSignature : public Signature {
+class CustomSignature : public Signature
+{
 protected:
     int			sp;
 public:
     CustomSignature(const char *nam);
     virtual ~CustomSignature() { }
-    virtual	bool		isPromoted() {
+    virtual	bool		isPromoted()
+    {
         return true;
     }
     virtual Signature	*clone();
     void		setSP(int nsp);
-    virtual int			getStackRegister() throw(StackRegisterNotDefinedException) {
+    virtual int			getStackRegister() throw(StackRegisterNotDefinedException)
+    {
         return sp;
     };
 };

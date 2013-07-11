@@ -21,7 +21,8 @@ CPPUNIT_TEST_SUITE_REGISTRATION( CTest );
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void CTest::setUp () {
+void CTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -31,7 +32,8 @@ void CTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void CTest::tearDown () {
+void CTest::tearDown ()
+{
 }
 
 /*==============================================================================
@@ -40,7 +42,8 @@ void CTest::tearDown () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void CTest::testSignature () {
+void CTest::testSignature ()
+{
     std::istringstream os("int printf(char *fmt, ...);");
     AnsiCParser *p = new AnsiCParser(os, false);
     p->yyparse(PLAT_PENTIUM, CONV_C);

@@ -41,7 +41,8 @@
 #define LMMHw(x) ((unsigned)((Byte *)(&x))[0] + ((unsigned)((Byte *)(&x))[1] << 8))
 
 
-typedef struct {				/* exe file header, just the signature really */
+typedef struct  				/* exe file header, just the signature really */
+{
     Byte	sigLo;			/* .EXE signature: 0x4D 0x5A	 */
     Byte	sigHi;
 } Header;
@@ -50,7 +51,8 @@ typedef struct {				/* exe file header, just the signature really */
 #pragma pack(1)
 //#endif
 
-typedef struct {
+typedef struct
+{
     Byte sigLo;
     Byte sigHi;
     Byte byteord;
@@ -100,7 +102,8 @@ typedef struct {
     DWord heapsize;
 } LXHeader;
 
-typedef struct {
+typedef struct
+{
     DWord VirtualSize;
     DWord RelocBaseAddr;
     DWord ObjectFlags;
@@ -109,14 +112,16 @@ typedef struct {
     DWord Reserved1;
 } LXObject;
 
-typedef struct {
+typedef struct
+{
     DWord pagedataoffset;
     SWord datasize;
     SWord flags;
 } LXPage;
 
 // this is correct for internal fixups only
-typedef struct {
+typedef struct
+{
     unsigned char src;
     unsigned char flags;
     short srcoff;
@@ -128,7 +133,8 @@ typedef struct {
 #pragma pack(4)
 //#endif
 
-class DOS4GWBinaryFile : public BinaryFile {
+class DOS4GWBinaryFile : public BinaryFile
+{
 public:
     DOS4GWBinaryFile();				// Default constructor
     virtual		~DOS4GWBinaryFile();				// Destructor
@@ -139,7 +145,8 @@ public:
     // LOADFMT_DOS4GW)
     virtual MACHINE GetMachine() const;			// Get machine (i.e.
     // MACHINE_Pentium)
-    virtual const char *getFilename() const {
+    virtual const char *getFilename() const
+    {
         return m_pFileName;
     }
     virtual bool isLibrary() const;
@@ -181,7 +188,8 @@ public:
     virtual bool	IsDynamicLinkedProc(ADDRESS uNative);
     virtual const char *GetDynamicProcName(ADDRESS uNative);
 
-    virtual std::map<ADDRESS, std::string> &getSymbols() {
+    virtual std::map<ADDRESS, std::string> &getSymbols()
+    {
         return dlprocptrs;
     }
 

@@ -27,14 +27,16 @@
 // these structs. All information about the sections is contained in these
 // structures.
 
-struct SectionInfo {
+struct SectionInfo
+{
     SectionInfo();		// Constructor
     virtual		~SectionInfo();		// Quell a warning in gcc
 
     // Windows's PE file sections can contain any combination of code, data and bss.
     // As such, it can't be correctly described by SectionInfo, why we need to override
     // the behaviour of (at least) the question "Is this address in BSS".
-    virtual bool isAddressBss(ADDRESS a) const {
+    virtual bool isAddressBss(ADDRESS a) const
+    {
         return bBss != 0;
     }
 

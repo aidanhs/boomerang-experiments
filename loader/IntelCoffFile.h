@@ -13,7 +13,8 @@
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
-struct coff_header {
+struct coff_header
+{
     unsigned short  coff_magic;
     unsigned short  coff_sections;
     unsigned long   coff_timestamp;
@@ -26,7 +27,8 @@ struct coff_header {
 #pragma pack(pop)
 #endif
 
-class IntelCoffFile : public BinaryFile {
+class IntelCoffFile : public BinaryFile
+{
 public:
     //
     // Interface

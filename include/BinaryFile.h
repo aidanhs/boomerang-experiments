@@ -52,26 +52,30 @@
 #define IMPORT_BINARYFILE
 #endif
 // Objective-C stuff
-class ObjcIvar {
+class ObjcIvar
+{
 public:
     std::string name, type;
     unsigned offset;
 };
 
-class ObjcMethod {
+class ObjcMethod
+{
 public:
     std::string name, types;
     ADDRESS addr;
 };
 
-class ObjcClass {
+class ObjcClass
+{
 public:
     std::string name;
     std::map<std::string, ObjcIvar> ivars;
     std::map<std::string, ObjcMethod> methods;
 };
 
-class ObjcModule {
+class ObjcModule
+{
 public:
     std::string name;
     std::map<std::string, ObjcClass> classes;
@@ -89,7 +93,8 @@ typedef BinaryFile *(*get_library_callback_t)(char *name);
 enum LOAD_FMT {LOADFMT_ELF, LOADFMT_PE, LOADFMT_PALM, LOADFMT_PAR, LOADFMT_EXE, LOADFMT_MACHO, LOADFMT_LX, LOADFMT_COFF};
 enum MACHINE {MACHINE_PENTIUM, MACHINE_SPARC, MACHINE_HPRISC, MACHINE_PALM, MACHINE_PPC, MACHINE_ST20, MACHINE_MIPS};
 
-class BinaryFileFactory {
+class BinaryFileFactory
+{
 #ifdef _WIN32
 // The below should be of type HINSTANCE, but #including windows.h here causes problems later compiling the objective C
 // code. So just cast as needed.
@@ -109,7 +114,8 @@ private:
 };
 
 
-class IMPORT_BINARYFILE BinaryFile {
+class IMPORT_BINARYFILE BinaryFile
+{
 
     friend class ArchiveFile;			// So can use the protected Load()
     friend class BinaryFileFactory;	// So can use getTextLimits
@@ -137,7 +143,8 @@ public:
     // Return whether the object can be relocated if necessary
     // (ie if it is not tied to a particular base address). If not, the object
     // must be loaded at the address given by getImageBase()
-    virtual bool	isRelocatable() const {
+    virtual bool	isRelocatable() const
+    {
         return isLibrary();
     }
     // Return a list of library names which the binary file depends on
@@ -152,33 +159,41 @@ public:
     // TODO: Convert this to use platform database of sections, and their info
     //virtual bool isReadOnly(ADDRESS uEntry);
     // returns true if the given address is in a "strings" section
-    virtual bool isStringConstant(ADDRESS uEntry) {
+    virtual bool isStringConstant(ADDRESS uEntry)
+    {
         return false;
     }
-    virtual bool isCFStringConstant(ADDRESS uEntry) {
+    virtual bool isCFStringConstant(ADDRESS uEntry)
+    {
         return false;
     }
-    virtual int			readNative1(ADDRESS a) {
+    virtual int			readNative1(ADDRESS a)
+    {
         return 0;
     }
     // Read 2 bytes from given native address a; considers endianness
-    virtual int			readNative2(ADDRESS a) {
+    virtual int			readNative2(ADDRESS a)
+    {
         return 0;
     }
     // Read 4 bytes from given native address a; considers endianness
-    virtual int			readNative4(ADDRESS a) {
+    virtual int			readNative4(ADDRESS a)
+    {
         return 0;
     }
     // Read 8 bytes from given native address a; considers endianness
-    virtual QWord		readNative8(ADDRESS a) {
+    virtual QWord		readNative8(ADDRESS a)
+    {
         return 0;
     }
     // Read 4 bytes as a float; consider endianness
-    virtual float		readNativeFloat4(ADDRESS a) {
+    virtual float		readNativeFloat4(ADDRESS a)
+    {
         return 0.;
     }
     // Read 8 bytes as a float; consider endianness
-    virtual double		readNativeFloat8(ADDRESS a) {
+    virtual double		readNativeFloat8(ADDRESS a)
+    {
         return 0.;
     }
 
@@ -188,10 +203,12 @@ public:
     // Get an array of addresses of imported function stubs
     // Set number of these to numImports
     virtual ADDRESS* GetImportStubs(int& numImports);
-    virtual	const char *getFilenameSymbolFor(const char *sym) {
+    virtual	const char *getFilenameSymbolFor(const char *sym)
+    {
         return NULL;
     }
-    virtual std::vector<ADDRESS> GetExportedAddresses(bool funcsOnly = true) {
+    virtual std::vector<ADDRESS> GetExportedAddresses(bool funcsOnly = true)
+    {
         return std::vector<ADDRESS>();
     }
 
@@ -201,7 +218,8 @@ public:
 //virtual	ADDRESS	ApplyRelocation(ADDRESS uNative, ADDRESS uWord);
     // Get symbol associated with relocation at address, if any
 //virtual const char* GetRelocSym(ADDRESS uNative, ADDRESS *a = NULL, unsigned int *sz = NULL) { return NULL; }
-    virtual bool IsRelocationAt(ADDRESS uNative) {
+    virtual bool IsRelocationAt(ADDRESS uNative)
+    {
         return false;
     }
 
@@ -247,29 +265,36 @@ public:
 
     virtual bool	RealLoad(const char* sName) = 0;
 
-    virtual void getFunctionSymbols(std::map<std::string, std::map<ADDRESS, std::string> > &syms_in_file) {
+    virtual void getFunctionSymbols(std::map<std::string, std::map<ADDRESS, std::string> > &syms_in_file)
+    {
     }
 
-    virtual std::map<ADDRESS, std::string> &getSymbols() {
+    virtual std::map<ADDRESS, std::string> &getSymbols()
+    {
         return *new std::map<ADDRESS, std::string>();
     }
 
-    virtual std::map<std::string, ObjcModule> &getObjcModules() {
+    virtual std::map<std::string, ObjcModule> &getObjcModules()
+    {
         return *new std::map<std::string, ObjcModule>();
     }
 
-    ADDRESS		getLimitTextLow() {
+    ADDRESS		getLimitTextLow()
+    {
         return limitTextLow;
     }
-    ADDRESS		getLimitTextHigh() {
+    ADDRESS		getLimitTextHigh()
+    {
         return limitTextHigh;
     }
 
-    int			getTextDelta() {
+    int			getTextDelta()
+    {
         return textDelta;
     }
 
-    virtual bool		hasDebugInfo() {
+    virtual bool		hasDebugInfo()
+    {
         return false;
     }
 

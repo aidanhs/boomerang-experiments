@@ -2,7 +2,8 @@
 
 #include "exp.h"
 
-class ExpTest : public CPPUNIT_NS::TestFixture {
+class ExpTest : public CPPUNIT_NS::TestFixture
+{
     CPPUNIT_TEST_SUITE( ExpTest );
     CPPUNIT_TEST( test99 );
     CPPUNIT_TEST( testFlt );

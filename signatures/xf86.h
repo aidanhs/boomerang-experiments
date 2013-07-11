@@ -1,6 +1,7 @@
 
 typedef int OptionValueType;
-typedef struct {
+typedef struct
+{
     double freq;
     int units;
 } ValueUnion;        // this is actually a union of other stuff and this :(
@@ -12,7 +13,8 @@ typedef void *pointer;
 typedef int Bool;
 typedef int INT32;
 
-typedef struct {
+typedef struct
+{
     const char * modname;
     const char * vendor;
     CARD32       _modinfo1_;
@@ -30,14 +32,16 @@ typedef struct {
 typedef pointer ModuleSetupProc(pointer module, pointer opts, int *errmaj, int *errmin);
 typedef void ModuleTearDownProc(pointer module);
 
-typedef struct {
+typedef struct
+{
     XF86ModuleVersionInfo 	*vers;
     ModuleSetupProc             *setup;
     ModuleTearDownProc          *teardown;
 } XF86ModuleData;
 
 
-typedef struct {
+typedef struct
+{
     int                 token;
     const char*         name;
     OptionValueType     type;
@@ -50,7 +54,8 @@ typedef OptionInfoRec OptionInfoRecs[];
 typedef void IdentifyFunc(int flags);
 typedef OptionInfoRecs *AvailableOptionsFunc(int chipid, int bustype);
 
-typedef struct {
+typedef struct
+{
     int driverVersion;
     char *driverName;
     IdentifyFunc *Identify;
@@ -73,7 +78,8 @@ void xf86LoaderRefSymbols(const char *p, ...);
 void LoaderRefSymLists(SymList *p, ...);
 void LoaderRefSymbols(const char *p, ...);
 
-typedef struct {
+typedef struct
+{
     char *                       identifier;
     char *                       driver;
     pointer                      commonOptions;
@@ -81,7 +87,8 @@ typedef struct {
 } IDevRec;
 typedef IDevRec *IDevPtr;
 
-typedef struct {
+typedef struct
+{
     int                 vendor;
     int                 chipType;
     int                 chipRev;
@@ -106,7 +113,8 @@ typedef struct {
 } pciVideoRec;
 typedef pciVideoRec *pciVideoPtr;
 
-typedef struct {
+typedef struct
+{
     int                 frameX0;
     int                 frameY0;
     int                 virtualX;
@@ -122,13 +130,15 @@ typedef struct {
 } DispRec;
 typedef DispRec *DispPtr;
 
-typedef struct {
+typedef struct
+{
     char *              identifier;
     pointer             options;
 } confXvPortRec;
 typedef confXvPortRec *confXvPortPtr;
 
-typedef struct {
+typedef struct
+{
     char *              identifier;
     int                 numports;
     confXvPortPtr       ports;
@@ -136,12 +146,14 @@ typedef struct {
 } confXvAdaptorRec;
 typedef confXvAdaptorRec *confXvAdaptorPtr;
 
-typedef struct {
+typedef struct
+{
     float hi;
     float lo;
 } range;
 
-typedef struct {
+typedef struct
+{
     char *              id;
     char *              vendor;
     char *              model;
@@ -159,7 +171,8 @@ typedef struct {
 } MonRec;
 typedef MonRec *MonPtr;
 
-typedef struct {
+typedef struct
+{
     char *              id;
     int                 screennum;
     int                 defaultdepth;
@@ -176,7 +189,8 @@ typedef struct {
 typedef confScreenRec *confScreenPtr;
 
 
-typedef struct {
+typedef struct
+{
     char *                       identifier;
     char *                       vendor;
     char *                       board;
@@ -215,19 +229,22 @@ typedef unsigned int uint;
 
 pointer Xrealloc(pointer p, uint n);
 
-typedef struct {
+typedef struct
+{
     int                 token;
     const char *        name;
 } SymTabRec;
 typedef SymTabRec *SymTabPtr;
 
-typedef struct {
+typedef struct
+{
     int numChipset;
     int PCIid;
     resRange *resList;
 } PciChipsets;
 
-typedef struct {
+typedef struct
+{
     unsigned long type;
     memType a;
     memType b;
@@ -241,13 +258,15 @@ int xf86MatchPciInstances(const char *driverName, int vendorID,
                           EntityList **foundEntities);
 void Xfree(pointer p);
 
-typedef struct {
+typedef struct
+{
     unsigned char       depth;
     unsigned char       bitsPerPixel;
     unsigned char       scanlinePad;
 } PixmapFormatRec;
 
-typedef struct {
+typedef struct
+{
     int                 myNum;
     ATOM                id;
     short               width;
@@ -342,18 +361,21 @@ typedef ScreenRec *ScreenPtr;
 typedef int Pix24Flags;
 typedef int MessageType;
 
-typedef struct {
+typedef struct
+{
     CARD32 red;
     CARD32 green;
     CARD32 blue;
 } rgb;
-typedef struct {
+typedef struct
+{
     float red;
     float green;
     float blue;
 } Gamma;
 
-typedef struct {
+typedef struct
+{
     DisplayModeRec *    prev;
     DisplayModeRec *    next;
     char *                      name;
@@ -404,14 +426,16 @@ typedef int resType;
 typedef void AccessDisableFunc(void *arg);
 typedef void AccessEnableFunc(void *arg);
 
-typedef struct {
+typedef struct
+{
     AccessDisableFunc *AccessDisable;
     AccessEnableFunc *AccessEnable;
     void *arg;
 } xf86AccessRec;
 typedef xf86AccessRec *xf86AccessPtr;
 
-typedef struct {
+typedef struct
+{
     xf86AccessPtr mem;
     xf86AccessPtr io;
     xf86AccessPtr io_mem;
@@ -419,7 +443,8 @@ typedef struct {
 typedef xf86SetAccessFuncRec *xf86SetAccessFuncPtr;
 
 
-typedef struct {
+typedef struct
+{
     xf86AccessPtr fallback;
     xf86AccessPtr pAccess;
     resType rt;
@@ -428,7 +453,8 @@ typedef struct {
 } EntityAccessRec;
 typedef EntityAccessRec *EntityAccessPtr;
 
-typedef struct {
+typedef struct
+{
     EntityAccessPtr pMemAccess;
     EntityAccessPtr pIoAccess;
 } xf86CurrentAccessRec;
@@ -436,7 +462,8 @@ typedef xf86CurrentAccessRec *xf86CurrentAccessPtr;
 
 typedef pointer DevUnion;
 
-typedef struct {
+typedef struct
+{
     ClockRange *next;
     int                 minClock;
     int                 maxClock;
@@ -449,7 +476,8 @@ typedef struct {
 } ClockRange;
 typedef ClockRange *ClockRangePtr;
 
-typedef struct {
+typedef struct
+{
     ClockRanges *next;
     int                 minClock;
     int                 maxClock;
@@ -464,7 +492,8 @@ typedef struct {
 typedef ClockRanges *ClockRangesPtr;
 
 
-typedef struct {
+typedef struct
+{
     int                 driverVersion;
     char *              driverName;
 
