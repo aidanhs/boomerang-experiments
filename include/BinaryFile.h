@@ -110,7 +110,8 @@ typedef BinaryFile *(*get_library_callback_t)(char *name);
 enum LOAD_FMT {LOADFMT_ELF, LOADFMT_PE, LOADFMT_PALM, LOADFMT_PAR, LOADFMT_EXE};
 enum MACHINE {MACHINE_PENTIUM, MACHINE_SPARC, MACHINE_HPRISC, MACHINE_PALM};
 
-class BinaryFile {
+class BinaryFile
+{
 
     friend class ArchiveFile;			// So can use the protected Load()
 
@@ -144,7 +145,8 @@ public:
     // Return whether the object can be relocated if necessary
     // (ie if it is not tied to a particular base address). If not, the object
     // must be loaded at the address given by getImageBase()
-    virtual bool isRelocatable() const {
+    virtual bool isRelocatable() const
+    {
         return isLibrary();
     }
     // Return a list of library names which the binary file depends on
@@ -164,27 +166,33 @@ public:
     PSectionInfo GetSectionInfoByAddr(ADDRESS uEntry) const;
 
     // returns true if the given address is in a read only section
-    bool isReadOnly(ADDRESS uEntry) {
+    bool isReadOnly(ADDRESS uEntry)
+    {
         return GetSectionInfoByAddr(uEntry)->bReadOnly;
     }
     // Read 2 bytes from given native address a; considers endianness
-    virtual int readNative2(ADDRESS a) {
+    virtual int readNative2(ADDRESS a)
+    {
         return 0;
     }
     // Read 4 bytes from given native address a; considers endianness
-    virtual int readNative4(ADDRESS a) {
+    virtual int readNative4(ADDRESS a)
+    {
         return 0;
     }
     // Read 8 bytes from given native address a; considers endianness
-    virtual QWord readNative8(ADDRESS a) {
+    virtual QWord readNative8(ADDRESS a)
+    {
         return 0;
     }
     // Read 4 bytes as a float; consider endianness
-    virtual float readNativeFloat4(ADDRESS a) {
+    virtual float readNativeFloat4(ADDRESS a)
+    {
         return 0.;
     }
     // Read 8 bytes as a float; consider endianness
-    virtual double readNativeFloat8(ADDRESS a) {
+    virtual double readNativeFloat8(ADDRESS a)
+    {
         return 0.;
     }
 
@@ -250,18 +258,22 @@ public:
 
     virtual bool    RealLoad(const char* sName) = 0;
 
-    virtual std::map<ADDRESS, std::string> &getFuncSymbols() {
+    virtual std::map<ADDRESS, std::string> &getFuncSymbols()
+    {
         return *new std::map<ADDRESS, std::string>();
     }
 
-    ADDRESS getLimitTextLow() {
+    ADDRESS getLimitTextLow()
+    {
         return limitTextLow;
     }
-    ADDRESS getLimitTextHigh() {
+    ADDRESS getLimitTextHigh()
+    {
         return limitTextHigh;
     }
 
-    int getTextDelta() {
+    int getTextDelta()
+    {
         return textDelta;
     }
 

@@ -22,7 +22,8 @@
 
 typedef std::map<Exp*, ADDRESS, lessExpStar> KMAP;
 
-class Analysis {
+class Analysis
+{
 public:
     Analysis() { }
     ~Analysis() { }

@@ -22,7 +22,8 @@
 
 #include "table.h"
 
-class InsNameElem {
+class InsNameElem
+{
 
 public:
     InsNameElem(const char *name);
@@ -44,7 +45,8 @@ protected:
     int value;
 };
 
-class InsOptionElem : public InsNameElem {
+class InsOptionElem : public InsNameElem
+{
 
 public:
     InsOptionElem(const char *name);
@@ -54,7 +56,8 @@ public:
 
 };
 
-class InsListElem : public InsNameElem {
+class InsListElem : public InsNameElem
+{
 
 public:
     InsListElem(const char *name, Table* t, const char *idx);

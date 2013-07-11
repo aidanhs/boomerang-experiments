@@ -4,7 +4,8 @@
 
 #include "exp.h"
 
-class ExpTest : public CppUnit::TestCase {
+class ExpTest : public CppUnit::TestCase
+{
 protected:
     Const*      m_99;
     Location*   m_rof2;

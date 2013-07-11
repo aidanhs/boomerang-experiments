@@ -5,7 +5,8 @@
 #include "type.h"
 
 
-class TypeTest : public CppUnit::TestCase {
+class TypeTest : public CppUnit::TestCase
+{
 protected:
 
 public:

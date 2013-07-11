@@ -38,7 +38,8 @@ typedef struct
 } SymValue;
 
 // Internal elf info
-typedef struct {
+typedef struct
+{
     char  e_ident[4];
     char  e_class;
     char  endianness;
@@ -69,7 +70,8 @@ typedef struct {
 #define ET_DYN  3       // Elf type (dynamic library)
 
 // Program header
-typedef struct {
+typedef struct
+{
     int  p_type;     /* entry type */
     int  p_offset;   /* file offset */
     int  p_vaddr;    /* virtual address */
@@ -81,7 +83,8 @@ typedef struct {
 } Elf32_Phdr;
 
 // Section header
-typedef struct {
+typedef struct
+{
     int   sh_name;
     int   sh_type;
     int   sh_flags;
@@ -100,7 +103,8 @@ typedef struct {
 
 #define SHT_NOBITS		8		// Bss
 
-typedef struct {
+typedef struct
+{
     int      st_name;
     unsigned st_value;
     int      st_size;
@@ -115,9 +119,11 @@ typedef struct {
 #define STT_NOTYPE 0    // Symbol table type: none
 #define STT_FUNC 2      // Symbol table type: function
 
-typedef struct {
+typedef struct
+{
     short d_tag;              /* how to interpret value */
-    union {
+    union
+    {
         int  d_val;
         int  d_ptr;
         int  d_off;
@@ -142,7 +148,8 @@ public:
     virtual void  Close();                        // Close file opened with Open()
     virtual LOAD_FMT GetFormat() const;           // Get format (e.g. LOADFMT_ELF)
     virtual MACHINE GetMachine() const;           // Get machine (e.g. MACHINE_SPARC)
-    virtual const char *getFilename() const {
+    virtual const char *getFilename() const
+    {
         return m_pFileName;
     }
     virtual bool isLibrary() const;

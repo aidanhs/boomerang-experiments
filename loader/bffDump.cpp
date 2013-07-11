@@ -42,11 +42,12 @@ int main(int argc, char* argv[])
 {
     // Usage
 
-    if (argc != 2) {
-        printf ("Usage: %s <filename>\n", argv[0]);
-        printf ("%s dumps the contents of the given executable file", argv[0]);
-        return 1;
-    }
+    if (argc != 2)
+        {
+            printf ("Usage: %s <filename>\n", argv[0]);
+            printf ("%s dumps the contents of the given executable file", argv[0]);
+            return 1;
+        }
 
     // Load the file
 
@@ -76,45 +77,53 @@ int main(int argc, char* argv[])
     // Note: this is traditionally the ".text" section in Elf binaries.
     // In the case of Prc files (Palm), the code section is named "code0".
 
-    for (int i=0; i < pbf->GetNumSections(); i++) {
-        SectionInfo* pSect = pbf->GetSectionInfo(i);
-        if (pSect->bCode) {
-            printf("  Code section:\n");
-            ADDRESS a = pSect->uNativeAddr;
-            unsigned char* p = (unsigned char*) pSect->uHostAddr;
-            for (unsigned off = 0; off < pSect->uSectionSize; ) {
-                printf("%04X: ", a);
-                for (int j=0; (j < 16) && (off < pSect->uSectionSize); j++) {
-                    printf("%02X ", *p++);
-                    a++;
-                    off++;
+    for (int i=0; i < pbf->GetNumSections(); i++)
+        {
+            SectionInfo* pSect = pbf->GetSectionInfo(i);
+            if (pSect->bCode)
+                {
+                    printf("  Code section:\n");
+                    ADDRESS a = pSect->uNativeAddr;
+                    unsigned char* p = (unsigned char*) pSect->uHostAddr;
+                    for (unsigned off = 0; off < pSect->uSectionSize; )
+                        {
+                            printf("%04X: ", a);
+                            for (int j=0; (j < 16) && (off < pSect->uSectionSize); j++)
+                                {
+                                    printf("%02X ", *p++);
+                                    a++;
+                                    off++;
+                                }
+                            printf("\n");
+                        }
+                    printf("\n");
                 }
-                printf("\n");
-            }
-            printf("\n");
         }
-    }
 
     // Display the data section(s) in raw hexadecimal notation
 
-    for (int i=0; i < pbf->GetNumSections(); i++) {
-        SectionInfo* pSect = pbf->GetSectionInfo(i);
-        if (pSect->bData) {
-            printf("  Data section: %s\n", pSect->pSectionName);
-            ADDRESS a = pSect->uNativeAddr;
-            unsigned char* p = (unsigned char*) pSect->uHostAddr;
-            for (unsigned off = 0; off < pSect->uSectionSize; ) {
-                printf("%04X: ", a);
-                for (int j=0; (j < 16) && (off < pSect->uSectionSize); j++) {
-                    printf("%02X ", *p++);
-                    a++;
-                    off++;
+    for (int i=0; i < pbf->GetNumSections(); i++)
+        {
+            SectionInfo* pSect = pbf->GetSectionInfo(i);
+            if (pSect->bData)
+                {
+                    printf("  Data section: %s\n", pSect->pSectionName);
+                    ADDRESS a = pSect->uNativeAddr;
+                    unsigned char* p = (unsigned char*) pSect->uHostAddr;
+                    for (unsigned off = 0; off < pSect->uSectionSize; )
+                        {
+                            printf("%04X: ", a);
+                            for (int j=0; (j < 16) && (off < pSect->uSectionSize); j++)
+                                {
+                                    printf("%02X ", *p++);
+                                    a++;
+                                    off++;
+                                }
+                            printf("\n");
+                        }
+                    printf("\n");
                 }
-                printf("\n");
-            }
-            printf("\n");
         }
-    }
 
     pbf->UnLoad();
     return 0;

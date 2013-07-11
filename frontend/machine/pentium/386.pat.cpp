@@ -25,8 +25,10 @@ int InstructionPatterns::ESP = 4;
 int InstructionPatterns::EBP = 5;
 int InstructionPatterns::ESI = 6;
 int InstructionPatterns::EDI = 7;
-int InstructionPatterns::iterhlp0(ADDRESS& lc, int& regs) {
-    {   for(regs = 0; (PUSHod(lc, ESI, VAL) ||
+int InstructionPatterns::iterhlp0(ADDRESS& lc, int& regs)
+{
+    {
+        for(regs = 0; (PUSHod(lc, ESI, VAL) ||
                        PUSHod(lc, EBX, VAL) ||
                        PUSHod(lc, EDI, VAL)); regs++);
         return (regs >= 1 && 3 >= regs);
@@ -34,8 +36,10 @@ int InstructionPatterns::iterhlp0(ADDRESS& lc, int& regs) {
     return 0;
 }
 
-int InstructionPatterns::iterhlp1(ADDRESS& lc, int& regs) {
-    {   for(regs = 0; (PUSHod(lc, ESI, VAL) ||
+int InstructionPatterns::iterhlp1(ADDRESS& lc, int& regs)
+{
+    {
+        for(regs = 0; (PUSHod(lc, ESI, VAL) ||
                        PUSHod(lc, EBX, VAL) ||
                        PUSHod(lc, EDI, VAL)); regs++);
         return (regs >= 1 && 3 >= regs);
@@ -43,8 +47,10 @@ int InstructionPatterns::iterhlp1(ADDRESS& lc, int& regs) {
     return 0;
 }
 
-int InstructionPatterns::iterhlp2(ADDRESS& lc, int& __loop, int& __loc0) {
-    {   for(__loop = 0; (MOVrmod$E$Disp8(lc, EBX, VAL, __loc0, VAR, EBP, VAL) ||
+int InstructionPatterns::iterhlp2(ADDRESS& lc, int& __loop, int& __loc0)
+{
+    {
+        for(__loop = 0; (MOVrmod$E$Disp8(lc, EBX, VAL, __loc0, VAR, EBP, VAL) ||
                          MOVrmod$E$Disp8(lc, ESI, VAL, __loc0, VAR, EBP, VAL) ||
                          MOVrmod$E$Disp8(lc, EDI, VAL, __loc0, VAR, EBP, VAL)); __loop++);
         return (__loop >= 1 && 3 >= __loop);
@@ -52,8 +58,10 @@ int InstructionPatterns::iterhlp2(ADDRESS& lc, int& __loop, int& __loc0) {
     return 0;
 }
 
-int InstructionPatterns::iterhlp3(ADDRESS& lc, int& __loop, int& __loc0) {
-    {   for(__loop = 0; (POPod(lc, EBX, VAL) ||
+int InstructionPatterns::iterhlp3(ADDRESS& lc, int& __loop, int& __loc0)
+{
+    {
+        for(__loop = 0; (POPod(lc, EBX, VAL) ||
                          POPod(lc, ESI, VAL) ||
                          POPod(lc, EDI, VAL)); __loop++);
         return (__loop >= 1 && 3 >= __loop);
@@ -61,8 +69,10 @@ int InstructionPatterns::iterhlp3(ADDRESS& lc, int& __loop, int& __loc0) {
     return 0;
 }
 
-int InstructionPatterns::iterhlp4(ADDRESS& lc, int& __loop) {
-    {   for(__loop = 0; (POPod(lc, EBX, VAL) ||
+int InstructionPatterns::iterhlp4(ADDRESS& lc, int& __loop)
+{
+    {
+        for(__loop = 0; (POPod(lc, EBX, VAL) ||
                          POPod(lc, ESI, VAL) ||
                          POPod(lc, EDI, VAL)); __loop++);
         return (__loop >= 1 && 3 >= __loop);
@@ -70,8 +80,10 @@ int InstructionPatterns::iterhlp4(ADDRESS& lc, int& __loop) {
     return 0;
 }
 
-int InstructionPatterns::iterhlp5(ADDRESS& lc, int& n) {
-    {   for(n = 0; (POPod(lc, EAX, VAL) ||
+int InstructionPatterns::iterhlp5(ADDRESS& lc, int& n)
+{
+    {
+        for(n = 0; (POPod(lc, EAX, VAL) ||
                     POPod(lc, EBX, VAL) ||
                     POPod(lc, ECX, VAL) ||
                     POPod(lc, EDX, VAL) ||
@@ -83,7 +95,8 @@ int InstructionPatterns::iterhlp5(ADDRESS& lc, int& n) {
     return 0;
 }
 
-bool InstructionPatterns::ADDid$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::ADDid$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -109,113 +122,121 @@ bool InstructionPatterns::ADDid$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, b
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_eb0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
-                        if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 0)
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 0)
 
-                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                            case 0:
-
-                                switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                                case 0:
-                                case 1:
-                                case 2:
-                                case 3:
-                                case 6:
-                                case 7:
-                                    MATCH_w_32_16 = getDword(2 + MATCH_p);
-                                    goto MATCH_label_eb1;
-
-                                    break;
-                                case 4:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7)
-                                    /* index at 16 */ &&
-                                    (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                        MATCH_w_32_56 = getDword(7 + MATCH_p);
-                                        goto MATCH_label_eb3;
-
-                                    } /*opt-block*/
-                                    else {
-                                        MATCH_w_32_24 = getDword(3 + MATCH_p);
-                                        goto MATCH_label_eb2;
-
-                                    } /*opt-block*/
-
-                                    break;
-                                case 5:
-                                    MATCH_w_32_48 = getDword(6 + MATCH_p);
-                                    goto MATCH_label_eb4;
-
-                                    break;
-                                default:
-                                    assert(0);
-                                } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                                break;
-                            case 1:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_32_32 = getDword(4 + MATCH_p);
+                                switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
                                     {
-                                        unsigned _a = 1 + addressToPC(MATCH_p);
-                                        unsigned _b = MATCH_w_32_32 /* i32 at 32 */;
-                                        nextPC = 8 + MATCH_p;
+                                    case 0:
+
+                                        switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                            {
+                                            case 0:
+                                            case 1:
+                                            case 2:
+                                            case 3:
+                                            case 6:
+                                            case 7:
+                                                MATCH_w_32_16 = getDword(2 + MATCH_p);
+                                                goto MATCH_label_eb1;
+
+                                                break;
+                                            case 4:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7)
+                                                /* index at 16 */ &&
+                                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                    {
+                                                        MATCH_w_32_56 = getDword(7 + MATCH_p);
+                                                        goto MATCH_label_eb3;
+
+                                                    } /*opt-block*/
+                                                else
+                                                    {
+                                                        MATCH_w_32_24 = getDword(3 + MATCH_p);
+                                                        goto MATCH_label_eb2;
+
+                                                    } /*opt-block*/
+
+                                                break;
+                                            case 5:
+                                                MATCH_w_32_48 = getDword(6 + MATCH_p);
+                                                goto MATCH_label_eb4;
+
+                                                break;
+                                            default:
+                                                assert(0);
+                                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                        break;
+                                    case 1:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_32_32 = getDword(4 + MATCH_p);
+                                                {
+                                                    unsigned _a = 1 + addressToPC(MATCH_p);
+                                                    unsigned _b = MATCH_w_32_32 /* i32 at 32 */;
+                                                    nextPC = 8 + MATCH_p;
 
 #line 74 "machine/pentium/386.pat.m"
 
 
-                                        if (!Reg(_a, a, a_isVAR)) return false;
+                                                    if (!Reg(_a, a, a_isVAR)) return false;
 
-                                        if (!b_isVAR && (int)_b != b) return false;
-                                        else b = _b;
+                                                    if (!b_isVAR && (int)_b != b) return false;
+                                                    else b = _b;
 
-                                        lc = nextPC;
+                                                    lc = nextPC;
 
-                                        return true;
-
-
+                                                    return true;
 
 
-                                    }
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_32_24 = getDword(3 + MATCH_p);
-                                    goto MATCH_label_eb2;
 
-                                } /*opt-block*/
+                                                }
 
-                                break;
-                            case 2:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_32_56 = getDword(7 + MATCH_p);
-                                    goto MATCH_label_eb3;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_32_24 = getDword(3 + MATCH_p);
+                                                goto MATCH_label_eb2;
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_32_48 = getDword(6 + MATCH_p);
-                                    goto MATCH_label_eb4;
+                                            } /*opt-block*/
 
-                                } /*opt-block*/
+                                        break;
+                                    case 2:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_32_56 = getDword(7 + MATCH_p);
+                                                goto MATCH_label_eb3;
 
-                                break;
-                            case 3:
-                                MATCH_w_32_16 = getDword(2 + MATCH_p);
-                                goto MATCH_label_eb1;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_32_48 = getDword(6 + MATCH_p);
+                                                goto MATCH_label_eb4;
 
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
-                        else
-                            goto MATCH_label_eb0;  /*opt-block+*/
+                                            } /*opt-block*/
 
-                    } /*opt-block*/
+                                        break;
+                                    case 3:
+                                        MATCH_w_32_16 = getDword(2 + MATCH_p);
+                                        goto MATCH_label_eb1;
+
+                                        break;
+                                    default:
+                                        assert(0);
+                                    } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                            else
+                                goto MATCH_label_eb0;  /*opt-block+*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_eb0;  /*opt-block+*/
             else
@@ -345,7 +366,8 @@ MATCH_finished_eb:
 
 #line 82 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::ADDiodb$E$Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR, int& c, bool c_isVAR) {
+bool InstructionPatterns::ADDiodb$E$Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR, int& c, bool c_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -370,114 +392,122 @@ bool InstructionPatterns::ADDiodb$E$Base8(ADDRESS& lc, int& a, bool a_isVAR, int
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_db0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
-                        if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 0)
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 0)
 
-                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                            case 0:
-
-                                switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                                case 0:
-                                case 1:
-                                case 2:
-                                case 3:
-                                case 6:
-                                case 7:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    goto MATCH_label_db1;
-
-                                    break;
-                                case 4:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7)
-                                    /* index at 16 */ &&
-                                    (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                        MATCH_w_8_56 = getByte(7 + MATCH_p);
-                                        goto MATCH_label_db3;
-
-                                    } /*opt-block*/
-                                    else {
-                                        MATCH_w_8_24 = getByte(3 + MATCH_p);
-                                        goto MATCH_label_db2;
-
-                                    } /*opt-block*/
-
-                                    break;
-                                case 5:
-                                    MATCH_w_8_48 = getByte(6 + MATCH_p);
-                                    goto MATCH_label_db4;
-
-                                    break;
-                                default:
-                                    assert(0);
-                                } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                                break;
-                            case 1:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_8_32 = getByte(4 + MATCH_p);
+                                switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
                                     {
-                                        unsigned _a = 1 + addressToPC(MATCH_p);
-                                        int /* [~128..127] */ _b =
-                                            sign_extend((MATCH_w_8_32 & 0xff) /* i8 at 32 */, 8);
-                                        nextPC = 5 + MATCH_p;
+                                    case 0:
+
+                                        switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                            {
+                                            case 0:
+                                            case 1:
+                                            case 2:
+                                            case 3:
+                                            case 6:
+                                            case 7:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                goto MATCH_label_db1;
+
+                                                break;
+                                            case 4:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7)
+                                                /* index at 16 */ &&
+                                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                    {
+                                                        MATCH_w_8_56 = getByte(7 + MATCH_p);
+                                                        goto MATCH_label_db3;
+
+                                                    } /*opt-block*/
+                                                else
+                                                    {
+                                                        MATCH_w_8_24 = getByte(3 + MATCH_p);
+                                                        goto MATCH_label_db2;
+
+                                                    } /*opt-block*/
+
+                                                break;
+                                            case 5:
+                                                MATCH_w_8_48 = getByte(6 + MATCH_p);
+                                                goto MATCH_label_db4;
+
+                                                break;
+                                            default:
+                                                assert(0);
+                                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                        break;
+                                    case 1:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_8_32 = getByte(4 + MATCH_p);
+                                                {
+                                                    unsigned _a = 1 + addressToPC(MATCH_p);
+                                                    int /* [~128..127] */ _b =
+                                                        sign_extend((MATCH_w_8_32 & 0xff) /* i8 at 32 */, 8);
+                                                    nextPC = 5 + MATCH_p;
 
 #line 86 "machine/pentium/386.pat.m"
 
 
-                                        if (!E$Base8(_a, a, a_isVAR, b, b_isVAR)) return false;
+                                                    if (!E$Base8(_a, a, a_isVAR, b, b_isVAR)) return false;
 
-                                        if (!c_isVAR && (int)_b != c) return false;
-                                        else c = _b;
+                                                    if (!c_isVAR && (int)_b != c) return false;
+                                                    else c = _b;
 
-                                        lc = nextPC;
+                                                    lc = nextPC;
 
-                                        return true;
-
-
+                                                    return true;
 
 
-                                    }
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_8_24 = getByte(3 + MATCH_p);
-                                    goto MATCH_label_db2;
 
-                                } /*opt-block*/
+                                                }
 
-                                break;
-                            case 2:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_8_56 = getByte(7 + MATCH_p);
-                                    goto MATCH_label_db3;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_8_24 = getByte(3 + MATCH_p);
+                                                goto MATCH_label_db2;
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_8_48 = getByte(6 + MATCH_p);
-                                    goto MATCH_label_db4;
+                                            } /*opt-block*/
 
-                                } /*opt-block*/
+                                        break;
+                                    case 2:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_8_56 = getByte(7 + MATCH_p);
+                                                goto MATCH_label_db3;
 
-                                break;
-                            case 3:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                goto MATCH_label_db1;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_8_48 = getByte(6 + MATCH_p);
+                                                goto MATCH_label_db4;
 
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
-                        else
-                            goto MATCH_label_db0;  /*opt-block+*/
+                                            } /*opt-block*/
 
-                    } /*opt-block*/
+                                        break;
+                                    case 3:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        goto MATCH_label_db1;
+
+                                        break;
+                                    default:
+                                        assert(0);
+                                    } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                            else
+                                goto MATCH_label_db0;  /*opt-block+*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_db0;  /*opt-block+*/
             else
@@ -611,7 +641,8 @@ MATCH_finished_db:
 
 #line 94 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::ADDiodb$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::ADDiodb$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -636,114 +667,122 @@ bool InstructionPatterns::ADDiodb$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b,
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_cb0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
-                        if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 0)
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 0)
 
-                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                            case 0:
-
-                                switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                                case 0:
-                                case 1:
-                                case 2:
-                                case 3:
-                                case 6:
-                                case 7:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    goto MATCH_label_cb1;
-
-                                    break;
-                                case 4:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7)
-                                    /* index at 16 */ &&
-                                    (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                        MATCH_w_8_56 = getByte(7 + MATCH_p);
-                                        goto MATCH_label_cb3;
-
-                                    } /*opt-block*/
-                                    else {
-                                        MATCH_w_8_24 = getByte(3 + MATCH_p);
-                                        goto MATCH_label_cb2;
-
-                                    } /*opt-block*/
-
-                                    break;
-                                case 5:
-                                    MATCH_w_8_48 = getByte(6 + MATCH_p);
-                                    goto MATCH_label_cb4;
-
-                                    break;
-                                default:
-                                    assert(0);
-                                } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                                break;
-                            case 1:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_8_32 = getByte(4 + MATCH_p);
+                                switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
                                     {
-                                        unsigned _a = 1 + addressToPC(MATCH_p);
-                                        int /* [~128..127] */ _b =
-                                            sign_extend((MATCH_w_8_32 & 0xff) /* i8 at 32 */, 8);
-                                        nextPC = 5 + MATCH_p;
+                                    case 0:
+
+                                        switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                            {
+                                            case 0:
+                                            case 1:
+                                            case 2:
+                                            case 3:
+                                            case 6:
+                                            case 7:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                goto MATCH_label_cb1;
+
+                                                break;
+                                            case 4:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7)
+                                                /* index at 16 */ &&
+                                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                    {
+                                                        MATCH_w_8_56 = getByte(7 + MATCH_p);
+                                                        goto MATCH_label_cb3;
+
+                                                    } /*opt-block*/
+                                                else
+                                                    {
+                                                        MATCH_w_8_24 = getByte(3 + MATCH_p);
+                                                        goto MATCH_label_cb2;
+
+                                                    } /*opt-block*/
+
+                                                break;
+                                            case 5:
+                                                MATCH_w_8_48 = getByte(6 + MATCH_p);
+                                                goto MATCH_label_cb4;
+
+                                                break;
+                                            default:
+                                                assert(0);
+                                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                        break;
+                                    case 1:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_8_32 = getByte(4 + MATCH_p);
+                                                {
+                                                    unsigned _a = 1 + addressToPC(MATCH_p);
+                                                    int /* [~128..127] */ _b =
+                                                        sign_extend((MATCH_w_8_32 & 0xff) /* i8 at 32 */, 8);
+                                                    nextPC = 5 + MATCH_p;
 
 #line 98 "machine/pentium/386.pat.m"
 
 
-                                        if (!Reg(_a, a, a_isVAR)) return false;
+                                                    if (!Reg(_a, a, a_isVAR)) return false;
 
-                                        if (!b_isVAR && (int)_b != b) return false;
-                                        else b = _b;
+                                                    if (!b_isVAR && (int)_b != b) return false;
+                                                    else b = _b;
 
-                                        lc = nextPC;
+                                                    lc = nextPC;
 
-                                        return true;
-
-
+                                                    return true;
 
 
-                                    }
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_8_24 = getByte(3 + MATCH_p);
-                                    goto MATCH_label_cb2;
 
-                                } /*opt-block*/
+                                                }
 
-                                break;
-                            case 2:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_8_56 = getByte(7 + MATCH_p);
-                                    goto MATCH_label_cb3;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_8_24 = getByte(3 + MATCH_p);
+                                                goto MATCH_label_cb2;
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_8_48 = getByte(6 + MATCH_p);
-                                    goto MATCH_label_cb4;
+                                            } /*opt-block*/
 
-                                } /*opt-block*/
+                                        break;
+                                    case 2:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_8_56 = getByte(7 + MATCH_p);
+                                                goto MATCH_label_cb3;
 
-                                break;
-                            case 3:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                goto MATCH_label_cb1;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_8_48 = getByte(6 + MATCH_p);
+                                                goto MATCH_label_cb4;
 
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
-                        else
-                            goto MATCH_label_cb0;  /*opt-block+*/
+                                            } /*opt-block*/
 
-                    } /*opt-block*/
+                                        break;
+                                    case 3:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        goto MATCH_label_cb1;
+
+                                        break;
+                                    default:
+                                        assert(0);
+                                    } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                            else
+                                goto MATCH_label_cb0;  /*opt-block+*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_cb0;  /*opt-block+*/
             else
@@ -877,7 +916,8 @@ MATCH_finished_cb:
 
 #line 105 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::Base(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::Base(ADDRESS& lc, int& a, bool a_isVAR)
+{
 
 
 #line 107 "machine/pentium/386.pat.m"
@@ -909,20 +949,20 @@ bool InstructionPatterns::Base(ADDRESS& lc, int& a, bool a_isVAR) {
             /* mod at 0 */ && (MATCH_w_8_0 >> 6 & 0x3) /* mod at 0 */ < 4))
                 goto MATCH_label_bb0;  /*opt-block+*/
             else {
-                unsigned _a = (MATCH_w_8_8 & 0x7) /* base at 8 */;
+                    unsigned _a = (MATCH_w_8_8 & 0x7) /* base at 8 */;
 
 #line 109 "machine/pentium/386.pat.m"
 
 
-                if (!a_isVAR && (int)_a != a) return false;
-                else a = _a;
+                    if (!a_isVAR && (int)_a != a) return false;
+                    else a = _a;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
 
         } goto MATCH_finished_bb;
 
@@ -944,7 +984,8 @@ MATCH_finished_bb:
 
 #line 114 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
 
 
 #line 116 "machine/pentium/386.pat.m"
@@ -962,29 +1003,30 @@ bool InstructionPatterns::Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool 
             MATCH_w_8_8 = getByte(1 + MATCH_p);
             if ((MATCH_w_8_0 >> 6 & 0x3) /* mod at 0 */ == 1 &&
             (MATCH_w_8_0 & 0x7) /* r_m at 0 */ == 4 &&
-            (MATCH_w_8_8 >> 3 & 0x7) /* index at 8 */ == 4) {
-                MATCH_w_8_16 = getByte(2 + MATCH_p);
+            (MATCH_w_8_8 >> 3 & 0x7) /* index at 8 */ == 4)
                 {
-                    unsigned _a = (MATCH_w_8_16 & 0xff) /* i8 at 16 */;
-                    unsigned _b = (MATCH_w_8_8 & 0x7) /* base at 8 */;
+                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                    {
+                        unsigned _a = (MATCH_w_8_16 & 0xff) /* i8 at 16 */;
+                        unsigned _b = (MATCH_w_8_8 & 0x7) /* base at 8 */;
 
 #line 118 "machine/pentium/386.pat.m"
 
 
-                    if (!a_isVAR && (int)_a != a) return false;
-                    else a = _a;
+                        if (!a_isVAR && (int)_a != a) return false;
+                        else a = _a;
 
-                    if (!b_isVAR && (int)_b != b) return false;
-                    else b = _b;
+                        if (!b_isVAR && (int)_b != b) return false;
+                        else b = _b;
 
-                    return true;
-
-
+                        return true;
 
 
-                }
 
-            } /*opt-block*/
+
+                    }
+
+                } /*opt-block*/
             else
                 goto MATCH_label_ab0;  /*opt-block+*/
 
@@ -1008,7 +1050,8 @@ MATCH_finished_ab:
 
 #line 125 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::CALL$Jvod(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::CALL$Jvod(ADDRESS& lc, int& a, bool a_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -1025,28 +1068,29 @@ bool InstructionPatterns::CALL$Jvod(ADDRESS& lc, int& a, bool a_isVAR) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 14 &&
             (MATCH_w_8_0 & 0x7) /* col at 0 */ == 0 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                MATCH_w_32_8 = getDword(1 + MATCH_p);
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                 {
-                    unsigned _a = 5 + MATCH_w_32_8 /* i32 at 8 */ + addressToPC(MATCH_p);
-                    nextPC = 5 + MATCH_p;
+                    MATCH_w_32_8 = getDword(1 + MATCH_p);
+                    {
+                        unsigned _a = 5 + MATCH_w_32_8 /* i32 at 8 */ + addressToPC(MATCH_p);
+                        nextPC = 5 + MATCH_p;
 
 #line 129 "machine/pentium/386.pat.m"
 
 
-                    if (!a_isVAR && (int)_a != a) return false;
-                    else a = _a;
+                        if (!a_isVAR && (int)_a != a) return false;
+                        else a = _a;
 
-                    lc = nextPC;
+                        lc = nextPC;
 
-                    return true;
-
-
+                        return true;
 
 
-                }
 
-            } /*opt-block*/
+
+                    }
+
+                } /*opt-block*/
             else
                 goto MATCH_label_z0;  /*opt-block+*/
 
@@ -1074,7 +1118,8 @@ MATCH_finished_z:
 
 #line 136 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::CLD(ADDRESS& lc) {
+bool InstructionPatterns::CLD(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -1090,20 +1135,21 @@ bool InstructionPatterns::CLD(ADDRESS& lc) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 4 &&
             (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1 &&
-            (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 15) {
-                nextPC = 1 + MATCH_p;
+            (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 15)
+                {
+                    nextPC = 1 + MATCH_p;
 
 #line 140 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
                 goto MATCH_label_y0;  /*opt-block+*/
 
@@ -1131,7 +1177,8 @@ MATCH_finished_y:
 
 #line 145 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
 
 
 #line 147 "machine/pentium/386.pat.m"
@@ -1151,29 +1198,29 @@ bool InstructionPatterns::Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool 
             /* mod at 0 */ == 1 && (MATCH_w_8_0 & 0x7) /* r_m at 0 */ == 4)
                 goto MATCH_label_x0;  /*opt-block+*/
             else {
-                MATCH_w_8_8 = getByte(1 + MATCH_p);
-                {
-                    int /* [~128..127] */ _a =
-                    sign_extend((MATCH_w_8_8 & 0xff) /* i8 at 8 */, 8);
-                    unsigned _b = (MATCH_w_8_0 & 0x7) /* r_m at 0 */;
+                    MATCH_w_8_8 = getByte(1 + MATCH_p);
+                    {
+                        int /* [~128..127] */ _a =
+                        sign_extend((MATCH_w_8_8 & 0xff) /* i8 at 8 */, 8);
+                        unsigned _b = (MATCH_w_8_0 & 0x7) /* r_m at 0 */;
 
 #line 149 "machine/pentium/386.pat.m"
 
 
-                    if (!a_isVAR && (int)_a != a) return false;
-                    else a = _a;
+                        if (!a_isVAR && (int)_a != a) return false;
+                        else a = _a;
 
-                    if (!b_isVAR && (int)_b != b) return false;
-                    else b = _b;
+                        if (!b_isVAR && (int)_b != b) return false;
+                        else b = _b;
 
-                    return true;
-
-
+                        return true;
 
 
-                }
 
-            } /*opt-block*/
+
+                    }
+
+                } /*opt-block*/
 
         } goto MATCH_finished_x;
 
@@ -1195,7 +1242,8 @@ MATCH_finished_x:
 
 #line 155 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::E$Base(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::E$Base(ADDRESS& lc, int& a, bool a_isVAR)
+{
 
 
 #line 157 "machine/pentium/386.pat.m"
@@ -1247,7 +1295,8 @@ MATCH_finished_w:
 
 #line 164 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::E$Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::E$Base8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
 
 
 #line 166 "machine/pentium/386.pat.m"
@@ -1299,7 +1348,8 @@ MATCH_finished_v:
 
 #line 173 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::E$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::E$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
 
 
 #line 175 "machine/pentium/386.pat.m"
@@ -1351,7 +1401,8 @@ MATCH_finished_u:
 
 #line 183 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::JMP$Jvod(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::JMP$Jvod(ADDRESS& lc, int& a, bool a_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -1368,28 +1419,29 @@ bool InstructionPatterns::JMP$Jvod(ADDRESS& lc, int& a, bool a_isVAR) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 1 &&
             (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 14 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                MATCH_w_32_8 = getDword(1 + MATCH_p);
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                 {
-                    unsigned _a = 5 + MATCH_w_32_8 /* i32 at 8 */ + addressToPC(MATCH_p);
-                    nextPC = 5 + MATCH_p;
+                    MATCH_w_32_8 = getDword(1 + MATCH_p);
+                    {
+                        unsigned _a = 5 + MATCH_w_32_8 /* i32 at 8 */ + addressToPC(MATCH_p);
+                        nextPC = 5 + MATCH_p;
 
 #line 187 "machine/pentium/386.pat.m"
 
 
-                    if (!a_isVAR && (int)_a != a) return false;
-                    else a = _a;
+                        if (!a_isVAR && (int)_a != a) return false;
+                        else a = _a;
 
-                    lc = nextPC;
+                        lc = nextPC;
 
-                    return true;
-
-
+                        return true;
 
 
-                }
 
-            } /*opt-block*/
+
+                    }
+
+                } /*opt-block*/
             else
                 goto MATCH_label_t0;  /*opt-block+*/
 
@@ -1417,7 +1469,8 @@ MATCH_finished_t:
 
 #line 194 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::LEAVE(ADDRESS& lc) {
+bool InstructionPatterns::LEAVE(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -1433,20 +1486,21 @@ bool InstructionPatterns::LEAVE(ADDRESS& lc) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 1 &&
             (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 12 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                nextPC = 1 + MATCH_p;
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
+                {
+                    nextPC = 1 + MATCH_p;
 
 #line 198 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
                 goto MATCH_label_s0;  /*opt-block+*/
 
@@ -1474,7 +1528,8 @@ MATCH_finished_s:
 
 #line 204 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::LEAod$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR, int& c, bool c_isVAR) {
+bool InstructionPatterns::LEAod$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR, int& c, bool c_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -1492,108 +1547,112 @@ bool InstructionPatterns::LEAod$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b,
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 5)
                 if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 8)
-                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
+                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
+                        {
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
 
-                        switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                        case 0:
+                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
+                                {
+                                case 0:
 
-                            switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 6:
-                            case 7:
-                            {
-                                unsigned _a =
-                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                unsigned _b = 1 + addressToPC(MATCH_p);
-                                nextPC = 2 + MATCH_p;
-
-#line 208 "machine/pentium/386.pat.m"
-
-
-                                if (!a_isVAR && (int)_a != a) return false;
-                                else a = _a;
-
-                                if (!Disp8(_b, b, b_isVAR, c, c_isVAR)) return false;
-
-                                lc = nextPC;
-
-                                return true;
-
-
-
-
-                            }
-
-                            break;
-                            case 4:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                    goto MATCH_label_r2;  /*opt-block+*/
-                                else
-                                    goto MATCH_label_r1;  /*opt-block+*/
-
-                                break;
-                            case 5:
-                                goto MATCH_label_r3;
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                            break;
-                        case 1:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                unsigned _a =
-                                    (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                unsigned _b = 1 + addressToPC(MATCH_p);
-                                nextPC = 4 + MATCH_p;
+                                    switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                        {
+                                        case 0:
+                                        case 1:
+                                        case 2:
+                                        case 3:
+                                        case 6:
+                                        case 7:
+                                        {
+                                            unsigned _a =
+                                            (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            unsigned _b = 1 + addressToPC(MATCH_p);
+                                            nextPC = 2 + MATCH_p;
 
 #line 208 "machine/pentium/386.pat.m"
 
 
-                                if (!a_isVAR && (int)_a != a) return false;
-                                else a = _a;
+                                            if (!a_isVAR && (int)_a != a) return false;
+                                            else a = _a;
 
-                                if (!Disp8(_b, b, b_isVAR, c, c_isVAR)) return false;
+                                            if (!Disp8(_b, b, b_isVAR, c, c_isVAR)) return false;
 
-                                lc = nextPC;
+                                            lc = nextPC;
 
-                                return true;
-
-
+                                            return true;
 
 
-                            } /*opt-block*//*opt-block+*/
-                            else
-                                goto MATCH_label_r1;  /*opt-block+*/
 
-                            break;
-                        case 2:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                goto MATCH_label_r2;  /*opt-block+*/
-                            else
-                                goto MATCH_label_r3;  /*opt-block+*/
 
-                            break;
-                        case 3:
-                            goto MATCH_label_r0;
-                            break;
-                        default:
-                            assert(0);
-                        } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                                        }
 
-                    } /*opt-block*/
+                                        break;
+                                        case 4:
+                                            MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                            if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                goto MATCH_label_r2;  /*opt-block+*/
+                                            else
+                                                goto MATCH_label_r1;  /*opt-block+*/
+
+                                            break;
+                                        case 5:
+                                            goto MATCH_label_r3;
+                                            break;
+                                        default:
+                                            assert(0);
+                                        } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                    break;
+                                case 1:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        {
+                                            unsigned _a =
+                                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            unsigned _b = 1 + addressToPC(MATCH_p);
+                                            nextPC = 4 + MATCH_p;
+
+#line 208 "machine/pentium/386.pat.m"
+
+
+                                            if (!a_isVAR && (int)_a != a) return false;
+                                            else a = _a;
+
+                                            if (!Disp8(_b, b, b_isVAR, c, c_isVAR)) return false;
+
+                                            lc = nextPC;
+
+                                            return true;
+
+
+
+
+                                        } /*opt-block*//*opt-block+*/
+                                    else
+                                        goto MATCH_label_r1;  /*opt-block+*/
+
+                                    break;
+                                case 2:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        goto MATCH_label_r2;  /*opt-block+*/
+                                    else
+                                        goto MATCH_label_r3;  /*opt-block+*/
+
+                                    break;
+                                case 3:
+                                    goto MATCH_label_r0;
+                                    break;
+                                default:
+                                    assert(0);
+                                } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+
+                        } /*opt-block*/
                     else
                         goto MATCH_label_r0;  /*opt-block+*/
                 else
@@ -1700,7 +1759,8 @@ MATCH_finished_r:
 
 #line 216 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::MOVSB(ADDRESS& lc) {
+bool InstructionPatterns::MOVSB(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -1716,20 +1776,21 @@ bool InstructionPatterns::MOVSB(ADDRESS& lc) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 4 &&
             (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 10 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0) {
-                nextPC = 1 + MATCH_p;
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0)
+                {
+                    nextPC = 1 + MATCH_p;
 
 #line 220 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
                 goto MATCH_label_q0;  /*opt-block+*/
 
@@ -1757,7 +1818,8 @@ MATCH_finished_q:
 
 #line 226 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::MOVSvow(ADDRESS& lc) {
+bool InstructionPatterns::MOVSvow(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -1803,19 +1865,19 @@ bool InstructionPatterns::MOVSvow(ADDRESS& lc) {
             (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                 goto MATCH_label_p0;  /*opt-block+*/
             else {
-                nextPC = 2 + MATCH_p;
+                    nextPC = 2 + MATCH_p;
 
 #line 230 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
 
         } goto MATCH_finished_p;
 
@@ -1841,7 +1903,8 @@ MATCH_finished_p:
 
 #line 236 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::MOVid(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::MOVid(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -1857,32 +1920,33 @@ bool InstructionPatterns::MOVid(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool 
         {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 11 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                MATCH_w_32_8 = getDword(1 + MATCH_p);
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                 {
-                    unsigned _a = (MATCH_w_8_0 & 0x7) /* r32 at 0 */;
-                    unsigned _b = MATCH_w_32_8 /* i32 at 8 */;
-                    nextPC = 5 + MATCH_p;
+                    MATCH_w_32_8 = getDword(1 + MATCH_p);
+                    {
+                        unsigned _a = (MATCH_w_8_0 & 0x7) /* r32 at 0 */;
+                        unsigned _b = MATCH_w_32_8 /* i32 at 8 */;
+                        nextPC = 5 + MATCH_p;
 
 #line 240 "machine/pentium/386.pat.m"
 
 
-                    if (!a_isVAR && (int)_a != a) return false;
-                    else a = _a;
+                        if (!a_isVAR && (int)_a != a) return false;
+                        else a = _a;
 
-                    if (!b_isVAR && (int)_b != b) return false;
-                    else b = _b;
+                        if (!b_isVAR && (int)_b != b) return false;
+                        else b = _b;
 
-                    lc = nextPC;
+                        lc = nextPC;
 
-                    return true;
-
-
+                        return true;
 
 
-                }
 
-            } /*opt-block*/
+
+                    }
+
+                } /*opt-block*/
             else
                 goto MATCH_label_o0;  /*opt-block+*/
 
@@ -1910,7 +1974,8 @@ MATCH_finished_o:
 
 #line 248 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::MOVmrod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::MOVmrod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -1928,86 +1993,90 @@ bool InstructionPatterns::MOVmrod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b,
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 1)
                 if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 8)
-                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
+                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
+                        {
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
 
-                        switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                        case 0:
+                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
+                                {
+                                case 0:
 
-                            switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 6:
-                            case 7:
-                                goto MATCH_label_n1;
-                                break;
-                            case 4:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                    goto MATCH_label_n3;  /*opt-block+*/
-                                else
-                                    goto MATCH_label_n2;  /*opt-block+*/
+                                    switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                        {
+                                        case 0:
+                                        case 1:
+                                        case 2:
+                                        case 3:
+                                        case 6:
+                                        case 7:
+                                            goto MATCH_label_n1;
+                                            break;
+                                        case 4:
+                                            MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                            if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                            (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                goto MATCH_label_n3;  /*opt-block+*/
+                                            else
+                                                goto MATCH_label_n2;  /*opt-block+*/
 
-                                break;
-                            case 5:
-                                goto MATCH_label_n4;
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                            break;
-                        case 1:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                unsigned _a = 1 + addressToPC(MATCH_p);
-                                unsigned _b =
-                                    (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                nextPC = 4 + MATCH_p;
+                                            break;
+                                        case 5:
+                                            goto MATCH_label_n4;
+                                            break;
+                                        default:
+                                            assert(0);
+                                        } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                    break;
+                                case 1:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        {
+                                            unsigned _a = 1 + addressToPC(MATCH_p);
+                                            unsigned _b =
+                                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            nextPC = 4 + MATCH_p;
 
 #line 252 "machine/pentium/386.pat.m"
 
 
-                                if (!Reg(_a, a, a_isVAR)) return false;
+                                            if (!Reg(_a, a, a_isVAR)) return false;
 
-                                if (!b_isVAR && (int)_b != b) return false;
-                                else b = _b;
+                                            if (!b_isVAR && (int)_b != b) return false;
+                                            else b = _b;
 
-                                lc = nextPC;
+                                            lc = nextPC;
 
-                                return true;
-
-
+                                            return true;
 
 
-                            } /*opt-block*//*opt-block+*/
-                            else
-                                goto MATCH_label_n2;  /*opt-block+*/
 
-                            break;
-                        case 2:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                goto MATCH_label_n3;  /*opt-block+*/
-                            else
-                                goto MATCH_label_n4;  /*opt-block+*/
 
-                            break;
-                        case 3:
-                            goto MATCH_label_n1;
-                            break;
-                        default:
-                            assert(0);
-                        } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                                        } /*opt-block*//*opt-block+*/
+                                    else
+                                        goto MATCH_label_n2;  /*opt-block+*/
 
-                    } /*opt-block*/
+                                    break;
+                                case 2:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        goto MATCH_label_n3;  /*opt-block+*/
+                                    else
+                                        goto MATCH_label_n4;  /*opt-block+*/
+
+                                    break;
+                                case 3:
+                                    goto MATCH_label_n1;
+                                    break;
+                                default:
+                                    assert(0);
+                                } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+
+                        } /*opt-block*/
                     else
                         goto MATCH_label_n0;  /*opt-block+*/
                 else
@@ -2139,7 +2208,8 @@ MATCH_finished_n:
 
 #line 260 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::MOVrmod$E$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR, int& c, bool c_isVAR) {
+bool InstructionPatterns::MOVrmod$E$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR, int& c, bool c_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -2157,86 +2227,90 @@ bool InstructionPatterns::MOVrmod$E$Disp8(ADDRESS& lc, int& a, bool a_isVAR, int
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 3)
                 if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 8)
-                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
+                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
+                        {
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
 
-                        switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                        case 0:
+                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
+                                {
+                                case 0:
 
-                            switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 6:
-                            case 7:
-                                goto MATCH_label_m1;
-                                break;
-                            case 4:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                    goto MATCH_label_m3;  /*opt-block+*/
-                                else
-                                    goto MATCH_label_m2;  /*opt-block+*/
+                                    switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                        {
+                                        case 0:
+                                        case 1:
+                                        case 2:
+                                        case 3:
+                                        case 6:
+                                        case 7:
+                                            goto MATCH_label_m1;
+                                            break;
+                                        case 4:
+                                            MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                            if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                            (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                goto MATCH_label_m3;  /*opt-block+*/
+                                            else
+                                                goto MATCH_label_m2;  /*opt-block+*/
 
-                                break;
-                            case 5:
-                                goto MATCH_label_m4;
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                            break;
-                        case 1:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                unsigned _a =
-                                    (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                unsigned _b = 1 + addressToPC(MATCH_p);
-                                nextPC = 4 + MATCH_p;
+                                            break;
+                                        case 5:
+                                            goto MATCH_label_m4;
+                                            break;
+                                        default:
+                                            assert(0);
+                                        } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                    break;
+                                case 1:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        {
+                                            unsigned _a =
+                                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            unsigned _b = 1 + addressToPC(MATCH_p);
+                                            nextPC = 4 + MATCH_p;
 
 #line 264 "machine/pentium/386.pat.m"
 
 
-                                if (!a_isVAR && (int)_a != a) return false;
-                                else a = _a;
+                                            if (!a_isVAR && (int)_a != a) return false;
+                                            else a = _a;
 
-                                if (!E$Disp8(_b, b, b_isVAR, c, c_isVAR)) return false;
+                                            if (!E$Disp8(_b, b, b_isVAR, c, c_isVAR)) return false;
 
-                                lc = nextPC;
+                                            lc = nextPC;
 
-                                return true;
-
-
+                                            return true;
 
 
-                            } /*opt-block*//*opt-block+*/
-                            else
-                                goto MATCH_label_m2;  /*opt-block+*/
 
-                            break;
-                        case 2:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                goto MATCH_label_m3;  /*opt-block+*/
-                            else
-                                goto MATCH_label_m4;  /*opt-block+*/
 
-                            break;
-                        case 3:
-                            goto MATCH_label_m1;
-                            break;
-                        default:
-                            assert(0);
-                        } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                                        } /*opt-block*//*opt-block+*/
+                                    else
+                                        goto MATCH_label_m2;  /*opt-block+*/
 
-                    } /*opt-block*/
+                                    break;
+                                case 2:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        goto MATCH_label_m3;  /*opt-block+*/
+                                    else
+                                        goto MATCH_label_m4;  /*opt-block+*/
+
+                                    break;
+                                case 3:
+                                    goto MATCH_label_m1;
+                                    break;
+                                default:
+                                    assert(0);
+                                } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+
+                        } /*opt-block*/
                     else
                         goto MATCH_label_m0;  /*opt-block+*/
                 else
@@ -2368,7 +2442,8 @@ MATCH_finished_m:
 
 #line 272 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::MOVrmod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::MOVrmod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -2386,86 +2461,90 @@ bool InstructionPatterns::MOVrmod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b,
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 3)
                 if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 8)
-                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
+                    if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
+                        {
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
 
-                        switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                        case 0:
+                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
+                                {
+                                case 0:
 
-                            switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 6:
-                            case 7:
-                                goto MATCH_label_l1;
-                                break;
-                            case 4:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                    goto MATCH_label_l3;  /*opt-block+*/
-                                else
-                                    goto MATCH_label_l2;  /*opt-block+*/
+                                    switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                        {
+                                        case 0:
+                                        case 1:
+                                        case 2:
+                                        case 3:
+                                        case 6:
+                                        case 7:
+                                            goto MATCH_label_l1;
+                                            break;
+                                        case 4:
+                                            MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                            if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                            (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                goto MATCH_label_l3;  /*opt-block+*/
+                                            else
+                                                goto MATCH_label_l2;  /*opt-block+*/
 
-                                break;
-                            case 5:
-                                goto MATCH_label_l4;
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                            break;
-                        case 1:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                unsigned _a =
-                                    (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                unsigned _b = 1 + addressToPC(MATCH_p);
-                                nextPC = 4 + MATCH_p;
+                                            break;
+                                        case 5:
+                                            goto MATCH_label_l4;
+                                            break;
+                                        default:
+                                            assert(0);
+                                        } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                    break;
+                                case 1:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        {
+                                            unsigned _a =
+                                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            unsigned _b = 1 + addressToPC(MATCH_p);
+                                            nextPC = 4 + MATCH_p;
 
 #line 276 "machine/pentium/386.pat.m"
 
 
-                                if (!a_isVAR && (int)_a != a) return false;
-                                else a = _a;
+                                            if (!a_isVAR && (int)_a != a) return false;
+                                            else a = _a;
 
-                                if (!Reg(_b, b, b_isVAR)) return false;
+                                            if (!Reg(_b, b, b_isVAR)) return false;
 
-                                lc = nextPC;
+                                            lc = nextPC;
 
-                                return true;
-
-
+                                            return true;
 
 
-                            } /*opt-block*//*opt-block+*/
-                            else
-                                goto MATCH_label_l2;  /*opt-block+*/
 
-                            break;
-                        case 2:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                goto MATCH_label_l3;  /*opt-block+*/
-                            else
-                                goto MATCH_label_l4;  /*opt-block+*/
 
-                            break;
-                        case 3:
-                            goto MATCH_label_l1;
-                            break;
-                        default:
-                            assert(0);
-                        } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                                        } /*opt-block*//*opt-block+*/
+                                    else
+                                        goto MATCH_label_l2;  /*opt-block+*/
 
-                    } /*opt-block*/
+                                    break;
+                                case 2:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        goto MATCH_label_l3;  /*opt-block+*/
+                                    else
+                                        goto MATCH_label_l4;  /*opt-block+*/
+
+                                    break;
+                                case 3:
+                                    goto MATCH_label_l1;
+                                    break;
+                                default:
+                                    assert(0);
+                                } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+
+                        } /*opt-block*/
                     else
                         goto MATCH_label_l0;  /*opt-block+*/
                 else
@@ -2597,7 +2676,8 @@ MATCH_finished_l:
 
 #line 284 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::POPod(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::POPod(ADDRESS& lc, int& a, bool a_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -2612,24 +2692,25 @@ bool InstructionPatterns::POPod(ADDRESS& lc, int& a, bool a_isVAR) {
         {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 5 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1) {
-                unsigned _a = (MATCH_w_8_0 & 0x7) /* r32 at 0 */;
-                nextPC = 1 + MATCH_p;
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
+                {
+                    unsigned _a = (MATCH_w_8_0 & 0x7) /* r32 at 0 */;
+                    nextPC = 1 + MATCH_p;
 
 #line 288 "machine/pentium/386.pat.m"
 
 
-                if (!a_isVAR && (int)_a != a) return false;
-                else a = _a;
+                    if (!a_isVAR && (int)_a != a) return false;
+                    else a = _a;
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
                 goto MATCH_label_k0;  /*opt-block+*/
 
@@ -2657,7 +2738,8 @@ MATCH_finished_k:
 
 #line 295 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::PUSHod(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::PUSHod(ADDRESS& lc, int& a, bool a_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -2672,24 +2754,25 @@ bool InstructionPatterns::PUSHod(ADDRESS& lc, int& a, bool a_isVAR) {
         {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 5 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0) {
-                unsigned _a = (MATCH_w_8_0 & 0x7) /* r32 at 0 */;
-                nextPC = 1 + MATCH_p;
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0)
+                {
+                    unsigned _a = (MATCH_w_8_0 & 0x7) /* r32 at 0 */;
+                    nextPC = 1 + MATCH_p;
 
 #line 299 "machine/pentium/386.pat.m"
 
 
-                if (!a_isVAR && (int)_a != a) return false;
-                else a = _a;
+                    if (!a_isVAR && (int)_a != a) return false;
+                    else a = _a;
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
                 goto MATCH_label_j0;  /*opt-block+*/
 
@@ -2717,7 +2800,8 @@ MATCH_finished_j:
 
 #line 306 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::REP$MOVSvod(ADDRESS& lc) {
+bool InstructionPatterns::REP$MOVSvod(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -2762,19 +2846,19 @@ bool InstructionPatterns::REP$MOVSvod(ADDRESS& lc) {
             (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                 goto MATCH_label_i0;  /*opt-block+*/
             else {
-                nextPC = 2 + MATCH_p;
+                    nextPC = 2 + MATCH_p;
 
 #line 310 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
 
         } goto MATCH_finished_i;
 
@@ -2800,7 +2884,8 @@ MATCH_finished_i:
 
 #line 316 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::REPNE$SCASB(ADDRESS& lc) {
+bool InstructionPatterns::REPNE$SCASB(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -2845,19 +2930,19 @@ bool InstructionPatterns::REPNE$SCASB(ADDRESS& lc) {
             (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                 goto MATCH_label_h0;  /*opt-block+*/
             else {
-                nextPC = 2 + MATCH_p;
+                    nextPC = 2 + MATCH_p;
 
 #line 320 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
 
         } goto MATCH_finished_h;
 
@@ -2883,7 +2968,8 @@ MATCH_finished_h:
 
 #line 326 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::RET(ADDRESS& lc) {
+bool InstructionPatterns::RET(ADDRESS& lc)
+{
     ADDRESS nextPC;
 
 
@@ -2899,20 +2985,21 @@ bool InstructionPatterns::RET(ADDRESS& lc) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 3 &&
             (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 12 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0) {
-                nextPC = 1 + MATCH_p;
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0)
+                {
+                    nextPC = 1 + MATCH_p;
 
 #line 330 "machine/pentium/386.pat.m"
 
 
-                lc = nextPC;
+                    lc = nextPC;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
                 goto MATCH_label_g0;  /*opt-block+*/
 
@@ -2940,7 +3027,8 @@ MATCH_finished_g:
 
 #line 336 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::RET$Iw(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::RET$Iw(ADDRESS& lc, int& a, bool a_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -2957,28 +3045,29 @@ bool InstructionPatterns::RET$Iw(ADDRESS& lc, int& a, bool a_isVAR) {
             MATCH_w_8_0 = getByte(MATCH_p);
             if ((MATCH_w_8_0 & 0x7) /* col at 0 */ == 2 &&
             (MATCH_w_8_0 >> 4 & 0xf) /* row at 0 */ == 12 &&
-            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0) {
-                MATCH_w_16_8 = getWord(1 + MATCH_p);
+            (MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 0)
                 {
-                    unsigned _a = (MATCH_w_16_8 & 0xffff) /* i16 at 8 */;
-                    nextPC = 3 + MATCH_p;
+                    MATCH_w_16_8 = getWord(1 + MATCH_p);
+                    {
+                        unsigned _a = (MATCH_w_16_8 & 0xffff) /* i16 at 8 */;
+                        nextPC = 3 + MATCH_p;
 
 #line 340 "machine/pentium/386.pat.m"
 
 
-                    if (!a_isVAR && (int)_a != a) return false;
-                    else a = _a;
+                        if (!a_isVAR && (int)_a != a) return false;
+                        else a = _a;
 
-                    lc = nextPC;
+                        lc = nextPC;
 
-                    return true;
-
-
+                        return true;
 
 
-                }
 
-            } /*opt-block*/
+
+                    }
+
+                } /*opt-block*/
             else
                 goto MATCH_label_f0;  /*opt-block+*/
 
@@ -3006,7 +3095,8 @@ MATCH_finished_f:
 
 #line 346 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::Reg(ADDRESS& lc, int& a, bool a_isVAR) {
+bool InstructionPatterns::Reg(ADDRESS& lc, int& a, bool a_isVAR)
+{
 
 
 #line 348 "machine/pentium/386.pat.m"
@@ -3019,21 +3109,22 @@ bool InstructionPatterns::Reg(ADDRESS& lc, int& a, bool a_isVAR) {
         unsigned /* [0..255] */ MATCH_w_8_0;
         {
             MATCH_w_8_0 = getByte(MATCH_p);
-            if ((MATCH_w_8_0 >> 6 & 0x3) /* mod at 0 */ == 3) {
-                unsigned _a = (MATCH_w_8_0 & 0x7) /* r_m at 0 */;
+            if ((MATCH_w_8_0 >> 6 & 0x3) /* mod at 0 */ == 3)
+                {
+                    unsigned _a = (MATCH_w_8_0 & 0x7) /* r_m at 0 */;
 
 #line 350 "machine/pentium/386.pat.m"
 
 
-                if (!a_isVAR && (int)_a != a) return false;
-                else a = _a;
+                    if (!a_isVAR && (int)_a != a) return false;
+                    else a = _a;
 
-                return true;
-
-
+                    return true;
 
 
-            } /*opt-block*//*opt-block+*/
+
+
+                } /*opt-block*//*opt-block+*/
             else
 
 #line 352 "machine/pentium/386.pat.m"
@@ -3052,7 +3143,8 @@ MATCH_finished_e:
 
 #line 356 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::SUBid$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::SUBid$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -3078,113 +3170,121 @@ bool InstructionPatterns::SUBid$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, b
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_d0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
-                        if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 5)
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 5)
 
-                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                            case 0:
-
-                                switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                                case 0:
-                                case 1:
-                                case 2:
-                                case 3:
-                                case 6:
-                                case 7:
-                                    MATCH_w_32_16 = getDword(2 + MATCH_p);
-                                    goto MATCH_label_d1;
-
-                                    break;
-                                case 4:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7)
-                                    /* index at 16 */ &&
-                                    (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                        MATCH_w_32_56 = getDword(7 + MATCH_p);
-                                        goto MATCH_label_d3;
-
-                                    } /*opt-block*/
-                                    else {
-                                        MATCH_w_32_24 = getDword(3 + MATCH_p);
-                                        goto MATCH_label_d2;
-
-                                    } /*opt-block*/
-
-                                    break;
-                                case 5:
-                                    MATCH_w_32_48 = getDword(6 + MATCH_p);
-                                    goto MATCH_label_d4;
-
-                                    break;
-                                default:
-                                    assert(0);
-                                } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                                break;
-                            case 1:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_32_32 = getDword(4 + MATCH_p);
+                                switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
                                     {
-                                        unsigned _a = 1 + addressToPC(MATCH_p);
-                                        unsigned _b = MATCH_w_32_32 /* i32 at 32 */;
-                                        nextPC = 8 + MATCH_p;
+                                    case 0:
+
+                                        switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                            {
+                                            case 0:
+                                            case 1:
+                                            case 2:
+                                            case 3:
+                                            case 6:
+                                            case 7:
+                                                MATCH_w_32_16 = getDword(2 + MATCH_p);
+                                                goto MATCH_label_d1;
+
+                                                break;
+                                            case 4:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7)
+                                                /* index at 16 */ &&
+                                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                    {
+                                                        MATCH_w_32_56 = getDword(7 + MATCH_p);
+                                                        goto MATCH_label_d3;
+
+                                                    } /*opt-block*/
+                                                else
+                                                    {
+                                                        MATCH_w_32_24 = getDword(3 + MATCH_p);
+                                                        goto MATCH_label_d2;
+
+                                                    } /*opt-block*/
+
+                                                break;
+                                            case 5:
+                                                MATCH_w_32_48 = getDword(6 + MATCH_p);
+                                                goto MATCH_label_d4;
+
+                                                break;
+                                            default:
+                                                assert(0);
+                                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                        break;
+                                    case 1:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_32_32 = getDword(4 + MATCH_p);
+                                                {
+                                                    unsigned _a = 1 + addressToPC(MATCH_p);
+                                                    unsigned _b = MATCH_w_32_32 /* i32 at 32 */;
+                                                    nextPC = 8 + MATCH_p;
 
 #line 360 "machine/pentium/386.pat.m"
 
 
-                                        if (!Reg(_a, a, a_isVAR)) return false;
+                                                    if (!Reg(_a, a, a_isVAR)) return false;
 
-                                        if (!b_isVAR && (int)_b != b) return false;
-                                        else b = _b;
+                                                    if (!b_isVAR && (int)_b != b) return false;
+                                                    else b = _b;
 
-                                        lc = nextPC;
+                                                    lc = nextPC;
 
-                                        return true;
-
-
+                                                    return true;
 
 
-                                    }
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_32_24 = getDword(3 + MATCH_p);
-                                    goto MATCH_label_d2;
 
-                                } /*opt-block*/
+                                                }
 
-                                break;
-                            case 2:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_32_56 = getDword(7 + MATCH_p);
-                                    goto MATCH_label_d3;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_32_24 = getDword(3 + MATCH_p);
+                                                goto MATCH_label_d2;
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_32_48 = getDword(6 + MATCH_p);
-                                    goto MATCH_label_d4;
+                                            } /*opt-block*/
 
-                                } /*opt-block*/
+                                        break;
+                                    case 2:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_32_56 = getDword(7 + MATCH_p);
+                                                goto MATCH_label_d3;
 
-                                break;
-                            case 3:
-                                MATCH_w_32_16 = getDword(2 + MATCH_p);
-                                goto MATCH_label_d1;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_32_48 = getDword(6 + MATCH_p);
+                                                goto MATCH_label_d4;
 
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
-                        else
-                            goto MATCH_label_d0;  /*opt-block+*/
+                                            } /*opt-block*/
 
-                    } /*opt-block*/
+                                        break;
+                                    case 3:
+                                        MATCH_w_32_16 = getDword(2 + MATCH_p);
+                                        goto MATCH_label_d1;
+
+                                        break;
+                                    default:
+                                        assert(0);
+                                    } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                            else
+                                goto MATCH_label_d0;  /*opt-block+*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_d0;  /*opt-block+*/
             else
@@ -3314,7 +3414,8 @@ MATCH_finished_d:
 
 #line 368 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::SUBiodb$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::SUBiodb$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -3339,114 +3440,122 @@ bool InstructionPatterns::SUBiodb$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b,
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_c0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
-                        if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 5)
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            if ((MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */ == 5)
 
-                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                            case 0:
-
-                                switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                                case 0:
-                                case 1:
-                                case 2:
-                                case 3:
-                                case 6:
-                                case 7:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    goto MATCH_label_c1;
-
-                                    break;
-                                case 4:
-                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                    if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7)
-                                    /* index at 16 */ &&
-                                    (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                        MATCH_w_8_56 = getByte(7 + MATCH_p);
-                                        goto MATCH_label_c3;
-
-                                    } /*opt-block*/
-                                    else {
-                                        MATCH_w_8_24 = getByte(3 + MATCH_p);
-                                        goto MATCH_label_c2;
-
-                                    } /*opt-block*/
-
-                                    break;
-                                case 5:
-                                    MATCH_w_8_48 = getByte(6 + MATCH_p);
-                                    goto MATCH_label_c4;
-
-                                    break;
-                                default:
-                                    assert(0);
-                                } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                                break;
-                            case 1:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_8_32 = getByte(4 + MATCH_p);
+                                switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
                                     {
-                                        unsigned _a = 1 + addressToPC(MATCH_p);
-                                        int /* [~128..127] */ _b =
-                                            sign_extend((MATCH_w_8_32 & 0xff) /* i8 at 32 */, 8);
-                                        nextPC = 5 + MATCH_p;
+                                    case 0:
+
+                                        switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                            {
+                                            case 0:
+                                            case 1:
+                                            case 2:
+                                            case 3:
+                                            case 6:
+                                            case 7:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                goto MATCH_label_c1;
+
+                                                break;
+                                            case 4:
+                                                MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7)
+                                                /* index at 16 */ &&
+                                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                    {
+                                                        MATCH_w_8_56 = getByte(7 + MATCH_p);
+                                                        goto MATCH_label_c3;
+
+                                                    } /*opt-block*/
+                                                else
+                                                    {
+                                                        MATCH_w_8_24 = getByte(3 + MATCH_p);
+                                                        goto MATCH_label_c2;
+
+                                                    } /*opt-block*/
+
+                                                break;
+                                            case 5:
+                                                MATCH_w_8_48 = getByte(6 + MATCH_p);
+                                                goto MATCH_label_c4;
+
+                                                break;
+                                            default:
+                                                assert(0);
+                                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                        break;
+                                    case 1:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_8_32 = getByte(4 + MATCH_p);
+                                                {
+                                                    unsigned _a = 1 + addressToPC(MATCH_p);
+                                                    int /* [~128..127] */ _b =
+                                                        sign_extend((MATCH_w_8_32 & 0xff) /* i8 at 32 */, 8);
+                                                    nextPC = 5 + MATCH_p;
 
 #line 372 "machine/pentium/386.pat.m"
 
 
-                                        if (!Reg(_a, a, a_isVAR)) return false;
+                                                    if (!Reg(_a, a, a_isVAR)) return false;
 
-                                        if (!b_isVAR && (int)_b != b) return false;
-                                        else b = _b;
+                                                    if (!b_isVAR && (int)_b != b) return false;
+                                                    else b = _b;
 
-                                        lc = nextPC;
+                                                    lc = nextPC;
 
-                                        return true;
-
-
+                                                    return true;
 
 
-                                    }
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_8_24 = getByte(3 + MATCH_p);
-                                    goto MATCH_label_c2;
 
-                                } /*opt-block*/
+                                                }
 
-                                break;
-                            case 2:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                        (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                         (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                    MATCH_w_8_56 = getByte(7 + MATCH_p);
-                                    goto MATCH_label_c3;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_8_24 = getByte(3 + MATCH_p);
+                                                goto MATCH_label_c2;
 
-                                } /*opt-block*/
-                                else {
-                                    MATCH_w_8_48 = getByte(6 + MATCH_p);
-                                    goto MATCH_label_c4;
+                                            } /*opt-block*/
 
-                                } /*opt-block*/
+                                        break;
+                                    case 2:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                                 (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                            {
+                                                MATCH_w_8_56 = getByte(7 + MATCH_p);
+                                                goto MATCH_label_c3;
 
-                                break;
-                            case 3:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                goto MATCH_label_c1;
+                                            } /*opt-block*/
+                                        else
+                                            {
+                                                MATCH_w_8_48 = getByte(6 + MATCH_p);
+                                                goto MATCH_label_c4;
 
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
-                        else
-                            goto MATCH_label_c0;  /*opt-block+*/
+                                            } /*opt-block*/
 
-                    } /*opt-block*/
+                                        break;
+                                    case 3:
+                                        MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                        goto MATCH_label_c1;
+
+                                        break;
+                                    default:
+                                        assert(0);
+                                    } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                            else
+                                goto MATCH_label_c0;  /*opt-block+*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_c0;  /*opt-block+*/
             else
@@ -3580,7 +3689,8 @@ MATCH_finished_c:
 
 #line 380 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::XCHG$Ev$Gvod$E$Base(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::XCHG$Ev$Gvod$E$Base(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -3601,85 +3711,88 @@ bool InstructionPatterns::XCHG$Ev$Gvod$E$Base(ADDRESS& lc, int& a, bool a_isVAR,
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_b0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
 
-                        switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                        case 0:
+                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
+                                {
+                                case 0:
 
-                            switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 6:
-                            case 7:
-                                goto MATCH_label_b1;
-                                break;
-                            case 4:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                    goto MATCH_label_b3;  /*opt-block+*/
-                                else
-                                    goto MATCH_label_b2;  /*opt-block+*/
+                                    switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                        {
+                                        case 0:
+                                        case 1:
+                                        case 2:
+                                        case 3:
+                                        case 6:
+                                        case 7:
+                                            goto MATCH_label_b1;
+                                            break;
+                                        case 4:
+                                            MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                            if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                            (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                goto MATCH_label_b3;  /*opt-block+*/
+                                            else
+                                                goto MATCH_label_b2;  /*opt-block+*/
 
-                                break;
-                            case 5:
-                                goto MATCH_label_b4;
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                            break;
-                        case 1:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                unsigned _a = 1 + addressToPC(MATCH_p);
-                                unsigned _b =
-                                    (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                nextPC = 4 + MATCH_p;
+                                            break;
+                                        case 5:
+                                            goto MATCH_label_b4;
+                                            break;
+                                        default:
+                                            assert(0);
+                                        } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                    break;
+                                case 1:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        {
+                                            unsigned _a = 1 + addressToPC(MATCH_p);
+                                            unsigned _b =
+                                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            nextPC = 4 + MATCH_p;
 
 #line 384 "machine/pentium/386.pat.m"
 
 
-                                if (!E$Base(_a, a, a_isVAR)) return false;
+                                            if (!E$Base(_a, a, a_isVAR)) return false;
 
-                                if (!b_isVAR && (int)_b != b) return false;
-                                else b = _b;
+                                            if (!b_isVAR && (int)_b != b) return false;
+                                            else b = _b;
 
-                                lc = nextPC;
+                                            lc = nextPC;
 
-                                return true;
-
-
+                                            return true;
 
 
-                            } /*opt-block*//*opt-block+*/
-                            else
-                                goto MATCH_label_b2;  /*opt-block+*/
 
-                            break;
-                        case 2:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                goto MATCH_label_b3;  /*opt-block+*/
-                            else
-                                goto MATCH_label_b4;  /*opt-block+*/
 
-                            break;
-                        case 3:
-                            goto MATCH_label_b1;
-                            break;
-                        default:
-                            assert(0);
-                        } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                                        } /*opt-block*//*opt-block+*/
+                                    else
+                                        goto MATCH_label_b2;  /*opt-block+*/
 
-                    } /*opt-block*/
+                                    break;
+                                case 2:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        goto MATCH_label_b3;  /*opt-block+*/
+                                    else
+                                        goto MATCH_label_b4;  /*opt-block+*/
+
+                                    break;
+                                case 3:
+                                    goto MATCH_label_b1;
+                                    break;
+                                default:
+                                    assert(0);
+                                } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_b0;  /*opt-block+*/
             else
@@ -3809,7 +3922,8 @@ MATCH_finished_b:
 
 #line 392 "machine/pentium/386.pat.m"
 }
-bool InstructionPatterns::XORrmod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR) {
+bool InstructionPatterns::XORrmod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b, bool b_isVAR)
+{
     ADDRESS nextPC;
 
 
@@ -3830,85 +3944,88 @@ bool InstructionPatterns::XORrmod$Reg(ADDRESS& lc, int& a, bool a_isVAR, int& b,
                     if ((MATCH_w_8_0 >> 3 & 0x1) /* page at 0 */ == 1)
                         goto MATCH_label_a0;  /*opt-block+*/
                     else {
-                        MATCH_w_8_8 = getByte(1 + MATCH_p);
+                            MATCH_w_8_8 = getByte(1 + MATCH_p);
 
-                        switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */) {
-                        case 0:
+                            switch((MATCH_w_8_8 >> 6 & 0x3) /* mod at 8 */)
+                                {
+                                case 0:
 
-                            switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */) {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 6:
-                            case 7:
-                                goto MATCH_label_a1;
-                                break;
-                            case 4:
-                                MATCH_w_8_16 = getByte(2 + MATCH_p);
-                                if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
-                                (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                    goto MATCH_label_a3;  /*opt-block+*/
-                                else
-                                    goto MATCH_label_a2;  /*opt-block+*/
+                                    switch((MATCH_w_8_8 & 0x7) /* r_m at 8 */)
+                                        {
+                                        case 0:
+                                        case 1:
+                                        case 2:
+                                        case 3:
+                                        case 6:
+                                        case 7:
+                                            goto MATCH_label_a1;
+                                            break;
+                                        case 4:
+                                            MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                            if ((MATCH_w_8_16 & 0x7) /* base at 16 */ == 5 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                            (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                                goto MATCH_label_a3;  /*opt-block+*/
+                                            else
+                                                goto MATCH_label_a2;  /*opt-block+*/
 
-                                break;
-                            case 5:
-                                goto MATCH_label_a4;
-                                break;
-                            default:
-                                assert(0);
-                            } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
-                            break;
-                        case 1:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8)) {
-                                unsigned _a =
-                                    (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
-                                unsigned _b = 1 + addressToPC(MATCH_p);
-                                nextPC = 4 + MATCH_p;
+                                            break;
+                                        case 5:
+                                            goto MATCH_label_a4;
+                                            break;
+                                        default:
+                                            assert(0);
+                                        } /* (MATCH_w_8_8 & 0x7) -- r_m at 8 --*/
+                                    break;
+                                case 1:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        {
+                                            unsigned _a =
+                                                (MATCH_w_8_8 >> 3 & 0x7) /* reg_opcode at 8 */;
+                                            unsigned _b = 1 + addressToPC(MATCH_p);
+                                            nextPC = 4 + MATCH_p;
 
 #line 396 "machine/pentium/386.pat.m"
 
 
-                                if (!a_isVAR && (int)_a != a) return false;
-                                else a = _a;
+                                            if (!a_isVAR && (int)_a != a) return false;
+                                            else a = _a;
 
-                                if (!Reg(_b, b, b_isVAR)) return false;
+                                            if (!Reg(_b, b, b_isVAR)) return false;
 
-                                lc = nextPC;
+                                            lc = nextPC;
 
-                                return true;
-
-
+                                            return true;
 
 
-                            } /*opt-block*//*opt-block+*/
-                            else
-                                goto MATCH_label_a2;  /*opt-block+*/
 
-                            break;
-                        case 2:
-                            MATCH_w_8_16 = getByte(2 + MATCH_p);
-                            if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
-                                    (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
-                                     (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
-                                goto MATCH_label_a3;  /*opt-block+*/
-                            else
-                                goto MATCH_label_a4;  /*opt-block+*/
 
-                            break;
-                        case 3:
-                            goto MATCH_label_a1;
-                            break;
-                        default:
-                            assert(0);
-                        } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+                                        } /*opt-block*//*opt-block+*/
+                                    else
+                                        goto MATCH_label_a2;  /*opt-block+*/
 
-                    } /*opt-block*/
+                                    break;
+                                case 2:
+                                    MATCH_w_8_16 = getByte(2 + MATCH_p);
+                                    if ((MATCH_w_8_8 & 0x7) /* r_m at 8 */ == 4 &&
+                                            (0 <= (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ &&
+                                             (MATCH_w_8_16 >> 3 & 0x7) /* index at 16 */ < 8))
+                                        goto MATCH_label_a3;  /*opt-block+*/
+                                    else
+                                        goto MATCH_label_a4;  /*opt-block+*/
+
+                                    break;
+                                case 3:
+                                    goto MATCH_label_a1;
+                                    break;
+                                default:
+                                    assert(0);
+                                } /* (MATCH_w_8_8 >> 6 & 0x3) -- mod at 8 --*/
+
+                        } /*opt-block*/
                 else
                     goto MATCH_label_a0;  /*opt-block+*/
             else
@@ -4042,15 +4159,18 @@ Logue* InstructionPatterns::std_call(CSR& csr, ADDRESS& lc, int& addr)
 {
     ADDRESS __save = lc;
     if (
-        CALL$Jvod(lc, addr, VAR)) {
-        vector<int> params(1);
-        params[0] = addr;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("std_call",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        CALL$Jvod(lc, addr, VAR))
+        {
+            vector<int> params(1);
+            params[0] = addr;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("std_call",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::pat_strlen(CSR& csr, ADDRESS& lc)
 {
@@ -4060,14 +4180,17 @@ Logue* InstructionPatterns::pat_strlen(CSR& csr, ADDRESS& lc)
         XORrmod$Reg(lc, EAX, VAL, EAX, VAL) &&
         CLD(lc) &&
         MOVid(lc, ECX, VAL, __loc0 = -1, VAL) &&
-        REPNE$SCASB(lc)) {
-        vector<int> params(0);
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("pat_strlen",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        REPNE$SCASB(lc))
+        {
+            vector<int> params(0);
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("pat_strlen",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::pat_memcpy_00(CSR& csr, ADDRESS& lc, int& len)
 {
@@ -4075,15 +4198,18 @@ Logue* InstructionPatterns::pat_memcpy_00(CSR& csr, ADDRESS& lc, int& len)
     if (
         CLD(lc) &&
         MOVid(lc, ECX, VAL, len, VAR) &&
-        REP$MOVSvod(lc)) {
-        vector<int> params(1);
-        params[0] = len;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("pat_memcpy_00",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        REP$MOVSvod(lc))
+        {
+            vector<int> params(1);
+            params[0] = len;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("pat_memcpy_00",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::pat_memcpy_01(CSR& csr, ADDRESS& lc, int& len)
 {
@@ -4092,15 +4218,18 @@ Logue* InstructionPatterns::pat_memcpy_01(CSR& csr, ADDRESS& lc, int& len)
         CLD(lc) &&
         MOVid(lc, ECX, VAL, len, VAR) &&
         REP$MOVSvod(lc) &&
-        MOVSB(lc)) {
-        vector<int> params(1);
-        params[0] = len;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("pat_memcpy_01",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        MOVSB(lc))
+        {
+            vector<int> params(1);
+            params[0] = len;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("pat_memcpy_01",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::pat_memcpy_10(CSR& csr, ADDRESS& lc, int& len)
 {
@@ -4109,15 +4238,18 @@ Logue* InstructionPatterns::pat_memcpy_10(CSR& csr, ADDRESS& lc, int& len)
         CLD(lc) &&
         MOVid(lc, ECX, VAL, len, VAR) &&
         REP$MOVSvod(lc) &&
-        MOVSvow(lc)) {
-        vector<int> params(1);
-        params[0] = len;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("pat_memcpy_10",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        MOVSvow(lc))
+        {
+            vector<int> params(1);
+            params[0] = len;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("pat_memcpy_10",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::pat_memcpy_11(CSR& csr, ADDRESS& lc, int& len)
 {
@@ -4127,15 +4259,18 @@ Logue* InstructionPatterns::pat_memcpy_11(CSR& csr, ADDRESS& lc, int& len)
         MOVid(lc, ECX, VAL, len, VAR) &&
         REP$MOVSvod(lc) &&
         MOVSvow(lc) &&
-        MOVSB(lc)) {
-        vector<int> params(1);
-        params[0] = len;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("pat_memcpy_11",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        MOVSB(lc))
+        {
+            vector<int> params(1);
+            params[0] = len;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("pat_memcpy_11",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::pat_this_thunk(CSR& csr, ADDRESS& lc, int& off, int& dest)
 {
@@ -4143,16 +4278,19 @@ Logue* InstructionPatterns::pat_this_thunk(CSR& csr, ADDRESS& lc, int& off, int&
     int __loc0;
     if (
         ADDiodb$E$Base8(lc, __loc0 = 4, VAL, ESP, VAL, off, VAR) &&
-        JMP$Jvod(lc, dest, VAR)) {
-        vector<int> params(2);
-        params[0] = off;
-        params[1] = dest;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("pat_this_thunk",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        JMP$Jvod(lc, dest, VAR))
+        {
+            vector<int> params(2);
+            params[0] = off;
+            params[1] = dest;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("pat_this_thunk",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::std_entry(CSR& csr, ADDRESS& lc, int& locals, int& regs)
 {
@@ -4164,16 +4302,19 @@ Logue* InstructionPatterns::std_entry(CSR& csr, ADDRESS& lc, int& locals, int& r
           MOVmrod$Reg(lc, EBP, VAL, ESP, VAL)) || true) &&
         ((SUBiodb$Reg(lc, ESP, VAL, locals, VAR) ||
           SUBid$Reg(lc, ESP, VAL, locals, VAR)) || true) &&
-        ((iterhlp0(lc,regs)) || true)) {
-        vector<int> params(2);
-        params[0] = locals;
-        params[1] = regs;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("std_entry",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        ((iterhlp0(lc,regs)) || true))
+        {
+            vector<int> params(2);
+            params[0] = locals;
+            params[1] = regs;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("std_entry",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::struct_ptr(CSR& csr, ADDRESS& lc, int& locals, int& regs)
 {
@@ -4181,16 +4322,19 @@ Logue* InstructionPatterns::struct_ptr(CSR& csr, ADDRESS& lc, int& locals, int& 
     if (
         POPod(lc, EAX, VAL) &&
         XCHG$Ev$Gvod$E$Base(lc, ESP, VAL, EAX, VAL) &&
-        std_entry(csr, lc, locals, regs)) {
-        vector<int> params(2);
-        params[0] = locals;
-        params[1] = regs;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("struct_ptr",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        std_entry(csr, lc, locals, regs))
+        {
+            vector<int> params(2);
+            params[0] = locals;
+            params[1] = regs;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("struct_ptr",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::frameless_pro(CSR& csr, ADDRESS& lc, int& locals, int& regs)
 {
@@ -4198,29 +4342,35 @@ Logue* InstructionPatterns::frameless_pro(CSR& csr, ADDRESS& lc, int& locals, in
     if (
         ((SUBiodb$Reg(lc, ESP, VAL, locals, VAR) ||
           SUBid$Reg(lc, ESP, VAL, locals, VAR)) || true) &&
-        ((iterhlp1(lc,regs)) || true)) {
-        vector<int> params(2);
-        params[0] = locals;
-        params[1] = regs;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("frameless_pro",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        ((iterhlp1(lc,regs)) || true))
+        {
+            vector<int> params(2);
+            params[0] = locals;
+            params[1] = regs;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("frameless_pro",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::none(CSR& csr, ADDRESS& lc)
 {
     ADDRESS __save = lc;
     if (
-        (lc += 0, true)) {
-        vector<int> params(0);
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("none",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        (lc += 0, true))
+        {
+            vector<int> params(0);
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("none",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::std_ret(CSR& csr, ADDRESS& lc)
 {
@@ -4235,14 +4385,17 @@ Logue* InstructionPatterns::std_ret(CSR& csr, ADDRESS& lc)
          (MOVrmod$Reg(lc, ESP, VAL, EBP, VAL) &&
           POPod(lc, EBP, VAL))) &&
         (RET(lc) ||
-         RET$Iw(lc, __loc0, VAR))) {
-        vector<int> params(0);
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("std_ret",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+         RET$Iw(lc, __loc0, VAR)))
+        {
+            vector<int> params(0);
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("std_ret",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::frameless_epi(CSR& csr, ADDRESS& lc, int& n)
 {
@@ -4254,15 +4407,18 @@ Logue* InstructionPatterns::frameless_epi(CSR& csr, ADDRESS& lc, int& n)
         (((ADDiodb$Reg(lc, ESP, VAL, n, VAR) ||
            ADDid$Reg(lc, ESP, VAL, n, VAR))) || true) &&
         (RET(lc) ||
-         RET$Iw(lc, __loc0, VAR))) {
-        vector<int> params(1);
-        params[0] = n;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("frameless_epi",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+         RET$Iw(lc, __loc0, VAR)))
+        {
+            vector<int> params(1);
+            params[0] = n;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("frameless_epi",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 Logue* InstructionPatterns::clear_stack(CSR& csr, ADDRESS& lc, int& n)
 {
@@ -4270,15 +4426,18 @@ Logue* InstructionPatterns::clear_stack(CSR& csr, ADDRESS& lc, int& n)
     if (
         (ADDiodb$Reg(lc, ESP, VAL, n, VAR) ||
          ADDid$Reg(lc, ESP, VAL, n, VAR)) ||
-        iterhlp5(lc,n)) {
-        vector<int> params(1);
-        params[0] = n;
-        if (__save == lc) return NULL;
-        return csr.instantiateLogue("clear_stack",params);
-    } else {
-        lc = __save;
-        return NULL;
-    }
+        iterhlp5(lc,n))
+        {
+            vector<int> params(1);
+            params[0] = n;
+            if (__save == lc) return NULL;
+            return csr.instantiateLogue("clear_stack",params);
+        }
+    else
+        {
+            lc = __save;
+            return NULL;
+        }
 }
 LogueDict::LogueDict()
 {

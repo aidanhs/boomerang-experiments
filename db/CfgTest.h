@@ -4,7 +4,8 @@
 
 #include "cfg.h"
 
-class CfgTest : public CppUnit::TestCase {
+class CfgTest : public CppUnit::TestCase
+{
 protected:
     Cfg*  m_prog;
 

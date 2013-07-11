@@ -56,7 +56,8 @@ class XMLProgParser;
  * Class RTL: describes low level register transfer lists (actually lists of
  * expressions)
  *============================================================================*/
-class RTL {
+class RTL
+{
     ADDRESS nativeAddr;             // RTL's source program instruction address
     std::list<Statement*> stmtList; // List of expressions in this RTL.
 public:
@@ -97,7 +98,8 @@ public:
     // Make a deep copy of the list of Exp*
     void deepCopyList(std::list<Statement*>& dest);
     // direct access to the list of expressions
-    std::list<Statement*> &getList() {
+    std::list<Statement*> &getList()
+    {
         return stmtList;
     }
 
@@ -182,7 +184,8 @@ protected:
  * This class plus ParamEntry and RTLInstDict should be moved to a separate
  * header file...
  *============================================================================*/
-class TableEntry {
+class TableEntry
+{
 public:
     TableEntry();
     TableEntry(std::list<std::string>& p, RTL& rtl);
@@ -209,9 +212,11 @@ public:
  *============================================================================*/
 typedef enum {PARAM_SIMPLE, PARAM_ASGN, PARAM_LAMBDA, PARAM_VARIANT} ParamKind;
 
-class ParamEntry {
+class ParamEntry
+{
 public:
-    ParamEntry() {
+    ParamEntry()
+    {
         asgn = NULL;
         kind = PARAM_SIMPLE;
         type = NULL;
@@ -219,7 +224,8 @@ public:
         lhs = false;
         mark = 0;
     }
-    ~ParamEntry() {
+    ~ParamEntry()
+    {
         if (type) delete type;
         if (regType) delete regType;
     }
@@ -246,7 +252,8 @@ public:
  * instruction name and list of actual parameters.
  *============================================================================*/
 
-class RTLInstDict {
+class RTLInstDict
+{
 public:
     RTLInstDict();
     ~RTLInstDict();

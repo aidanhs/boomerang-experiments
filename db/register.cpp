@@ -87,7 +87,8 @@ Register Register::operator=(const Register& r2)
  * PARAMETERS:    Reference to another Register object
  * RETURNS:       True if the same
  *============================================================================*/
-bool Register::operator==(const Register& r2) const {
+bool Register::operator==(const Register& r2) const
+{
     // compare on name
     assert(name != NULL && r2.name != NULL);
     if (strcmp(name, r2.name) != 0)
@@ -132,7 +133,8 @@ void Register::s_name(const char *s)
  * PARAMETERS:    <none>
  * RETURNS:       The name as a character string
  *============================================================================*/
-char *Register::g_name() const {
+char *Register::g_name() const
+{
     static char outname[100];
 
     strncpy(outname, name, 100);

@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     struct stat st;
     int res = stat(argv[1], &st);
     printf("res: %i\n", res);

@@ -4,7 +4,8 @@
 
 #include "prog.h"
 
-class ParserTest : public CppUnit::TestCase {
+class ParserTest : public CppUnit::TestCase
+{
 protected:
 
 public:

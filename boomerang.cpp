@@ -38,10 +38,12 @@ Boomerang::Boomerang() : logger(NULL), vFlag(false), printRtl(false),
     outputPath = "./output/";
 }
 
-class FileLogger : public Log {
+class FileLogger : public Log
+{
 public:
     FileLogger() : Log(), out((Boomerang::get()->getOutputPath() + "log").c_str()) { }
-    virtual Log &operator<<(const char *str) {
+    virtual Log &operator<<(const char *str)
+    {
         out << str << std::flush;
         return *this;
     }
@@ -50,21 +52,25 @@ protected:
     std::ofstream out;
 };
 
-Log &Boomerang::log() {
+Log &Boomerang::log()
+{
     return *logger;
 }
 
-HLLCode *Boomerang::getHLLCode(UserProc *p) {
+HLLCode *Boomerang::getHLLCode(UserProc *p)
+{
     return new CHLLCode(p);
 }
 
-void Boomerang::usage() {
+void Boomerang::usage()
+{
     std::cerr << "usage: boomerang [ switches ] <program>" << std::endl;
     std::cerr << "boomerang -h for switch help" << std::endl;
     exit(1);
 }
 
-void Boomerang::helpcmd() {
+void Boomerang::helpcmd()
+{
     std::cerr << "Available commands (for use with -k):\n";
     std::cerr << "\tdecode: loads and decodes the specified binary.\n";
     std::cerr << "\tdecompile [proc]: decompiles the program or specified proc.\n";
@@ -83,7 +89,8 @@ void Boomerang::helpcmd() {
     std::cerr << "\texit: quit the shell.\n";
 }
 
-void Boomerang::help() {
+void Boomerang::help()
+{
     std::cerr << "--: no effect (used for testing)\n";
     std::cerr << "-da: debug - print AST before code generation\n";
     std::cerr << "-dc: debug - debug switch (case) analysis\n";
@@ -128,19 +135,21 @@ void Boomerang::help() {
 }
 
 // Create the directory. Return false if invalid
-bool createDirectory(std::string dir) {
+bool createDirectory(std::string dir)
+{
     std::string remainder(dir);
     std::string path;
     unsigned i;
-    while ((i = remainder.find('/')) != std::string::npos) {
-        path += remainder.substr(0, i+1);
-        remainder = remainder.substr(i+1);
+    while ((i = remainder.find('/')) != std::string::npos)
+        {
+            path += remainder.substr(0, i+1);
+            remainder = remainder.substr(i+1);
 #ifdef WIN32
-        mkdir(path.c_str());
+            mkdir(path.c_str());
 #else
-        mkdir(path.c_str(), 0777);              // Doesn't matter if already exists
+            mkdir(path.c_str(), 0777);              // Doesn't matter if already exists
 #endif
-    }
+        }
     // Now try to create a test file
     path += remainder;
 #ifdef WIN32
@@ -173,346 +182,447 @@ int Boomerang::splitLine(char *line, char ***pargv)
     int argc = 0;
     *pargv = new crazy_vc_bug[100];
     const char *p = strtok(line, " \r\n");
-    while(p) {
-        (*pargv)[argc++] = (char*)p;
-        p = strtok(NULL, " \r\n");
-    }
+    while(p)
+        {
+            (*pargv)[argc++] = (char*)p;
+            p = strtok(NULL, " \r\n");
+        }
     return argc;
 }
 
 int Boomerang::parseCmd(int argc, const char **argv)
 {
     static Prog *prog = NULL;
-    if (!strcmp(argv[0], "decode")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-        const char *fname = argv[1];
-        Prog *p = loadAndDecode(fname);
-        if (p == NULL) {
-            std::cerr << "failed to load " << fname << "\n";
-            return 1;
-        }
-        prog = p;
-    } else if (!strcmp(argv[0], "load")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-        const char *fname = argv[1];
-        XMLProgParser *p = new XMLProgParser();
-        Prog *pr = p->parse(fname);
-        if (pr == NULL) {
-            // try guessing
-            pr = p->parse((outputPath + "/" + fname + "/" + fname + ".xml").c_str());
-            if (pr == NULL) {
-                std::cerr << "failed to read xml " << fname << "\n";
-                return 1;
-            }
-        }
-        prog = pr;
-    } else if (!strcmp(argv[0], "save")) {
-        if (prog == NULL) {
-            std::cerr << "need to load or decode before save!\n";
-            return 1;
-        }
-        XMLProgParser *p = new XMLProgParser();
-        p->persistToXML(prog);
-    } else if (!strcmp(argv[0], "decompile")) {
-        if (argc > 1) {
-            Proc *proc = prog->findProc(argv[1]);
-            if (proc == NULL) {
-                std::cerr << "cannot find proc " << argv[1] << "\n";
-                return 1;
-            }
-            if (proc->isLib()) {
-                std::cerr << "cannot decompile a lib proc\n";
-                return 1;
-            }
-            ((UserProc*)proc)->decompile();
-        } else {
-            prog->decompile();
-        }
-    } else if (!strcmp(argv[0], "codegen")) {
-        if (argc > 1 ) {
-            Cluster *cluster = prog->findCluster(argv[1]);
-            if (cluster == NULL) {
-                std::cerr << "cannot find cluster " << argv[1] << "\n";
-                return 1;
-            }
-            prog->generateCode(cluster);
-        } else {
-            prog->generateCode();
-        }
-    } else if (!strcmp(argv[0], "move")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-        if (!strcmp(argv[1], "proc")) {
-            if (argc <= 3) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Proc *proc = prog->findProc(argv[2]);
-            if (proc == NULL) {
-                std::cerr << "cannot find proc " << argv[2] << "\n";
-                return 1;
-            }
-
-            Cluster *cluster = prog->findCluster(argv[3]);
-            if (cluster == NULL) {
-                std::cerr << "cannot find cluster " << argv[3] << "\n";
-                return 1;
-            }
-            proc->setCluster(cluster);
-        } else if (!strcmp(argv[1], "cluster")) {
-            if (argc <= 3) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Cluster *cluster = prog->findCluster(argv[2]);
-            if (cluster == NULL) {
-                std::cerr << "cannot find cluster " << argv[2] << "\n";
-                return 1;
-            }
-
-            Cluster *parent = prog->findCluster(argv[3]);
-            if (parent == NULL) {
-                std::cerr << "cannot find cluster " << argv[3] << "\n";
-                return 1;
-            }
-
-            parent->addChild(cluster);
-        } else {
-            std::cerr << "don't know how to move a " << argv[1] << "\n";
-            return 1;
-        }
-    } else if (!strcmp(argv[0], "add")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-        if (!strcmp(argv[1], "cluster")) {
-            if (argc <= 2) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Cluster *cluster = new Cluster(argv[2]);
-            if (cluster == NULL) {
-                std::cerr << "cannot create cluster " << argv[2] << "\n";
-                return 1;
-            }
-
-            Cluster *parent = prog->getRootCluster();
-            if (argc > 3) {
-                parent = prog->findCluster(argv[3]);
-                if (cluster == NULL) {
-                    std::cerr << "cannot find cluster " << argv[3] << "\n";
+    if (!strcmp(argv[0], "decode"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
                     return 1;
                 }
-            }
-
-            parent->addChild(cluster);
-        } else {
-            std::cerr << "don't know how to add a " << argv[1] << "\n";
-            return 1;
+            const char *fname = argv[1];
+            Prog *p = loadAndDecode(fname);
+            if (p == NULL)
+                {
+                    std::cerr << "failed to load " << fname << "\n";
+                    return 1;
+                }
+            prog = p;
         }
-    } else if (!strcmp(argv[0], "delete")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
+    else if (!strcmp(argv[0], "load"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+            const char *fname = argv[1];
+            XMLProgParser *p = new XMLProgParser();
+            Prog *pr = p->parse(fname);
+            if (pr == NULL)
+                {
+                    // try guessing
+                    pr = p->parse((outputPath + "/" + fname + "/" + fname + ".xml").c_str());
+                    if (pr == NULL)
+                        {
+                            std::cerr << "failed to read xml " << fname << "\n";
+                            return 1;
+                        }
+                }
+            prog = pr;
         }
-        if (!strcmp(argv[1], "cluster")) {
-            if (argc <= 2) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Cluster *cluster = prog->findCluster(argv[2]);
-            if (cluster == NULL) {
-                std::cerr << "cannot find cluster " << argv[2] << "\n";
-                return 1;
-            }
-
-            if (cluster->hasChildren() || cluster == prog->getRootCluster()) {
-                std::cerr << "cluster " << argv[2] << " is not empty\n";
-                return 1;
-            }
-
-            if (prog->clusterUsed(cluster)) {
-                std::cerr << "cluster " << argv[2] << " is not empty\n";
-                return 1;
-            }
-
-            unlink(cluster->getOutPath("xml"));
-            unlink(cluster->getOutPath("c"));
-            assert(cluster->getParent());
-            cluster->getParent()->removeChild(cluster);
-        } else {
-            std::cerr << "don't know how to delete a " << argv[1] << "\n";
-            return 1;
+    else if (!strcmp(argv[0], "save"))
+        {
+            if (prog == NULL)
+                {
+                    std::cerr << "need to load or decode before save!\n";
+                    return 1;
+                }
+            XMLProgParser *p = new XMLProgParser();
+            p->persistToXML(prog);
         }
-    } else if (!strcmp(argv[0], "rename")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-        if (!strcmp(argv[1], "proc")) {
-            if (argc <= 3) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Proc *proc = prog->findProc(argv[2]);
-            if (proc == NULL) {
-                std::cerr << "cannot find proc " << argv[2] << "\n";
-                return 1;
-            }
-
-            Proc *nproc = prog->findProc(argv[3]);
-            if (nproc != NULL) {
-                std::cerr << "proc " << argv[3] << " already exists\n";
-                return 1;
-            }
-
-            proc->setName(argv[3]);
-        } else if (!strcmp(argv[1], "cluster")) {
-            if (argc <= 3) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Cluster *cluster = prog->findCluster(argv[2]);
-            if (cluster == NULL) {
-                std::cerr << "cannot find cluster " << argv[2] << "\n";
-                return 1;
-            }
-
-            Cluster *ncluster = prog->findCluster(argv[3]);
-            if (ncluster == NULL) {
-                std::cerr << "cluster " << argv[3] << " already exists\n";
-                return 1;
-            }
-
-            cluster->setName(argv[3]);
-        } else {
-            std::cerr << "don't know how to rename a " << argv[1] << "\n";
-            return 1;
-        }
-    } else if (!strcmp(argv[0], "info")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-        if (!strcmp(argv[1], "prog")) {
-
-            std::cout << "prog " << prog->getName() << ":\n";
-            std::cout << "\tclusters:\n";
-            prog->getRootCluster()->printTree(std::cout);
-            std::cout << "\n\tlibprocs:\n";
-            PROGMAP::const_iterator it;
-            for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
-                if (p->isLib())
-                    std::cout << "\t\t" << p->getName() << "\n";
-            std::cout << "\n\tuserprocs:\n";
-            for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
-                if (!p->isLib())
-                    std::cout << "\t\t" << p->getName() << "\n";
-            std::cout << "\n";
-
-            return 0;
-        } else if (!strcmp(argv[1], "cluster")) {
-            if (argc <= 2) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
-
-            Cluster *cluster = prog->findCluster(argv[2]);
-            if (cluster == NULL) {
-                std::cerr << "cannot find cluster " << argv[2] << "\n";
-                return 1;
-            }
-
-            std::cout << "cluster " << cluster->getName() << ":\n";
-            if (cluster->getParent())
-                std::cout << "\tparent = " << cluster->getParent()->getName() << "\n";
+    else if (!strcmp(argv[0], "decompile"))
+        {
+            if (argc > 1)
+                {
+                    Proc *proc = prog->findProc(argv[1]);
+                    if (proc == NULL)
+                        {
+                            std::cerr << "cannot find proc " << argv[1] << "\n";
+                            return 1;
+                        }
+                    if (proc->isLib())
+                        {
+                            std::cerr << "cannot decompile a lib proc\n";
+                            return 1;
+                        }
+                    ((UserProc*)proc)->decompile();
+                }
             else
-                std::cout << "\troot cluster.\n";
-            std::cout << "\tprocs:\n";
-            PROGMAP::const_iterator it;
-            for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
-                if (p->getCluster() == cluster)
-                    std::cout << "\t\t" << p->getName() << "\n";
-            std::cout << "\n";
+                {
+                    prog->decompile();
+                }
+        }
+    else if (!strcmp(argv[0], "codegen"))
+        {
+            if (argc > 1 )
+                {
+                    Cluster *cluster = prog->findCluster(argv[1]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[1] << "\n";
+                            return 1;
+                        }
+                    prog->generateCode(cluster);
+                }
+            else
+                {
+                    prog->generateCode();
+                }
+        }
+    else if (!strcmp(argv[0], "move"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+            if (!strcmp(argv[1], "proc"))
+                {
+                    if (argc <= 3)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
 
-            return 0;
-        } else if (!strcmp(argv[1], "proc")) {
-            if (argc <= 2) {
-                std::cerr << "not enough arguments for cmd\n";
-                return 1;
-            }
+                    Proc *proc = prog->findProc(argv[2]);
+                    if (proc == NULL)
+                        {
+                            std::cerr << "cannot find proc " << argv[2] << "\n";
+                            return 1;
+                        }
 
-            Proc *proc = prog->findProc(argv[2]);
-            if (proc == NULL) {
-                std::cerr << "cannot find proc " << argv[2] << "\n";
-                return 1;
-            }
+                    Cluster *cluster = prog->findCluster(argv[3]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[3] << "\n";
+                            return 1;
+                        }
+                    proc->setCluster(cluster);
+                }
+            else if (!strcmp(argv[1], "cluster"))
+                {
+                    if (argc <= 3)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
 
-            std::cout << "proc " << proc->getName() << ":\n";
-            std::cout << "\tbelongs to cluster " << proc->getCluster()->getName() << "\n";
-            std::cout << "\tnative address " << std::hex << proc->getNativeAddress() << std::dec << "\n";
+                    Cluster *cluster = prog->findCluster(argv[2]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    Cluster *parent = prog->findCluster(argv[3]);
+                    if (parent == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[3] << "\n";
+                            return 1;
+                        }
+
+                    parent->addChild(cluster);
+                }
+            else
+                {
+                    std::cerr << "don't know how to move a " << argv[1] << "\n";
+                    return 1;
+                }
+        }
+    else if (!strcmp(argv[0], "add"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+            if (!strcmp(argv[1], "cluster"))
+                {
+                    if (argc <= 2)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
+
+                    Cluster *cluster = new Cluster(argv[2]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot create cluster " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    Cluster *parent = prog->getRootCluster();
+                    if (argc > 3)
+                        {
+                            parent = prog->findCluster(argv[3]);
+                            if (cluster == NULL)
+                                {
+                                    std::cerr << "cannot find cluster " << argv[3] << "\n";
+                                    return 1;
+                                }
+                        }
+
+                    parent->addChild(cluster);
+                }
+            else
+                {
+                    std::cerr << "don't know how to add a " << argv[1] << "\n";
+                    return 1;
+                }
+        }
+    else if (!strcmp(argv[0], "delete"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+            if (!strcmp(argv[1], "cluster"))
+                {
+                    if (argc <= 2)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
+
+                    Cluster *cluster = prog->findCluster(argv[2]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    if (cluster->hasChildren() || cluster == prog->getRootCluster())
+                        {
+                            std::cerr << "cluster " << argv[2] << " is not empty\n";
+                            return 1;
+                        }
+
+                    if (prog->clusterUsed(cluster))
+                        {
+                            std::cerr << "cluster " << argv[2] << " is not empty\n";
+                            return 1;
+                        }
+
+                    unlink(cluster->getOutPath("xml"));
+                    unlink(cluster->getOutPath("c"));
+                    assert(cluster->getParent());
+                    cluster->getParent()->removeChild(cluster);
+                }
+            else
+                {
+                    std::cerr << "don't know how to delete a " << argv[1] << "\n";
+                    return 1;
+                }
+        }
+    else if (!strcmp(argv[0], "rename"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+            if (!strcmp(argv[1], "proc"))
+                {
+                    if (argc <= 3)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
+
+                    Proc *proc = prog->findProc(argv[2]);
+                    if (proc == NULL)
+                        {
+                            std::cerr << "cannot find proc " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    Proc *nproc = prog->findProc(argv[3]);
+                    if (nproc != NULL)
+                        {
+                            std::cerr << "proc " << argv[3] << " already exists\n";
+                            return 1;
+                        }
+
+                    proc->setName(argv[3]);
+                }
+            else if (!strcmp(argv[1], "cluster"))
+                {
+                    if (argc <= 3)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
+
+                    Cluster *cluster = prog->findCluster(argv[2]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    Cluster *ncluster = prog->findCluster(argv[3]);
+                    if (ncluster == NULL)
+                        {
+                            std::cerr << "cluster " << argv[3] << " already exists\n";
+                            return 1;
+                        }
+
+                    cluster->setName(argv[3]);
+                }
+            else
+                {
+                    std::cerr << "don't know how to rename a " << argv[1] << "\n";
+                    return 1;
+                }
+        }
+    else if (!strcmp(argv[0], "info"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+            if (!strcmp(argv[1], "prog"))
+                {
+
+                    std::cout << "prog " << prog->getName() << ":\n";
+                    std::cout << "\tclusters:\n";
+                    prog->getRootCluster()->printTree(std::cout);
+                    std::cout << "\n\tlibprocs:\n";
+                    PROGMAP::const_iterator it;
+                    for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
+                        if (p->isLib())
+                            std::cout << "\t\t" << p->getName() << "\n";
+                    std::cout << "\n\tuserprocs:\n";
+                    for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
+                        if (!p->isLib())
+                            std::cout << "\t\t" << p->getName() << "\n";
+                    std::cout << "\n";
+
+                    return 0;
+                }
+            else if (!strcmp(argv[1], "cluster"))
+                {
+                    if (argc <= 2)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
+
+                    Cluster *cluster = prog->findCluster(argv[2]);
+                    if (cluster == NULL)
+                        {
+                            std::cerr << "cannot find cluster " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    std::cout << "cluster " << cluster->getName() << ":\n";
+                    if (cluster->getParent())
+                        std::cout << "\tparent = " << cluster->getParent()->getName() << "\n";
+                    else
+                        std::cout << "\troot cluster.\n";
+                    std::cout << "\tprocs:\n";
+                    PROGMAP::const_iterator it;
+                    for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
+                        if (p->getCluster() == cluster)
+                            std::cout << "\t\t" << p->getName() << "\n";
+                    std::cout << "\n";
+
+                    return 0;
+                }
+            else if (!strcmp(argv[1], "proc"))
+                {
+                    if (argc <= 2)
+                        {
+                            std::cerr << "not enough arguments for cmd\n";
+                            return 1;
+                        }
+
+                    Proc *proc = prog->findProc(argv[2]);
+                    if (proc == NULL)
+                        {
+                            std::cerr << "cannot find proc " << argv[2] << "\n";
+                            return 1;
+                        }
+
+                    std::cout << "proc " << proc->getName() << ":\n";
+                    std::cout << "\tbelongs to cluster " << proc->getCluster()->getName() << "\n";
+                    std::cout << "\tnative address " << std::hex << proc->getNativeAddress() << std::dec << "\n";
+                    if (proc->isLib())
+                        std::cout << "\tis a library proc.\n";
+                    else
+                        {
+                            std::cout << "\tis a user proc.\n";
+                            UserProc *p = (UserProc*)proc;
+                            if (p->isDecoded())
+                                std::cout << "\thas been decoded.\n";
+                            if (p->isAnalysed())
+                                std::cout << "\thas been analysed.\n";
+                        }
+                    std::cout << "\n";
+
+                    return 0;
+                }
+            else
+                {
+                    std::cerr << "don't know how to print info about a " << argv[1] << "\n";
+                    return 1;
+                }
+        }
+    else if (!strcmp(argv[0], "print"))
+        {
+            if (argc <= 1)
+                {
+                    std::cerr << "not enough arguments for cmd\n";
+                    return 1;
+                }
+
+            Proc *proc = prog->findProc(argv[1]);
+            if (proc == NULL)
+                {
+                    std::cerr << "cannot find proc " << argv[1] << "\n";
+                    return 1;
+                }
             if (proc->isLib())
-                std::cout << "\tis a library proc.\n";
-            else {
-                std::cout << "\tis a user proc.\n";
-                UserProc *p = (UserProc*)proc;
-                if (p->isDecoded())
-                    std::cout << "\thas been decoded.\n";
-                if (p->isAnalysed())
-                    std::cout << "\thas been analysed.\n";
-            }
+                {
+                    std::cerr << "cannot print a libproc.\n";
+                    return 1;
+                }
+
+            ((UserProc*)proc)->print(std::cout);
             std::cout << "\n";
-
             return 0;
-        } else {
-            std::cerr << "don't know how to print info about a " << argv[1] << "\n";
+        }
+    else if (!strcmp(argv[0], "exit"))
+        {
+            return 2;
+        }
+    else if (!strcmp(argv[0], "quit"))
+        {
+            return 2;
+        }
+    else if (!strcmp(argv[0], "help"))
+        {
+            helpcmd();
+            return 0;
+        }
+    else
+        {
+            std::cerr << "unknown cmd " << argv[0] << ".\n";
             return 1;
         }
-    } else if (!strcmp(argv[0], "print")) {
-        if (argc <= 1) {
-            std::cerr << "not enough arguments for cmd\n";
-            return 1;
-        }
-
-        Proc *proc = prog->findProc(argv[1]);
-        if (proc == NULL) {
-            std::cerr << "cannot find proc " << argv[1] << "\n";
-            return 1;
-        }
-        if (proc->isLib()) {
-            std::cerr << "cannot print a libproc.\n";
-            return 1;
-        }
-
-        ((UserProc*)proc)->print(std::cout);
-        std::cout << "\n";
-        return 0;
-    } else if (!strcmp(argv[0], "exit")) {
-        return 2;
-    } else if (!strcmp(argv[0], "quit")) {
-        return 2;
-    } else if (!strcmp(argv[0], "help")) {
-        helpcmd();
-        return 0;
-    } else {
-        std::cerr << "unknown cmd " << argv[0] << ".\n";
-        return 1;
-    }
 
     return 0;
 }
@@ -522,14 +632,15 @@ int Boomerang::cmdLine()
     char line[1024];
     printf("boomerang: ");
     fflush(stdout);
-    while (fgets(line, sizeof(line), stdin)) {
-        char **argv;
-        int argc = splitLine(line, &argv);
-        if (parseCmd(argc, (const char **)argv) == 2)
-            return 2;
-        printf("boomerang: ");
-        fflush(stdout);
-    }
+    while (fgets(line, sizeof(line), stdin))
+        {
+            char **argv;
+            int argc = splitLine(line, &argv);
+            if (parseCmd(argc, (const char **)argv) == 2)
+                return 2;
+            printf("boomerang: ");
+            fflush(stdout);
+        }
     return 0;
 }
 
@@ -542,204 +653,221 @@ int Boomerang::commandLine(int argc, const char **argv)
     if (j == (size_t)-1)
         j = progPath.rfind("\\");
     if (j != (size_t)-1)
-    {
-        // Do the chop; keep the trailing slash
-        progPath = progPath.substr(0, j+1);
-    }
-    else {
-        std::cerr << "? No slash in argv[0]!" << std::endl;
-        return 1;
-    }
+        {
+            // Do the chop; keep the trailing slash
+            progPath = progPath.substr(0, j+1);
+        }
+    else
+        {
+            std::cerr << "? No slash in argv[0]!" << std::endl;
+            return 1;
+        }
 
     // Parse switches on command line
-    if ((argc == 2) && (strcmp(argv[1], "-h") == 0)) {
-        help();
-        return 1;
-    }
-    if (argc == 3 && !strcmp(argv[1], "-h") && !strcmp(argv[2], "cmd")) {
-        helpcmd();
-        return 1;
-    }
+    if ((argc == 2) && (strcmp(argv[1], "-h") == 0))
+        {
+            help();
+            return 1;
+        }
+    if (argc == 3 && !strcmp(argv[1], "-h") && !strcmp(argv[2], "cmd"))
+        {
+            helpcmd();
+            return 1;
+        }
 
     int kmd = 0;
 
-    for (int i=1; i < argc; i++) {
-        if (argv[i][0] != '-' && i == argc - 1)
-            break;
-        if (argv[i][0] != '-')
-            usage();
-        switch (argv[i][1]) {
-        case '-':
-            break;        // No effect: ignored
-        case 'h':
-            help();
-            break;
-        case 'v':
-            vFlag = true;
-            break;
-        case 'x':
-            dumpXML = true;
-            break;
-        case 'r':
-            printRtl = true;
-            break;
-        case 't':
-            traceDecoder = true;
-            break;
-        case 'g':
-            dotFile = argv[++i];
-            break;
-        case 'o':
-            outputPath = argv[++i];
-            if (outputPath[outputPath.size()-1] != '/')
-                outputPath += '/';
-            break;
-        case 'O':
-            overlapped = true;
-            break;
-        case 'p':
-            if (argv[i][2] == 'a') {
-                propOnlyToAll = true;
-                std::cerr << " * * Warning! -pa is not implemented yet!\n";
-            }
-            else
-                sscanf(argv[++i], "%i", &numToPropagate);
-            break;
-        case 'n':
-            switch(argv[i][2]) {
-            case 'b':
-                noBranchSimplify = true;
-                break;
-            case 'n':
-                noRemoveNull = true;
-                break;
-            case 'l':
-                noLocals = true;
-                break;
-            case 'r':
-                noRemoveLabels = true;
-                break;
-            case 'R':
-                noRemoveReturns = true;
-                break;
-            case 'd':
-                noDataflow = true;
-                break;
-            case 'D':
-                noDecompile = true;
-                break;
-            case 'P':
-                noPromote = true;
-                break;
-            case 'p':
-                noParameterNames = true;
-                break;
-            case 'm':
-                decodeMain = false;
-                break;
-            default:
-                help();
-            }
-            break;
-        case 'E':
-            noDecodeChildren = true;
-            decodeMain = false;
-            // Fall through
-        case 'e':
+    for (int i=1; i < argc; i++)
         {
-            ADDRESS addr;
-            int n;
-            if (argv[i+1][0] == '0' && argv[i+1][1] == 'x') {
-                n = sscanf(argv[i+1], "0x%x", &addr);
-            } else {
-                n = sscanf(argv[i+1], "%i", &addr);
-            }
-            i++;
-            if (n != 1) {
-                std::cerr << "bad address: " << argv[i+1] << std::endl;
-                exit(1);
-            }
-            entrypoints.push_back(addr);
+            if (argv[i][0] != '-' && i == argc - 1)
+                break;
+            if (argv[i][0] != '-')
+                usage();
+            switch (argv[i][1])
+                {
+                case '-':
+                    break;        // No effect: ignored
+                case 'h':
+                    help();
+                    break;
+                case 'v':
+                    vFlag = true;
+                    break;
+                case 'x':
+                    dumpXML = true;
+                    break;
+                case 'r':
+                    printRtl = true;
+                    break;
+                case 't':
+                    traceDecoder = true;
+                    break;
+                case 'g':
+                    dotFile = argv[++i];
+                    break;
+                case 'o':
+                    outputPath = argv[++i];
+                    if (outputPath[outputPath.size()-1] != '/')
+                        outputPath += '/';
+                    break;
+                case 'O':
+                    overlapped = true;
+                    break;
+                case 'p':
+                    if (argv[i][2] == 'a')
+                        {
+                            propOnlyToAll = true;
+                            std::cerr << " * * Warning! -pa is not implemented yet!\n";
+                        }
+                    else
+                        sscanf(argv[++i], "%i", &numToPropagate);
+                    break;
+                case 'n':
+                    switch(argv[i][2])
+                        {
+                        case 'b':
+                            noBranchSimplify = true;
+                            break;
+                        case 'n':
+                            noRemoveNull = true;
+                            break;
+                        case 'l':
+                            noLocals = true;
+                            break;
+                        case 'r':
+                            noRemoveLabels = true;
+                            break;
+                        case 'R':
+                            noRemoveReturns = true;
+                            break;
+                        case 'd':
+                            noDataflow = true;
+                            break;
+                        case 'D':
+                            noDecompile = true;
+                            break;
+                        case 'P':
+                            noPromote = true;
+                            break;
+                        case 'p':
+                            noParameterNames = true;
+                            break;
+                        case 'm':
+                            decodeMain = false;
+                            break;
+                        default:
+                            help();
+                        }
+                    break;
+                case 'E':
+                    noDecodeChildren = true;
+                    decodeMain = false;
+                    // Fall through
+                case 'e':
+                {
+                    ADDRESS addr;
+                    int n;
+                    if (argv[i+1][0] == '0' && argv[i+1][1] == 'x')
+                        {
+                            n = sscanf(argv[i+1], "0x%x", &addr);
+                        }
+                    else
+                        {
+                            n = sscanf(argv[i+1], "%i", &addr);
+                        }
+                    i++;
+                    if (n != 1)
+                        {
+                            std::cerr << "bad address: " << argv[i+1] << std::endl;
+                            exit(1);
+                        }
+                    entrypoints.push_back(addr);
+                }
+                break;
+                case 's':
+                {
+                    if (argv[i][2] == 'f')
+                        {
+                            symbolFiles.push_back(argv[i+1]);
+                            i++;
+                            break;
+                        }
+                    ADDRESS addr;
+                    int n;
+                    if (argv[i+1][0] == '0' && argv[i+1][1] == 'x')
+                        {
+                            n = sscanf(argv[i+1], "0x%x", &addr);
+                        }
+                    else
+                        {
+                            n = sscanf(argv[i+1], "%i", &addr);
+                        }
+                    i++;
+                    if (n != 1)
+                        {
+                            std::cerr << "bad address: " << argv[i+1] << std::endl;
+                            exit(1);
+                        }
+                    const char *nam = argv[++i];
+                    symbols[addr] = nam;
+                }
+                break;
+                case 'd':
+                    switch(argv[i][2])
+                        {
+                        case 'a':
+                            printAST = true;
+                            break;
+                        case 'c':
+                            debugSwitch = true;
+                            break;
+                        case 'd':
+                            debugDecoder = true;
+                            break;
+                        case 'g':
+                            debugGen = true;
+                            break;
+                        case 'l':
+                            debugLiveness = true;
+                            break;
+                        case 'p':
+                            debugProof = true;
+                            break;
+                        case 'r':       // debug counting unused Returns
+                            debugUnusedRets = true;
+                            break;
+                        case 't':       // debug type analysis
+                            debugTA = true;
+                            break;
+                        case 'u':       // debug unused locations (incl unused rets)
+                            debugUnusedStmt = true;
+                            break;
+                        default:
+                            help();
+                        }
+                    break;
+                case 'm':
+                    sscanf(argv[++i], "%i", &maxMemDepth);
+                    break;
+                case 'i':
+                    if (argv[i][2] == 'c')
+                        decodeThruIndCall = true;       // -ic;
+                    break;
+                case 'L':
+                    if (argv[i][2] == 'D')
+                        loadBeforeDecompile = true;
+                    break;
+                case 'S':
+                    if (argv[i][2] == 'D')
+                        saveBeforeDecompile = true;
+                    break;
+                case 'k':
+                    kmd = 1;
+                    break;
+                default:
+                    help();
+                }
         }
-        break;
-        case 's':
-        {
-            if (argv[i][2] == 'f') {
-                symbolFiles.push_back(argv[i+1]);
-                i++;
-                break;
-            }
-            ADDRESS addr;
-            int n;
-            if (argv[i+1][0] == '0' && argv[i+1][1] == 'x') {
-                n = sscanf(argv[i+1], "0x%x", &addr);
-            } else {
-                n = sscanf(argv[i+1], "%i", &addr);
-            }
-            i++;
-            if (n != 1) {
-                std::cerr << "bad address: " << argv[i+1] << std::endl;
-                exit(1);
-            }
-            const char *nam = argv[++i];
-            symbols[addr] = nam;
-        }
-        break;
-        case 'd':
-            switch(argv[i][2]) {
-            case 'a':
-                printAST = true;
-                break;
-            case 'c':
-                debugSwitch = true;
-                break;
-            case 'd':
-                debugDecoder = true;
-                break;
-            case 'g':
-                debugGen = true;
-                break;
-            case 'l':
-                debugLiveness = true;
-                break;
-            case 'p':
-                debugProof = true;
-                break;
-            case 'r':       // debug counting unused Returns
-                debugUnusedRets = true;
-                break;
-            case 't':       // debug type analysis
-                debugTA = true;
-                break;
-            case 'u':       // debug unused locations (incl unused rets)
-                debugUnusedStmt = true;
-                break;
-            default:
-                help();
-            }
-            break;
-        case 'm':
-            sscanf(argv[++i], "%i", &maxMemDepth);
-            break;
-        case 'i':
-            if (argv[i][2] == 'c')
-                decodeThruIndCall = true;       // -ic;
-            break;
-        case 'L':
-            if (argv[i][2] == 'D')
-                loadBeforeDecompile = true;
-            break;
-        case 'S':
-            if (argv[i][2] == 'D')
-                saveBeforeDecompile = true;
-            break;
-        case 'k':
-            kmd = 1;
-            break;
-        default:
-            help();
-        }
-    }
 
     // Create the output directory, if needed
     if (!createDirectory(outputPath))
@@ -758,16 +886,18 @@ Prog *Boomerang::loadAndDecode(const char *fname)
     Prog *prog;
     std::cerr << "loading...\n";
     FrontEnd *fe = FrontEnd::Load(fname);
-    if (fe == NULL) {
-        std::cerr << "failed.\n";
-        return NULL;
-    }
+    if (fe == NULL)
+        {
+            std::cerr << "failed.\n";
+            return NULL;
+        }
 
     // Add symbols from -s switch(es)
     for (std::map<ADDRESS, std::string>::iterator it = symbols.begin();
-            it != symbols.end(); it++) {
-        fe->AddSymbol((*it).first, (*it).second.c_str());
-    }
+            it != symbols.end(); it++)
+        {
+            fe->AddSymbol((*it).first, (*it).second.c_str());
+        }
 
     if (decodeMain)
         std::cerr << "decoding...\n";
@@ -776,23 +906,26 @@ Prog *Boomerang::loadAndDecode(const char *fname)
     // Delay symbol files to now, since need Prog* prog
     // Also, decode() reads the library catalog
     // symbolFiles from -sf switch(es)
-    for (unsigned i = 0; i < symbolFiles.size(); i++) {
-        std::cerr << "reading symbol file " << symbolFiles[i].c_str() << "\n";
-        prog->readSymbolFile(symbolFiles[i].c_str());
-    }
+    for (unsigned i = 0; i < symbolFiles.size(); i++)
+        {
+            std::cerr << "reading symbol file " << symbolFiles[i].c_str() << "\n";
+            prog->readSymbolFile(symbolFiles[i].c_str());
+        }
 
-    if (!noDecodeChildren) {   // MVE: Not sure if this is right...
-        // this causes any undecoded userprocs to be decoded
-        std::cerr << "decoding anything undecoded...\n";
-        fe->decode(prog, NO_ADDRESS);
-    }
+    if (!noDecodeChildren)     // MVE: Not sure if this is right...
+        {
+            // this causes any undecoded userprocs to be decoded
+            std::cerr << "decoding anything undecoded...\n";
+            fe->decode(prog, NO_ADDRESS);
+        }
 
     // Entry points from -e (and -E) switch(es)
-    for (unsigned i = 0; i < entrypoints.size(); i++) {
-        std::cerr<< "decoding extra entrypoint " << std::hex <<
-                 entrypoints[i] << "\n";
-        prog->decodeExtraEntrypoint(entrypoints[i]);
-    }
+    for (unsigned i = 0; i < entrypoints.size(); i++)
+        {
+            std::cerr<< "decoding extra entrypoint " << std::hex <<
+                     entrypoints[i] << "\n";
+            prog->decodeExtraEntrypoint(entrypoints[i]);
+        }
 
     std::cerr << "found " << std::dec << prog->getNumUserProcs() << " procs\n";
 
@@ -812,21 +945,25 @@ int Boomerang::decompile(const char *fname)
     std::cerr << "setting up transformers...\n";
     ExpTransformer::loadAll();
 
-    if (loadBeforeDecompile) {
-        std::cerr << "loading persisted state...\n";
-        XMLProgParser *p = new XMLProgParser();
-        prog = p->parse(fname);
-    } else {
-        prog = loadAndDecode(fname);
-        if (prog == NULL)
-            return 1;
-    }
+    if (loadBeforeDecompile)
+        {
+            std::cerr << "loading persisted state...\n";
+            XMLProgParser *p = new XMLProgParser();
+            prog = p->parse(fname);
+        }
+    else
+        {
+            prog = loadAndDecode(fname);
+            if (prog == NULL)
+                return 1;
+        }
 
-    if (saveBeforeDecompile) {
-        std::cerr << "saving persistable state...\n";
-        XMLProgParser *p = new XMLProgParser();
-        p->persistToXML(prog);
-    }
+    if (saveBeforeDecompile)
+        {
+            std::cerr << "saving persistable state...\n";
+            XMLProgParser *p = new XMLProgParser();
+            p->persistToXML(prog);
+        }
 
     std::cerr << "decompiling...\n";
     prog->decompile();
@@ -834,16 +971,18 @@ int Boomerang::decompile(const char *fname)
     if (dotFile)
         prog->generateDotFile();
 
-    if (printAST) {
-        std::cerr << "printing AST...\n";
-        PROGMAP::const_iterator it;
-        for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
-            if (!p->isLib()) {
-                UserProc *u = (UserProc*)p;
-                u->getCFG()->compressCfg();
-                u->printAST();
-            }
-    }
+    if (printAST)
+        {
+            std::cerr << "printing AST...\n";
+            PROGMAP::const_iterator it;
+            for (Proc *p = prog->getFirstProc(it); p; p = prog->getNextProc(it))
+                if (!p->isLib())
+                    {
+                        UserProc *u = (UserProc*)p;
+                        u->getCFG()->compressCfg();
+                        u->printAST();
+                    }
+        }
 
     std::cerr << "generating code...\n";
     prog->generateCode();

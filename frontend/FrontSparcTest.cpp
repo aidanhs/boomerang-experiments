@@ -34,7 +34,8 @@
 suite->addTest(new CppUnit::TestCaller<FrontSparcTest> ("FrontSparcTest", \
     &FrontSparcTest::name, *this))
 
-void FrontSparcTest::registerTests(CppUnit::TestSuite* suite) {
+void FrontSparcTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(test1);
     MYTEST(test2);
     MYTEST(test3);
@@ -55,7 +56,8 @@ int FrontSparcTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void FrontSparcTest::setUp () {
+void FrontSparcTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -65,14 +67,16 @@ void FrontSparcTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void FrontSparcTest::tearDown () {
+void FrontSparcTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        FrontSparcTest::test1
  * OVERVIEW:        Test decoding some sparc instructions
  *============================================================================*/
-void FrontSparcTest::test1 () {
+void FrontSparcTest::test1 ()
+{
     std::ostringstream ost;
 
     BinaryFile *pBF = BinaryFile::Load(HELLO_SPARC);
@@ -138,7 +142,8 @@ void FrontSparcTest::test1 () {
     delete pBF;
 }
 
-void FrontSparcTest::test2() {
+void FrontSparcTest::test2()
+{
     DecodeResult inst;
     std::string expected;
 
@@ -180,7 +185,8 @@ void FrontSparcTest::test2() {
     delete pBF;
 }
 
-void FrontSparcTest::test3() {
+void FrontSparcTest::test3()
+{
     DecodeResult inst;
     std::string expected;
 
@@ -240,7 +246,8 @@ void FrontSparcTest::test3() {
     delete pBF;
 }
 
-void FrontSparcTest::testBranch() {
+void FrontSparcTest::testBranch()
+{
     DecodeResult inst;
     std::string expected;
 
@@ -282,7 +289,8 @@ void FrontSparcTest::testBranch() {
     delete pBF;
 }
 
-void FrontSparcTest::testDelaySlot() {
+void FrontSparcTest::testDelaySlot()
+{
 
     BinaryFile *pBF = BinaryFile::Load(BRANCH_SPARC);
     if (pBF == NULL)

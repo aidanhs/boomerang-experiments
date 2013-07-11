@@ -28,7 +28,8 @@
 
 #define LOG Boomerang::get()->log()
 
-class Boomerang {
+class Boomerang
+{
 private:
     static Boomerang *boomerang;
     std::string progPath;   // String with the path to this exec
@@ -42,13 +43,15 @@ private:
 
     Boomerang();
 public:
-    static Boomerang *get() {
+    static Boomerang *get()
+    {
         if (!boomerang) boomerang = new Boomerang();
         return boomerang;
     }
 
     Log &log();
-    void setLogger(Log *l) {
+    void setLogger(Log *l)
+    {
         logger = l;
     }
 
@@ -56,16 +59,20 @@ public:
 
     // performs command line operation
     int commandLine(int argc, const char **argv);
-    void setProgPath(const char* p) {
+    void setProgPath(const char* p)
+    {
         progPath = p;
     }
-    const std::string& getProgPath() {
+    const std::string& getProgPath()
+    {
         return progPath;
     }
-    void setOutputPath(const char* p) {
+    void setOutputPath(const char* p)
+    {
         outputPath = p;
     }
-    const std::string& getOutputPath() {
+    const std::string& getOutputPath()
+    {
         return outputPath;
     }
     Prog *loadAndDecode(const char *fname);

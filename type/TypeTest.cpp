@@ -30,7 +30,8 @@
 suite->addTest(new CppUnit::TestCaller<TypeTest> ("testUtil", \
     &TypeTest::name, *this))
 
-void TypeTest::registerTests(CppUnit::TestSuite* suite) {
+void TypeTest::registerTests(CppUnit::TestSuite* suite)
+{
 
 //  Note: there is nothing left to test in Util (for now)
     MYTEST(testTypeLong);
@@ -50,7 +51,8 @@ int TypeTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void TypeTest::setUp () {
+void TypeTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -60,14 +62,16 @@ void TypeTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void TypeTest::tearDown () {
+void TypeTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        TypeTest::testTypeLong
  * OVERVIEW:        Test type unsigned long
  *============================================================================*/
-void TypeTest::testTypeLong () {
+void TypeTest::testTypeLong ()
+{
 
     std::string expected("unsigned long long");
     IntegerType t(64, -1);
@@ -79,7 +83,8 @@ void TypeTest::testTypeLong () {
  * FUNCTION:        TypeTest::testNotEqual
  * OVERVIEW:        Test type inequality
  *============================================================================*/
-void TypeTest::testNotEqual () {
+void TypeTest::testNotEqual ()
+{
 
     IntegerType t1(32, -1);
     IntegerType t2(32, -1);
@@ -92,15 +97,18 @@ void TypeTest::testNotEqual () {
  * FUNCTION:        TypeTest::testNotEqual
  * OVERVIEW:        Test type inequality
  *============================================================================*/
-class ErrLogger : public Log {
+class ErrLogger : public Log
+{
 public:
-    virtual Log &operator<<(const char *str) {
+    virtual Log &operator<<(const char *str)
+    {
         std::cerr << str;
         return *this;
     }
     virtual ~ErrLogger() {};
 };
-void TypeTest::testCompound() {
+void TypeTest::testCompound()
+{
     BinaryFile *pBF = BinaryFile::Load(HELLO_WINDOWS);
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
     pFE->readLibraryCatalog();              // Read definitions

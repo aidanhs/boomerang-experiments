@@ -71,7 +71,8 @@ typedef std::map<Exp*, int, lessExpStar> igraph;
  * Kinds of Statements, or high-level register transfer lists.
  * changing the order of these will result in save files not working - trent
  *============================================================================*/
-enum STMT_KIND {
+enum STMT_KIND
+{
     STMT_ASSIGN = 0,
     STMT_PHIASSIGN,
     STMT_IMPASSIGN,
@@ -89,7 +90,8 @@ enum STMT_KIND {
  * conditonal assign is being performed.
  * Changing the order of these will result in save files not working - trent
  *============================================================================*/
-enum BRANCH_TYPE {
+enum BRANCH_TYPE
+{
     BRANCH_JE = 0,          // Jump if equals
     BRANCH_JNE,             // Jump if not equals
     BRANCH_JSL,             // Jump if signed less
@@ -116,7 +118,8 @@ enum BRANCH_TYPE {
 /* Statements define values that are used in expressions.
  * They are akin to "definition" in the Dragon Book.
  */
-class Statement {
+class Statement
+{
 protected:
     PBB         pbb;            // contains a pointer to the enclosing BB
     UserProc    *proc;          // procedure containing this statement
@@ -129,36 +132,45 @@ public:
     virtual     ~Statement() { }
 
     // get/set the enclosing BB, etc
-    PBB         getBB() {
+    PBB         getBB()
+    {
         return pbb;
     }
-    void        setBB(PBB bb) {
+    void        setBB(PBB bb)
+    {
         pbb = bb;
     }
 
     void        setProc(UserProc *p);
-    UserProc*   getProc() {
+    UserProc*   getProc()
+    {
         return proc;
     }
 
-    int         getNumber() {
+    int         getNumber()
+    {
         return number;
     }
-    void        setNumber(int num) {
+    void        setNumber(int num)
+    {
         number = num;
     }
 
-    STMT_KIND   getKind() {
+    STMT_KIND   getKind()
+    {
         return kind;
     }
-    void        setKind(STMT_KIND k) {
+    void        setKind(STMT_KIND k)
+    {
         kind = k;
     }
 
-    void        setParent(Statement* par) {
+    void        setParent(Statement* par)
+    {
         parent = par;
     }
-    Statement*  getParent() {
+    Statement*  getParent()
+    {
         return parent;
     }
 
@@ -176,14 +188,17 @@ public:
     bool        isNullStatement();
 
     // true if this statement is any kind of assign
-    bool        isAssign() {
+    bool        isAssign()
+    {
         return kind == STMT_ASSIGN;
     }
 
-    virtual bool    isGoto() {
+    virtual bool    isGoto()
+    {
         return kind == STMT_GOTO;
     }
-    virtual bool    isBranch() {
+    virtual bool    isBranch()
+    {
         return kind == STMT_BRANCH;
     }
 
@@ -194,22 +209,26 @@ public:
     bool        isFlagAssgn();
 
     // true if this statement is a phi assignment
-    bool        isPhi() {
+    bool        isPhi()
+    {
         return kind == STMT_PHIASSIGN;
     }
 
     // true if this statement is a call
-    bool        isCall() {
+    bool        isCall()
+    {
         return kind == STMT_CALL;
     }
 
     // true if this statement is a BoolAssign
-    bool        isBool() {
+    bool        isBool()
+    {
         return kind == STMT_BOOL;
     }
 
     // true if this statement is a ReturnStatement
-    bool        isReturn() {
+    bool        isReturn()
+    {
         return kind == STMT_RET;
     }
 
@@ -250,13 +269,16 @@ public:
 
     // statements should be printable (for debugging)
     virtual void    print(std::ostream &os) = 0;
-    void    printAsUse(std::ostream &os)   {
+    void    printAsUse(std::ostream &os)
+    {
         os << std::dec << number;
     }
-    void    printAsUseBy(std::ostream &os) {
+    void    printAsUseBy(std::ostream &os)
+    {
         os << std::dec << number;
     }
-    void    printNum(std::ostream &os)     {
+    void    printNum(std::ostream &os)
+    {
         os << std::dec << number;
     }
     char*   prints();      // For use in a debugger
@@ -336,7 +358,8 @@ std::ostream& operator<<(std::ostream& os, LocationSet* p);
  * Assignment is an abstract subclass of Statement, holding a location and a
  * Type
  *============================================================================*/
-class Assignment : public Statement {
+class Assignment : public Statement
+{
 protected:
     Type*       type;       // The type for this assignment
     Exp*        lhs;        // The left hand side
@@ -359,28 +382,33 @@ public:
     virtual void    print(std::ostream& os) = 0;
 
     // Get and set the type
-    Type*       getType() {
+    Type*       getType()
+    {
         return type;
     }
-    void        setType(Type* ty) {
+    void        setType(Type* ty)
+    {
         type = ty;
     }
 
     virtual bool    usesExp(Exp *e);       // PhiExp and ImplicitExp don't override
 
-    virtual bool    isDefinition() {
+    virtual bool    isDefinition()
+    {
         return true;
     }
     virtual void    getDefinitions(LocationSet &defs);
 
     // get how to access this value
-    virtual Exp*    getLeft() {
+    virtual Exp*    getLeft()
+    {
         return lhs;
     }
 // virtual Type* getLeftType() { return NULL; }
 
     // set the lhs to something new
-    void        setLeft(Exp* e)  {
+    void        setLeft(Exp* e)
+    {
         lhs = e;
     }
 
@@ -413,7 +441,8 @@ protected:
 
 
 // Assign: an ordinary assignment with left and right sides
-class Assign : public Assignment {
+class Assign : public Assignment
+{
     Exp*    rhs;
     Exp*    guard;
 
@@ -433,12 +462,14 @@ public:
     virtual Statement* clone();
 
     // get how to replace this statement in a use
-    virtual Exp*    getRight() {
+    virtual Exp*    getRight()
+    {
         return rhs;
     }
 
     // set the rhs to something new
-    void        setRight(Exp* e) {
+    void        setRight(Exp* e)
+    {
         rhs = e;
     }
 
@@ -452,23 +483,28 @@ public:
     virtual void    print(std::ostream& os);
 
     // Guard
-    void        setGuard(Exp* g) {
+    void        setGuard(Exp* g)
+    {
         guard = g;
     }
-    Exp*        getGuard() {
+    Exp*        getGuard()
+    {
         return guard;
     }
-    bool        isGuarded() {
+    bool        isGuarded()
+    {
         return guard != NULL;
     }
 
     virtual bool    usesExp(Exp *e);
-    virtual bool    isDefinition() {
+    virtual bool    isDefinition()
+    {
         return true;
     }
 
     // get how to access this value
-    virtual Exp*    getLeft() {
+    virtual Exp*    getLeft()
+    {
         return lhs;
     }
 
@@ -521,17 +557,20 @@ protected:
  * and the reference is to a CallStatement returning multiple locations.
  * Besides, the lhs gives it useful common functionality with other Assignments
  *============================================================================*/
-class PhiAssign : public Assignment {
+class PhiAssign : public Assignment
+{
     StatementVec    stmtVec;        // A vector of pointers to statements
 public:
     // Constructor, subexpression
     PhiAssign(Exp* lhs)
-        : Assignment(lhs) {
+        : Assignment(lhs)
+    {
         kind = STMT_PHIASSIGN;
     }
     // Constructor, type and subexpression
     PhiAssign(Type* ty, Exp* lhs)
-        : Assignment(ty, lhs) {
+        : Assignment(ty, lhs)
+    {
         kind = STMT_PHIASSIGN;
     }
     // Copy constructor (not currently used or implemented)
@@ -543,7 +582,8 @@ public:
     virtual Statement* clone();
 
     // get how to replace this statement in a use
-    virtual Exp*    getRight() {
+    virtual Exp*    getRight()
+    {
         return NULL;
     }
 
@@ -577,26 +617,32 @@ public:
 //
 
     // Get or put the statement at index idx
-    Statement*  getAt(int idx) {
+    Statement*  getAt(int idx)
+    {
         return stmtVec.getAt(idx);
     }
-    void        putAt(int idx, Statement* d) {
+    void        putAt(int idx, Statement* d)
+    {
         stmtVec.putAt(idx, d);
     }
     void        simplifyRefs();
-    virtual int     getNumRefs() {
+    virtual int     getNumRefs()
+    {
         return stmtVec.size();
     }
-    StatementVec& getRefs() {
+    StatementVec& getRefs()
+    {
         return stmtVec;
     }
     // A hack. Check MVE
     bool        hasGlobalFuncParam();
 
-    StatementVec::iterator begin() {
+    StatementVec::iterator begin()
+    {
         return stmtVec.begin();
     }
-    StatementVec::iterator end()   {
+    StatementVec::iterator end()
+    {
         return stmtVec.end();
     }
 
@@ -611,16 +657,19 @@ protected:
 // storing the types of parameters and globals
 // That way, you can always find the type of a subscripted variable by
 // looking in its defining Assignment
-class ImplicitAssign : public Assignment {
+class ImplicitAssign : public Assignment
+{
 public:
     // Constructor, subexpression
     ImplicitAssign(Exp* lhs)
-        : Assignment(lhs) {
+        : Assignment(lhs)
+    {
         kind = STMT_IMPASSIGN;
     }
     // Constructor, type, and subexpression
     ImplicitAssign(Type* ty, Exp* lhs)
-        : Assignment(ty, lhs) {
+        : Assignment(ty, lhs)
+    {
         kind = STMT_IMPASSIGN;
     }
     // Copy constructor
@@ -650,7 +699,8 @@ public:
  * set (to 1 or 0) depending on the condition codes. It has a condition
  * Exp, similar to the BranchStatement class.
  * *==========================================================================*/
-class BoolAssign: public Assignment {
+class BoolAssign: public Assignment
+{
     BRANCH_TYPE jtCond;         // the condition for setting true
     Exp*        pCond;          // Exp representation of the high level
     // condition: e.g. r[8] == 5
@@ -671,13 +721,16 @@ public:
     // Set and return the BRANCH_TYPE of this scond as well as whether the
     // floating point condition codes are used.
     void        setCondType(BRANCH_TYPE cond, bool usesFloat = false);
-    BRANCH_TYPE getCond() {
+    BRANCH_TYPE getCond()
+    {
         return jtCond;
     }
-    bool        isFloat() {
+    bool        isFloat()
+    {
         return bFloat;
     }
-    void        setFloat(bool b) {
+    void        setFloat(bool b)
+    {
         bFloat = b;
     }
 
@@ -685,11 +738,13 @@ public:
     Exp*        getCondExpr();
     void        setCondExpr(Exp* pss);
     // As above, no delete (for subscripting)
-    void        setCondExprND(Exp* e) {
+    void        setCondExprND(Exp* e)
+    {
         pCond = e;
     }
 
-    int         getSize() {
+    int         getSize()
+    {
         return size;   // Return the size of the assignment
     }
     void        makeSigned();
@@ -710,11 +765,13 @@ public:
     virtual void    simplify();
 
     // Statement functions
-    virtual bool    isDefinition() {
+    virtual bool    isDefinition()
+    {
         return true;
     }
     virtual void    getDefinitions(LocationSet &def);
-    virtual Exp*    getRight() {
+    virtual Exp*    getRight()
+    {
         return getCondExpr();
     }
     virtual bool    usesExp(Exp *e);
@@ -740,7 +797,8 @@ public:
  * This class also represents unconditional jumps with a fixed offset
  * (e.g BN, Ba on SPARC).
  *===========================================================================*/
-class GotoStatement: public Statement {
+class GotoStatement: public Statement
+{
 protected:
     Exp*        pDest;          // Destination of a jump or call. This is the
     // absolute destination for both static and
@@ -799,24 +857,30 @@ public:
     virtual void    simplify();
 
     // Statement virtual functions
-    virtual bool    isDefinition() {
+    virtual bool    isDefinition()
+    {
         return false;
     }
-    virtual Exp*    getLeft() {
+    virtual Exp*    getLeft()
+    {
         return NULL;
     }
-    virtual Type*   getLeftType() {
+    virtual Type*   getLeftType()
+    {
         return NULL;
     };
-    virtual Exp*    getRight() {
+    virtual Exp*    getRight()
+    {
         return NULL;
     }
-    virtual bool    usesExp(Exp*) {
+    virtual bool    usesExp(Exp*)
+    {
         return false;
     }
     virtual void    processConstants(Prog*) {}
     virtual void    fromSSAform(igraph&) {}
-    virtual bool    doReplaceRef(Exp*, Exp*) {
+    virtual bool    doReplaceRef(Exp*, Exp*)
+    {
         return false;
     }
 
@@ -827,7 +891,8 @@ public:
 /*==============================================================================
  * BranchStatement has a condition Exp in addition to the destination of the jump.
  *============================================================================*/
-class BranchStatement: public GotoStatement {
+class BranchStatement: public GotoStatement
+{
 public:
     BranchStatement();
     virtual         ~BranchStatement();
@@ -843,13 +908,16 @@ public:
     // Set and return the BRANCH_TYPE of this jcond as well as whether the
     // floating point condition codes are used.
     void        setCondType(BRANCH_TYPE cond, bool usesFloat = false);
-    BRANCH_TYPE getCond() {
+    BRANCH_TYPE getCond()
+    {
         return jtCond;
     }
-    bool        isFloat() {
+    bool        isFloat()
+    {
         return bFloat;
     }
-    void        setFloat(bool b)      {
+    void        setFloat(bool b)
+    {
         bFloat = b;
     }
 
@@ -857,7 +925,8 @@ public:
     Exp*        getCondExpr();
     void        setCondExpr(Exp* pe);
     // As above, no delete (for subscripting)
-    void        setCondExprND(Exp* e) {
+    void        setCondExprND(Exp* e)
+    {
         pCond = e;
     }
 
@@ -891,27 +960,33 @@ public:
     virtual bool    usesExp(Exp *e);
 
     // dataflow related functions
-    virtual bool    canPropagateToAll() {
+    virtual bool    canPropagateToAll()
+    {
         return false;
     }
-    virtual void    propagateToAll() {
+    virtual void    propagateToAll()
+    {
         assert(false);
     }
 
-    virtual bool    isDefinition() {
+    virtual bool    isDefinition()
+    {
         return false;
     }
 
     // get how to access this value
-    virtual Exp*    getLeft() {
+    virtual Exp*    getLeft()
+    {
         return NULL;
     }
-    virtual Type*   getLeftType() {
+    virtual Type*   getLeftType()
+    {
         return NULL;
     }
 
     // get how to replace this statement in a use
-    virtual Exp*    getRight() {
+    virtual Exp*    getRight()
+    {
         return pCond;
     }
 
@@ -940,7 +1015,8 @@ private:
  * CaseStatement is derived from GotoStatement. In addition to the destination
  * of the jump, it has a switch variable Exp.
  *============================================================================*/
-typedef struct {
+typedef struct
+{
     Exp*        pSwitchVar;     // Ptr to Exp repres switch var, e.g. v[7]
     char        chForm;         // Switch form: 'A', 'O', 'R', or 'H'
     int         iLower;         // Lower bound of the switch variable
@@ -951,7 +1027,8 @@ typedef struct {
 //  int         delta;          // Host address - Native address
 } SWITCH_INFO;
 
-class CaseStatement: public GotoStatement {
+class CaseStatement: public GotoStatement
+{
     SWITCH_INFO* pSwitchInfo;   // Ptr to struct with info about the switch
 public:
     CaseStatement();
@@ -1006,7 +1083,8 @@ public:
  * CallStatement: represents a high level call. Information about parameters and
  * the like are stored here.
  *============================================================================*/
-class CallStatement: public GotoStatement {
+class CallStatement: public GotoStatement
+{
     // FIXME: Below will likely go away soon...
     int         returnTypeSize; // Size in bytes of the struct, union or quad FP
     // value returned by the called function.
@@ -1053,7 +1131,8 @@ public:
     int         findReturn(Exp *e);
     void        removeReturn(Exp *e);
     void        addReturn(Exp *e);
-    std::vector<Exp*>& getReturns() {
+    std::vector<Exp*>& getReturns()
+    {
         return returns;
     }
     Exp         *getProven(Exp *e);
@@ -1062,10 +1141,12 @@ public:
     Exp*        findArgument(Exp* e);
     Exp*        getArgumentExp(int i);
     Exp*        getImplicitArgumentExp(int i);
-    std::vector<Exp*>& getImplicitArguments() {
+    std::vector<Exp*>& getImplicitArguments()
+    {
         return implicitArguments;
     }
-    int         getNumImplicitArguments() {
+    int         getNumImplicitArguments()
+    {
         return implicitArguments.size();
     }
     void        setArgumentExp(int i, Exp *e);
@@ -1114,7 +1195,8 @@ public:
     virtual bool    usesExp(Exp *e);
 
     // dataflow related functions
-    virtual bool    propagateToAll() {
+    virtual bool    propagateToAll()
+    {
         assert(false);
         return false;
     }
@@ -1126,7 +1208,8 @@ public:
     // Still called from (e.g.) UserProc::prover()
     //virtual Exp* getLeft() {assert(0);}
     // get how to replace this statement in a use
-    virtual Exp*    getRight() {
+    virtual Exp*    getRight()
+    {
         return NULL;
     }
 
@@ -1148,10 +1231,12 @@ public:
 protected:
     virtual bool    doReplaceRef(Exp* from, Exp* to);
 
-    void        appendArgument(Exp *e) {
+    void        appendArgument(Exp *e)
+    {
         arguments.push_back(e);
     }
-    void        appendImplicitArgument(Exp *e) {
+    void        appendImplicitArgument(Exp *e)
+    {
         implicitArguments.push_back(e);
     }
     friend class XMLProgParser;
@@ -1161,7 +1246,8 @@ protected:
 /*==============================================================================
  * ReturnStatement: represents a high level return.
  *============================================================================*/
-class ReturnStatement: public GotoStatement {
+class ReturnStatement: public GotoStatement
+{
 protected:
     // number of bytes that this return pops
     int         nBytesPopped;
@@ -1211,23 +1297,29 @@ public:
     virtual bool    usesExp(Exp *e);
 
     virtual bool    doReplaceRef(Exp* from, Exp* to);
-    int         getNumBytesPopped() {
+    int         getNumBytesPopped()
+    {
         return nBytesPopped;
     }
-    void        setNumBytesPopped(int n) {
+    void        setNumBytesPopped(int n)
+    {
         nBytesPopped = n;
     }
 
-    int         getNumReturns() {
+    int         getNumReturns()
+    {
         return returns.size();
     }
-    Exp         *getReturnExp(int n) {
+    Exp         *getReturnExp(int n)
+    {
         return returns[n];
     }
-    void        setReturnExp(int n, Exp *e) {
+    void        setReturnExp(int n, Exp *e)
+    {
         returns[n] = e;
     }
-    std::vector<Exp*>& getReturns() {
+    std::vector<Exp*>& getReturns()
+    {
         return returns;
     }
     void        setSigArguments();   // Set returns based on signature
@@ -1235,10 +1327,12 @@ public:
     void        addReturn(Exp *e);
 
     // Get and set the native address for the first and only return statement
-    ADDRESS     getRetAddr() {
+    ADDRESS     getRetAddr()
+    {
         return retAddr;
     }
-    void        setRetAddr(ADDRESS r) {
+    void        setRetAddr(ADDRESS r)
+    {
         retAddr = r;
     }
 

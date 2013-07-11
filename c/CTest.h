@@ -6,7 +6,8 @@
 
 #include "ansi-c-parser.h"
 
-class CTest : public CppUnit::TestCase {
+class CTest : public CppUnit::TestCase
+{
 
 public:
     CTest(std::string name) : CppUnit::TestCase (name)

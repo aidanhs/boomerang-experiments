@@ -31,14 +31,16 @@
 #include "SymTab.h"
 #include <set>
 
-struct import_entry {
+struct import_entry
+{
     int         name;
     short       reserved2;
     Byte        type;
     Byte        reserved1;
 };
 
-struct export_entry {
+struct export_entry
+{
     int         next;
     int         name;
     int         value;
@@ -48,7 +50,8 @@ struct export_entry {
     short       module_index;
 };
 
-struct space_dictionary_record {
+struct space_dictionary_record
+{
     unsigned    name;
     unsigned    flags;
     int         space_number;
@@ -60,7 +63,8 @@ struct space_dictionary_record {
     unsigned    init_pointer_quantity;
 };
 
-struct subspace_dictionary_record {
+struct subspace_dictionary_record
+{
     int         space_index;
     unsigned    flags;
     int         file_loc_init_value;
@@ -73,12 +77,14 @@ struct subspace_dictionary_record {
     int         fixup_request_quantity;
 };
 
-struct plt_record {
+struct plt_record
+{
     ADDRESS     value;                      // Address in the library
     ADDRESS     r19value;                   // r19 value needed
 };
 
-struct symElem {
+struct symElem
+{
     const char* name;                       // Simple symbol table entry
     ADDRESS     value;
 };
@@ -94,7 +100,8 @@ public:
     virtual bool  PostLoad(void* handle);     // For archive files only
     virtual LOAD_FMT GetFormat() const;       // Get format i.e. LOADFMT_PALM
     virtual MACHINE GetMachine() const;       // Get format i.e. MACHINE_HPRISC
-    virtual const char *getFilename() const {
+    virtual const char *getFilename() const
+    {
         return m_pFileName;
     }
 

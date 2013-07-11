@@ -26,7 +26,8 @@ bool isSwitch(PBB pSwitchBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF)
 void processSwitch(PBB pBB, int delta, Cfg* pCfg, TargetQueue& tq,
                    BinaryFile* pBF) {}
 void Analysis::analyse(UserProc* proc) {}
-HLLCode *Boomerang::getHLLCode(UserProc *p) {
+HLLCode *Boomerang::getHLLCode(UserProc *p)
+{
     return 0;
 }
 

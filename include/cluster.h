@@ -41,19 +41,24 @@ protected:
 public:
     Cluster() : name(""), parent(NULL) { }
     Cluster(const char *name) : name(name), parent(NULL) { }
-    const char *getName() {
+    const char *getName()
+    {
         return name.c_str();
     }
-    void setName(const char *nam) {
+    void setName(const char *nam)
+    {
         name = nam;
     }
-    unsigned int getNumChildren() {
+    unsigned int getNumChildren()
+    {
         return children.size();
     }
-    Cluster *getChild(int n) {
+    Cluster *getChild(int n)
+    {
         return children[n];
     }
-    void addChild(Cluster *n) {
+    void addChild(Cluster *n)
+    {
         children.push_back(n);
         n->parent = this;
     }

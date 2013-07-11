@@ -24,9 +24,11 @@
 #include <sstream>
 #include <map>
 
-class NullLogger : public Log {
+class NullLogger : public Log
+{
 public:
-    virtual Log &operator<<(const char *str) {
+    virtual Log &operator<<(const char *str)
+    {
         //std::cerr << str;
         return *this;
     }
@@ -42,7 +44,8 @@ public:
 suite->addTest(new CppUnit::TestCaller<StatementTest> ("Statements", \
     &StatementTest::name, *this))
 
-void StatementTest::registerTests(CppUnit::TestSuite* suite) {
+void StatementTest::registerTests(CppUnit::TestSuite* suite)
+{
 
     MYTEST(testLocationSet);
     MYTEST(testWildLocationSet);
@@ -78,11 +81,13 @@ int StatementTest::countTestCases () const
  * RETURNS:         <nothing>
  *============================================================================*/
 static bool logset = false;
-void StatementTest::setUp () {
-    if (!logset) {
-        logset = true;
-        Boomerang::get()->setLogger(new NullLogger());
-    }
+void StatementTest::setUp ()
+{
+    if (!logset)
+        {
+            logset = true;
+            Boomerang::get()->setLogger(new NullLogger());
+        }
 }
 
 /*==============================================================================
@@ -92,14 +97,16 @@ void StatementTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void StatementTest::tearDown () {
+void StatementTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testEmpty
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testEmpty () {
+void StatementTest::testEmpty ()
+{
     // Force "verbose" flag (-v)
     Boomerang* boo = Boomerang::get();
     boo->vFlag = true;
@@ -137,7 +144,8 @@ void StatementTest::testEmpty () {
  * FUNCTION:        StatementTest::testFlow
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testFlow () {
+void StatementTest::testFlow ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -192,7 +200,8 @@ void StatementTest::testFlow () {
  * FUNCTION:        StatementTest::testKill
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testKill () {
+void StatementTest::testKill ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -250,7 +259,8 @@ void StatementTest::testKill () {
  * FUNCTION:        StatementTest::testUse
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUse () {
+void StatementTest::testUse ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -308,7 +318,8 @@ void StatementTest::testUse () {
  * FUNCTION:        StatementTest::testUseOverKill
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUseOverKill () {
+void StatementTest::testUseOverKill ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -371,7 +382,8 @@ void StatementTest::testUseOverKill () {
  * FUNCTION:        StatementTest::testUseOverBB
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUseOverBB () {
+void StatementTest::testUseOverBB ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -437,7 +449,8 @@ void StatementTest::testUseOverBB () {
  * FUNCTION:        StatementTest::testUseKill
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testUseKill () {
+void StatementTest::testUseKill ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -496,7 +509,8 @@ void StatementTest::testUseKill () {
  * FUNCTION:        StatementTest::testEndlessLoop
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testEndlessLoop () {
+void StatementTest::testEndlessLoop ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -555,7 +569,8 @@ void StatementTest::testEndlessLoop () {
  * FUNCTION:        StatementTest::testLocationSet
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testLocationSet () {
+void StatementTest::testLocationSet ()
+{
     Location rof(opRegOf, new Const(12), NULL);
     Const& theReg = *(Const*)rof.getSubExp1();
     LocationSet ls;
@@ -606,7 +621,8 @@ void StatementTest::testLocationSet () {
  * FUNCTION:        StatementTest::testWildLocationSet
  * OVERVIEW:
  *============================================================================*/
-void StatementTest::testWildLocationSet () {
+void StatementTest::testWildLocationSet ()
+{
     Location rof12(opRegOf, new Const(12), NULL);
     Location rof13(opRegOf, new Const(13), NULL);
     Assign a10, a20;
@@ -654,7 +670,8 @@ void StatementTest::testWildLocationSet () {
  * FUNCTION:        StatementTest::testRecursion
  * OVERVIEW:        Test push of argument (X86 style), then call self
  *============================================================================*/
-void StatementTest::testRecursion () {
+void StatementTest::testRecursion ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
@@ -790,7 +807,8 @@ void StatementTest::testRecursion () {
  * FUNCTION:        StatamentTest::testClone
  * OVERVIEW:        Test cloning of Assigns (and exps)
  *============================================================================*/
-void StatementTest::testClone () {
+void StatementTest::testClone ()
+{
     Assign* a1 = new Assign(
         Location::regOf(8),
         new Binary(opPlus,
@@ -825,7 +843,8 @@ void StatementTest::testClone () {
  * FUNCTION:        StatementTest::testIsAssign
  * OVERVIEW:        Test assignment test
  *============================================================================*/
-void StatementTest::testIsAssign () {
+void StatementTest::testIsAssign ()
+{
     std::ostringstream ost;
     // r2 := 99
     Assign a(
@@ -846,7 +865,8 @@ void StatementTest::testIsAssign () {
  * FUNCTION:        StatementTest::testIsFlagCall
  * OVERVIEW:        Test the isFlagAssgn function, and opFlagCall
  *============================================================================*/
-void StatementTest::testIsFlagAssgn () {
+void StatementTest::testIsFlagAssgn ()
+{
     std::ostringstream ost;
     // FLAG addFlags(r2 , 99)
     Assign fc(
@@ -879,7 +899,8 @@ void StatementTest::testIsFlagAssgn () {
  * FUNCTION:        StatementTest::testAddUsedLocs
  * OVERVIEW:        Test the finding of locations used by this statement
  *============================================================================*/
-void StatementTest::testAddUsedLocs () {
+void StatementTest::testAddUsedLocs ()
+{
     // m[r28-4] := m[r28-8] * r26
     Assign* a = new Assign(
         Location::memOf(
@@ -1019,7 +1040,8 @@ void StatementTest::testAddUsedLocs () {
  * FUNCTION:        StatementTest::testSubscriptVars
  * OVERVIEW:        Test the subscripting of locations in Statements
  *============================================================================*/
-void StatementTest::testSubscriptVars () {
+void StatementTest::testSubscriptVars ()
+{
     Exp* srch = Location::regOf(28);
     Assign s9(new Const(0), new Const(0));
     s9.setNumber(9);
@@ -1182,7 +1204,8 @@ void StatementTest::testSubscriptVars () {
  * OVERVIEW:        Test the visitor code that fixes references that were to
  *                    return locations from calls
  *============================================================================*/
-void StatementTest::testCallRefsFixer () {
+void StatementTest::testCallRefsFixer ()
+{
     BinaryFile *pBF = BinaryFile::Load(FIB_PENTIUM);
     FrontEnd *pFE = new PentiumFrontEnd(pBF);
     Type::clearNamedTypes();
@@ -1238,7 +1261,8 @@ void StatementTest::testCallRefsFixer () {
  * FUNCTION:        StatementTest::testStripSizes
  * OVERVIEW:        Test the visitor code that strips out size casts
  *============================================================================*/
-void StatementTest::testStripSizes () {
+void StatementTest::testStripSizes ()
+{
     // ** r24 := m[zfill(8,32,local5) + param6]*8**8* / 16
     // The double size casting happens as a result of substitution
     Exp* lhs = Location::regOf(24);

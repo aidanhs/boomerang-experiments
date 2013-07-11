@@ -25,13 +25,15 @@
 #include <deque>
 
 // Kinds of SSL specification tables
-enum TABLE_TYPE {
+enum TABLE_TYPE
+{
     NAMETABLE,
     OPTABLE,
     EXPRTABLE
 };
 
-class Table {
+class Table
+{
 public:
     Table(std::deque<std::string>& recs, TABLE_TYPE t = NAMETABLE);
     Table(TABLE_TYPE t);
@@ -42,14 +44,16 @@ private:
     TABLE_TYPE type;
 };
 
-class OpTable : public Table {
+class OpTable : public Table
+{
 public:
     OpTable(std::deque<std::string>& ops);
 };
 
 class Exp;
 
-class ExprTable : public Table {
+class ExprTable : public Table
+{
 public:
     ExprTable(std::deque<Exp*>& exprs);
     ~ExprTable(void);
