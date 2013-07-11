@@ -65,11 +65,12 @@ BinaryFile *BinaryFile::Load( const char *sName )
 {
     BinaryFile *pBF = BinaryFile::getInstanceFor( sName );
     if( pBF == NULL ) return NULL;
-    if( pBF->RealLoad( sName ) == 0 ) {
-        fprintf( stderr, "Loading '%s' failed\n", sName );
-        delete pBF;
-        return NULL;
-    }
+    if( pBF->RealLoad( sName ) == 0 )
+        {
+            fprintf( stderr, "Loading '%s' failed\n", sName );
+            delete pBF;
+            return NULL;
+        }
     pBF->getTextLimits();
     return pBF;
 }
@@ -89,86 +90,106 @@ BinaryFile* BinaryFile::getInstanceFor( const char *sName )
     BinaryFile *res = NULL;
 
     f = fopen (sName, "ro");
-    if( f == NULL ) {
-        fprintf(stderr, "Unable to open binary file: %s\n", sName );
-        return NULL;
-    }
-    fread (buf, sizeof(buf), 1, f);
-    if( TESTMAGIC4(buf,0, '\177','E','L','F') ) {
-        /* ELF Binary */
-        libName = "libElfBinaryFile.so";
-    } else if( TESTMAGIC2( buf,0, 'M','Z' ) ) { /* DOS-based file */
-        int peoff = LMMH(buf[0x3C]);
-        if( peoff != 0 && fseek(f, peoff, SEEK_SET) != -1 ) {
-            fread( buf, 4, 1, f );
-            if( TESTMAGIC4( buf,0, 'P','E',0,0 ) ) {
-                /* Win32 Binary */
-                libName = "libWin32BinaryFile.so";
-#ifdef WIN32
-                res = new Win32BinaryFile;
-                fclose(f);
-                return res;
-#endif
-            } else if( TESTMAGIC2( buf,0, 'N','E' ) ) {
-                /* Win16 / Old OS/2 Binary */
-            } else if( TESTMAGIC2( buf,0, 'L','E' ) ) {
-                /* Win32 VxD (Linear Executable) */
-            } else if( TESTMAGIC2( buf,0, 'L','X' ) ) {
-                /* New OS/2 Binary */
-            }
+    if( f == NULL )
+        {
+            fprintf(stderr, "Unable to open binary file: %s\n", sName );
+            return NULL;
         }
-        /* Assume MS-DOS Real-mode binary. */
-        if( libName.size() == 0 )
-            libName = "libExeBinaryFile.so";
+    fread (buf, sizeof(buf), 1, f);
+    if( TESTMAGIC4(buf,0, '\177','E','L','F') )
+        {
+            /* ELF Binary */
+            libName = "libElfBinaryFile.so";
+        }
+    else if( TESTMAGIC2( buf,0, 'M','Z' ) )     /* DOS-based file */
+        {
+            int peoff = LMMH(buf[0x3C]);
+            if( peoff != 0 && fseek(f, peoff, SEEK_SET) != -1 )
+                {
+                    fread( buf, 4, 1, f );
+                    if( TESTMAGIC4( buf,0, 'P','E',0,0 ) )
+                        {
+                            /* Win32 Binary */
+                            libName = "libWin32BinaryFile.so";
 #ifdef WIN32
-        res = new ExeBinaryFile;
-        fclose(f);
-        return res;
+                            res = new Win32BinaryFile;
+                            fclose(f);
+                            return res;
 #endif
-    } else if( TESTMAGIC4( buf,0x3C, 'a','p','p','l' ) ||
-               TESTMAGIC4( buf,0x3C, 'p','a','n','l' ) ) {
-        /* PRC Palm-pilot binary */
-        libName = "libPalmBinaryFile.so";
+                        }
+                    else if( TESTMAGIC2( buf,0, 'N','E' ) )
+                        {
+                            /* Win16 / Old OS/2 Binary */
+                        }
+                    else if( TESTMAGIC2( buf,0, 'L','E' ) )
+                        {
+                            /* Win32 VxD (Linear Executable) */
+                        }
+                    else if( TESTMAGIC2( buf,0, 'L','X' ) )
+                        {
+                            /* New OS/2 Binary */
+                        }
+                }
+            /* Assume MS-DOS Real-mode binary. */
+            if( libName.size() == 0 )
+                libName = "libExeBinaryFile.so";
 #ifdef WIN32
-        res = new PalmBinaryFile;
-        fclose(f);
-        return res;
+            res = new ExeBinaryFile;
+            fclose(f);
+            return res;
 #endif
-    } else if( buf[0] == 0x02 && buf[2] == 0x01 &&
-               (buf[1] == 0x10 || buf[1] == 0x0B) &&
-               (buf[3] == 0x07 || buf[3] == 0x08 || buf[4] == 0x0B) ) {
-        /* HP Som binary (last as it's not really particularly good magic) */
-        libName = "libHpSomBinaryFile.so";
+        }
+    else if( TESTMAGIC4( buf,0x3C, 'a','p','p','l' ) ||
+             TESTMAGIC4( buf,0x3C, 'p','a','n','l' ) )
+        {
+            /* PRC Palm-pilot binary */
+            libName = "libPalmBinaryFile.so";
 #ifdef WIN32
-        res = new HpSomBinaryFile;
-        fclose(f);
-        return res;
+            res = new PalmBinaryFile;
+            fclose(f);
+            return res;
 #endif
-    } else {
-        fprintf( stderr, "Unrecognised binary file\n" );
-        fclose(f);
-        return NULL;
-    }
+        }
+    else if( buf[0] == 0x02 && buf[2] == 0x01 &&
+             (buf[1] == 0x10 || buf[1] == 0x0B) &&
+             (buf[3] == 0x07 || buf[3] == 0x08 || buf[4] == 0x0B) )
+        {
+            /* HP Som binary (last as it's not really particularly good magic) */
+            libName = "libHpSomBinaryFile.so";
+#ifdef WIN32
+            res = new HpSomBinaryFile;
+            fclose(f);
+            return res;
+#endif
+        }
+    else
+        {
+            fprintf( stderr, "Unrecognised binary file\n" );
+            fclose(f);
+            return NULL;
+        }
 
 #ifndef WIN32
     // Load the specific loader library
     libName = std::string(LIBDIR) + "/" + libName;
     void* dlHandle = dlopen(libName.c_str(), RTLD_LAZY);
-    if (dlHandle == NULL) {
-        fprintf( stderr, "Could not open dynamic loader library %s\n",
-                 libName.c_str());
-        fprintf( stderr, "%s\n", dlerror());
-        fclose(f);
-        return NULL;
-    }
+    if (dlHandle == NULL)
+        {
+            fprintf( stderr, "Could not open dynamic loader library %s\n",
+                     libName.c_str());
+            fprintf( stderr, "%s\n", dlerror());
+            fclose(f);
+            return NULL;
+        }
     // Use the handle to find the "construct" function
     constructFcn pFcn = (constructFcn) dlsym(dlHandle, "construct");
-    if (pFcn == NULL) {
-        fprintf( stderr, "Loader library %s does not have a construct "
-                 "function\n", libName.c_str());
-        fclose(f);
-        return NULL;
-    }
+    if (pFcn == NULL)
+        {
+            fprintf( stderr, "Loader library %s does not have a construct "
+                     "function\n", libName.c_str());
+            fclose(f);
+            return NULL;
+        }
     // Call the construct function
     res = (*pFcn)();
 #endif
@@ -190,12 +211,12 @@ PSectionInfo BinaryFile::GetSectionInfo(int idx) const
 int BinaryFile::GetSectionIndexByName(const char* sName)
 {
     for (int i=0; i < m_iNumSections; i++)
-    {
-        if (strcmp(m_pSections[i].pSectionName, sName) == 0)
         {
-            return i;
+            if (strcmp(m_pSections[i].pSectionName, sName) == 0)
+                {
+                    return i;
+                }
         }
-    }
     return -1;
 }
 
@@ -203,15 +224,15 @@ PSectionInfo BinaryFile::GetSectionInfoByAddr(ADDRESS uEntry) const
 {
     PSectionInfo pSect;
     for (int i=0; i < m_iNumSections; i++)
-    {
-        pSect = &m_pSections[i];
-        if ((uEntry >= pSect->uNativeAddr) &&
-                (uEntry < pSect->uNativeAddr + pSect->uSectionSize))
         {
-            // We have the right section
-            return pSect;
+            pSect = &m_pSections[i];
+            if ((uEntry >= pSect->uNativeAddr) &&
+                    (uEntry < pSect->uNativeAddr + pSect->uSectionSize))
+                {
+                    // We have the right section
+                    return pSect;
+                }
         }
-    }
     // Failed to find the address
     return NULL;
 }
@@ -329,25 +350,27 @@ void BinaryFile::getTextLimits()
     limitTextLow = 0xFFFFFFFF;
     limitTextHigh = 0;
     textDelta = 0;
-    for (int i=0; i < n; i++) {
-        SectionInfo* pSect = GetSectionInfo(i);
-        if (pSect->bCode) {
-            // The .plt section is an anomaly. It's code, but we never want to
-            // decode it, and in Sparc ELF files, it's actually in the data
-            // segment (so it can be modified). For now, we make this ugly
-            // exception
-            if (strcmp(".plt", pSect->pSectionName) == 0)
-                continue;
-            if (pSect->uNativeAddr < limitTextLow)
-                limitTextLow = pSect->uNativeAddr;
-            ADDRESS hiAddress = pSect->uNativeAddr + pSect->uSectionSize;
-            if (hiAddress > limitTextHigh)
-                limitTextHigh = hiAddress;
-            if (textDelta == 0)
-                textDelta = pSect->uHostAddr - pSect->uNativeAddr;
-            else
-                assert(textDelta ==
-                       (int) (pSect->uHostAddr - pSect->uNativeAddr));
+    for (int i=0; i < n; i++)
+        {
+            SectionInfo* pSect = GetSectionInfo(i);
+            if (pSect->bCode)
+                {
+                    // The .plt section is an anomaly. It's code, but we never want to
+                    // decode it, and in Sparc ELF files, it's actually in the data
+                    // segment (so it can be modified). For now, we make this ugly
+                    // exception
+                    if (strcmp(".plt", pSect->pSectionName) == 0)
+                        continue;
+                    if (pSect->uNativeAddr < limitTextLow)
+                        limitTextLow = pSect->uNativeAddr;
+                    ADDRESS hiAddress = pSect->uNativeAddr + pSect->uSectionSize;
+                    if (hiAddress > limitTextHigh)
+                        limitTextHigh = hiAddress;
+                    if (textDelta == 0)
+                        textDelta = pSect->uHostAddr - pSect->uNativeAddr;
+                    else
+                        assert(textDelta ==
+                               (int) (pSect->uHostAddr - pSect->uNativeAddr));
+                }
         }
-    }
 }

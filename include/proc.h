@@ -51,7 +51,8 @@ class Signature;
 /*==============================================================================
  * Procedure class.
  *============================================================================*/
-class Proc {
+class Proc
+{
 public:
 
     /*
@@ -90,7 +91,8 @@ public:
      * Get/Set the first procedure that calls this procedure (or null for main/start).
      */
     Proc *getFirstCaller();
-    void setFirstCaller(Proc *p) {
+    void setFirstCaller(Proc *p)
+    {
         if (m_firstCaller == NULL) m_firstCaller = p;
     }
 
@@ -167,14 +169,16 @@ public:
      * Set the number of bytes popped off the caller stack by this procedure
      */
     void setBytesPopped(int n);
-    int getBytesPopped() {
+    int getBytesPopped()
+    {
         return bytesPopped;
     }
 
     /*
      * Return true if this is a library proc
      */
-    virtual bool isLib() {
+    virtual bool isLib()
+    {
         return false;
     }
 
@@ -182,7 +186,8 @@ public:
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {
+    virtual bool isAggregateUsed()
+    {
         return false;
     }
 
@@ -242,7 +247,8 @@ protected:
 /*==============================================================================
  * LibProc class.
  *============================================================================*/
-class LibProc : public Proc {
+class LibProc : public Proc
+{
 public:
 
     LibProc(Prog *prog, std::string& name, ADDRESS address);
@@ -251,7 +257,8 @@ public:
     /*
      * Return the coverage of this procedure in bytes.
      */
-    unsigned getCoverage() {
+    unsigned getCoverage()
+    {
         return 0;
     }
 
@@ -266,7 +273,8 @@ public:
     /*
      * Return true, since is a library proc
      */
-    bool isLib() {
+    bool isLib()
+    {
         return true;
     }
 
@@ -274,7 +282,8 @@ public:
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {
+    virtual bool isAggregateUsed()
+    {
         return false;
     }
 
@@ -294,7 +303,8 @@ public:
 /*==============================================================================
  * UserProc class.
  *============================================================================*/
-class UserProc : public Proc {
+class UserProc : public Proc
+{
 public:
 
     UserProc(Prog *prog, std::string& name, ADDRESS address);
@@ -331,10 +341,12 @@ public:
     /*
      * Is this procedure decompiled or partly decompiled
      */
-    bool isDecompiled() {
+    bool isDecompiled()
+    {
         return decompiled;
     }
-    bool isPartDecompiled() {
+    bool isPartDecompiled()
+    {
         return decompiled_down;
     }
 
@@ -365,7 +377,8 @@ public:
     void print(std::ostream &out, bool withDF = false);
 
     // simplify the statements in this proc
-    void simplify() {
+    void simplify()
+    {
         cfg->simplify();
     }
 
@@ -407,7 +420,8 @@ public:
 
     // get internal statements
     // Note: assignment causes shallow copy of list
-    virtual void getInternalStatements(StatementList &sl) {
+    virtual void getInternalStatements(StatementList &sl)
+    {
         sl = internal;
     }
     // Calculate uses info
@@ -531,7 +545,8 @@ public:
      * Return true if this proc uses the special aggregate pointer as the
      * first parameter
      */
-    virtual bool isAggregateUsed() {
+    virtual bool isAggregateUsed()
+    {
         return aggregateUsed;
     }
 

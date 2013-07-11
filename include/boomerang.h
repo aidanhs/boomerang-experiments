@@ -25,7 +25,8 @@
 #include "proc.h"
 #include "hllcode.h"
 
-class Boomerang {
+class Boomerang
+{
 private:
     static Boomerang *boomerang;
     std::string progPath;   // String with the path to this exec
@@ -35,7 +36,8 @@ private:
 
     Boomerang();
 public:
-    static Boomerang *get() {
+    static Boomerang *get()
+    {
         if (!boomerang) boomerang = new Boomerang();
         return boomerang;
     }
@@ -44,10 +46,12 @@ public:
 
     // performs command line operation
     int commandLine(int argc, const char **argv);
-    void setProgPath(const char* p) {
+    void setProgPath(const char* p)
+    {
         progPath = p;
     }
-    const std::string& getProgPath() {
+    const std::string& getProgPath()
+    {
         return progPath;
     }
 

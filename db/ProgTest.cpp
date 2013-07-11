@@ -32,7 +32,8 @@
 suite->addTest(new CppUnit::TestCaller<ProgTest> ("ProgTest", \
     &ProgTest::name, *this))
 
-void ProgTest::registerTests(CppUnit::TestSuite* suite) {
+void ProgTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(testName);
     MYTEST(testLibParams);
 }
@@ -49,7 +50,8 @@ int ProgTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void ProgTest::setUp () {
+void ProgTest::setUp ()
+{
     //prog.setName("default name");
 }
 
@@ -60,14 +62,16 @@ void ProgTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void ProgTest::tearDown () {
+void ProgTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        ProgTest::testName
  * OVERVIEW:        Test setting and reading name
  *============================================================================*/
-void ProgTest::testName () {
+void ProgTest::testName ()
+{
     /*    std::string actual(prog.getName());
         CPPUNIT_ASSERT_EQUAL(std::string("default name"), actual);
         std::string name("Happy prog");
@@ -80,7 +84,8 @@ void ProgTest::testName () {
  * FUNCTION:        ProgTest::testLibParams
  * OVERVIEW:        Test loading of the library parameters
  *============================================================================*/
-void ProgTest::testLibParams () {
+void ProgTest::testLibParams ()
+{
     // Read the library parameter information
     // Oops - now have to set up a frontend before calling this
     /*    prog.clear();

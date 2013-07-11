@@ -35,7 +35,8 @@
 suite->addTest(new CppUnit::TestCaller<DataflowTest> ("testDataflow", \
     &DataflowTest::name, *this))
 
-void DataflowTest::registerTests(CppUnit::TestSuite* suite) {
+void DataflowTest::registerTests(CppUnit::TestSuite* suite)
+{
 
     MYTEST(testLocationSet);
     MYTEST(testEmpty);
@@ -61,7 +62,8 @@ int DataflowTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void DataflowTest::setUp () {
+void DataflowTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -71,14 +73,16 @@ void DataflowTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void DataflowTest::tearDown () {
+void DataflowTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        DataflowTest::testEmpty
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testEmpty () {
+void DataflowTest::testEmpty ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -107,7 +111,8 @@ void DataflowTest::testEmpty () {
  * FUNCTION:        DataflowTest::testFlow
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testFlow () {
+void DataflowTest::testFlow ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -152,7 +157,8 @@ void DataflowTest::testFlow () {
  * FUNCTION:        DataflowTest::testKill
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testKill () {
+void DataflowTest::testKill ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -202,7 +208,8 @@ void DataflowTest::testKill () {
  * FUNCTION:        DataflowTest::testUse
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testUse () {
+void DataflowTest::testUse ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -252,7 +259,8 @@ void DataflowTest::testUse () {
  * FUNCTION:        DataflowTest::testUseOverKill
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testUseOverKill () {
+void DataflowTest::testUseOverKill ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -307,7 +315,8 @@ void DataflowTest::testUseOverKill () {
  * FUNCTION:        DataflowTest::testUseOverBB
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testUseOverBB () {
+void DataflowTest::testUseOverBB ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -364,7 +373,8 @@ void DataflowTest::testUseOverBB () {
  * FUNCTION:        DataflowTest::testUseKill
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testUseKill () {
+void DataflowTest::testUseKill ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -415,7 +425,8 @@ void DataflowTest::testUseKill () {
  * FUNCTION:        DataflowTest::testEndlessLoop
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testEndlessLoop () {
+void DataflowTest::testEndlessLoop ()
+{
     // create Prog
     Prog *prog = new Prog();
     // create UserProc
@@ -471,7 +482,8 @@ void DataflowTest::testEndlessLoop () {
  * FUNCTION:        DataflowTest::testLocationSet
  * OVERVIEW:
  *============================================================================*/
-void DataflowTest::testLocationSet () {
+void DataflowTest::testLocationSet ()
+{
     Unary rof(opRegOf, new Const(12));
     Const& theReg = *(Const*)rof.getSubExp1();
     LocationSet ls;
@@ -520,7 +532,8 @@ void DataflowTest::testLocationSet () {
  * FUNCTION:        DataflowTest::testRecursion
  * OVERVIEW:        Test push of argument (X86 style), then call self
  *============================================================================*/
-void DataflowTest::testRecursion () {
+void DataflowTest::testRecursion ()
+{
     // create Prog
     BinaryFile *pBF = BinaryFile::Load(HELLO_PENTIUM);  // Don't actually use it
     FrontEnd *pFE = new PentiumFrontEnd(pBF);

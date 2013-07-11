@@ -13,7 +13,8 @@
 class SparcFrontEnd;
 class Prog;
 
-class AnalysisTest : public CppUnit::TestCase {
+class AnalysisTest : public CppUnit::TestCase
+{
     // the frontend
     FrontEnd *pFE;
     // the program

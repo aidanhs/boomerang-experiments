@@ -73,7 +73,8 @@ char *ElfKindNames[ELF_K_NUM] =
 {"ELF_K_NONE", "ELF_K_AR", "ELF_K_COFF", "ELF_K_ELF"};
 
 char *ElfCmdNames[ELF_C_NUM] =
-{   "ELF_C_NULL", "ELF_C_READ", "ELF_C_WRITE", "ELF_C_CLR",
+{
+    "ELF_C_NULL", "ELF_C_READ", "ELF_C_WRITE", "ELF_C_CLR",
     "ELF_C_SET", "ELF_C_FDDONE", "ELF_C_FDREAD", "ELF_C_RDWR"
 };
 
@@ -86,7 +87,8 @@ static char *ElfTypeNames[ELF_T_NUM] =
 */
 
 static char *E_identIndexNames[8] =
-{   "EI_MAG0", "EI_MAG1", "EI_MAG2", "EI_MAG3",
+{
+    "EI_MAG0", "EI_MAG1", "EI_MAG2", "EI_MAG3",
     "EI_CLASS", "EI_DATA", "EI_VERSION", "EI_PAD"
 };
 
@@ -100,7 +102,8 @@ static char *E_TypeNames[ET_NUM] =
 {"ET_NONE", "ET_REL", "ET_EXEC", "ET_DYN", "ET_CORE"};
 
 static char *E_MachineNames[EM_NUM] =
-{   "EM_NONE", "EM_M32", "EM_SPARC", "EM_386",
+{
+    "EM_NONE", "EM_M32", "EM_SPARC", "EM_386",
     "EM_68K", "EM_88K", "EM_486", "EM_860"
 };
 
@@ -108,41 +111,48 @@ static char *E_VersionNames[EV_NUM] =
 {"EV_NONE", "EV_CURRENT"};
 
 static char *PTypeNames[PT_NUM] =
-{   "PT_NULL", "PT_LOAD", "PT_DYNAMIC", "PT_INTERP",
+{
+    "PT_NULL", "PT_LOAD", "PT_DYNAMIC", "PT_INTERP",
     "PT_NOTE", "PT_SHLIB", "PT_PHDR"
 };
 
 static char *PFlags[8] =
-{   "Nil", "PF_X", "PF_W", "PF_X | PF_W", "PF_R",
+{
+    "Nil", "PF_X", "PF_W", "PF_X | PF_W", "PF_R",
     "PF_X | PF_R", "PF_W | PF_R", "PF_X | PF_W | PF_R"
 };
 
 static char *ShTypeNames[SHT_NUM] =
-{   "SHT_NULL", "SHT_PROGBITS", "SHT_SYMTAB", "SHT_STRTAB",
+{
+    "SHT_NULL", "SHT_PROGBITS", "SHT_SYMTAB", "SHT_STRTAB",
     "SHT_RELA", "SHT_HASH", "SHT_DYNAMIC", "SHT_NOTE",
     "SHT_NOBITS", "SHT_REL", "SHT_SHLIB", "SHT_DYNSYM"
 };
 
 static char *SFlags[8] =
-{   "Nil", "SHF_WRITE", "SHF_ALLOC", "SHF_WRITE | SHF_ALLOC",
+{
+    "Nil", "SHF_WRITE", "SHF_ALLOC", "SHF_WRITE | SHF_ALLOC",
     "SHF_EXECINSTR", "SHF_WRITE | SHF_EXECINSTR",
     "SHF_ALLOC | SHF_EXECINSTR", "SHF_WRITE | SHF_ALLOC | SHF_EXECINSTR"
 };
 
 static char *Elf32BindName[16] =
-{   "STB_LOCAL", "STB_GLOBAL", "STB_WEAK", "STB_NUM",
+{
+    "STB_LOCAL", "STB_GLOBAL", "STB_WEAK", "STB_NUM",
     "", "", "", "", "", "", "", "",
     "STB_LOPROC", "", "STB_HIPROC"
 };
 
 static char *Elf32TypeName[16] =
-{   "STT_NOTYPE", "STT_OBJECT", "STT_FUNC", "STT_SECTION",
+{
+    "STT_NOTYPE", "STT_OBJECT", "STT_FUNC", "STT_SECTION",
     "STT_FILE", "STT_NUM", "", "", "", "", "", "", "",
     "STT_LOPROC", "", "STT_HIPROC"
 };
 
 static char *Elf32DynTagName[25] =
-{   "DT_NULL", "DT_NEEDED", "DT_PLTRELSZ", "DT_PLTGOT",
+{
+    "DT_NULL", "DT_NEEDED", "DT_PLTRELSZ", "DT_PLTGOT",
     "DT_HASH", "DT_STRTAB", "DT_SYMTAB", "DT_RELA",
     "DT_RELASZ", "DT_RELAENT", "DT_STRSZ", "DT_SYMENT",
     "DT_INIT", "DT_FINI", "DT_SONAME", "DT_RPATH",
@@ -151,7 +161,8 @@ static char *Elf32DynTagName[25] =
 };
 
 static char *SparcRelocName[25] =
-{   "R_SPARC_NONE", "R_SPARC_8", "R_SPARC_16",
+{
+    "R_SPARC_NONE", "R_SPARC_8", "R_SPARC_16",
     "R_SPARC_32", "R_SPARC_DISP8", "R_SPARC_DISP16",
     "R_SPARC_DISP32", "R_SPARC_WDISP30", "R_SPARC_WDISP22",
     "R_SPARC_HI22", "R_SPARC_22", "R_SPARC_13",
@@ -164,33 +175,35 @@ static char *SparcRelocName[25] =
 
 
 void dumpElf32 (Elf32_Ehdr *ehdr, const char *fileName, FILE* f)
-{   int i;
+{
+    int i;
 
     fprintf (f, "Elf32 header for %s\n", fileName);
     fprintf (f, "\tIdent bytes =\n");
     for (i = 0; i < 8; i++)
-        switch (i) {
-        case EI_MAG0 :
-            fprintf (f, "\t\t%s = %X\n", E_identIndexNames[i], ehdr->e_ident[i]);
-            break;
-        case EI_MAG1:
-        case EI_MAG2:
-        case EI_MAG3:
-            fprintf (f, "\t\t%s = %c\n", E_identIndexNames[i], ehdr->e_ident[i]);
-            break;
-        case EI_CLASS:
-            fprintf (f, "\t\t%s = %s\n", E_identIndexNames[i],
-                     EI_ClassNames[ehdr->e_ident[i]]);
-            break;
-        case EI_DATA:
-            fprintf (f, "\t\t%s = %s\n", E_identIndexNames[i],
-                     EI_DataNames[ehdr->e_ident[i]]);
-            break;
-        case EI_VERSION:
-        case EI_PAD:
-            fprintf (f, "\t\t%s = %d\n", E_identIndexNames[i], ehdr->e_ident[i]);
-            break;
-        }
+        switch (i)
+            {
+            case EI_MAG0 :
+                fprintf (f, "\t\t%s = %X\n", E_identIndexNames[i], ehdr->e_ident[i]);
+                break;
+            case EI_MAG1:
+            case EI_MAG2:
+            case EI_MAG3:
+                fprintf (f, "\t\t%s = %c\n", E_identIndexNames[i], ehdr->e_ident[i]);
+                break;
+            case EI_CLASS:
+                fprintf (f, "\t\t%s = %s\n", E_identIndexNames[i],
+                         EI_ClassNames[ehdr->e_ident[i]]);
+                break;
+            case EI_DATA:
+                fprintf (f, "\t\t%s = %s\n", E_identIndexNames[i],
+                         EI_DataNames[ehdr->e_ident[i]]);
+                break;
+            case EI_VERSION:
+            case EI_PAD:
+                fprintf (f, "\t\t%s = %d\n", E_identIndexNames[i], ehdr->e_ident[i]);
+                break;
+            }
     fprintf (f, "\tFile type = %s\n", E_TypeNames[ehdr->e_type]);
     fprintf (f, "\tTarget machine = %s\n", ehdr->e_machine > 8 ? "unknown" :
              E_MachineNames[ehdr->e_machine]);
@@ -244,61 +257,63 @@ void ElfBinaryFile::dumpSymtab (char* sSymName, char* sStrName,
     fprintf (f, "\t%s Information\n", sSymName);
     //for (i = pShdr->sh_info; i < nSyms; i++)
     for (i = 0; i < nSyms; i++)			// Sometimes local symbols are useful
-    {
-        memcpy (&sym, &pSym[i], sizeof(Elf32_Sym));
-        fprintf (f, "\tName[%ld] = %s\n", i, sym.st_name == 0 ? "No name" :
-                 GetStrPtr(idxStr, sym.st_name));
-        if (ELF32_ST_TYPE(sym.st_info) == STT_FUNC)
-            fprintf (f,
-                     "\t\tAddress = 0x%08lX\tSize = %ld\tScn hdr index = %d\n",
-                     sym.st_value, sym.st_size > 0 ? sym.st_size : 0, sym.st_shndx);
-        else
-            fprintf (f, "\t\tValue = %ld (0x%08lX)\t\tSize = %ld\tScn hdr index = %d\n",
-                     sym.st_value, sym.st_value, sym.st_size > 0 ? sym.st_size : 0,
-                     sym.st_shndx);
-        fprintf (f, "\t\tBind = %s\tType = %s\n",
-                 Elf32BindName[ELF32_ST_BIND(sym.st_info)],
-                 Elf32TypeName[ELF32_ST_TYPE(sym.st_info)]);
-    }
+        {
+            memcpy (&sym, &pSym[i], sizeof(Elf32_Sym));
+            fprintf (f, "\tName[%ld] = %s\n", i, sym.st_name == 0 ? "No name" :
+                     GetStrPtr(idxStr, sym.st_name));
+            if (ELF32_ST_TYPE(sym.st_info) == STT_FUNC)
+                fprintf (f,
+                         "\t\tAddress = 0x%08lX\tSize = %ld\tScn hdr index = %d\n",
+                         sym.st_value, sym.st_size > 0 ? sym.st_size : 0, sym.st_shndx);
+            else
+                fprintf (f, "\t\tValue = %ld (0x%08lX)\t\tSize = %ld\tScn hdr index = %d\n",
+                         sym.st_value, sym.st_value, sym.st_size > 0 ? sym.st_size : 0,
+                         sym.st_shndx);
+            fprintf (f, "\t\tBind = %s\tType = %s\n",
+                     Elf32BindName[ELF32_ST_BIND(sym.st_info)],
+                     Elf32TypeName[ELF32_ST_TYPE(sym.st_info)]);
+        }
     fprintf (f, "\n");
 }
 
 
 void dumpHashTab (Elf_Scn *scn, FILE* f)
-{   Elf32_Word i;                 /* counter */
+{
+    Elf32_Word i;                 /* counter */
     Elf_Data *d = NULL;
     Elf32_Word nBucket=0, nChain=0;  /* size of the hash table and chain table */
 
     fprintf (f, "\tHash Table Information\n");
     d = elf_getdata (scn, d);
     for (i = 0; i < d->d_size / sizeof(Elf32_Word); i++)
-    {
-        if (i == 0)
         {
-            nBucket = *((Elf32_Word *)(d->d_buf));
-            fprintf (f, "\tnBuckets = %ld\n", nBucket);
+            if (i == 0)
+                {
+                    nBucket = *((Elf32_Word *)(d->d_buf));
+                    fprintf (f, "\tnBuckets = %ld\n", nBucket);
+                }
+            else if (i == 1)
+                {
+                    nChain = *((Elf32_Word *)(d->d_buf) + 1);
+                    fprintf (f, "\tnChain = %ld\n", nChain);
+                }
+            else	/* i > 1 */
+                {
+                    if (i < (nBucket + 2))
+                        fprintf (f, "\tBucket[%ld] = %ld\n", i - 2,
+                                 *((Elf32_Word *)(d->d_buf) + i));
+                    else
+                        fprintf (f, "\tChain[%ld] = %ld\n", i - nBucket - 2,
+                                 *((Elf32_Word *)(d->d_buf) + i));
+                }
         }
-        else if (i == 1)
-        {
-            nChain = *((Elf32_Word *)(d->d_buf) + 1);
-            fprintf (f, "\tnChain = %ld\n", nChain);
-        }
-        else	/* i > 1 */
-        {
-            if (i < (nBucket + 2))
-                fprintf (f, "\tBucket[%ld] = %ld\n", i - 2,
-                         *((Elf32_Word *)(d->d_buf) + i));
-            else
-                fprintf (f, "\tChain[%ld] = %ld\n", i - nBucket - 2,
-                         *((Elf32_Word *)(d->d_buf) + i));
-        }
-    }
     fprintf (f, "\n");
 }
 
 
 void ElfBinaryFile::dumpDynTab (Elf_Scn *scn, const char* name, FILE* f)
-{   Elf32_Dyn e;
+{
+    Elf32_Dyn e;
     Elf32_Word i = 0;
     const char* pStr;
 
@@ -308,62 +323,64 @@ void ElfBinaryFile::dumpDynTab (Elf_Scn *scn, const char* name, FILE* f)
     int idxStr = GetSectionIndexByName(".dynstr");
     memcpy (&e, pBuf, sizeof(Elf32_Dyn));
     while (e.d_tag != DT_NULL)
-    {
-        if (e.d_tag < 25)
-            fprintf (f, "\t\tTag = %s\t\t", Elf32DynTagName[e.d_tag]);
-        else
-            fprintf(f, "\t\tTag = (unknown) %lX\n", e.d_tag);
-        switch (e.d_tag) {
-        case DT_PLTRELSZ:
-        case DT_RELASZ:
-        case DT_RELAENT:
-        case DT_STRSZ:
-        case DT_SYMENT:
-        case DT_SONAME:
-        case DT_RPATH:
-        case DT_RELSZ:
-        case DT_RELENT:
-        case DT_PLTREL:
-            fprintf (f, "Value = %ld\n", e.d_un.d_val);
-            break;
-        case DT_NEEDED:
-            fprintf (f, "Value = %ld\n", e.d_un.d_val);
-            pStr = GetStrPtr(idxStr, e.d_un.d_val);
-            if (pStr)
-                fprintf (f, "\t\t\t\t\t%s\n", pStr);
-            else fprintf (f, "\t\t\t\t\t*NULL!!*\n");
+        {
+            if (e.d_tag < 25)
+                fprintf (f, "\t\tTag = %s\t\t", Elf32DynTagName[e.d_tag]);
+            else
+                fprintf(f, "\t\tTag = (unknown) %lX\n", e.d_tag);
+            switch (e.d_tag)
+                {
+                case DT_PLTRELSZ:
+                case DT_RELASZ:
+                case DT_RELAENT:
+                case DT_STRSZ:
+                case DT_SYMENT:
+                case DT_SONAME:
+                case DT_RPATH:
+                case DT_RELSZ:
+                case DT_RELENT:
+                case DT_PLTREL:
+                    fprintf (f, "Value = %ld\n", e.d_un.d_val);
+                    break;
+                case DT_NEEDED:
+                    fprintf (f, "Value = %ld\n", e.d_un.d_val);
+                    pStr = GetStrPtr(idxStr, e.d_un.d_val);
+                    if (pStr)
+                        fprintf (f, "\t\t\t\t\t%s\n", pStr);
+                    else fprintf (f, "\t\t\t\t\t*NULL!!*\n");
 #if 0
-            Elf32_Shdr* shdr = elf32_getshdr (scn);
-            Elf_Scn* linkScn = elf_getscn (elf, shdr->sh_link);
-            dlink = elf_getdata (linkScn, NULL);
-            if (dlink)
-                fprintf (f, "\t\t\t\t\t%s\n",
-                         (char *)((char *)dlink->d_buf+e.d_un.d_val));
-            else fprintf (f, "\t\t\t\t\t*NULL!!*\n");
+                    Elf32_Shdr* shdr = elf32_getshdr (scn);
+                    Elf_Scn* linkScn = elf_getscn (elf, shdr->sh_link);
+                    dlink = elf_getdata (linkScn, NULL);
+                    if (dlink)
+                        fprintf (f, "\t\t\t\t\t%s\n",
+                                 (char *)((char *)dlink->d_buf+e.d_un.d_val));
+                    else fprintf (f, "\t\t\t\t\t*NULL!!*\n");
 #endif
-            break;
-        case DT_PLTGOT:
-        case DT_HASH:
-        case DT_STRTAB:
-        case DT_SYMTAB:
-        case DT_RELA:
-        case DT_INIT:
-        case DT_FINI:
-        case DT_REL:
-        case DT_DEBUG:
-        case DT_JMPREL:
-        case DT_FILTER:
-            fprintf (f, "Address = 0x%08lX\n", e.d_un.d_ptr);
+                    break;
+                case DT_PLTGOT:
+                case DT_HASH:
+                case DT_STRTAB:
+                case DT_SYMTAB:
+                case DT_RELA:
+                case DT_INIT:
+                case DT_FINI:
+                case DT_REL:
+                case DT_DEBUG:
+                case DT_JMPREL:
+                case DT_FILTER:
+                    fprintf (f, "Address = 0x%08lX\n", e.d_un.d_ptr);
+                }
+            i++;
+            memcpy (&e, (Elf32_Dyn *)pBuf + i, sizeof(Elf32_Dyn));
         }
-        i++;
-        memcpy (&e, (Elf32_Dyn *)pBuf + i, sizeof(Elf32_Dyn));
-    }
     fprintf (f, "\n");
 }
 
 
 void dumpInterp (Elf_Scn *scn, FILE* f)
-{   Elf_Data *d = NULL;
+{
+    Elf_Data *d = NULL;
 
     d = elf_getdata (scn, d);
     fprintf (f, "\tPath = %s\n\n", (char*) d->d_buf);
@@ -371,22 +388,25 @@ void dumpInterp (Elf_Scn *scn, FILE* f)
 
 
 void dumpStrTab (Elf_Scn *scn, const char* name, FILE* f)
-{   Elf_Data *d = NULL;
+{
+    Elf_Data *d = NULL;
     Elf32_Word len, i = 1;
 
     fprintf (f, "\tStrings in Table %s\n", name);
     d = elf_getdata (scn, d);
     len = d->d_size;
     while (i < len)
-    {
-        if (((char *)d->d_buf)[i] == '\0') {	// empty byte/string
-            i++;
+        {
+            if (((char *)d->d_buf)[i] == '\0')  	// empty byte/string
+                {
+                    i++;
+                }
+            else
+                {
+                    fprintf (f, "\t\t%s\n", &((char *)d->d_buf)[i]);
+                    i = i + strlen (&((char *)d->d_buf)[i]) + 1;
+                }
         }
-        else {
-            fprintf (f, "\t\t%s\n", &((char *)d->d_buf)[i]);
-            i = i + strlen (&((char *)d->d_buf)[i]) + 1;
-        }
-    }
     fprintf (f, "\n");
 }
 
@@ -404,27 +424,28 @@ void ElfBinaryFile::dumpPLT (Elf_Scn *scn, Elf32_Shdr *shdr,
     int n = shdr->sh_size / shdr->sh_entsize;
     ADDRESS uHostAddr = (ADDRESS)d->d_buf;
     for (int i=0; i < n; i++)
-    {
-        // Mike: may need changes for non Sparc!
-        fprintf (f, "\t%08lX (PLT%d)\n", sh_addr, i);
-        for (unsigned j=0; j < shdr->sh_entsize/4; j++)
         {
-            pName = SymbolByAddress(sh_addr);
-            if (pName)
-                fprintf(f, "%s:\n", pName);	// Symbol
+            // Mike: may need changes for non Sparc!
+            fprintf (f, "\t%08lX (PLT%d)\n", sh_addr, i);
+            for (unsigned j=0; j < shdr->sh_entsize/4; j++)
+                {
+                    pName = SymbolByAddress(sh_addr);
+                    if (pName)
+                        fprintf(f, "%s:\n", pName);	// Symbol
 
-            fprintf(f, "%08lX: %08X\n", sh_addr, *(ADDRESS*)uHostAddr);
-            uHostAddr += 4;
-            sh_addr += 4;
+                    fprintf(f, "%08lX: %08X\n", sh_addr, *(ADDRESS*)uHostAddr);
+                    uHostAddr += 4;
+                    sh_addr += 4;
+                }
         }
-    }
 
     fprintf (f, "\n");
 }
 
 
 void dumpRela (Elf_Scn *scn, const char* scn_name, FILE* f)
-{   Elf_Data *d = NULL;
+{
+    Elf_Data *d = NULL;
     Elf32_Word i;		/* idx in # of Elf32_Rela structures */
     Elf32_Word tabSize;	/* number of entries in the table */
     Elf32_Word info;
@@ -434,21 +455,22 @@ void dumpRela (Elf_Scn *scn, const char* scn_name, FILE* f)
 
     tabSize = d->d_size / sizeof(Elf32_Rela);
     for (i = 0; i < tabSize; i++)
-    {
-        fprintf (f, "\tAddress = %08lX\n",
-                 ((Elf32_Rela *)d->d_buf)[i].r_offset);
-        info = ((Elf32_Rela *)d->d_buf)[i].r_info;
-        fprintf (f, "\t\tInfo = %08lX\tAddend = %08lX\n", info,
-                 ((Elf32_Rela *)d->d_buf)[i].r_addend);
-        fprintf (f, "\t\tSym = %ld\tType = %s\n", ELF32_R_SYM(info),
-                 SparcRelocName[ELF32_R_TYPE(info)]);
-    }
+        {
+            fprintf (f, "\tAddress = %08lX\n",
+                     ((Elf32_Rela *)d->d_buf)[i].r_offset);
+            info = ((Elf32_Rela *)d->d_buf)[i].r_info;
+            fprintf (f, "\t\tInfo = %08lX\tAddend = %08lX\n", info,
+                     ((Elf32_Rela *)d->d_buf)[i].r_addend);
+            fprintf (f, "\t\tSym = %ld\tType = %s\n", ELF32_R_SYM(info),
+                     SparcRelocName[ELF32_R_TYPE(info)]);
+        }
     fprintf (f, "\n");
 }
 
 
 void dumpRel (Elf_Scn *scn, const char* scn_name, FILE* f)
-{   Elf_Data *d = NULL;
+{
+    Elf_Data *d = NULL;
     Elf32_Word i;		/* idx in # of Elf32_Rel structures */
     Elf32_Word tabSize;	/* number of entries in the table */
     Elf32_Word info;
@@ -458,14 +480,14 @@ void dumpRel (Elf_Scn *scn, const char* scn_name, FILE* f)
 
     tabSize = d->d_size / sizeof(Elf32_Rel);
     for (i = 0; i < tabSize; i++)
-    {
-        fprintf (f, "\tAddress = %08lX\n",
-                 ((Elf32_Rel *)d->d_buf)[i].r_offset);
-        info = ((Elf32_Rel *)d->d_buf)[i].r_info;
-        fprintf (f, "\t\tInfo = %08lX\n", info);
-        fprintf (f, "\t\tSym = %ld\tType = %s\n", ELF32_R_SYM(info),
-                 SparcRelocName[ELF32_R_TYPE(info)]);
-    }
+        {
+            fprintf (f, "\tAddress = %08lX\n",
+                     ((Elf32_Rel *)d->d_buf)[i].r_offset);
+            info = ((Elf32_Rel *)d->d_buf)[i].r_info;
+            fprintf (f, "\t\tInfo = %08lX\n", info);
+            fprintf (f, "\t\tSym = %ld\tType = %s\n", ELF32_R_SYM(info),
+                     SparcRelocName[ELF32_R_TYPE(info)]);
+        }
     fprintf (f, "\n");
 }
 
@@ -479,21 +501,21 @@ void ElfBinaryFile::dumpVerdef(Elf_Scn *scn, const char* scn_name,
     d = elf_getdata (scn, d);
     Elf32_Verdef* pDef = (Elf32_Verdef*) d->d_buf;
     for (i=0; i < pShdr->sh_info; i++)
-    {
-        fprintf(f, "\tvd_version = %d\n", pDef->vd_version);
-        fprintf(f, "\tvd_flags = %04X\n", pDef->vd_flags);
-        fprintf(f, "\tvd_ndx   = %04X\n", pDef->vd_ndx);
-        fprintf(f, "\tNumber of aux entries = %d\n", pDef->vd_cnt);
-        fprintf(f, "\tvd_hash = %08lX\n", pDef->vd_hash);
-        Elf32_Verdaux* pAux = (Elf32_Verdaux*)((char*)pDef + pDef->vd_aux);
-        for (int j=0; j < pDef->vd_cnt; j++)
         {
-            fprintf(f, "\t\tvda_name = %s\n",
-                    GetStrPtr((int)pShdr->sh_link, pAux->vda_name));
+            fprintf(f, "\tvd_version = %d\n", pDef->vd_version);
+            fprintf(f, "\tvd_flags = %04X\n", pDef->vd_flags);
+            fprintf(f, "\tvd_ndx   = %04X\n", pDef->vd_ndx);
+            fprintf(f, "\tNumber of aux entries = %d\n", pDef->vd_cnt);
+            fprintf(f, "\tvd_hash = %08lX\n", pDef->vd_hash);
+            Elf32_Verdaux* pAux = (Elf32_Verdaux*)((char*)pDef + pDef->vd_aux);
+            for (int j=0; j < pDef->vd_cnt; j++)
+                {
+                    fprintf(f, "\t\tvda_name = %s\n",
+                            GetStrPtr((int)pShdr->sh_link, pAux->vda_name));
+                }
+            fprintf(f, "\n");
+            pDef = (Elf32_Verdef*)((char*)pDef + pDef->vd_next);
         }
-        fprintf(f, "\n");
-        pDef = (Elf32_Verdef*)((char*)pDef + pDef->vd_next);
-    }
 }
 
 // Must be a member of ElfBinaryFile because GetStrPtr() is also a member of
@@ -506,23 +528,23 @@ void ElfBinaryFile::dumpVerneed(Elf_Scn *scn, const char* scn_name,
     d = elf_getdata (scn, d);
     Elf32_Verneed* pNeed = (Elf32_Verneed*) d->d_buf;
     for (i=0; i < pShdr->sh_info; i++)
-    {
-        fprintf(f, "\tvn_version = %d\n", pNeed->vn_version);
-        fprintf(f, "\tNumber of aux entries = %d\n", pNeed->vn_cnt);
-        fprintf(f, "\tNeeded file = %s\n",
-                GetStrPtr((int)pShdr->sh_link, pNeed->vn_file));
-        Elf32_Vernaux* pAux = (Elf32_Vernaux*)((char*)pNeed + pNeed->vn_aux);
-        for (int j=0; j < pNeed->vn_cnt; j++)
         {
-            fprintf(f, "\t\tvna_hash = %08lX\n", pAux->vna_hash);
-            fprintf(f, "\t\tvna_flags = %04X\n", pAux->vna_flags);
-            fprintf(f, "\t\tvna_other = %04X\n", pAux->vna_other);
-            fprintf(f, "\t\tvna_name = %s\n\n",
-                    GetStrPtr((int)pShdr->sh_link, pAux->vna_name));
-            pAux = (Elf32_Vernaux*)((char*)pAux + pAux->vna_next);
+            fprintf(f, "\tvn_version = %d\n", pNeed->vn_version);
+            fprintf(f, "\tNumber of aux entries = %d\n", pNeed->vn_cnt);
+            fprintf(f, "\tNeeded file = %s\n",
+                    GetStrPtr((int)pShdr->sh_link, pNeed->vn_file));
+            Elf32_Vernaux* pAux = (Elf32_Vernaux*)((char*)pNeed + pNeed->vn_aux);
+            for (int j=0; j < pNeed->vn_cnt; j++)
+                {
+                    fprintf(f, "\t\tvna_hash = %08lX\n", pAux->vna_hash);
+                    fprintf(f, "\t\tvna_flags = %04X\n", pAux->vna_flags);
+                    fprintf(f, "\t\tvna_other = %04X\n", pAux->vna_other);
+                    fprintf(f, "\t\tvna_name = %s\n\n",
+                            GetStrPtr((int)pShdr->sh_link, pAux->vna_name));
+                    pAux = (Elf32_Vernaux*)((char*)pAux + pAux->vna_next);
+                }
+            pNeed = (Elf32_Verneed*)((char*)pNeed + pNeed->vn_next);
         }
-        pNeed = (Elf32_Verneed*)((char*)pNeed + pNeed->vn_next);
-    }
 }
 
 
@@ -542,9 +564,9 @@ void ElfBinaryFile::dumpVersym(Elf_Scn *scn, const char* scn_name,
     Elf32_Word n = pShdr->sh_size / sizeof(Elf32_Versym);
     Elf32_Word i;
     for (i=0; i < n; i++)
-    {
-        fprintf(f, "\tVersion Depencency Index [%ld] = %04X\n", i, pSym[i]);
-    }
+        {
+            fprintf(f, "\tVersion Depencency Index [%ld] = %04X\n", i, pSym[i]);
+        }
 }
 
 
@@ -562,27 +584,27 @@ void ElfBinaryFile::dumpShdr (Elf32_Shdr *pShdr, int idxElf, FILE* f)
     fprintf (f, "\tSection name = %s\n",  GetStrPtr(idxStr, pShdr->sh_name));
     fprintf (f, "\tSection type = ");
     if (pShdr->sh_type > SHT_NUM)
-    {
-        switch (pShdr->sh_type)
         {
-        case SHT_SUNW_verdef:
-            fprintf(f, "%s\n", "SHT_SUNW_verdef");
-            break;
-        case SHT_SUNW_verneed:
-            fprintf(f, "%s\n", "SHT_SUNW_verneed");
-            break;
-        case SHT_SUNW_versym:
-            fprintf(f, "%s\n", "SHT_SUNW_versym");
-            break;
-        default:
-            if ((pShdr->sh_type >= SHT_LOPROC) &&
-                    (pShdr->sh_type <= SHT_HIPROC))
-                fprintf(f, "SHT_PROC %lX\n", pShdr->sh_type);
-            else if (pShdr->sh_type >= SHT_LOUSER)
-                fprintf(f, "SHT_USER %lX\n", pShdr->sh_type);
-            else fprintf(f, "unknown type %lX\n", pShdr->sh_type);
+            switch (pShdr->sh_type)
+                {
+                case SHT_SUNW_verdef:
+                    fprintf(f, "%s\n", "SHT_SUNW_verdef");
+                    break;
+                case SHT_SUNW_verneed:
+                    fprintf(f, "%s\n", "SHT_SUNW_verneed");
+                    break;
+                case SHT_SUNW_versym:
+                    fprintf(f, "%s\n", "SHT_SUNW_versym");
+                    break;
+                default:
+                    if ((pShdr->sh_type >= SHT_LOPROC) &&
+                            (pShdr->sh_type <= SHT_HIPROC))
+                        fprintf(f, "SHT_PROC %lX\n", pShdr->sh_type);
+                    else if (pShdr->sh_type >= SHT_LOUSER)
+                        fprintf(f, "SHT_USER %lX\n", pShdr->sh_type);
+                    else fprintf(f, "unknown type %lX\n", pShdr->sh_type);
+                }
         }
-    }
     else
         fprintf (f, "%s\n", ShTypeNames[pShdr->sh_type]);
     fprintf (f, "\tFlags = %s\n", SFlags[pShdr->sh_flags]);
@@ -602,43 +624,43 @@ void ElfBinaryFile::dumpShdr (Elf32_Shdr *pShdr, int idxElf, FILE* f)
     Elf_Scn* scn = GetElfScn(idxElf);
 
     switch (pShdr->sh_type)
-    {
-    case SHT_SYMTAB:							/* symtab section */
-        dumpSymtab(".symtab", ".strtab", pShdr, f);
-        break;
-    case SHT_DYNSYM:							/* dyn symtab scn */
-        dumpSymtab(".dynsym", ".dynstr", pShdr, f);
-        break;
-    case SHT_HASH:							 	/* hash table scn */
-        dumpHashTab (scn, f);
-        break;
-    case SHT_DYNAMIC:							/* dynamic scn */
-        dumpDynTab (scn, name.c_str(), f);
-        break;
-    case SHT_RELA:							 	/* reloc table */
-        dumpRela (scn, name.c_str(), f);
-        break;
-    case SHT_REL:								/* reloc table, no addend */
-        dumpRel (scn, name.c_str(), f);
-        break;
-    case SHT_STRTAB:							/* string table */
-        dumpStrTab (scn, (const char*) name.c_str(), f);
-        break;
-    case SHT_SUNW_verdef:						/* Sun version definition */
-        dumpVerdef(scn, name.c_str(), pShdr, f);
-        break;
-    case SHT_SUNW_verneed:
-        dumpVerneed(scn, name.c_str(), pShdr, f);
-        break;
-    case SHT_SUNW_versym:
-        dumpVerdef(scn, name.c_str(), pShdr, f);
-        break;
+        {
+        case SHT_SYMTAB:							/* symtab section */
+            dumpSymtab(".symtab", ".strtab", pShdr, f);
+            break;
+        case SHT_DYNSYM:							/* dyn symtab scn */
+            dumpSymtab(".dynsym", ".dynstr", pShdr, f);
+            break;
+        case SHT_HASH:							 	/* hash table scn */
+            dumpHashTab (scn, f);
+            break;
+        case SHT_DYNAMIC:							/* dynamic scn */
+            dumpDynTab (scn, name.c_str(), f);
+            break;
+        case SHT_RELA:							 	/* reloc table */
+            dumpRela (scn, name.c_str(), f);
+            break;
+        case SHT_REL:								/* reloc table, no addend */
+            dumpRel (scn, name.c_str(), f);
+            break;
+        case SHT_STRTAB:							/* string table */
+            dumpStrTab (scn, (const char*) name.c_str(), f);
+            break;
+        case SHT_SUNW_verdef:						/* Sun version definition */
+            dumpVerdef(scn, name.c_str(), pShdr, f);
+            break;
+        case SHT_SUNW_verneed:
+            dumpVerneed(scn, name.c_str(), pShdr, f);
+            break;
+        case SHT_SUNW_versym:
+            dumpVerdef(scn, name.c_str(), pShdr, f);
+            break;
 
-        dumpStrTab (GetElfScn ((int) pShdr->sh_link), name.c_str(), f);
-        break;
-    default:
-        break;
-    }
+            dumpStrTab (GetElfScn ((int) pShdr->sh_link), name.c_str(), f);
+            break;
+        default:
+            break;
+        }
 
     if (name == ".plt")      					/* PLT scn */
         dumpPLT (scn, pShdr, pShdr->sh_addr, f);

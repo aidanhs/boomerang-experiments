@@ -90,13 +90,16 @@ bool hasExt(const std::string& s, const char* ext)
 {
     std::string tailStr = std::string(".") + std::string(ext);
     unsigned int i = s.rfind(tailStr);
-    if (i == std::string::npos) {
-        return false;
-    } else {
-        unsigned int sLen = s.length();
-        unsigned int tailStrLen = tailStr.length();
-        return ((i + tailStrLen) == sLen);
-    }
+    if (i == std::string::npos)
+        {
+            return false;
+        }
+    else
+        {
+            unsigned int sLen = s.length();
+            unsigned int tailStrLen = tailStr.length();
+            return ((i + tailStrLen) == sLen);
+        }
 }
 
 /*==============================================================================
@@ -110,12 +113,14 @@ bool hasExt(const std::string& s, const char* ext)
 std::string changeExt(const std::string& s, const char* ext)
 {
     size_t i = s.rfind(".");
-    if (i == std::string::npos) {
-        return s + ext;
-    }
-    else {
-        return s.substr(0, i) + ext;
-    }
+    if (i == std::string::npos)
+        {
+            return s + ext;
+        }
+    else
+        {
+            return s.substr(0, i) + ext;
+        }
 }
 
 /*==============================================================================
@@ -131,15 +136,17 @@ std::string searchAndReplace( const std::string &in, const std::string &match,
                               const std::string &rep )
 {
     std::string result;
-    for( int n = 0; n != -1; ) {
-        int l = in.find(match,n);
-        result.append( in.substr(n,(l==-1?in.length() : l )-n) );
-        if( l != -1 ) {
-            result.append( rep );
-            l+=match.length();
+    for( int n = 0; n != -1; )
+        {
+            int l = in.find(match,n);
+            result.append( in.substr(n,(l==-1?in.length() : l )-n) );
+            if( l != -1 )
+                {
+                    result.append( rep );
+                    l+=match.length();
+                }
+            n = l;
         }
-        n = l;
-    }
     return result;
 }
 
@@ -235,30 +242,36 @@ int loadFID(std::istream &is)
     if (is.eof() || !is.good()) return -1;
     unsigned char ch;
     is.read((char *)&ch, 1);
-    if (ch == 255) {
-        unsigned char sh[2];
-        is.read((char *)sh, 2);
-        fid = sh[0] | (sh[1] << 8);
-    } else {
-        fid = ch;
-    }
+    if (ch == 255)
+        {
+            unsigned char sh[2];
+            is.read((char *)sh, 2);
+            fid = sh[0] | (sh[1] << 8);
+        }
+    else
+        {
+            fid = ch;
+        }
     return fid;
 }
 
 void saveFID(std::ostream &os, int fid)
 {
-    if (fid < 255) {
-        unsigned char ch = fid;
-        os.write((char *)&ch, 1);
-    } else {
-        unsigned char ch = 255;
-        os.write((char *)&ch, 1);
-        assert(fid < 65536);
-        unsigned char sh[2];
-        sh[0] = fid & 255;
-        sh[1] = (fid >> 8) & 255;
-        os.write((char *)sh, 2);
-    }
+    if (fid < 255)
+        {
+            unsigned char ch = fid;
+            os.write((char *)&ch, 1);
+        }
+    else
+        {
+            unsigned char ch = 255;
+            os.write((char *)&ch, 1);
+            assert(fid < 65536);
+            unsigned char sh[2];
+            sh[0] = fid & 255;
+            sh[1] = (fid >> 8) & 255;
+            os.write((char *)sh, 2);
+        }
 }
 
 void skipFID(std::istream &is, int fid)
@@ -274,41 +287,48 @@ int loadLen(std::istream &is)
     if (is.eof() || !is.good()) return -1;
     unsigned char ch;
     is.read((char *)&ch, 1);
-    if (ch == 255) {
-        unsigned char sh[4];
-        is.read((char *)sh, 4);
-        len = sh[0] | (sh[1] << 8) | (sh[2] << 16) | (sh[3] << 24);
-    } else {
-        len = ch;
-    }
+    if (ch == 255)
+        {
+            unsigned char sh[4];
+            is.read((char *)sh, 4);
+            len = sh[0] | (sh[1] << 8) | (sh[2] << 16) | (sh[3] << 24);
+        }
+    else
+        {
+            len = ch;
+        }
     return len;
 }
 
 void saveLen(std::ostream &os, int len, bool large)
 {
-    if (large || (unsigned)len >= 255) {
-        unsigned char ch = 255;
-        os.write((char *)&ch, 1);
-        unsigned char sh[4];
-        sh[0] = len & 255;
-        sh[1] = (len >> 8) & 255;
-        sh[2] = (len >> 16) & 255;
-        sh[3] = (len >> 24) & 255;
-        os.write((char *)sh, 4);
-    } else {
-        unsigned char ch = len;
-        assert(ch != 255);
-        os.write((char *)&ch, 1);
-    }
+    if (large || (unsigned)len >= 255)
+        {
+            unsigned char ch = 255;
+            os.write((char *)&ch, 1);
+            unsigned char sh[4];
+            sh[0] = len & 255;
+            sh[1] = (len >> 8) & 255;
+            sh[2] = (len >> 16) & 255;
+            sh[3] = (len >> 24) & 255;
+            os.write((char *)sh, 4);
+        }
+    else
+        {
+            unsigned char ch = len;
+            assert(ch != 255);
+            os.write((char *)&ch, 1);
+        }
 }
 
 void loadValue(std::istream &is, bool &b, bool wantlen)
 {
     assert(!is.eof() && is.good());
-    if (wantlen) {
-        int len = loadLen(is);
-        assert(len == 1);
-    }
+    if (wantlen)
+        {
+            int len = loadLen(is);
+            assert(len == 1);
+        }
     char ch;
     is.read(&ch, 1);
     b = (ch == 0 ? false : true);
@@ -316,9 +336,10 @@ void loadValue(std::istream &is, bool &b, bool wantlen)
 
 void saveValue(std::ostream &os, bool b, bool wantlen)
 {
-    if (wantlen) {
-        saveLen(os, 1);
-    }
+    if (wantlen)
+        {
+            saveLen(os, 1);
+        }
     char ch = b;
     os.write(&ch, 1);
 }
@@ -326,28 +347,31 @@ void saveValue(std::ostream &os, bool b, bool wantlen)
 void loadValue(std::istream &is, char &ch, bool wantlen)
 {
     assert(!is.eof() && is.good());
-    if (wantlen) {
-        int len = loadLen(is);
-        assert(len == 1);
-    }
+    if (wantlen)
+        {
+            int len = loadLen(is);
+            assert(len == 1);
+        }
     is.read(&ch, 1);
 }
 
 void saveValue(std::ostream &os, char ch, bool wantlen)
 {
-    if (wantlen) {
-        saveLen(os, 1);
-    }
+    if (wantlen)
+        {
+            saveLen(os, 1);
+        }
     os.write(&ch, 1);
 }
 
 void loadValue(std::istream &is, int &i, bool wantlen)
 {
     assert(!is.eof() && is.good());
-    if (wantlen) {
-        int len = loadLen(is);
-        assert(len == 4);
-    }
+    if (wantlen)
+        {
+            int len = loadLen(is);
+            assert(len == 4);
+        }
     unsigned char sh[4];
     is.read((char *)sh, 4);
     i = sh[0] | (sh[1] << 8) | (sh[2] << 16) | (sh[3] << 24);
@@ -355,9 +379,10 @@ void loadValue(std::istream &is, int &i, bool wantlen)
 
 void saveValue(std::ostream &os, int i, bool wantlen)
 {
-    if (wantlen) {
-        saveLen(os, 4);
-    }
+    if (wantlen)
+        {
+            saveLen(os, 4);
+        }
     unsigned char sh[4];
     sh[0] = i & 255;
     sh[1] = (i >> 8) & 255;
@@ -369,10 +394,11 @@ void saveValue(std::ostream &os, int i, bool wantlen)
 void loadValue(std::istream &is, ADDRESS &a, bool wantlen)
 {
     assert(!is.eof() && is.good());
-    if (wantlen) {
-        int len = loadLen(is);
-        assert(len == 4);
-    }
+    if (wantlen)
+        {
+            int len = loadLen(is);
+            assert(len == 4);
+        }
     unsigned char sh[4];
     is.read((char *)sh, 4);
     a = sh[0] | (sh[1] << 8) | (sh[2] << 16) | (sh[3] << 24);
@@ -380,9 +406,10 @@ void loadValue(std::istream &is, ADDRESS &a, bool wantlen)
 
 void saveValue(std::ostream &os, ADDRESS a, bool wantlen)
 {
-    if (wantlen) {
-        saveLen(os, 4);
-    }
+    if (wantlen)
+        {
+            saveLen(os, 4);
+        }
     unsigned char sh[4];
     sh[0] = a & 255;
     sh[1] = (a >> 8) & 255;
@@ -395,17 +422,19 @@ void saveValue(std::ostream &os, ADDRESS a, bool wantlen)
 void loadValue(std::istream &is, double &d, bool wantlen)
 {
     assert(!is.eof() && is.good());
-    if (wantlen) {
-        int len = loadLen(is);
-        assert(len == sizeof(double));
-    }
+    if (wantlen)
+        {
+            int len = loadLen(is);
+            assert(len == sizeof(double));
+        }
     is.read((char *)&d, sizeof(double));
 }
 
 void saveValue(std::ostream &os, double d, bool wantlen)
 {
-    if (wantlen) {
-        saveLen(os, sizeof(d));
-    }
+    if (wantlen)
+        {
+            saveLen(os, sizeof(d));
+        }
     os.write((char *)&d, sizeof(d));
 }

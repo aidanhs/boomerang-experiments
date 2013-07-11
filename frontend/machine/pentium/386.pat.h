@@ -1,6 +1,7 @@
 #ifndef __386_pat_H__
 #define __386_pat_H__
-class InstructionPatterns {
+class InstructionPatterns
+{
 private:
     static int EAX;
     static int ECX;

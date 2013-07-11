@@ -180,18 +180,20 @@ MyFrame::MyFrame(wxWindow *parent,
 
 void MyFrame::IndicateNotImplemented(void)
 {
-    int notimplemented[] = { //MDI_NEW_PROJECT, MDI_OPEN_PROJECT, MDI_SAVE_PROJECT, MDI_CLOSE_PROJECT,
+    int notimplemented[] =   //MDI_NEW_PROJECT, MDI_OPEN_PROJECT, MDI_SAVE_PROJECT, MDI_CLOSE_PROJECT,
+    {
         MDI_EDIT_UNDO, MDI_EDIT_REDO, MDI_EDIT_CUT, MDI_EDIT_COPY, MDI_EDIT_PASTE, MDI_EDIT_DELETE,
         MDI_EDIT_SELECTALL, MDI_EDIT_FIND, MDI_EDIT_REPLACE, MDI_EDIT_GOTO,
         0
     };
 
-    for (int i = 0; notimplemented[i]; i++) {
-        wxMenuItem *item = GetMenuBar()->FindItem(notimplemented[i]);
+    for (int i = 0; notimplemented[i]; i++)
+        {
+            wxMenuItem *item = GetMenuBar()->FindItem(notimplemented[i]);
 
-        item->SetHelp(item->GetHelp() + " [NOT IMPLEMENTED]");
-        item->Enable(false);
-    }
+            item->SetHelp(item->GetHelp() + " [NOT IMPLEMENTED]");
+            item->Enable(false);
+        }
 }
 
 void MyFrame::LoadPlugins(void)
@@ -199,38 +201,38 @@ void MyFrame::LoadPlugins(void)
     wxDir dir(prefs->m_PluginDir);
 
     if (!dir.IsOpened())
-    {
-        // no plugins
-        return;
-    }
+        {
+            // no plugins
+            return;
+        }
 
     wxString filename;
     bool cont = dir.GetFirst(&filename);
     while (cont)
-    {
-        IPlugin *p = IPlugin::load(prefs->m_PluginDir + "\\" + filename);
-        if (p)
         {
-            plugins.push_back(p);
-            plugin_menu->Append(MDI_VIEW_PLUGINS, p->GetName(), "View this plugin");
+            IPlugin *p = IPlugin::load(prefs->m_PluginDir + "\\" + filename);
+            if (p)
+                {
+                    plugins.push_back(p);
+                    plugin_menu->Append(MDI_VIEW_PLUGINS, p->GetName(), "View this plugin");
+                }
+            cont = dir.GetNext(&filename);
         }
-        cont = dir.GetNext(&filename);
-    }
 }
 
 void MyFrame::OnClose(wxCloseEvent& event)
 {
     if ( event.CanVeto() && curProject )
-    {
-        wxString msg;
-        if ( wxMessageBox("Changes will be lost, close anyhow?", "Please confirm",
-                          wxICON_QUESTION | wxYES_NO) != wxYES )
         {
-            event.Veto();
+            wxString msg;
+            if ( wxMessageBox("Changes will be lost, close anyhow?", "Please confirm",
+                              wxICON_QUESTION | wxYES_NO) != wxYES )
+                {
+                    event.Veto();
 
-            return;
+                    return;
+                }
         }
-    }
 
     event.Skip();
 }
@@ -248,59 +250,59 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event) )
 void MyFrame::OnNewProject(wxCommandEvent& WXUNUSED(event) )
 {
     if ( curProject && curProject->hasUnsaved() )
-    {
-        int savechanges = wxNO;
-
-        if ( (savechanges = wxMessageBox("There are outstanding changes to this project.  Save changes now?", "Please confirm",
-                                         wxICON_QUESTION | wxYES_NO | wxCANCEL)) == wxCANCEL )
         {
-            return;
-        }
+            int savechanges = wxNO;
 
-        if (savechanges)
-        {
-            curProject->saveChanges(this);
-        }
+            if ( (savechanges = wxMessageBox("There are outstanding changes to this project.  Save changes now?", "Please confirm",
+                                             wxICON_QUESTION | wxYES_NO | wxCANCEL)) == wxCANCEL )
+                {
+                    return;
+                }
 
-        delete curProject;
-    }
+            if (savechanges)
+                {
+                    curProject->saveChanges(this);
+                }
+
+            delete curProject;
+        }
 
     // display new project dialog
     curProject = Project::createProjectUsingDialog(this);
     if (curProject)
-    {
-        GetMenuBar()->FindItem(MDI_SAVE_PROJECT)->Enable(true);
-        GetMenuBar()->FindItem(MDI_CLOSE_PROJECT)->Enable(true);
-    }
+        {
+            GetMenuBar()->FindItem(MDI_SAVE_PROJECT)->Enable(true);
+            GetMenuBar()->FindItem(MDI_CLOSE_PROJECT)->Enable(true);
+        }
 }
 
 void MyFrame::OnOpenProject(wxCommandEvent& WXUNUSED(event) )
 {
     if ( curProject && curProject->hasUnsaved() )
-    {
-        int savechanges = wxNO;
-
-        if ( (savechanges = wxMessageBox("There are outstanding changes to this project.  Save changes now?", "Please confirm",
-                                         wxICON_QUESTION | wxYES_NO | wxCANCEL)) == wxCANCEL )
         {
-            return;
-        }
+            int savechanges = wxNO;
 
-        if (savechanges)
-        {
-            curProject->saveChanges(this);
-        }
+            if ( (savechanges = wxMessageBox("There are outstanding changes to this project.  Save changes now?", "Please confirm",
+                                             wxICON_QUESTION | wxYES_NO | wxCANCEL)) == wxCANCEL )
+                {
+                    return;
+                }
 
-        delete curProject;
-    }
+            if (savechanges)
+                {
+                    curProject->saveChanges(this);
+                }
+
+            delete curProject;
+        }
 
     // display open project dialog
     curProject = Project::openProjectUsingDialog(this);
     if (curProject)
-    {
-        GetMenuBar()->FindItem(MDI_SAVE_PROJECT)->Enable(true);
-        GetMenuBar()->FindItem(MDI_CLOSE_PROJECT)->Enable(true);
-    }
+        {
+            GetMenuBar()->FindItem(MDI_SAVE_PROJECT)->Enable(true);
+            GetMenuBar()->FindItem(MDI_CLOSE_PROJECT)->Enable(true);
+        }
 }
 
 void MyFrame::OnSaveProject(wxCommandEvent& WXUNUSED(event) )
@@ -312,21 +314,21 @@ void MyFrame::OnSaveProject(wxCommandEvent& WXUNUSED(event) )
 void MyFrame::OnCloseProject(wxCommandEvent& WXUNUSED(event) )
 {
     if ( curProject && curProject->hasUnsaved() )
-    {
-        int savechanges = wxNO;
-
-        if ( (savechanges = wxMessageBox("There are outstanding changes to this project.  Save changes now?", "Please confirm",
-                                         wxICON_QUESTION | wxYES_NO | wxCANCEL)) == wxCANCEL )
         {
-            return;
-        }
+            int savechanges = wxNO;
 
-        if (savechanges)
-        {
-            curProject->saveChanges(this);
-        }
+            if ( (savechanges = wxMessageBox("There are outstanding changes to this project.  Save changes now?", "Please confirm",
+                                             wxICON_QUESTION | wxYES_NO | wxCANCEL)) == wxCANCEL )
+                {
+                    return;
+                }
 
-    }
+            if (savechanges)
+                {
+                    curProject->saveChanges(this);
+                }
+
+        }
 
     delete curProject;
     curProject = NULL;
@@ -343,9 +345,9 @@ void MyFrame::OnPreferences(wxCommandEvent& WXUNUSED(event))
 void MyFrame::OnProjectSettings(wxCommandEvent& WXUNUSED(event))
 {
     if (curProject)
-    {
-        curProject->displaySettingsDialog(this);
-    }
+        {
+            curProject->displaySettingsDialog(this);
+        }
 }
 
 void MyFrame::OnSize(wxSizeEvent& WXUNUSED(event))

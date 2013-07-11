@@ -86,22 +86,23 @@ BasicBlock::BasicBlock()
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-BasicBlock::~BasicBlock() {
+BasicBlock::~BasicBlock()
+{
     if (m_pRtls)
-    {
-        // Delete the RTLs
-        for (std::list<RTL*>::iterator it = m_pRtls->begin(); it != m_pRtls->end(); it++)
         {
-            if (*it)
-            {
-                delete *it;
-            }
-        }
+            // Delete the RTLs
+            for (std::list<RTL*>::iterator it = m_pRtls->begin(); it != m_pRtls->end(); it++)
+                {
+                    if (*it)
+                        {
+                            delete *it;
+                        }
+                }
 
-        // and delete the list
-        delete m_pRtls;
-        m_pRtls = NULL;
-    }
+            // and delete the list
+            delete m_pRtls;
+            m_pRtls = NULL;
+        }
     if (m_returnVal) delete m_returnVal;
 }
 
@@ -194,14 +195,15 @@ BasicBlock::BasicBlock(std::list<RTL*>* pRtls, BBTYPE bbType, int iNumOutEdges)
 void BasicBlock::storeUseDefineStruct(BBBlock& inBlock)
 {
     if (m_pRtls)                    // Can be zero if e.g. INVALID
-    {
+        {
 
 //      RTL_CIT rit;
-        std::list<RTL*>_CIT rit;
-        for (rit = m_pRtls->begin(); rit != m_pRtls->end(); rit++) {
-            (*rit)->storeUseDefineStruct(inBlock);
+            std::list<RTL*>_CIT rit;
+            for (rit = m_pRtls->begin(); rit != m_pRtls->end(); rit++)
+                {
+                    (*rit)->storeUseDefineStruct(inBlock);
+                }
         }
-    }
 }
 
 /*==============================================================================
@@ -211,7 +213,8 @@ void BasicBlock::storeUseDefineStruct(BBBlock& inBlock)
  * PARAMETERS:      BasicBlock * prevBlock, used to find the parent BB
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::propagateType(BasicBlock * prevBlock, bool endCase = false) {
+void BasicBlock::propagateType(BasicBlock * prevBlock, bool endCase = false)
+{
 
     // Remember to clear it before and after type propagation
     m_iTraversed = true;
@@ -232,19 +235,23 @@ void BasicBlock::propagateType(BasicBlock * prevBlock, bool endCase = false) {
         }
     */
 
-    if (!endCase) {
-        for (std::vector<PBB>::iterator it = m_OutEdges.begin(); it != m_OutEdges.end();
-                it++) {
+    if (!endCase)
+        {
+            for (std::vector<PBB>::iterator it = m_OutEdges.begin(); it != m_OutEdges.end();
+                    it++)
+                {
 
-            PBB child = *it;
-            if (child->m_iTraversed == false) {
-                child->propagateType(this);
-            }
-            else {
-                child->propagateType(this, true);
-            }
+                    PBB child = *it;
+                    if (child->m_iTraversed == false)
+                        {
+                            child->propagateType(this);
+                        }
+                    else
+                        {
+                            child->propagateType(this, true);
+                        }
+                }
         }
-    }
 
     // We reached a back branch, propagate ONCE
     // and then leave
@@ -256,48 +263,54 @@ void BasicBlock::propagateType(BasicBlock * prevBlock, bool endCase = false) {
     std::map<Byte, UDChain*> noDefMap = usedDefineStruct->returnNoDefRegChains();
 
     // Iterate through the map of no def chains
-    for (noDefMapIt = noDefMap.begin(); noDefMapIt != noDefMap.end(); ++noDefMapIt) {
+    for (noDefMapIt = noDefMap.begin(); noDefMapIt != noDefMap.end(); ++noDefMapIt)
+        {
 
-        // Reset the forwardLooking BB to the immediate previous BB
-        BasicBlock * forwardLookingBB = tempPrevBB;
+            // Reset the forwardLooking BB to the immediate previous BB
+            BasicBlock * forwardLookingBB = tempPrevBB;
 
-        int timeOut = 0;
-        while (forwardLookingBB) {
-            // Get a map of all the defined registers in the prev BB
-            std::map<Byte, UDChain*> prevLastDefMap =
-                forwardLookingBB->usedDefineStruct->returnLastDefRegChains();
+            int timeOut = 0;
+            while (forwardLookingBB)
+                {
+                    // Get a map of all the defined registers in the prev BB
+                    std::map<Byte, UDChain*> prevLastDefMap =
+                        forwardLookingBB->usedDefineStruct->returnLastDefRegChains();
 
-            // See if it contains one of the reg that we don't have a def for
-            prevLastDefMapIt = prevLastDefMap.find(noDefMapIt->first);
+                    // See if it contains one of the reg that we don't have a def for
+                    prevLastDefMapIt = prevLastDefMap.find(noDefMapIt->first);
 
-            if (prevLastDefMapIt != prevLastDefMap.end()) {
-                // Found a match! Propagate type.
+                    if (prevLastDefMapIt != prevLastDefMap.end())
+                        {
+                            // Found a match! Propagate type.
 
-                if (prevLastDefMapIt->second->chainType > noDefMapIt->second->chainType) {
-                    noDefMapIt->second->chainType = prevLastDefMapIt->second->chainType;
+                            if (prevLastDefMapIt->second->chainType > noDefMapIt->second->chainType)
+                                {
+                                    noDefMapIt->second->chainType = prevLastDefMapIt->second->chainType;
+                                }
+                            else
+                                {
+                                    prevLastDefMapIt->second->chainType = noDefMapIt->second->chainType ;
+                                }
+                            break;
+                        }
+                    else
+                        {
+                            // 50 is currently an arbitary number
+                            // If we look 50 basic blocks up and still don't find it
+                            // where the register is defined, give up
+                            if (timeOut++ > 50)
+                                break;
+
+                            forwardLookingBB = forwardLookingBB->tempPrevBB;
+
+                            // Complete loop, will go around until timeout.
+                            // Break now to save time
+                            if (forwardLookingBB == this->tempPrevBB)
+                                break;
+
+                        }
                 }
-                else {
-                    prevLastDefMapIt->second->chainType = noDefMapIt->second->chainType ;
-                }
-                break;
-            }
-            else {
-                // 50 is currently an arbitary number
-                // If we look 50 basic blocks up and still don't find it
-                // where the register is defined, give up
-                if (timeOut++ > 50)
-                    break;
-
-                forwardLookingBB = forwardLookingBB->tempPrevBB;
-
-                // Complete loop, will go around until timeout.
-                // Break now to save time
-                if (forwardLookingBB == this->tempPrevBB)
-                    break;
-
-            }
         }
-    }
 }
 #endif
 
@@ -308,7 +321,8 @@ void BasicBlock::propagateType(BasicBlock * prevBlock, bool endCase = false) {
  * PARAMETERS:      <none>
  * RETURNS:         An integer unique to this BB, or zero
  *============================================================================*/
-int BasicBlock::getLabel() {
+int BasicBlock::getLabel()
+{
     return m_iLabelNum;
 }
 
@@ -318,7 +332,8 @@ int BasicBlock::getLabel() {
  * PARAMETERS:      <none>
  * RETURNS:         True if traversed
  *============================================================================*/
-bool BasicBlock::isTraversed() {
+bool BasicBlock::isTraversed()
+{
     return m_iTraversed;
 }
 
@@ -328,7 +343,8 @@ bool BasicBlock::isTraversed() {
  * PARAMETERS:      bTraversed: true to set this BB to traversed
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::setTraversed(bool bTraversed) {
+void BasicBlock::setTraversed(bool bTraversed)
+{
     m_iTraversed = bTraversed;
 }
 
@@ -340,7 +356,8 @@ void BasicBlock::setTraversed(bool bTraversed) {
  * PARAMETERS:      rtls - a list of RTLs
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::setRTLs(std::list<RTL*>* rtls) {
+void BasicBlock::setRTLs(std::list<RTL*>* rtls)
+{
     // should we delete old ones here?  breaks some things - trent
     m_pRtls = rtls;
 
@@ -351,7 +368,8 @@ void BasicBlock::setRTLs(std::list<RTL*>* rtls) {
         call->setBB(this);
 }
 
-void BasicBlock::setReturnVal(Exp *e) {
+void BasicBlock::setReturnVal(Exp *e)
+{
     if (m_returnVal) delete m_returnVal;
     m_returnVal = e;
 }
@@ -362,7 +380,8 @@ void BasicBlock::setReturnVal(Exp *e) {
  * PARAMETERS:      <none>
  * RETURNS:         the type of the basic block
  *============================================================================*/
-BBTYPE BasicBlock::getType() {
+BBTYPE BasicBlock::getType()
+{
     return m_nodeType;
 }
 
@@ -375,7 +394,8 @@ BBTYPE BasicBlock::getType() {
  *                  iNumOutEdges - new number of inedges
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::updateType(BBTYPE bbType, int iNumOutEdges) {
+void BasicBlock::updateType(BBTYPE bbType, int iNumOutEdges)
+{
     m_nodeType = bbType;
     m_iNumOutEdges = iNumOutEdges;
 }
@@ -388,7 +408,8 @@ void BasicBlock::updateType(BBTYPE bbType, int iNumOutEdges) {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::setJumpReqd() {
+void BasicBlock::setJumpReqd()
+{
     m_bJumpReqd = true;
 }
 
@@ -398,7 +419,8 @@ void BasicBlock::setJumpReqd() {
  * PARAMETERS:      <none>
  * RETURNS:         True if a jump is required
  *============================================================================*/
-bool BasicBlock::isJumpReqd() {
+bool BasicBlock::isJumpReqd()
+{
     return m_bJumpReqd;
 }
 
@@ -409,7 +431,8 @@ bool BasicBlock::isJumpReqd() {
  * RETURNS:         Address of the static buffer
  *============================================================================*/
 static char debug_buffer[1000];
-char* BasicBlock::prints() {
+char* BasicBlock::prints()
+{
     std::ostringstream ost;
     print(ost);
     // Static buffer may overflow; that's OK, we just copy and print the first
@@ -426,69 +449,77 @@ char* BasicBlock::prints() {
  * PARAMETERS:      os - stream to output to
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::print(std::ostream& os, bool withDF) {
+void BasicBlock::print(std::ostream& os, bool withDF)
+{
     if (m_iLabelNum) os << "L" << std::dec << m_iLabelNum << ": ";
-    switch(m_nodeType) {
-    case ONEWAY:
-        os << "Oneway BB";
-        break;
-    case TWOWAY:
-        os << "Twoway BB";
-        break;
-    case NWAY:
-        os << "Nway BB";
-        break;
-    case CALL:
-        os << "Call BB";
-        break;
-    case RET:
-        os << "Ret BB";
-        break;
-    case FALL:
-        os << "Fall BB";
-        break;
-    case COMPJUMP:
-        os << "Computed jump BB";
-        break;
-    case COMPCALL:
-        os << "Computed call BB";
-        break;
-    case INVALID:
-        os << "Invalid BB";
-        break;
-    }
+    switch(m_nodeType)
+        {
+        case ONEWAY:
+            os << "Oneway BB";
+            break;
+        case TWOWAY:
+            os << "Twoway BB";
+            break;
+        case NWAY:
+            os << "Nway BB";
+            break;
+        case CALL:
+            os << "Call BB";
+            break;
+        case RET:
+            os << "Ret BB";
+            break;
+        case FALL:
+            os << "Fall BB";
+            break;
+        case COMPJUMP:
+            os << "Computed jump BB";
+            break;
+        case COMPCALL:
+            os << "Computed call BB";
+            break;
+        case INVALID:
+            os << "Invalid BB";
+            break;
+        }
     // Printing the address is bad for unit testing, since address will
     // be arbitrary
     //os << " (0x" << std::hex << (unsigned int)this << "):\n";
     os << ":";
-    if (withDF) {
-        os << " reach in: ";
-        StatementSet reachin;
-        getReachIn(reachin, 2);
-        StmtSetIter it;
-        Statement* s = reachin.getFirst(it);
-        while (s) {
-            s->printAsUse(os);
-            os << " ";
-            s = reachin.getNext(it);
+    if (withDF)
+        {
+            os << " reach in: ";
+            StatementSet reachin;
+            getReachIn(reachin, 2);
+            StmtSetIter it;
+            Statement* s = reachin.getFirst(it);
+            while (s)
+                {
+                    s->printAsUse(os);
+                    os << " ";
+                    s = reachin.getNext(it);
+                }
         }
-    }
     os << std::endl;
-    if (m_pRtls) {                  // Can be zero if e.g. INVALID
-        std::list<RTL*>::iterator rit;
-        for (rit = m_pRtls->begin(); rit != m_pRtls->end(); rit++) {
-            (*rit)->print(os, withDF);
+    if (m_pRtls)                    // Can be zero if e.g. INVALID
+        {
+            std::list<RTL*>::iterator rit;
+            for (rit = m_pRtls->begin(); rit != m_pRtls->end(); rit++)
+                {
+                    (*rit)->print(os, withDF);
+                }
         }
-    }
-    if (m_bJumpReqd) {
-        os << "Synthetic out edge(s) to ";
-        for (int i=0; i < m_iNumOutEdges; i++) {
-            PBB outEdge = m_OutEdges[i];
-            if (outEdge && outEdge->m_iLabelNum)
-                os << "L" << std::dec << outEdge->m_iLabelNum << " ";
+    if (m_bJumpReqd)
+        {
+            os << "Synthetic out edge(s) to ";
+            for (int i=0; i < m_iNumOutEdges; i++)
+                {
+                    PBB outEdge = m_OutEdges[i];
+                    if (outEdge && outEdge->m_iLabelNum)
+                        os << "L" << std::dec << outEdge->m_iLabelNum << " ";
+                }
+            os << std::endl;
         }
-        os << std::endl;
-    }
 }
 
 /*==============================================================================
@@ -505,22 +536,23 @@ void BasicBlock::print(std::ostream& os, bool withDF) {
  * PARAMETERS:      <none>
  * RETURNS:         the lowest real address associated with this BB
  *============================================================================*/
-ADDRESS BasicBlock::getLowAddr() {
+ADDRESS BasicBlock::getLowAddr()
+{
     assert(m_pRtls != NULL);
     ADDRESS a = m_pRtls->front()->getAddress();
     if ((a == 0) && (m_pRtls->size() > 1))
-    {
-        std::list<RTL*>::iterator it = m_pRtls->begin();
-        ADDRESS add2 = (*++it)->getAddress();
-        // This is a bit of a hack for 286 programs, whose main actually starts
-        // at offset 0. A better solution would be to change orphan BBs'
-        // addresses to NO_ADDRESS, but I suspect that this will cause many
-        // problems. MVE
-        if (add2 < 0x10)
-            // Assume that 0 is the real address
-            return 0;
-        return add2;
-    }
+        {
+            std::list<RTL*>::iterator it = m_pRtls->begin();
+            ADDRESS add2 = (*++it)->getAddress();
+            // This is a bit of a hack for 286 programs, whose main actually starts
+            // at offset 0. A better solution would be to change orphan BBs'
+            // addresses to NO_ADDRESS, but I suspect that this will cause many
+            // problems. MVE
+            if (add2 < 0x10)
+                // Assume that 0 is the real address
+                return 0;
+            return add2;
+        }
     return a;
 }
 
@@ -531,7 +563,8 @@ ADDRESS BasicBlock::getLowAddr() {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-ADDRESS BasicBlock::getHiAddr() {
+ADDRESS BasicBlock::getHiAddr()
+{
     assert(m_pRtls != NULL);
     return m_pRtls->back()->getAddress();
 }
@@ -542,7 +575,8 @@ ADDRESS BasicBlock::getHiAddr() {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-std::list<RTL*>* BasicBlock::getRTLs() {
+std::list<RTL*>* BasicBlock::getRTLs()
+{
     return m_pRtls;
 }
 
@@ -552,7 +586,8 @@ std::list<RTL*>* BasicBlock::getRTLs() {
  * PARAMETERS:      <none>
  * RETURNS:         a constant reference to the vector of in edges
  *============================================================================*/
-std::vector<PBB>& BasicBlock::getInEdges() {
+std::vector<PBB>& BasicBlock::getInEdges()
+{
     return m_InEdges;
 }
 
@@ -562,7 +597,8 @@ std::vector<PBB>& BasicBlock::getInEdges() {
  * PARAMETERS:      <none>
  * RETURNS:         a constant reference to the vector of out edges
  *============================================================================*/
-std::vector<PBB>& BasicBlock::getOutEdges() {
+std::vector<PBB>& BasicBlock::getOutEdges()
+{
     return m_OutEdges;
 }
 
@@ -574,7 +610,8 @@ std::vector<PBB>& BasicBlock::getOutEdges() {
  *                  pNewInEdge: pointer to BB that will be a new parent
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::setInEdge(int i, PBB pNewInEdge) {
+void BasicBlock::setInEdge(int i, PBB pNewInEdge)
+{
     m_InEdges[i] = pNewInEdge;
 }
 
@@ -588,14 +625,18 @@ void BasicBlock::setInEdge(int i, PBB pNewInEdge) {
  *                  pNewOutEdge: pointer to BB that will be the new successor
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::setOutEdge(int i, PBB pNewOutEdge) {
-    if (m_OutEdges.size() == 0) {
-        assert(i == 0);
-        m_OutEdges.push_back(pNewOutEdge);
-    } else {
-        assert(i < (int)m_OutEdges.size());
-        m_OutEdges[i] = pNewOutEdge;
-    }
+void BasicBlock::setOutEdge(int i, PBB pNewOutEdge)
+{
+    if (m_OutEdges.size() == 0)
+        {
+            assert(i == 0);
+            m_OutEdges.push_back(pNewOutEdge);
+        }
+    else
+        {
+            assert(i < (int)m_OutEdges.size());
+            m_OutEdges[i] = pNewOutEdge;
+        }
 }
 
 /*==============================================================================
@@ -605,7 +646,8 @@ void BasicBlock::setOutEdge(int i, PBB pNewOutEdge) {
  * PARAMETERS:      i: index (0 based) of the desired out edge
  * RETURNS:         the i-th out edge; 0 if there is no such out edge
  *============================================================================*/
-PBB BasicBlock::getOutEdge(unsigned int i) {
+PBB BasicBlock::getOutEdge(unsigned int i)
+{
     if (i < m_OutEdges.size()) return m_OutEdges[i];
     else return 0;
 }
@@ -619,11 +661,13 @@ PBB BasicBlock::getOutEdge(unsigned int i) {
  * RETURNS:
  *============================================================================*/
 
-PBB BasicBlock::getCorrectOutEdge(ADDRESS a) {
+PBB BasicBlock::getCorrectOutEdge(ADDRESS a)
+{
     std::vector<PBB>::iterator it;
-    for (it = m_OutEdges.begin(); it != m_OutEdges.end(); it++) {
-        if ((*it)->getLowAddr() == a) return *it;
-    }
+    for (it = m_OutEdges.begin(); it != m_OutEdges.end(); it++)
+        {
+            if ((*it)->getLowAddr() == a) return *it;
+        }
     return 0;
 }
 
@@ -635,7 +679,8 @@ PBB BasicBlock::getCorrectOutEdge(ADDRESS a) {
  * PARAMETERS:      pNewInEdge: pointer to BB that will be a new parent
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::addInEdge(PBB pNewInEdge) {
+void BasicBlock::addInEdge(PBB pNewInEdge)
+{
     m_InEdges.push_back(pNewInEdge);
     m_iNumInEdges++;
 }
@@ -650,31 +695,38 @@ void BasicBlock::addInEdge(PBB pNewInEdge) {
  *                    if (pred) deleteInEdge(it) else it++;
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::deleteInEdge(std::vector<PBB>::iterator& it) {
+void BasicBlock::deleteInEdge(std::vector<PBB>::iterator& it)
+{
     it = m_InEdges.erase(it);
     m_iNumInEdges--;
 }
 
-void BasicBlock::deleteInEdge(PBB edge) {
+void BasicBlock::deleteInEdge(PBB edge)
+{
     for (std::vector<PBB>::iterator it = m_InEdges.begin();
-            it != m_InEdges.end(); it++) {
-        if (*it == edge) {
-            deleteInEdge(it);
-            break;
+            it != m_InEdges.end(); it++)
+        {
+            if (*it == edge)
+                {
+                    deleteInEdge(it);
+                    break;
+                }
         }
-    }
 }
 
-void BasicBlock::deleteEdge(PBB edge) {
+void BasicBlock::deleteEdge(PBB edge)
+{
     edge->deleteInEdge(this);
     for (std::vector<PBB>::iterator it = m_OutEdges.begin();
-            it != m_OutEdges.end(); it++) {
-        if (*it == edge) {
-            m_OutEdges.erase(it);
-            m_iNumOutEdges--;
-            break;
+            it != m_OutEdges.end(); it++)
+        {
+            if (*it == edge)
+                {
+                    m_OutEdges.erase(it);
+                    m_iNumOutEdges--;
+                    break;
+                }
         }
-    }
 }
 
 /*==============================================================================
@@ -688,7 +740,8 @@ void BasicBlock::deleteEdge(PBB edge) {
  * RETURNS:         the number of nodes (including this one) that were traversed
  *                  from this node
  *============================================================================*/
-unsigned BasicBlock::DFTOrder(int& first, int& last) {
+unsigned BasicBlock::DFTOrder(int& first, int& last)
+{
     first++;
     m_DFTfirst = first;
 
@@ -696,12 +749,13 @@ unsigned BasicBlock::DFTOrder(int& first, int& last) {
     m_iTraversed = true;
 
     for (std::vector<PBB>::iterator it = m_OutEdges.begin();
-            it != m_OutEdges.end(); it++) {
+            it != m_OutEdges.end(); it++)
+        {
 
-        PBB child = *it;
-        if (child->m_iTraversed == false)
-            numTraversed = numTraversed + child->DFTOrder(first,last);
-    }
+            PBB child = *it;
+            if (child->m_iTraversed == false)
+                numTraversed = numTraversed + child->DFTOrder(first,last);
+        }
 
     last++;
     m_DFTlast = last;
@@ -720,7 +774,8 @@ unsigned BasicBlock::DFTOrder(int& first, int& last) {
  * RETURNS:       the number of nodes (including this one) that were traversed
  *                from this node
  *============================================================================*/
-unsigned BasicBlock::RevDFTOrder(int& first, int& last) {
+unsigned BasicBlock::RevDFTOrder(int& first, int& last)
+{
     first++;
     m_DFTrevfirst = first;
 
@@ -728,12 +783,13 @@ unsigned BasicBlock::RevDFTOrder(int& first, int& last) {
     m_iTraversed = true;
 
     for (std::vector<PBB>::iterator it = m_InEdges.begin(); it != m_InEdges.end();
-            it++) {
+            it++)
+        {
 
-        PBB parent = *it;
-        if (parent->m_iTraversed == false)
-            numTraversed = numTraversed + parent->RevDFTOrder(first,last);
-    }
+            PBB parent = *it;
+            if (parent->m_iTraversed == false)
+                numTraversed = numTraversed + parent->RevDFTOrder(first,last);
+        }
 
     last++;
     m_DFTrevlast = last;
@@ -749,7 +805,8 @@ unsigned BasicBlock::RevDFTOrder(int& first, int& last) {
  *                  bb2 - last BB
  * RETURNS:         bb1.address < bb2.address
  *============================================================================*/
-bool BasicBlock::lessAddress(PBB bb1, PBB bb2) {
+bool BasicBlock::lessAddress(PBB bb1, PBB bb2)
+{
     return bb1->getLowAddr() < bb2->getLowAddr();
 }
 
@@ -761,7 +818,8 @@ bool BasicBlock::lessAddress(PBB bb1, PBB bb2) {
  *                  bb2 - last BB
  * RETURNS:         bb1.first_DFS < bb2.first_DFS
  *============================================================================*/
-bool BasicBlock::lessFirstDFT(PBB bb1, PBB bb2) {
+bool BasicBlock::lessFirstDFT(PBB bb1, PBB bb2)
+{
     return bb1->m_DFTfirst < bb2->m_DFTfirst;
 }
 
@@ -773,7 +831,8 @@ bool BasicBlock::lessFirstDFT(PBB bb1, PBB bb2) {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void BasicBlock::resetDFASets() {
+void BasicBlock::resetDFASets()
+{
     reachOut.reset();
     defSet.reset();
     useSet.reset();
@@ -790,7 +849,8 @@ void BasicBlock::resetDFASets() {
  *                  bb2 - last BB
  * RETURNS:         bb1.last_DFS < bb2.last_DFS
  *============================================================================*/
-bool BasicBlock::lessLastDFT(PBB bb1, PBB bb2) {
+bool BasicBlock::lessLastDFT(PBB bb1, PBB bb2)
+{
     return bb1->m_DFTlast < bb2->m_DFTlast;
 }
 
@@ -801,19 +861,22 @@ bool BasicBlock::lessLastDFT(PBB bb1, PBB bb2) {
  * PARAMETERS:      <none>
  * RETURNS:         Native destination of the call, or -1
  *============================================================================*/
-ADDRESS BasicBlock::getCallDest() {
+ADDRESS BasicBlock::getCallDest()
+{
     if (m_nodeType != CALL)
         return (ADDRESS)-1;
     std::list<RTL*>::reverse_iterator it;
-    for (it = m_pRtls->rbegin(); it != m_pRtls->rend(); it++) {
-        if ((*it)->getKind() == CALL_RTL)
-            return ((HLCall*)(*it))->getFixedDest();
-    }
+    for (it = m_pRtls->rbegin(); it != m_pRtls->rend(); it++)
+        {
+            if ((*it)->getKind() == CALL_RTL)
+                return ((HLCall*)(*it))->getFixedDest();
+        }
     return (ADDRESS)-1;
 }
 
 // serialize this BB
-bool BasicBlock::serialize(std::ostream &ouf, int &len) {
+bool BasicBlock::serialize(std::ostream &ouf, int &len)
+{
     std::streampos st = ouf.tellp();
 
     saveFID(ouf, FID_BB_TYPE);
@@ -822,36 +885,40 @@ bool BasicBlock::serialize(std::ostream &ouf, int &len) {
     int ncount = 0;
     for (std::vector<PBB>::iterator it = m_OutEdges.begin(); it != m_OutEdges.end(); it++)
         ncount++;
-    if (ncount) {
-        saveFID(ouf, FID_BB_OUTEDGES);
-        saveLen(ouf, ncount * 4);
-        saveValue(ouf, ncount, false);
-        for (
+    if (ncount)
+        {
+            saveFID(ouf, FID_BB_OUTEDGES);
+            saveLen(ouf, ncount * 4);
+            saveValue(ouf, ncount, false);
+            for (
 #ifndef WIN32
-            std::vector<PBB>::iterator
+                std::vector<PBB>::iterator
 #endif
-            it = m_OutEdges.begin(); it != m_OutEdges.end(); it++) {
-            saveValue(ouf, (*it)->m_nindex, false);
+                it = m_OutEdges.begin(); it != m_OutEdges.end(); it++)
+                {
+                    saveValue(ouf, (*it)->m_nindex, false);
+                }
         }
-    }
 
-    if (m_pRtls) {
-        for (std::list<RTL*>::iterator it = m_pRtls->begin(); it != m_pRtls->end(); it++) {
-            saveFID(ouf, FID_BB_RTL);
-            std::streampos pos = ouf.tellp();
-            int len = -1;
-            saveLen(ouf, -1, true);
-            std::streampos posa = ouf.tellp();
+    if (m_pRtls)
+        {
+            for (std::list<RTL*>::iterator it = m_pRtls->begin(); it != m_pRtls->end(); it++)
+                {
+                    saveFID(ouf, FID_BB_RTL);
+                    std::streampos pos = ouf.tellp();
+                    int len = -1;
+                    saveLen(ouf, -1, true);
+                    std::streampos posa = ouf.tellp();
 
-            assert((*it)->serialize(ouf, len));
+                    assert((*it)->serialize(ouf, len));
 
-            std::streampos now = ouf.tellp();
-            assert((int)(now - posa) == len);
-            ouf.seekp(pos);
-            saveLen(ouf, len, true);
-            ouf.seekp(now);
+                    std::streampos now = ouf.tellp();
+                    assert((int)(now - posa) == len);
+                    ouf.seekp(pos);
+                    saveLen(ouf, len, true);
+                    ouf.seekp(now);
+                }
         }
-    }
 
     saveFID(ouf, FID_BB_END);
     saveLen(ouf, 0);
@@ -861,67 +928,74 @@ bool BasicBlock::serialize(std::ostream &ouf, int &len) {
 }
 
 // deserialize a BB
-bool BasicBlock::deserialize(std::istream &inf) {
+bool BasicBlock::deserialize(std::istream &inf)
+{
     int fid;
     int i, l, j;
     char ch;
 
     m_nOutEdges.clear();
 
-    while ((fid = loadFID(inf)) != -1 && fid != FID_BB_END) {
-        switch (fid) {
-        case FID_BB_TYPE:
-            loadValue(inf, ch);
-            assert(ch <= INVALID);
-            m_nodeType = (BBTYPE)ch;
-            break;
-        case FID_BB_OUTEDGES:
-            l = loadLen(inf);
-            loadValue(inf, i, false);
-            assert(l == i * 4);
-            for (j = 0; j < i; j++) {
-                int o;
-                loadValue(inf, o, false);
-                m_nOutEdges.push_back(o);
-            }
-            break;
-        case FID_BB_RTL:
+    while ((fid = loadFID(inf)) != -1 && fid != FID_BB_END)
         {
-            int len = loadLen(inf);
-            std::streampos pos = inf.tellg();
-            RTL *rtl = RTL::deserialize(inf);
-            if (rtl) {
-                assert((int)(inf.tellg() - pos) == len);
-                if (m_pRtls == NULL) m_pRtls = new std::list<RTL*>();
-                assert(m_pRtls);
-                m_pRtls->push_back(rtl);
-            } else {
-                // unknown rtl type, skip it
-                inf.seekg(pos + (std::streamoff)len);
-            }
+            switch (fid)
+                {
+                case FID_BB_TYPE:
+                    loadValue(inf, ch);
+                    assert(ch <= INVALID);
+                    m_nodeType = (BBTYPE)ch;
+                    break;
+                case FID_BB_OUTEDGES:
+                    l = loadLen(inf);
+                    loadValue(inf, i, false);
+                    assert(l == i * 4);
+                    for (j = 0; j < i; j++)
+                        {
+                            int o;
+                            loadValue(inf, o, false);
+                            m_nOutEdges.push_back(o);
+                        }
+                    break;
+                case FID_BB_RTL:
+                {
+                    int len = loadLen(inf);
+                    std::streampos pos = inf.tellg();
+                    RTL *rtl = RTL::deserialize(inf);
+                    if (rtl)
+                        {
+                            assert((int)(inf.tellg() - pos) == len);
+                            if (m_pRtls == NULL) m_pRtls = new std::list<RTL*>();
+                            assert(m_pRtls);
+                            m_pRtls->push_back(rtl);
+                        }
+                    else
+                        {
+                            // unknown rtl type, skip it
+                            inf.seekg(pos + (std::streamoff)len);
+                        }
+                }
+                break;
+                /*
+                TODO:
+
+                std::list<RTL*>*     m_pRtls;        // Ptr to list of RTLs
+                int             m_iLabelNum;    // Nonzero if start of BB needs label
+                bool            m_bIncomplete:1;// True if not yet complete
+                bool            m_bJumpReqd:1;  // True if jump required for "fall through"
+
+                std::vector<PBB>     m_InEdges;      // Vector of in-edges
+                std::vector<PBB>     m_OutEdges;     // Vector of out-edges
+                int             m_iNumInEdges;  // We need these two because GCC doesn't
+
+                bool            m_iTraversed;   // traversal marker
+
+                Exp* returnLoc;
+
+                */
+                default:
+                    skipFID(inf, fid);
+                }
         }
-        break;
-        /*
-        TODO:
-
-        std::list<RTL*>*     m_pRtls;        // Ptr to list of RTLs
-        int             m_iLabelNum;    // Nonzero if start of BB needs label
-        bool            m_bIncomplete:1;// True if not yet complete
-        bool            m_bJumpReqd:1;  // True if jump required for "fall through"
-
-        std::vector<PBB>     m_InEdges;      // Vector of in-edges
-        std::vector<PBB>     m_OutEdges;     // Vector of out-edges
-        int             m_iNumInEdges;  // We need these two because GCC doesn't
-
-        bool            m_iTraversed;   // traversal marker
-
-        Exp* returnLoc;
-
-        */
-        default:
-            skipFID(inf, fid);
-        }
-    }
     assert(loadLen(inf) == 0);
 
     return true;
@@ -938,7 +1012,8 @@ bool BasicBlock::deserialize(std::istream &inf) {
  */
 
 /* Get the condition */
-Exp *BasicBlock::getCond() {
+Exp *BasicBlock::getCond()
+{
     // the condition will be in the last rtl
     assert(m_pRtls);
     RTL *last = m_pRtls->back();
@@ -949,7 +1024,8 @@ Exp *BasicBlock::getCond() {
     return e;
 }
 
-void BasicBlock::setCond(Exp *e) {
+void BasicBlock::setCond(Exp *e)
+{
     // the condition will be in the last rtl
     assert(m_pRtls);
     RTL *last = m_pRtls->back();
@@ -960,7 +1036,8 @@ void BasicBlock::setCond(Exp *e) {
 }
 
 /* Check for branch if equal relation */
-bool BasicBlock::isJmpZ(PBB dest) {
+bool BasicBlock::isJmpZ(PBB dest)
+{
     // The condition will be in the last rtl
     assert(m_pRtls);
     RTL *last = m_pRtls->back();
@@ -972,14 +1049,16 @@ bool BasicBlock::isJmpZ(PBB dest) {
     PBB trueEdge = m_OutEdges[0];
     if (jt == HLJCOND_JE)
         return dest == trueEdge;
-    else {
-        PBB falseEdge = m_OutEdges[1];
-        return dest == falseEdge;
-    }
+    else
+        {
+            PBB falseEdge = m_OutEdges[1];
+            return dest == falseEdge;
+        }
 }
 
 /* Get the loop body */
-BasicBlock *BasicBlock::getLoopBody() {
+BasicBlock *BasicBlock::getLoopBody()
+{
     assert(m_structType == PRETESTLOOP || m_structType == POSTTESTLOOP ||
            m_structType == ENDLESSLOOP);
     assert(m_iNumOutEdges == 2);
@@ -988,7 +1067,8 @@ BasicBlock *BasicBlock::getLoopBody() {
     return m_OutEdges[1];
 }
 
-bool BasicBlock::isAncestorOf(BasicBlock *other) {
+bool BasicBlock::isAncestorOf(BasicBlock *other)
+{
     return ((loopStamps[0] < other->loopStamps[0] &&
              loopStamps[1] > other->loopStamps[1]) ||
             (revLoopStamps[0] < other->revLoopStamps[0] &&
@@ -998,13 +1078,15 @@ bool BasicBlock::isAncestorOf(BasicBlock *other) {
            m_DFTrevfirst > other->m_DFTrevfirst);*/
 }
 
-void BasicBlock::simplify() {
+void BasicBlock::simplify()
+{
     for (std::list<RTL*>::iterator it = m_pRtls->begin();
             it != m_pRtls->end(); it++)
         (*it)->simplify();
 }
 
-bool BasicBlock::hasBackEdgeTo(BasicBlock* dest) {
+bool BasicBlock::hasBackEdgeTo(BasicBlock* dest)
+{
 //  assert(HasEdgeTo(dest) || dest == this);
     return dest == this || dest->isAncestorOf(this);
 }
@@ -1028,20 +1110,26 @@ bool BasicBlock::allParentsGenerated()
 void BasicBlock::emitGotoAndLabel(HLLCode *hll, int indLevel, PBB dest)
 {
     // is this a goto to the ret block?
-    if (dest->getType() == RET) { // WAS: check about size of ret bb
-        hll->AddReturnStatement(indLevel, dest->getReturnVal());
-    } else {
-        if (loopHead && (loopHead == dest || loopHead->loopFollow == dest)) {
-            if (loopHead == dest)
-                hll->AddContinue(indLevel);
-            else
-                hll->AddBreak(indLevel);
-        } else {
-            hll->AddGoto(indLevel, dest->ord);
-
-            dest->hllLabel = true;
+    if (dest->getType() == RET)   // WAS: check about size of ret bb
+        {
+            hll->AddReturnStatement(indLevel, dest->getReturnVal());
         }
-    }
+    else
+        {
+            if (loopHead && (loopHead == dest || loopHead->loopFollow == dest))
+                {
+                    if (loopHead == dest)
+                        hll->AddContinue(indLevel);
+                    else
+                        hll->AddBreak(indLevel);
+                }
+            else
+                {
+                    hll->AddGoto(indLevel, dest->ord);
+
+                    dest->hllLabel = true;
+                }
+        }
 }
 
 // Generates code for each non CTI (except procedure calls) statement within
@@ -1063,7 +1151,8 @@ void BasicBlock::WriteBB(HLLCode *hll, int indLevel)
 }
 
 void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
-                              std::list<PBB> &followSet, std::list<PBB> &gotoSet) {
+                              std::list<PBB> &followSet, std::list<PBB> &gotoSet)
+{
     // If this is the follow for the most nested enclosing conditional, then
     // don't generate anything. Otherwise if it is in the follow set
     // generate a goto to the follow
@@ -1072,22 +1161,29 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
 
     if (isIn(gotoSet, this) && !isLatchNode() &&
             ((latch && this == latch->loopHead->loopFollow) ||
-             !allParentsGenerated())) {
-        emitGotoAndLabel(hll, indLevel, this);
-        return;
-    } else if (isIn(followSet, this)) {
-        if (this != enclFollow) {
+             !allParentsGenerated()))
+        {
             emitGotoAndLabel(hll, indLevel, this);
             return;
-        } else return;
-    }
+        }
+    else if (isIn(followSet, this))
+        {
+            if (this != enclFollow)
+                {
+                    emitGotoAndLabel(hll, indLevel, this);
+                    return;
+                }
+            else return;
+        }
 
     // Has this node already been generated?
-    if (traversed == DFS_CODEGEN) {
-        // this should only occur for a loop over a single block
-        assert(sType == Loop && lType == PostTested && latchNode == this);
-        return;
-    } else
+    if (traversed == DFS_CODEGEN)
+        {
+            // this should only occur for a loop over a single block
+            assert(sType == Loop && lType == PostTested && latchNode == this);
+            return;
+        }
+    else
         traversed = DFS_CODEGEN;
 
     // if this is a latchNode and the current indentation level is
@@ -1095,459 +1191,521 @@ void BasicBlock::generateCode(HLLCode *hll, int indLevel, PBB latch,
     // and return otherwise generate a goto
     if (isLatchNode())
         if (indLevel == latch->loopHead->indentLevel +
-                (latch->loopHead->lType == PreTested ? 1 : 0)) {
-            WriteBB(hll, indLevel);
-            return;
-        } else {
-            // unset its traversed flag
-            traversed = UNTRAVERSED;
+                (latch->loopHead->lType == PreTested ? 1 : 0))
+            {
+                WriteBB(hll, indLevel);
+                return;
+            }
+        else
+            {
+                // unset its traversed flag
+                traversed = UNTRAVERSED;
 
-            emitGotoAndLabel(hll, indLevel, this);
-            return;
-        }
+                emitGotoAndLabel(hll, indLevel, this);
+                return;
+            }
 
-    switch(sType) {
-    case Loop:
-    case LoopCond:
-        // add the follow of the loop (if it exists) to the follow set
-        if (loopFollow)
-            followSet.push_back(loopFollow);
+    switch(sType)
+        {
+        case Loop:
+        case LoopCond:
+            // add the follow of the loop (if it exists) to the follow set
+            if (loopFollow)
+                followSet.push_back(loopFollow);
 
-        if (lType == PreTested) {
-            assert(latchNode->m_OutEdges.size() == 1);
+            if (lType == PreTested)
+                {
+                    assert(latchNode->m_OutEdges.size() == 1);
+
+                    // write the body of the block (excluding the predicate)
+                    WriteBB(hll, indLevel);
+
+                    // write the 'while' predicate
+                    Exp *cond = getCond();
+                    if (m_OutEdges[BTHEN] == loopFollow)
+                        {
+                            cond = new Unary(opNot, cond);
+                            cond = cond->simplify();
+                        }
+                    hll->AddPretestedLoopHeader(indLevel, cond);
+
+                    // write the code for the body of the loop
+                    PBB loopBody = (m_OutEdges[BELSE] == loopFollow) ?
+                                   m_OutEdges[BTHEN] : m_OutEdges[BELSE];
+                    loopBody->generateCode(hll, indLevel + 1, latchNode,
+                                           followSet, gotoSet);
+
+                    // if code has not been generated for the latch node, generate
+                    // it now
+                    if (latchNode->traversed != DFS_CODEGEN)
+                        {
+                            latchNode->traversed = DFS_CODEGEN;
+                            latchNode->WriteBB(hll, indLevel+1);
+                        }
+
+                    // rewrite the body of the block (excluding the predicate) at
+                    // the next nesting level after making sure another label
+                    // won't be generated
+                    hllLabel = false;
+                    WriteBB(hll, indLevel+1);
+
+                    // write the loop tail
+                    hll->AddPretestedLoopEnd(indLevel);
+                }
+            else
+                {
+                    // write the loop header
+                    if (lType == Endless)
+                        hll->AddEndlessLoopHeader(indLevel);
+                    else
+                        hll->AddPosttestedLoopHeader(indLevel);
+
+                    // if this is also a conditional header, then generate code
+                    // for the conditional. Otherwise generate code for the loop
+                    // body.
+                    if (sType == LoopCond)
+                        {
+                            // set the necessary flags so that generateCode can
+                            // successfully be called again on this node
+                            sType = Cond;
+                            traversed = UNTRAVERSED;
+                            generateCode(hll, indLevel + 1, latchNode, followSet,
+                                         gotoSet);
+                        }
+                    else
+                        {
+                            WriteBB(hll, indLevel+1);
+
+                            // write the code for the body of the loop
+                            m_OutEdges[0]->generateCode(hll, indLevel + 1, latchNode,
+                                                        followSet, gotoSet);
+                        }
+
+                    if (lType == PostTested)
+                        {
+                            // if code has not been generated for the latch node,
+                            // generate it now
+                            if (latchNode->traversed != DFS_CODEGEN)
+                                {
+                                    latchNode->traversed = DFS_CODEGEN;
+                                    latchNode->WriteBB(hll, indLevel+1);
+                                }
+
+                            hll->AddPosttestedLoopEnd(indLevel, getCond());
+                        }
+                    else
+                        {
+                            assert(lType == Endless);
+
+                            // if code has not been generated for the latch node,
+                            // generate it now
+                            if (latchNode->traversed != DFS_CODEGEN)
+                                {
+                                    latchNode->traversed = DFS_CODEGEN;
+                                    latchNode->WriteBB(hll, indLevel+1);
+                                }
+
+                            // write the closing bracket for an endless loop
+                            hll->AddEndlessLoopEnd(indLevel);
+                        }
+                }
+
+            // write the code for the follow of the loop (if it exists)
+            if (loopFollow)
+                {
+                    // remove the follow from the follow set
+                    followSet.resize(followSet.size()-1);
+
+                    if (loopFollow->traversed != DFS_CODEGEN)
+                        loopFollow->generateCode(hll, indLevel, latch, followSet,
+                                                 gotoSet);
+                    else
+                        emitGotoAndLabel(hll, indLevel, loopFollow);
+                }
+            break;
+
+        case Cond:
+        {
+            // reset this back to LoopCond if it was originally of this type
+            if (latchNode)
+                sType = LoopCond;
+
+            // for 2 way conditional headers that are effectively jumps into
+            // or out of a loop or case body, we will need a new follow node
+            PBB tmpCondFollow = NULL;
+
+            // keep track of how many nodes were added to the goto set so that
+            // the correct number are removed
+            int gotoTotal = 0;
+
+            // add the follow to the follow set if this is a case header
+            if (cType == Case)
+                followSet.push_back(condFollow);
+            else if (cType != Case && condFollow)
+                {
+                    // For a structured two conditional header, its follow is
+                    // added to the follow set
+                    //myLoopHead = (sType == LoopCond ? this : loopHead);
+
+                    if (usType == Structured)
+                        followSet.push_back(condFollow);
+
+                    // Otherwise, for a jump into/outof a loop body, the follow is
+                    // added to the goto set.  The temporary follow is set for any
+                    // unstructured conditional header branch that is within the
+                    // same loop and case.
+                    else
+                        {
+                            if (usType == JumpInOutLoop)
+                                {
+                                    // define the loop header to be compared against
+                                    PBB myLoopHead = (sType == LoopCond ? this : loopHead);
+                                    gotoSet.push_back(condFollow);
+                                    gotoTotal++;
+
+                                    // also add the current latch node, and the loop header
+                                    // of the follow if they exist
+                                    if (latch)
+                                        {
+                                            gotoSet.push_back(latch);
+                                            gotoTotal++;
+                                        }
+
+                                    if (condFollow->loopHead &&
+                                            condFollow->loopHead != myLoopHead)
+                                        {
+                                            gotoSet.push_back(condFollow->loopHead);
+                                            gotoTotal++;
+                                        }
+                                }
+
+                            if (cType == IfThen)
+                                tmpCondFollow = m_OutEdges[BELSE];
+                            else
+                                tmpCondFollow = m_OutEdges[BTHEN];
+
+                            // for a jump into a case, the temp follow is added to the
+                            // follow set
+                            if (usType == JumpIntoCase)
+                                followSet.push_back(tmpCondFollow);
+                        }
+                }
 
             // write the body of the block (excluding the predicate)
             WriteBB(hll, indLevel);
 
-            // write the 'while' predicate
-            Exp *cond = getCond();
-            if (m_OutEdges[BTHEN] == loopFollow) {
-                cond = new Unary(opNot, cond);
-                cond = cond->simplify();
-            }
-            hll->AddPretestedLoopHeader(indLevel, cond);
-
-            // write the code for the body of the loop
-            PBB loopBody = (m_OutEdges[BELSE] == loopFollow) ?
-                           m_OutEdges[BTHEN] : m_OutEdges[BELSE];
-            loopBody->generateCode(hll, indLevel + 1, latchNode,
-                                   followSet, gotoSet);
-
-            // if code has not been generated for the latch node, generate
-            // it now
-            if (latchNode->traversed != DFS_CODEGEN) {
-                latchNode->traversed = DFS_CODEGEN;
-                latchNode->WriteBB(hll, indLevel+1);
-            }
-
-            // rewrite the body of the block (excluding the predicate) at
-            // the next nesting level after making sure another label
-            // won't be generated
-            hllLabel = false;
-            WriteBB(hll, indLevel+1);
-
-            // write the loop tail
-            hll->AddPretestedLoopEnd(indLevel);
-        } else {
-            // write the loop header
-            if (lType == Endless)
-                hll->AddEndlessLoopHeader(indLevel);
+            // write the conditional header
+            if (cType == Case)
+                {
+                    hll->AddCaseCondHeader(indLevel, getCond());
+                }
             else
-                hll->AddPosttestedLoopHeader(indLevel);
-
-            // if this is also a conditional header, then generate code
-            // for the conditional. Otherwise generate code for the loop
-            // body.
-            if (sType == LoopCond) {
-                // set the necessary flags so that generateCode can
-                // successfully be called again on this node
-                sType = Cond;
-                traversed = UNTRAVERSED;
-                generateCode(hll, indLevel + 1, latchNode, followSet,
-                             gotoSet);
-            } else {
-                WriteBB(hll, indLevel+1);
-
-                // write the code for the body of the loop
-                m_OutEdges[0]->generateCode(hll, indLevel + 1, latchNode,
-                                            followSet, gotoSet);
-            }
-
-            if (lType == PostTested) {
-                // if code has not been generated for the latch node,
-                // generate it now
-                if (latchNode->traversed != DFS_CODEGEN) {
-                    latchNode->traversed = DFS_CODEGEN;
-                    latchNode->WriteBB(hll, indLevel+1);
+                {
+                    Exp *cond = getCond();
+                    if (cType == IfElse)
+                        {
+                            cond = new Unary(opNot, cond);
+                            cond = cond->simplify();
+                        }
+                    if (cType == IfThenElse)
+                        hll->AddIfElseCondHeader(indLevel, cond);
+                    else
+                        hll->AddIfCondHeader(indLevel, cond);
                 }
 
-                hll->AddPosttestedLoopEnd(indLevel, getCond());
-            } else {
-                assert(lType == Endless);
+            // write code for the body of the conditional
+            if (cType != Case)
+                {
+                    PBB succ = (cType == IfElse ? m_OutEdges[BELSE] :
+                                m_OutEdges[BTHEN]);
 
-                // if code has not been generated for the latch node,
-                // generate it now
-                if (latchNode->traversed != DFS_CODEGEN) {
-                    latchNode->traversed = DFS_CODEGEN;
-                    latchNode->WriteBB(hll, indLevel+1);
+                    // emit a goto statement if the first clause has already been
+                    // generated or it is the follow of this node's enclosing loop
+                    if (succ->traversed == DFS_CODEGEN ||
+                            (loopHead && succ == loopHead->loopFollow))
+                        emitGotoAndLabel(hll, indLevel + 1, succ);
+                    else
+                        succ->generateCode(hll, indLevel + 1, latch, followSet,
+                                           gotoSet);
+
+                    // generate the else clause if necessary
+                    if (cType == IfThenElse)
+                        {
+                            // generate the 'else' keyword and matching brackets
+                            hll->AddIfElseCondOption(indLevel);
+
+                            succ = m_OutEdges[BELSE];
+
+                            // emit a goto statement if the second clause has already
+                            // been generated
+                            if (succ->traversed == DFS_CODEGEN)
+                                emitGotoAndLabel(hll, indLevel + 1, succ);
+                            else
+                                succ->generateCode(hll, indLevel + 1, latch,
+                                                   followSet, gotoSet);
+
+                            // generate the closing bracket
+                            hll->AddIfElseCondEnd(indLevel);
+                        }
+                    else
+                        {
+                            // generate the closing bracket
+                            hll->AddIfCondEnd(indLevel);
+                        }
                 }
+            else     // case header
+                {
+                    // generate code for each out branch
+                    for (unsigned int i = 0; i < m_OutEdges.size(); i++)
+                        {
+                            // emit a case label
+                            hll->AddCaseCondOption(indLevel, NULL); // TODO
 
-                // write the closing bracket for an endless loop
-                hll->AddEndlessLoopEnd(indLevel);
-            }
-        }
-
-        // write the code for the follow of the loop (if it exists)
-        if (loopFollow) {
-            // remove the follow from the follow set
-            followSet.resize(followSet.size()-1);
-
-            if (loopFollow->traversed != DFS_CODEGEN)
-                loopFollow->generateCode(hll, indLevel, latch, followSet,
-                                         gotoSet);
-            else
-                emitGotoAndLabel(hll, indLevel, loopFollow);
-        }
-        break;
-
-    case Cond:
-    {
-        // reset this back to LoopCond if it was originally of this type
-        if (latchNode)
-            sType = LoopCond;
-
-        // for 2 way conditional headers that are effectively jumps into
-        // or out of a loop or case body, we will need a new follow node
-        PBB tmpCondFollow = NULL;
-
-        // keep track of how many nodes were added to the goto set so that
-        // the correct number are removed
-        int gotoTotal = 0;
-
-        // add the follow to the follow set if this is a case header
-        if (cType == Case)
-            followSet.push_back(condFollow);
-        else if (cType != Case && condFollow) {
-            // For a structured two conditional header, its follow is
-            // added to the follow set
-            //myLoopHead = (sType == LoopCond ? this : loopHead);
-
-            if (usType == Structured)
-                followSet.push_back(condFollow);
-
-            // Otherwise, for a jump into/outof a loop body, the follow is
-            // added to the goto set.  The temporary follow is set for any
-            // unstructured conditional header branch that is within the
-            // same loop and case.
-            else {
-                if (usType == JumpInOutLoop) {
-                    // define the loop header to be compared against
-                    PBB myLoopHead = (sType == LoopCond ? this : loopHead);
-                    gotoSet.push_back(condFollow);
-                    gotoTotal++;
-
-                    // also add the current latch node, and the loop header
-                    // of the follow if they exist
-                    if (latch) {
-                        gotoSet.push_back(latch);
-                        gotoTotal++;
-                    }
-
-                    if (condFollow->loopHead &&
-                            condFollow->loopHead != myLoopHead) {
-                        gotoSet.push_back(condFollow->loopHead);
-                        gotoTotal++;
-                    }
-                }
-
-                if (cType == IfThen)
-                    tmpCondFollow = m_OutEdges[BELSE];
-                else
-                    tmpCondFollow = m_OutEdges[BTHEN];
-
-                // for a jump into a case, the temp follow is added to the
-                // follow set
-                if (usType == JumpIntoCase)
-                    followSet.push_back(tmpCondFollow);
-            }
-        }
-
-        // write the body of the block (excluding the predicate)
-        WriteBB(hll, indLevel);
-
-        // write the conditional header
-        if (cType == Case) {
-            hll->AddCaseCondHeader(indLevel, getCond());
-        } else {
-            Exp *cond = getCond();
-            if (cType == IfElse) {
-                cond = new Unary(opNot, cond);
-                cond = cond->simplify();
-            }
-            if (cType == IfThenElse)
-                hll->AddIfElseCondHeader(indLevel, cond);
-            else
-                hll->AddIfCondHeader(indLevel, cond);
-        }
-
-        // write code for the body of the conditional
-        if (cType != Case) {
-            PBB succ = (cType == IfElse ? m_OutEdges[BELSE] :
-                        m_OutEdges[BTHEN]);
-
-            // emit a goto statement if the first clause has already been
-            // generated or it is the follow of this node's enclosing loop
-            if (succ->traversed == DFS_CODEGEN ||
-                    (loopHead && succ == loopHead->loopFollow))
-                emitGotoAndLabel(hll, indLevel + 1, succ);
-            else
-                succ->generateCode(hll, indLevel + 1, latch, followSet,
-                                   gotoSet);
-
-            // generate the else clause if necessary
-            if (cType == IfThenElse) {
-                // generate the 'else' keyword and matching brackets
-                hll->AddIfElseCondOption(indLevel);
-
-                succ = m_OutEdges[BELSE];
-
-                // emit a goto statement if the second clause has already
-                // been generated
-                if (succ->traversed == DFS_CODEGEN)
-                    emitGotoAndLabel(hll, indLevel + 1, succ);
-                else
-                    succ->generateCode(hll, indLevel + 1, latch,
-                                       followSet, gotoSet);
-
-                // generate the closing bracket
-                hll->AddIfElseCondEnd(indLevel);
-            } else {
-                // generate the closing bracket
-                hll->AddIfCondEnd(indLevel);
-            }
-        } else { // case header
-            // generate code for each out branch
-            for (unsigned int i = 0; i < m_OutEdges.size(); i++) {
-                // emit a case label
-                hll->AddCaseCondOption(indLevel, NULL); // TODO
-
-                // generate code for the current outedge
-                PBB succ = m_OutEdges[i];
+                            // generate code for the current outedge
+                            PBB succ = m_OutEdges[i];
 //assert(succ->caseHead == this || succ == condFollow || HasBackEdgeTo(succ));
-                if (succ->traversed == DFS_CODEGEN)
-                    emitGotoAndLabel(hll, indLevel + 1, succ);
-                else
-                    succ->generateCode(hll, indLevel + 1, latch,
-                                       followSet, gotoSet);
+                            if (succ->traversed == DFS_CODEGEN)
+                                emitGotoAndLabel(hll, indLevel + 1, succ);
+                            else
+                                succ->generateCode(hll, indLevel + 1, latch,
+                                                   followSet, gotoSet);
 
-                // generate the 'break' statement
-                hll->AddCaseCondOptionEnd(indLevel);
-            }
-            // generate the closing bracket
-            hll->AddCaseCondEnd(indLevel);
+                            // generate the 'break' statement
+                            hll->AddCaseCondOptionEnd(indLevel);
+                        }
+                    // generate the closing bracket
+                    hll->AddCaseCondEnd(indLevel);
+                }
+
+
+            // do all the follow stuff if this conditional had one
+            if (condFollow)
+                {
+                    // remove the original follow from the follow set if it was
+                    // added by this header
+                    if (usType == Structured || usType == JumpIntoCase)
+                        {
+                            assert(gotoTotal == 0);
+                            followSet.resize(followSet.size()-1);
+                        }
+                    else   // remove all the nodes added to the goto set
+                        for (int i = 0; i < gotoTotal; i++)
+                            gotoSet.resize(gotoSet.size()-1);
+
+                    // do the code generation (or goto emitting) for the new
+                    // conditional follow if it exists, otherwise do it for the
+                    // original follow
+                    if (!tmpCondFollow)
+                        tmpCondFollow = condFollow;
+
+                    if (tmpCondFollow->traversed == DFS_CODEGEN)
+                        emitGotoAndLabel(hll, indLevel, tmpCondFollow);
+                    else
+                        tmpCondFollow->generateCode(hll, indLevel, latch,
+                                                    followSet, gotoSet);
+                }
+            break;
         }
+        case Seq:
+            // generate code for the body of this block
+            WriteBB(hll, indLevel);
 
+            // return if this is the 'return' block (i.e. has no out edges)
+            // after emmitting a 'return' statement
+            if (getType() == RET)
+                {
+                    hll->AddReturnStatement(indLevel, getReturnVal());
+                    return;
+                }
 
-        // do all the follow stuff if this conditional had one
-        if (condFollow) {
-            // remove the original follow from the follow set if it was
-            // added by this header
-            if (usType == Structured || usType == JumpIntoCase) {
-                assert(gotoTotal == 0);
-                followSet.resize(followSet.size()-1);
-            } else // remove all the nodes added to the goto set
-                for (int i = 0; i < gotoTotal; i++)
-                    gotoSet.resize(gotoSet.size()-1);
+            // return if this doesn't have any out edges (emit a warning)
+            if (m_OutEdges.size() == 0)
+                {
+                    std::cerr << "WARNING: no out edge for BB: " << std::endl;
+                    this->print(std::cerr, false);
+                    std::cerr << std::endl;
+                    return;
+                }
 
-            // do the code generation (or goto emitting) for the new
-            // conditional follow if it exists, otherwise do it for the
-            // original follow
-            if (!tmpCondFollow)
-                tmpCondFollow = condFollow;
-
-            if (tmpCondFollow->traversed == DFS_CODEGEN)
-                emitGotoAndLabel(hll, indLevel, tmpCondFollow);
+            // generate code for its successor if it hasn't already been
+            // visited and is in the same loop/case and is not the latch
+            // for the current most enclosing loop.  The only exception
+            // for generating it when it is not in the same loop is when
+            // it is only reached from this node
+            PBB child = m_OutEdges[0];
+            if (child->traversed == DFS_CODEGEN ||
+                    ((child->loopHead != loopHead) &&
+                     (!child->allParentsGenerated() ||
+                      isIn(followSet, child))) ||
+                    (latch && latch->loopHead->loopFollow == child) ||
+                    !(caseHead == child->caseHead ||
+                      (caseHead && child == caseHead->condFollow)))
+                emitGotoAndLabel(hll, indLevel, m_OutEdges[0]);
             else
-                tmpCondFollow->generateCode(hll, indLevel, latch,
+                m_OutEdges[0]->generateCode(hll, indLevel, latch,
                                             followSet, gotoSet);
+            break;
         }
-        break;
-    }
-    case Seq:
-        // generate code for the body of this block
-        WriteBB(hll, indLevel);
-
-        // return if this is the 'return' block (i.e. has no out edges)
-        // after emmitting a 'return' statement
-        if (getType() == RET) {
-            hll->AddReturnStatement(indLevel, getReturnVal());
-            return;
-        }
-
-        // return if this doesn't have any out edges (emit a warning)
-        if (m_OutEdges.size() == 0) {
-            std::cerr << "WARNING: no out edge for BB: " << std::endl;
-            this->print(std::cerr, false);
-            std::cerr << std::endl;
-            return;
-        }
-
-        // generate code for its successor if it hasn't already been
-        // visited and is in the same loop/case and is not the latch
-        // for the current most enclosing loop.  The only exception
-        // for generating it when it is not in the same loop is when
-        // it is only reached from this node
-        PBB child = m_OutEdges[0];
-        if (child->traversed == DFS_CODEGEN ||
-                ((child->loopHead != loopHead) &&
-                 (!child->allParentsGenerated() ||
-                  isIn(followSet, child))) ||
-                (latch && latch->loopHead->loopFollow == child) ||
-                !(caseHead == child->caseHead ||
-                  (caseHead && child == caseHead->condFollow)))
-            emitGotoAndLabel(hll, indLevel, m_OutEdges[0]);
-        else
-            m_OutEdges[0]->generateCode(hll, indLevel, latch,
-                                        followSet, gotoSet);
-        break;
-    }
 }
 
 void BasicBlock::getReachInAt(Statement *stmt, StatementSet &reachin,
-                              int phase) {
+                              int phase)
+{
     getReachIn(reachin, phase);
     for (std::list<RTL*>::iterator rit = m_pRtls->begin();
-            rit != m_pRtls->end(); rit++) {
-        RTL *rtl = *rit;
-        for (std::list<Exp*>::iterator it = rtl->getList().begin();
-                it != rtl->getList().end(); it++) {
-            if (*it == (AssignExp*)stmt) return;
-            Statement *e = dynamic_cast<Statement*>(*it);
-            if (e == NULL) continue;
-            e->calcReachOut(reachin);
+            rit != m_pRtls->end(); rit++)
+        {
+            RTL *rtl = *rit;
+            for (std::list<Exp*>::iterator it = rtl->getList().begin();
+                    it != rtl->getList().end(); it++)
+                {
+                    if (*it == (AssignExp*)stmt) return;
+                    Statement *e = dynamic_cast<Statement*>(*it);
+                    if (e == NULL) continue;
+                    e->calcReachOut(reachin);
+                }
+            if (rtl->getKind() == CALL_RTL)
+                {
+                    HLCall *call = (HLCall*)rtl;
+                    if (call == stmt) return;
+                    call->calcReachOut(reachin);
+                    StatementList &internals = call->getInternalStatements();
+                    StmtListIter it1;
+                    for (Statement* s1 = internals.getFirst(it1); s1;
+                            s1 = internals.getNext(it1))
+                        {
+                            // MVE: I think this next statement is wrong. The only way
+                            // stmt can be == to *it1 is in a recursive function; it is
+                            // affected by assignments to any part of the procedure, not
+                            // just up to this recursive call
+                            if (stmt == s1) return;
+                            s1->setBB(this);            // ??
+                            s1->calcReachOut(reachin);
+                        }
+                }
+            if (rtl->getKind() == JCOND_RTL)
+                {
+                    HLJcond *jcond = (HLJcond*)rtl;
+                    if (jcond == stmt) return;
+                    jcond->setBB(this);
+                    jcond->calcReachOut(reachin);
+                }
         }
-        if (rtl->getKind() == CALL_RTL) {
-            HLCall *call = (HLCall*)rtl;
-            if (call == stmt) return;
-            call->calcReachOut(reachin);
-            StatementList &internals = call->getInternalStatements();
-            StmtListIter it1;
-            for (Statement* s1 = internals.getFirst(it1); s1;
-                    s1 = internals.getNext(it1)) {
-                // MVE: I think this next statement is wrong. The only way
-                // stmt can be == to *it1 is in a recursive function; it is
-                // affected by assignments to any part of the procedure, not
-                // just up to this recursive call
-                if (stmt == s1) return;
-                s1->setBB(this);            // ??
-                s1->calcReachOut(reachin);
-            }
-        }
-        if (rtl->getKind() == JCOND_RTL) {
-            HLJcond *jcond = (HLJcond*)rtl;
-            if (jcond == stmt) return;
-            jcond->setBB(this);
-            jcond->calcReachOut(reachin);
-        }
-    }
 }
 
 void BasicBlock::getAvailInAt(Statement *stmt, StatementSet &availin,
-                              int phase) {
+                              int phase)
+{
     getAvailIn(availin, phase);
     for (std::list<RTL*>::iterator rit = m_pRtls->begin();
-            rit != m_pRtls->end(); rit++) {
-        RTL *rtl = *rit;
-        for (std::list<Exp*>::iterator it = rtl->getList().begin();
-                it != rtl->getList().end(); it++) {
-            if (*it == (AssignExp*)stmt) return;
-            Statement *e = dynamic_cast<Statement*>(*it);
-            if (e == NULL) continue;
-            e->calcAvailOut(availin);
+            rit != m_pRtls->end(); rit++)
+        {
+            RTL *rtl = *rit;
+            for (std::list<Exp*>::iterator it = rtl->getList().begin();
+                    it != rtl->getList().end(); it++)
+                {
+                    if (*it == (AssignExp*)stmt) return;
+                    Statement *e = dynamic_cast<Statement*>(*it);
+                    if (e == NULL) continue;
+                    e->calcAvailOut(availin);
+                }
+            if (rtl->getKind() == CALL_RTL)
+                {
+                    HLCall *call = (HLCall*)rtl;
+                    if (call == stmt) return;
+                    call->calcAvailOut(availin);
+                    StatementList &internals = call->getInternalStatements();
+                    StmtListIter it1;
+                    for (Statement* s1 = internals.getFirst(it1); s1;
+                            s1 = internals.getNext(it1))
+                        {
+                            // MVE: I think this next statement is wrong. The only way
+                            // stmt can be == to *it1 is in a recursive function; it is
+                            // affected by assignments to any part of the procedure, not
+                            // just up to this recursive call
+                            if (stmt == s1) return;
+                            s1->setBB(this);            // ??
+                            s1->calcAvailOut(availin);
+                        }
+                }
+            if (rtl->getKind() == JCOND_RTL)
+                {
+                    HLJcond *jcond = (HLJcond*)rtl;
+                    if (jcond == stmt) return;
+                    jcond->setBB(this);
+                    jcond->calcAvailOut(availin);
+                }
         }
-        if (rtl->getKind() == CALL_RTL) {
-            HLCall *call = (HLCall*)rtl;
-            if (call == stmt) return;
-            call->calcAvailOut(availin);
-            StatementList &internals = call->getInternalStatements();
-            StmtListIter it1;
-            for (Statement* s1 = internals.getFirst(it1); s1;
-                    s1 = internals.getNext(it1)) {
-                // MVE: I think this next statement is wrong. The only way
-                // stmt can be == to *it1 is in a recursive function; it is
-                // affected by assignments to any part of the procedure, not
-                // just up to this recursive call
-                if (stmt == s1) return;
-                s1->setBB(this);            // ??
-                s1->calcAvailOut(availin);
-            }
-        }
-        if (rtl->getKind() == JCOND_RTL) {
-            HLJcond *jcond = (HLJcond*)rtl;
-            if (jcond == stmt) return;
-            jcond->setBB(this);
-            jcond->calcAvailOut(availin);
-        }
-    }
 }
 
-void BasicBlock::getLiveOutAt(Statement *stmt, LocationSet &liveout) {
+void BasicBlock::getLiveOutAt(Statement *stmt, LocationSet &liveout)
+{
     getLiveOut(liveout);
     for (std::list<RTL*>::reverse_iterator rit = m_pRtls->rbegin();
-            rit != m_pRtls->rend(); rit++) {
-        RTL *rtl = *rit;
-        for (std::list<Exp*>::reverse_iterator it = rtl->getList().rbegin();
-                it != rtl->getList().rend(); it++) {
-            if (*it == (AssignExp*)stmt) return;
-            Statement *e = dynamic_cast<Statement*>(*it);
-            if (e == NULL) continue;
-            e->calcLiveIn(liveout);
+            rit != m_pRtls->rend(); rit++)
+        {
+            RTL *rtl = *rit;
+            for (std::list<Exp*>::reverse_iterator it = rtl->getList().rbegin();
+                    it != rtl->getList().rend(); it++)
+                {
+                    if (*it == (AssignExp*)stmt) return;
+                    Statement *e = dynamic_cast<Statement*>(*it);
+                    if (e == NULL) continue;
+                    e->calcLiveIn(liveout);
+                }
+            if (rtl->getKind() == CALL_RTL)
+                {
+                    HLCall *call = (HLCall*)rtl;
+                    if (call == stmt) return;
+                    call->calcLiveIn(liveout);
+                    StatementList &internals = call->getInternalStatements();
+                    StmtListRevIter it1;
+                    for (Statement* s1 = internals.getLast(it1); s1;
+                            s1 = internals.getPrev(it1))
+                        {
+                            if (stmt == s1) return;
+                            s1->calcLiveIn(liveout);
+                        }
+                }
+            if (rtl->getKind() == JCOND_RTL)
+                {
+                    HLJcond *jcond = (HLJcond*)rtl;
+                    if (jcond == stmt) return;
+                    jcond->calcLiveIn(liveout);
+                }
         }
-        if (rtl->getKind() == CALL_RTL) {
-            HLCall *call = (HLCall*)rtl;
-            if (call == stmt) return;
-            call->calcLiveIn(liveout);
-            StatementList &internals = call->getInternalStatements();
-            StmtListRevIter it1;
-            for (Statement* s1 = internals.getLast(it1); s1;
-                    s1 = internals.getPrev(it1)) {
-                if (stmt == s1) return;
-                s1->calcLiveIn(liveout);
-            }
-        }
-        if (rtl->getKind() == JCOND_RTL) {
-            HLJcond *jcond = (HLJcond*)rtl;
-            if (jcond == stmt) return;
-            jcond->calcLiveIn(liveout);
-        }
-    }
 }
 
-void BasicBlock::calcReachOut(StatementSet &reach, int phase) {
+void BasicBlock::calcReachOut(StatementSet &reach, int phase)
+{
     /* hopefully we can be sure that NULL is not a valid assignment,
        so this will calculate the reach set after every statement */
     getReachInAt(NULL, reach, phase);
 }
 
-void BasicBlock::calcAvailOut(StatementSet &avail, int phase) {
+void BasicBlock::calcAvailOut(StatementSet &avail, int phase)
+{
     /* hopefully we can be sure that NULL is not a valid assignment,
        so this will calculate the available definitions after every statement */
     getAvailInAt(NULL, avail, phase);
 }
 
-void BasicBlock::calcLiveIn(LocationSet &live) {
+void BasicBlock::calcLiveIn(LocationSet &live)
+{
     /* hopefully we can be sure that NULL is not a valid assignment,
        so this will calculate the live locations before every statement */
     getLiveOutAt(NULL, live);
 }
 
 // Check if this is a post-call BB (a return block in [SW93] terms)
-bool BasicBlock::isPostCall() {
+bool BasicBlock::isPostCall()
+{
     // Check in edges for a call. Could be other in-edges
-    for (int i=0; i<m_iNumInEdges; i++) {
-        if (m_InEdges[i]->m_nodeType == CALL)
-            return true;
-    }
+    for (int i=0; i<m_iNumInEdges; i++)
+        {
+            if (m_InEdges[i]->m_nodeType == CALL)
+                return true;
+        }
     return false;
 }
 
@@ -1557,14 +1715,16 @@ bool BasicBlock::isPostCall() {
  * PARAMETERS:      phase: 1=phase 1, 2=phase 2
  * RETURNS:         <nothing>
  *============================================================================*/
-bool BasicBlock::calcReaches(int phase) {
+bool BasicBlock::calcReaches(int phase)
+{
     bool change = false;
     StatementSet out;
     calcReachOut(out, phase);
-    if (!(out == reachOut)) {
-        reachOut = out;          // Copy the set
-        change = true;
-    }
+    if (!(out == reachOut))
+        {
+            reachOut = out;          // Copy the set
+            change = true;
+        }
     return change;
 }
 
@@ -1574,14 +1734,16 @@ bool BasicBlock::calcReaches(int phase) {
  * PARAMETERS:      phase: 1=phase 1, 2=phase 2
  * RETURNS:         <nothing>
  *============================================================================*/
-bool BasicBlock::calcAvailable(int phase) {
+bool BasicBlock::calcAvailable(int phase)
+{
     bool change = false;
     StatementSet out;
     calcAvailOut(out, phase);
-    if (!(out == availOut)) {
-        availOut = out;          // Copy the set
-        change = true;
-    }
+    if (!(out == availOut))
+        {
+            availOut = out;          // Copy the set
+            change = true;
+        }
     return change;
 }
 
@@ -1589,158 +1751,195 @@ bool BasicBlock::calcAvailable(int phase) {
 // definitions that reach its predecessors
 // There is an exception for post-call blocks (BBs after call blocks, called
 // return blocks in the literature)
-void BasicBlock::getReachIn(StatementSet &reachin, int phase) {
-    if (isPostCall() && (phase != 0)) {
-        if (phase == 1) {
-            // REACHIN[return] = REACHOUT[exit] U
-            //   REACHOUT[call] - AVAILOUT[exit]
-            // Note we have to union all reaching defs from return edges
-            // (in-edges from exit blocks), since there could be more than
-            // one call edge flowing into this post-call BB (e.g. some branch
-            // BBs have been optimised away)
-            // Can't union everything and take away all available definitions
-            // from return nodes, because one callee may kill a def that others
-            // don't; in that case, the def still reaches the post-call BB
-            reachin.clear();
-            // For each call in-edge, add its reach set, less its particular
-            // callee's available set. For others, just add its reach out set.
-            for (unsigned i = 0; i < m_InEdges.size(); i++) {
-                PBB inEdge = m_InEdges[i];
-                if (inEdge->m_nodeType == CALL) {
-                    Proc* dest = inEdge->getDestProc();
-                    // MVE: check that return locations are handled
-                    if (dest->isLib()) {
-                        // Just union them in, as per any regular in-edge
-                        reachin.makeUnion(inEdge->reachOut);
-                    } else {
-                        StatementSet temp(inEdge->reachOut);
-                        PBB exitBlock =
-                            ((UserProc*)dest)->getCFG()->getExitBB();
-                        temp.makeDiff(exitBlock->availOut);
-                        reachin.makeUnion(temp);
-                    }
-                } else
-                    // Just union it in: either from a return edge, or from
-                    // an intra-procedural jump, flow-through (etc) edge
-                    reachin.makeUnion(inEdge->reachOut);
-            }
-        } else {
-            // Phase 2
-            // REACHIN[return] = PREACH[P] U REACHOUT[call] - PAVAIL[P]
-            reachin.clear();
-            for (unsigned i = 0; i < m_InEdges.size(); i++) {
-                PBB inEdge = m_InEdges[i];
-                if (inEdge->m_nodeType == CALL) {
-                    Proc* dest = inEdge->getDestProc();
-                    if (dest->isLib()) {
-                        // Just union it in, like an ordinary in-edge
-                        reachin.makeUnion(inEdge->reachOut);
-                    } else {
-                        StatementSet temp(inEdge->reachOut);
-                        Cfg* cfgDest = ((UserProc*)dest)->getCFG();
-                        temp.makeDiff(*cfgDest->getAvailExit());
-                        temp.makeUnion(*cfgDest->getReachExit());
-                        reachin.makeUnion(temp);
-                    }
-                } else
-                    // Just union it in: has to be an intra-procedural jump,
-                    // flow-through (etc) edge
-                    reachin.makeUnion(inEdge->reachOut);
-            }
+void BasicBlock::getReachIn(StatementSet &reachin, int phase)
+{
+    if (isPostCall() && (phase != 0))
+        {
+            if (phase == 1)
+                {
+                    // REACHIN[return] = REACHOUT[exit] U
+                    //   REACHOUT[call] - AVAILOUT[exit]
+                    // Note we have to union all reaching defs from return edges
+                    // (in-edges from exit blocks), since there could be more than
+                    // one call edge flowing into this post-call BB (e.g. some branch
+                    // BBs have been optimised away)
+                    // Can't union everything and take away all available definitions
+                    // from return nodes, because one callee may kill a def that others
+                    // don't; in that case, the def still reaches the post-call BB
+                    reachin.clear();
+                    // For each call in-edge, add its reach set, less its particular
+                    // callee's available set. For others, just add its reach out set.
+                    for (unsigned i = 0; i < m_InEdges.size(); i++)
+                        {
+                            PBB inEdge = m_InEdges[i];
+                            if (inEdge->m_nodeType == CALL)
+                                {
+                                    Proc* dest = inEdge->getDestProc();
+                                    // MVE: check that return locations are handled
+                                    if (dest->isLib())
+                                        {
+                                            // Just union them in, as per any regular in-edge
+                                            reachin.makeUnion(inEdge->reachOut);
+                                        }
+                                    else
+                                        {
+                                            StatementSet temp(inEdge->reachOut);
+                                            PBB exitBlock =
+                                                ((UserProc*)dest)->getCFG()->getExitBB();
+                                            temp.makeDiff(exitBlock->availOut);
+                                            reachin.makeUnion(temp);
+                                        }
+                                }
+                            else
+                                // Just union it in: either from a return edge, or from
+                                // an intra-procedural jump, flow-through (etc) edge
+                                reachin.makeUnion(inEdge->reachOut);
+                        }
+                }
+            else
+                {
+                    // Phase 2
+                    // REACHIN[return] = PREACH[P] U REACHOUT[call] - PAVAIL[P]
+                    reachin.clear();
+                    for (unsigned i = 0; i < m_InEdges.size(); i++)
+                        {
+                            PBB inEdge = m_InEdges[i];
+                            if (inEdge->m_nodeType == CALL)
+                                {
+                                    Proc* dest = inEdge->getDestProc();
+                                    if (dest->isLib())
+                                        {
+                                            // Just union it in, like an ordinary in-edge
+                                            reachin.makeUnion(inEdge->reachOut);
+                                        }
+                                    else
+                                        {
+                                            StatementSet temp(inEdge->reachOut);
+                                            Cfg* cfgDest = ((UserProc*)dest)->getCFG();
+                                            temp.makeDiff(*cfgDest->getAvailExit());
+                                            temp.makeUnion(*cfgDest->getReachExit());
+                                            reachin.makeUnion(temp);
+                                        }
+                                }
+                            else
+                                // Just union it in: has to be an intra-procedural jump,
+                                // flow-through (etc) edge
+                                reachin.makeUnion(inEdge->reachOut);
+                        }
+                }
         }
-    } else {
-        // Standard situation: find the union of predecessors
-        reachin.clear();
-        for (unsigned i = 0; i < m_InEdges.size(); i++) {
-            StatementSet &in = m_InEdges[i]->reachOut;
-            reachin.makeUnion(in);
+    else
+        {
+            // Standard situation: find the union of predecessors
+            reachin.clear();
+            for (unsigned i = 0; i < m_InEdges.size(); i++)
+                {
+                    StatementSet &in = m_InEdges[i]->reachOut;
+                    reachin.makeUnion(in);
+                }
         }
-    }
 }
 
-void BasicBlock::doAvail(StatementSet& availSet, PBB inEdge) {
-    if (inEdge->m_nodeType == CALL) {
-        Proc* dest = inEdge->getDestProc();
-        if (dest->isLib()) {
-            // Treat lib calls like any ordinary in-edge
+void BasicBlock::doAvail(StatementSet& availSet, PBB inEdge)
+{
+    if (inEdge->m_nodeType == CALL)
+        {
+            Proc* dest = inEdge->getDestProc();
+            if (dest->isLib())
+                {
+                    // Treat lib calls like any ordinary in-edge
+                    availSet = inEdge->availOut;
+                    return;
+                }
+            // AVAILOUT[call]
             availSet = inEdge->availOut;
-            return;
+            PBB exitBlock = ((UserProc*)dest)->getCFG()->getExitBB();
+            // - REACHOUT[exit]
+            availSet.makeDiff(exitBlock->reachOut);
+            // U AVAILOUT[exit]
+            availSet.makeUnion(exitBlock->availOut);
         }
-        // AVAILOUT[call]
-        availSet = inEdge->availOut;
-        PBB exitBlock = ((UserProc*)dest)->getCFG()->getExitBB();
-        // - REACHOUT[exit]
-        availSet.makeDiff(exitBlock->reachOut);
-        // U AVAILOUT[exit]
-        availSet.makeUnion(exitBlock->availOut);
-    } else if (inEdge->m_nodeType != RET) {
-        // Non call in-edge; just copy the available set to intersect with the
-        // rest, except for return edges. These are considered with the special
-        // case for CALL basic blocks, above.
-        availSet = inEdge->availOut;
-    }
+    else if (inEdge->m_nodeType != RET)
+        {
+            // Non call in-edge; just copy the available set to intersect with the
+            // rest, except for return edges. These are considered with the special
+            // case for CALL basic blocks, above.
+            availSet = inEdge->availOut;
+        }
 }
 
 // Definitions that are available at the start of this BB are usually the
 // intersection of the definitions that are available at its predecessors
 // There is an exception for post-call blocks (BBs after call blocks, called
 // return blocks in the literature)
-void BasicBlock::getAvailIn(StatementSet &availin, int phase) {
-    if (isPostCall() && (phase != 0)) {
-        // Phase 1: AVAILIN[return] = AVAILOUT[exit] U
-        //    AVAILOUT[call] - REACHOUT[exit]
-        availin.clear();            // in case there is only a libproc, say
-        doAvail(availin, m_InEdges[0]);
-        for (unsigned i = 1; i < m_InEdges.size(); i++) {
-            StatementSet temp;
-            doAvail(temp, m_InEdges[i]);
-            availin.makeIsect(temp);
+void BasicBlock::getAvailIn(StatementSet &availin, int phase)
+{
+    if (isPostCall() && (phase != 0))
+        {
+            // Phase 1: AVAILIN[return] = AVAILOUT[exit] U
+            //    AVAILOUT[call] - REACHOUT[exit]
+            availin.clear();            // in case there is only a libproc, say
+            doAvail(availin, m_InEdges[0]);
+            for (unsigned i = 1; i < m_InEdges.size(); i++)
+                {
+                    StatementSet temp;
+                    doAvail(temp, m_InEdges[i]);
+                    availin.makeIsect(temp);
+                }
         }
-    } else {
-        // Standard situation: find the intersection of alailable defs of
-        // in-edges
-        if (m_InEdges.size() == 0) {
-            availin.clear();
-            return;
+    else
+        {
+            // Standard situation: find the intersection of alailable defs of
+            // in-edges
+            if (m_InEdges.size() == 0)
+                {
+                    availin.clear();
+                    return;
+                }
+            // Make equal to first, then intersect with the rest
+            // Have to to it this way, since we can't represent the universal set
+            availin = m_InEdges[0]->availOut;
+            for (unsigned i = 1; i < m_InEdges.size(); i++)
+                {
+                    StatementSet &in = m_InEdges[i]->availOut;
+                    availin.makeIsect(in);
+                }
         }
-        // Make equal to first, then intersect with the rest
-        // Have to to it this way, since we can't represent the universal set
-        availin = m_InEdges[0]->availOut;
-        for (unsigned i = 1; i < m_InEdges.size(); i++) {
-            StatementSet &in = m_InEdges[i]->availOut;
-            availin.makeIsect(in);
-        }
-    }
 }
 
 // Variables that are live at the end of this BB are the union of the
 // variables that are live at the start of its successors
-void BasicBlock::getLiveOut(LocationSet &liveout) {
+void BasicBlock::getLiveOut(LocationSet &liveout)
+{
     liveout.clear();
-    for (unsigned i = 0; i < m_OutEdges.size(); i++) {
-        LocationSet &out = m_OutEdges[i]->liveIn;
-        liveout.makeUnion(out);
-    }
+    for (unsigned i = 0; i < m_OutEdges.size(); i++)
+        {
+            LocationSet &out = m_OutEdges[i]->liveIn;
+            liveout.makeUnion(out);
+        }
 }
 
 // Get the destination proc
 // Note: this must be a call BB!
-Proc* BasicBlock::getDestProc() {
+Proc* BasicBlock::getDestProc()
+{
     // The last RTL should be a HLCall
     HLCall* call = (HLCall*)m_pRtls->back();
     assert(call->getKind() == CALL_RTL);
     Proc* proc = call->getDestProc();
-    if (proc == NULL) {
-        std::cerr << "Indirect calls not handled yet\n";
-        assert(0);
-    }
+    if (proc == NULL)
+        {
+            std::cerr << "Indirect calls not handled yet\n";
+            assert(0);
+        }
     return proc;
 }
 
 /*
  * Set the interprocedural outedge to the callee entry BB
  */
-void BasicBlock::setCallInterprocEdges() {
+void BasicBlock::setCallInterprocEdges()
+{
     if (m_nodeType != CALL) return;
     Proc* proc = getDestProc();
     if (proc->isLib()) return;      // Leave it alone
@@ -1752,7 +1951,8 @@ void BasicBlock::setCallInterprocEdges() {
 }
 
 // Kill the interprocedural outedges from call BBs
-void BasicBlock::clearCallInterprocEdges() {
+void BasicBlock::clearCallInterprocEdges()
+{
     if (m_nodeType != CALL) return;
     Proc* proc = getDestProc();
     if (proc->isLib()) return;  // Just ignore it
@@ -1766,7 +1966,8 @@ void BasicBlock::clearCallInterprocEdges() {
 /*
  * Set the interprocedural outedge from the callee exit to the post-call block
  */
-void BasicBlock::setReturnInterprocEdges() {
+void BasicBlock::setReturnInterprocEdges()
+{
     if (m_nodeType != CALL) return;
     Proc* proc = getDestProc();
     if (proc->isLib()) return;      // Leave it alone
@@ -1780,7 +1981,8 @@ void BasicBlock::setReturnInterprocEdges() {
 }
 
 // Kill the interprocedural outedges from exit BBs to post-call BBs
-void BasicBlock::clearReturnInterprocEdges() {
+void BasicBlock::clearReturnInterprocEdges()
+{
     if (m_nodeType != CALL) return;
     Proc* proc = getDestProc();
     if (proc->isLib()) return;  // Just ignore it
@@ -1792,31 +1994,35 @@ void BasicBlock::clearReturnInterprocEdges() {
     PBB postCall = m_OutEdges[0];
     std::vector<PBB>::iterator it;
     for (it = postCall->m_InEdges.begin(); it != postCall->m_InEdges.end();
-            it++) {
-        if (*it == exitBB) {
-            postCall->m_InEdges.erase(it);
-            break;
+            it++)
+        {
+            if (*it == exitBB)
+                {
+                    postCall->m_InEdges.erase(it);
+                    break;
+                }
         }
-    }
     postCall->m_iNumInEdges--;
 }
 
-void BasicBlock::setLoopStamps(int &time, std::vector<PBB> &order) {
+void BasicBlock::setLoopStamps(int &time, std::vector<PBB> &order)
+{
     // timestamp the current node with the current time and set its traversed
     // flag
     traversed = DFS_LNUM;
     loopStamps[0] = time;
 
     // recurse on unvisited children and set inedges for all children
-    for (unsigned int i = 0; i < m_OutEdges.size(); i++) {
-        // set the in edge from this child to its parent (the current node)
-        // (not done here, might be a problem)
-        // outEdges[i]->inEdges.Add(this);
+    for (unsigned int i = 0; i < m_OutEdges.size(); i++)
+        {
+            // set the in edge from this child to its parent (the current node)
+            // (not done here, might be a problem)
+            // outEdges[i]->inEdges.Add(this);
 
-        // recurse on this child if it hasn't already been visited
-        if (m_OutEdges[i]->traversed != DFS_LNUM)
-            m_OutEdges[i]->setLoopStamps(++time, order);
-    }
+            // recurse on this child if it hasn't already been visited
+            if (m_OutEdges[i]->traversed != DFS_LNUM)
+                m_OutEdges[i]->setLoopStamps(++time, order);
+        }
 
     // set the the second loopStamp value
     loopStamps[1] = ++time;
@@ -1835,11 +2041,12 @@ void BasicBlock::setRevLoopStamps(int &time)
     revLoopStamps[0] = time;
 
     // recurse on the unvisited children in reverse order
-    for (int i = m_OutEdges.size() - 1; i >= 0; i--) {
-        // recurse on this child if it hasn't already been visited
-        if (m_OutEdges[i]->traversed != DFS_RNUM)
-            m_OutEdges[i]->setRevLoopStamps(++time);
-    }
+    for (int i = m_OutEdges.size() - 1; i >= 0; i--)
+        {
+            // recurse on this child if it hasn't already been visited
+            if (m_OutEdges[i]->traversed != DFS_RNUM)
+                m_OutEdges[i]->setRevLoopStamps(++time);
+        }
 
     // set the the second loopStamp value
     revLoopStamps[1] = ++time;
@@ -1874,10 +2081,12 @@ void BasicBlock::setCaseHead(PBB head, PBB follow)
 
     // if this is a nested case header, then it's member nodes will already
     // have been tagged so skip straight to its follow
-    if (getType() == NWAY && this != head) {
-        if (condFollow->traversed != DFS_CASE && condFollow != follow)
-            condFollow->setCaseHead(head, follow);
-    } else
+    if (getType() == NWAY && this != head)
+        {
+            if (condFollow->traversed != DFS_CASE && condFollow != follow)
+                condFollow->setCaseHead(head, follow);
+        }
+    else
         // traverse each child of this node that:
         //   i) isn't on a back-edge,
         //  ii) hasn't already been traversed in a case tagging traversal and,
@@ -1893,16 +2102,17 @@ void BasicBlock::setStructType(structType s)
 {
     // if this is a conditional header, determine exactly which type of
     // conditional header it is (i.e. switch, if-then, if-then-else etc.)
-    if (s == Cond) {
-        if (getType() == NWAY)
-            cType = Case;
-        else if (m_OutEdges[BELSE] == condFollow)
-            cType = IfThen;
-        else if (m_OutEdges[BTHEN] == condFollow)
-            cType = IfElse;
-        else
-            cType = IfThenElse;
-    }
+    if (s == Cond)
+        {
+            if (getType() == NWAY)
+                cType = Case;
+            else if (m_OutEdges[BELSE] == condFollow)
+                cType = IfThen;
+            else if (m_OutEdges[BTHEN] == condFollow)
+                cType = IfElse;
+            else
+                cType = IfThenElse;
+        }
 
     sType = s;
 }
@@ -1972,56 +2182,64 @@ bool BasicBlock::inLoop(PBB header, PBB latch)
             latch->revLoopStamps[1] < revLoopStamps[1]);
 }
 
-void BasicBlock::toSSAform() {
+void BasicBlock::toSSAform()
+{
     // This set will be the set of reaching definitions before the current
     // statement
     StatementSet reachin;
     getReachIn(reachin, 2);
     StmtSetIter ssi;
     for (std::list<RTL*>::iterator rit = m_pRtls->begin();
-            rit != m_pRtls->end(); rit++) {
-        RTL *rtl = *rit;
-        for (std::list<Exp*>::iterator it = rtl->getList().begin();
-                it != rtl->getList().end(); it++) {
-            Statement *s = dynamic_cast<Statement*>(*it);
-            if (s == NULL) continue;
+            rit != m_pRtls->end(); rit++)
+        {
+            RTL *rtl = *rit;
+            for (std::list<Exp*>::iterator it = rtl->getList().begin();
+                    it != rtl->getList().end(); it++)
+                {
+                    Statement *s = dynamic_cast<Statement*>(*it);
+                    if (s == NULL) continue;
 
-            // We have a statement, which is also an expression (usually an
-            // assignment expression)
-            // Subscript the LHS to point to self as definition
-            s->subscriptLeft(s);
+                    // We have a statement, which is also an expression (usually an
+                    // assignment expression)
+                    // Subscript the LHS to point to self as definition
+                    s->subscriptLeft(s);
+                    for (Statement* rd = reachin.getFirst(ssi); rd;
+                            rd = reachin.getNext(ssi))
+                        {
+                            Exp* left = rd->getLeft();
+                            assert(left);           // Definitions must have a left!
+                            // Update the expression (*it)'s uses info
+                            (*it)->updateUses(rd, left);
+                        }
+                    // Update reachin to be the input for the next statement in this BB
+                    s->calcReachOut(reachin);
+                }
+
             for (Statement* rd = reachin.getFirst(ssi); rd;
-                    rd = reachin.getNext(ssi)) {
-                Exp* left = rd->getLeft();
-                assert(left);           // Definitions must have a left!
-                // Update the expression (*it)'s uses info
-                (*it)->updateUses(rd, left);
-            }
-            // Update reachin to be the input for the next statement in this BB
-            s->calcReachOut(reachin);
-        }
-
-        for (Statement* rd = reachin.getFirst(ssi); rd;
-                rd = reachin.getNext(ssi)) {
-            Exp* left = rd->getLeft();
-            if (rtl->getKind() == CALL_RTL) {
-                HLCall *call = (HLCall*)rtl;
-                call->updateArgUses(rd, left);
-                call->calcReachOut(reachin);
-            }
+                    rd = reachin.getNext(ssi))
+                {
+                    Exp* left = rd->getLeft();
+                    if (rtl->getKind() == CALL_RTL)
+                        {
+                            HLCall *call = (HLCall*)rtl;
+                            call->updateArgUses(rd, left);
+                            call->calcReachOut(reachin);
+                        }
 #if 0       // Note: we don't seem to use the "high level expression" any more
-            // It always seems to be "opFlags"
-            else if (rtl->getKind() == JCOND_RTL) {
-                // Fix up the HL expression
-                HLJcond* jc = (HLJcond*)rtl;
-                jc->setCondExpr(jc->getCondExpr()->updateUses(rd, left));
-            }
-            else if (rtl->getKind() == SCOND_RTL) {
-                // HL expression
-                HLScond* sc = (HLScond*)rtl;
-                sc->setCondExpr(sc->getCondExpr()->updateUses(rd, left));
-            }
+                    // It always seems to be "opFlags"
+                    else if (rtl->getKind() == JCOND_RTL)
+                        {
+                            // Fix up the HL expression
+                            HLJcond* jc = (HLJcond*)rtl;
+                            jc->setCondExpr(jc->getCondExpr()->updateUses(rd, left));
+                        }
+                    else if (rtl->getKind() == SCOND_RTL)
+                        {
+                            // HL expression
+                            HLScond* sc = (HLScond*)rtl;
+                            sc->setCondExpr(sc->getCondExpr()->updateUses(rd, left));
+                        }
 #endif
+                }
         }
-    }
 }

@@ -67,32 +67,38 @@ Preferences::Preferences(wxWindow* parent) :
 void Preferences::OnButton(wxCommandEvent& event)
 {
     if ( event.GetEventObject() == m_btnApply )
-    {
-        GetPrefsFromDialog();
-        Show(false);
-    } else if ( event.GetEventObject() == m_btnBrowse )
-    {
-        wxDirDialog *d = new wxDirDialog(this);
-        if (d->ShowModal() == wxID_OK)
         {
-            m_textProjectDir->SetValue(d->GetPath());
+            GetPrefsFromDialog();
+            Show(false);
         }
-    } else if ( event.GetEventObject() == m_btnBrowse1 )
-    {
-        wxDirDialog *d = new wxDirDialog(this);
-        if (d->ShowModal() == wxID_OK)
+    else if ( event.GetEventObject() == m_btnBrowse )
         {
-            m_textPluginDir->SetValue(d->GetPath());
+            wxDirDialog *d = new wxDirDialog(this);
+            if (d->ShowModal() == wxID_OK)
+                {
+                    m_textProjectDir->SetValue(d->GetPath());
+                }
         }
-    } else if ( event.GetEventObject() == m_btnCancel )
-    {
-        Show(false);
-    } else if ( event.GetEventObject() == m_btnSave )
-    {
-        GetPrefsFromDialog();
-        SavePreferences();
-        Show(false);
-    } else {
-        event.Skip();
-    }
+    else if ( event.GetEventObject() == m_btnBrowse1 )
+        {
+            wxDirDialog *d = new wxDirDialog(this);
+            if (d->ShowModal() == wxID_OK)
+                {
+                    m_textPluginDir->SetValue(d->GetPath());
+                }
+        }
+    else if ( event.GetEventObject() == m_btnCancel )
+        {
+            Show(false);
+        }
+    else if ( event.GetEventObject() == m_btnSave )
+        {
+            GetPrefsFromDialog();
+            SavePreferences();
+            Show(false);
+        }
+    else
+        {
+            event.Skip();
+        }
 }

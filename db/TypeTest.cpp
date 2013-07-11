@@ -21,7 +21,8 @@
 suite->addTest(new CppUnit::TestCaller<TypeTest> ("testUtil", \
     &TypeTest::name, *this))
 
-void TypeTest::registerTests(CppUnit::TestSuite* suite) {
+void TypeTest::registerTests(CppUnit::TestSuite* suite)
+{
 
 //  Note: there is nothing left to test in Util (for now)
     MYTEST(testTypeLong);
@@ -40,7 +41,8 @@ int TypeTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void TypeTest::setUp () {
+void TypeTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -50,14 +52,16 @@ void TypeTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void TypeTest::tearDown () {
+void TypeTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        TypeTest::testTypeLong
  * OVERVIEW:        Test type unsigned long
  *============================================================================*/
-void TypeTest::testTypeLong () {
+void TypeTest::testTypeLong ()
+{
 
     std::string expected("unsigned long long");
     IntegerType t(64, false);
@@ -69,7 +73,8 @@ void TypeTest::testTypeLong () {
  * FUNCTION:        TypeTest::testNotEqual
  * OVERVIEW:        Test type inequality
  *============================================================================*/
-void TypeTest::testNotEqual () {
+void TypeTest::testNotEqual ()
+{
 
     IntegerType t1(32, false);
     IntegerType t2(32, false);

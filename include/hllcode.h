@@ -30,7 +30,8 @@ class Proc;
 class Type;
 class Signature;
 
-class HLLCode {
+class HLLCode
+{
 protected:
     UserProc *m_proc;
 
@@ -43,14 +44,17 @@ public:
     virtual ~HLLCode() { }
 
     // clear the hllcode object (derived classes should call the base)
-    virtual void reset() {
+    virtual void reset()
+    {
     }
 
     // access to proc
-    UserProc *getProc() {
+    UserProc *getProc()
+    {
         return m_proc;
     }
-    void setProc(UserProc *p) {
+    void setProc(UserProc *p)
+    {
         m_proc = p;
     }
 

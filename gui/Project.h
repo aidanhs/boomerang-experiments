@@ -12,7 +12,8 @@ class Project
     string filename;
 public:
 
-    bool hasUnsaved() {
+    bool hasUnsaved()
+    {
         return m_unsaved;
     }
     void saveChanges(wxWindow *parent);

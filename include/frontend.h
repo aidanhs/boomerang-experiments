@@ -49,7 +49,8 @@ struct DecodeResult;
 class Signature;
 
 // Control flow types
-enum INSTTYPE {
+enum INSTTYPE
+{
     I_UNCOND,                // unconditional branch
     I_COND,                  // conditional branch
     I_N_COND,                // case branch
@@ -61,7 +62,8 @@ enum INSTTYPE {
 
 typedef bool (*PHELPER)(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
-class FrontEnd {
+class FrontEnd
+{
 protected:
 //    const int NOP_SIZE;         // Size of a no-op instruction (in bytes)
 //    const int NOP_INST;         // No-op pattern
@@ -110,7 +112,8 @@ public:
     /*
      * Accessor function to get the decoder.
      */
-    NJMCDecoder *getDecoder() {
+    NJMCDecoder *getDecoder()
+    {
         return decoder;
     }
 
@@ -240,7 +243,8 @@ bool decodeProc(ADDRESS uAddr, FrontEnd& fe, bool keep = true,
                 bool spec = false);
 
 // Put the target queue logic into this small class
-class TargetQueue {
+class TargetQueue
+{
     std::queue<ADDRESS>  targets;
 
 public:

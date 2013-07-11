@@ -30,7 +30,8 @@
 suite->addTest(new CppUnit::TestCaller<ParserTest> ("ParserTest", \
     &ParserTest::name, *this))
 
-void ParserTest::registerTests(CppUnit::TestSuite* suite) {
+void ParserTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(testRead);
     MYTEST(testExp);
 }
@@ -47,7 +48,8 @@ int ParserTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void ParserTest::setUp () {
+void ParserTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -57,14 +59,16 @@ void ParserTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void ParserTest::tearDown () {
+void ParserTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        ParserTest::testRead
  * OVERVIEW:        Test reading the SSL file
  *============================================================================*/
-void ParserTest::testRead () {
+void ParserTest::testRead ()
+{
     RTLInstDict d;
     CPPUNIT_ASSERT(d.readSSLFile(SPARC_SSL));
 }
@@ -73,7 +77,8 @@ void ParserTest::testRead () {
  * FUNCTION:        ParserTest::testExp
  * OVERVIEW:        Test parsing an expression
  *============================================================================*/
-void ParserTest::testExp () {
+void ParserTest::testExp ()
+{
     std::string s("*32* r[0] := 5 + 6");
     Exp *e = SSLParser::parseExp(s.c_str());
     CPPUNIT_ASSERT(e);

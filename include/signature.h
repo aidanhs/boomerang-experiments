@@ -17,7 +17,8 @@
 class Statement;
 class BinaryFile;
 
-class Parameter {
+class Parameter
+{
 private:
     Type *type;
     std::string name;
@@ -26,23 +27,28 @@ private:
 public:
     Parameter(Type *type, const char *name, Exp *exp = NULL) : type(type),
         name(name), exp(exp) { }
-    ~Parameter() {
+    ~Parameter()
+    {
         delete type;
         delete exp;
     }
 
-    Type *getType() {
+    Type *getType()
+    {
         return type;
     }
-    const char *getName() {
+    const char *getName()
+    {
         return name.c_str();
     }
-    Exp *getExp() {
+    Exp *getExp()
+    {
         return exp;
     }
 };
 
-class Signature {
+class Signature
+{
 protected:
     std::string name;       // name of procedure
     std::vector<Parameter*> params;
@@ -82,10 +88,12 @@ public:
     virtual void addParameter(Type *type, const char *nam = NULL,
                               Exp *e = NULL);
     virtual void addParameter(Exp *e);
-    virtual void addParameter(Parameter *param) {
+    virtual void addParameter(Parameter *param)
+    {
         params.push_back(param);
     }
-    virtual void addEllipsis() {
+    virtual void addEllipsis()
+    {
         ellipsis = true;
     }
     // set the number of parameters using defaults
@@ -98,7 +106,8 @@ public:
     virtual Type *getParamType(int n);
     // accessor for argument expressions
     virtual Exp *getArgumentExp(int n);
-    virtual bool hasEllipsis() {
+    virtual bool hasEllipsis()
+    {
         return ellipsis;
     }
     std::list<Exp*> *getCallerSave(Prog* prog);
@@ -124,7 +133,8 @@ public:
     Exp* getEarlyParamExp(int n, Prog* prog);
 
     // Get a wildcard to find stack locations
-    virtual Exp *getStackWildcard() {
+    virtual Exp *getStackWildcard()
+    {
         return NULL;
     }
 

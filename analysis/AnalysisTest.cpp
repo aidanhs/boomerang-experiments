@@ -28,7 +28,8 @@
 suite->addTest(new CppUnit::TestCaller<AnalysisTest> ("testAnalysis", \
     &AnalysisTest::name, *this))
 
-void AnalysisTest::registerTests(CppUnit::TestSuite* suite) {
+void AnalysisTest::registerTests(CppUnit::TestSuite* suite)
+{
 
     MYTEST(testFlags);
 }
@@ -45,7 +46,8 @@ int AnalysisTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void AnalysisTest::setUp () {
+void AnalysisTest::setUp ()
+{
     BinaryFile *pBF = BinaryFile::Load(CCX_SPARC);
     if (pBF == NULL)
         pBF = new BinaryFileStub();
@@ -66,7 +68,8 @@ void AnalysisTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void AnalysisTest::tearDown () {
+void AnalysisTest::tearDown ()
+{
     delete pFE;
 }
 
@@ -76,7 +79,8 @@ void AnalysisTest::tearDown () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void AnalysisTest::testFlags () {
+void AnalysisTest::testFlags ()
+{
 
     Proc* p = prog->findProc("main");
     CPPUNIT_ASSERT(p && !p->isLib());
@@ -92,13 +96,15 @@ void AnalysisTest::testFlags () {
     BB_IT it;
     PBB bb = cfg->getFirstBB(it);
     int found = 0;
-    while (bb) {
-        if (bb->getLowAddr() == 0x10cf4) {
-            found = 1;
-            break;
+    while (bb)
+        {
+            if (bb->getLowAddr() == 0x10cf4)
+                {
+                    found = 1;
+                    break;
+                }
+            bb = cfg->getNextBB(it);
         }
-        bb = cfg->getNextBB(it);
-    }
     CPPUNIT_ASSERT_EQUAL(1, found);
 
 //bb->print();		// It hasn't done anything, because the flag calls are expanded!
