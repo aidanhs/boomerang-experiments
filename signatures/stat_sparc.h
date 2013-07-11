@@ -9,7 +9,8 @@ typedef int time_t;
 typedef int blksize_t;
 typedef int blkcnt_t;
 
-struct stat {
+struct stat
+{
     dev_t st_dev;
     unsigned int pad1[2];
     ino_t st_ino;

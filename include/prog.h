@@ -42,7 +42,8 @@ class GlobalMemo;
 
 typedef std::map<ADDRESS, Proc*, std::less<ADDRESS> > PROGMAP;
 
-class Global : public Memoisable {
+class Global : public Memoisable
+{
 private:
     Type *type;
     ADDRESS uaddr;
@@ -54,17 +55,21 @@ public:
         nam(nam) { }
     ~Global() { }
 
-    Type		*getType() {
+    Type		*getType()
+    {
         return type;
     }
-    void  		setType(Type* ty) {
+    void  		setType(Type* ty)
+    {
         type = ty;
     }
     void  		meetType(Type* ty);
-    ADDRESS		getAddress() {
+    ADDRESS		getAddress()
+    {
         return uaddr;
     }
-    const char *getName() {
+    const char *getName()
+    {
         return nam.c_str();
     }
     Exp*		getInitialValue(Prog* prog);	// Get the initial value as an expression
@@ -78,7 +83,8 @@ protected:
     friend class XMLProgParser;
 };		// class Global
 
-class Prog : public Memoisable {
+class Prog : public Memoisable
+{
 public:
     Prog();							// Default constructor
     ~Prog();
@@ -90,7 +96,8 @@ public:
     Proc*		newProc(const char* name, ADDRESS uNative, bool bLib = false);
     void		remProc(UserProc* proc);		// Remove the given UserProc
     char*		getName();						// Get the name of this program
-    const char *getPath() {
+    const char *getPath()
+    {
         return m_path.c_str();
     }
     int			getNumProcs();					// # of procedures stored in prog
@@ -111,7 +118,8 @@ public:
     // The procs will appear in order of native address
     Proc*		getFirstProc(PROGMAP::const_iterator& it);
     Proc*		getNextProc(PROGMAP::const_iterator& it);
-    Proc*		getEntryProc() {
+    Proc*		getEntryProc()
+    {
         return entryProc;
     }
 
@@ -127,13 +135,15 @@ public:
     // a host pointer corresponding to the same address
     const void* getCodeInfo(ADDRESS uAddr, const char*& last, int& delta);
 
-    const char *getRegName(int idx) {
+    const char *getRegName(int idx)
+    {
         return pFE->getRegName(idx);
     }
 
     void		decodeExtraEntrypoint(ADDRESS a);
 
-    void		decodeFragment(UserProc* proc, ADDRESS a) {
+    void		decodeFragment(UserProc* proc, ADDRESS a)
+    {
         pFE->decodeFragment(proc, a);
     }
 
@@ -261,26 +271,33 @@ public:
     {
         return pBF->GetSectionInfoByAddr(a);
     }
-    ADDRESS		getLimitTextHigh() {
+    ADDRESS		getLimitTextHigh()
+    {
         return pBF->getLimitTextHigh();
     }
     // Read 2, 4, or 8 bytes given a native address
-    int			readNative1(ADDRESS a) {
+    int			readNative1(ADDRESS a)
+    {
         return pBF->readNative1(a);
     }
-    int			readNative2(ADDRESS a) {
+    int			readNative2(ADDRESS a)
+    {
         return pBF->readNative2(a);
     }
-    int			readNative4(ADDRESS a) {
+    int			readNative4(ADDRESS a)
+    {
         return pBF->readNative4(a);
     }
-    float		readNativeFloat4(ADDRESS a) {
+    float		readNativeFloat4(ADDRESS a)
+    {
         return pBF->readNativeFloat4(a);
     }
-    double		readNativeFloat8(ADDRESS a) {
+    double		readNativeFloat8(ADDRESS a)
+    {
         return pBF->readNativeFloat8(a);
     }
-    QWord		readNative8(ADDRESS a) {
+    QWord		readNative8(ADDRESS a)
+    {
         return pBF->readNative8(a);
     }
     Exp	  		*readNativeAs(ADDRESS uaddr, Type *type);
@@ -291,10 +308,12 @@ public:
     }
 
     void		readSymbolFile(const char *fname);
-    unsigned	getImageSize() {
+    unsigned	getImageSize()
+    {
         return pBF->getImageSize();
     }
-    ADDRESS		getImageBase() {
+    ADDRESS		getImageBase()
+    {
         return pBF->getImageBase();
     }
 
@@ -303,7 +322,8 @@ public:
     bool		bRegisterJump;
     bool		bRegisterCall;
 
-    void		setNextIsEntry() {
+    void		setNextIsEntry()
+    {
         nextIsEntry = true;
     }
 
@@ -311,16 +331,19 @@ public:
     void		printCallGraph();
     void		printCallGraphXML();
 
-    Cluster		*getRootCluster() {
+    Cluster		*getRootCluster()
+    {
         return m_rootCluster;
     }
-    Cluster		*findCluster(const char *name) {
+    Cluster		*findCluster(const char *name)
+    {
         return m_rootCluster->find(name);
     }
     bool		clusterUsed(Cluster *c);
 
     // Add the given RTL to the front end's map from address to aldready-decoded-RTL
-    void		addDecodedRtl(ADDRESS a, RTL* rtl) {
+    void		addDecodedRtl(ADDRESS a, RTL* rtl)
+    {
         pFE->addDecodedRtl(a, rtl);
     }
 

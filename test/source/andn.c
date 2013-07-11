@@ -3,7 +3,8 @@
    This worked in with gcc 3.1 for SPARC */
 /* Compile with gcc -O1 */
 #include <stdio.h>
-int main() {
+int main()
+{
     int a = 0x55AA55AA;
     int b = 0x12345678;
     int c = 0x98765432;

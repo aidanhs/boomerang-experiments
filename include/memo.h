@@ -20,7 +20,8 @@
 #ifndef MEMO_H
 #define MEMO_H
 
-class Memo {
+class Memo
+{
 public:
     Memo(int m) : mId(m) { }
     int mId;
@@ -28,9 +29,11 @@ public:
     virtual ~Memo() { }			// Kill gcc warning
 };
 
-class Memoisable {
+class Memoisable
+{
 public:
-    Memoisable() {
+    Memoisable()
+    {
         cur_memo = memos.begin();
     }
     virtual ~Memoisable() { }

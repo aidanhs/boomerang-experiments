@@ -46,7 +46,8 @@ Log &Log::operator<<(int i)
     return *this;
 }
 
-Log &Log::operator<<(char c) {
+Log &Log::operator<<(char c)
+{
     std::ostringstream st;
     st << c;
     *this << st.str().c_str();

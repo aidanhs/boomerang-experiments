@@ -39,7 +39,8 @@ class Cfg;
 class LocationSet;
 
 // A class to implement sets of statements
-class StatementSet {
+class StatementSet
+{
     std::set<Statement*> sset;							// For now, use use standard sets
 
 public:
@@ -51,17 +52,21 @@ public:
     void		makeIsect(StatementSet& other);		// Set intersection
     bool		isSubSetOf(StatementSet& other);	// Subset relation
 
-    unsigned	size() {
+    unsigned	size()
+    {
         return sset.size();   // Number of elements
     }
-    iterator	begin()	{
+    iterator	begin()
+    {
         return sset.begin();
     }
-    iterator	end()	{
+    iterator	end()
+    {
         return sset.end();
     }
 
-    void		insert(Statement* s) {
+    void		insert(Statement* s)
+    {
         sset.insert(s);   // Insertion
     }
     bool		remove(Statement* s);					// Removal; rets false if not found
@@ -70,7 +75,8 @@ public:
     bool		exists(Statement* s);					// Search; returns false if !found
     bool		definesLoc(Exp* loc);					// Search; returns true if any
     // statement defines loc
-    void		clear() {
+    void		clear()
+    {
         sset.clear();   // Clear the set
     }
     bool		operator==(const StatementSet& o) const	// Compare if equal
@@ -85,7 +91,8 @@ public:
 };		// class StatementSet
 
 // As above, but the Statements are known to be Assigns, and are sorted sensibly
-class AssignSet {
+class AssignSet
+{
     std::set<Assign*, lessAssignment> aset;			// For now, use use standard sets
 
 public:
@@ -98,19 +105,23 @@ public:
     void		makeIsect(AssignSet& other);		// Set intersection
     bool		isSubSetOf(AssignSet& other);		// Subset relation
 
-    unsigned	size() {
+    unsigned	size()
+    {
         return aset.size();   // Number of elements
     }
     //Statement* getFirst(StmtSetIter& it);	  		// Get the first Statement
     //Statement* getNext (StmtSetIter& it);	  		// Get next
-    iterator	begin()	{
+    iterator	begin()
+    {
         return aset.begin();
     }
-    iterator	end()	{
+    iterator	end()
+    {
         return aset.end();
     }
 
-    void		insert(Assign* a) {
+    void		insert(Assign* a)
+    {
         aset.insert(a);   // Insertion
     }
     bool		remove(Assign* a);						// Removal; rets false if not found
@@ -120,7 +131,8 @@ public:
     bool		definesLoc(Exp* loc);					// Search; returns true if any assignment defines loc
     Assign*		lookupLoc(Exp* loc);					// Search for loc on LHS, return ptr to Assign if found
 
-    void		clear() {
+    void		clear()
+    {
         aset.clear();   // Clear the set
     }
     bool		operator==(const AssignSet& o) const	// Compare if equal
@@ -135,26 +147,32 @@ public:
     //bool	isLast(StmtSetIter& it);					// returns true if it is at end
 };		// class AssignSet
 
-class StatementList {
+class StatementList
+{
     std::list<Statement*> slist;		  				// For now, use use standard list
 
 public:
     typedef std::list<Statement*>::iterator iterator;
     typedef std::list<Statement*>::reverse_iterator reverse_iterator;
     virtual				~StatementList() {}
-    unsigned	size() {
+    unsigned	size()
+    {
         return slist.size();   // Number of elements
     }
-    iterator	begin()  {
+    iterator	begin()
+    {
         return slist.begin();
     }
-    iterator	end()	  {
+    iterator	end()
+    {
         return slist.end();
     }
-    reverse_iterator rbegin() {
+    reverse_iterator rbegin()
+    {
         return slist.rbegin();
     }
-    reverse_iterator rend()	  {
+    reverse_iterator rend()
+    {
         return slist.rend();
     }
 
@@ -163,7 +181,8 @@ public:
     // Used for calculating returns for a CallStatement
     void		makeIsect(StatementList& a, LocationSet& b);
 
-    void		append(Statement* s) {
+    void		append(Statement* s)
+    {
         slist.push_back(s);   // Insert at end
     }
     void		append(StatementList& sl);			// Append whole StatementList
@@ -172,19 +191,23 @@ public:
     void		removeDefOf(Exp* loc);				// Remove definitions of loc
     // This one is needed where you remove in the middle of a loop
     // Use like this: it = mystatementlist.erase(it);
-    iterator	erase(iterator it) {
+    iterator	erase(iterator it)
+    {
         return slist.erase(it);
     }
-    iterator	erase(iterator first, iterator last) {
+    iterator	erase(iterator first, iterator last)
+    {
         return slist.erase(first, last);
     }
-    iterator	insert(iterator it, Statement* s) {
+    iterator	insert(iterator it, Statement* s)
+    {
         return slist.insert(it, s);
     }
     bool		exists(Statement* s);				// Search; returns false if not found
     char*		prints();							// Print to string (for debugging)
     void		dump();								// Print to standard error for debugging
-    void		clear() {
+    void		clear()
+    {
         slist.clear();
     }
     void		makeCloneOf(StatementList& o);		// Make this a clone of o
@@ -192,29 +215,36 @@ public:
     Assignment*	findOnLeft(Exp* loc);				// Return the first stmt with loc on the LHS
 };		// class StatementList
 
-class StatementVec {
+class StatementVec
+{
     std::vector<Statement*> svec;			// For now, use use standard vector
 
 public:
     typedef std::vector<Statement*>::iterator iterator;
     typedef std::vector<Statement*>::reverse_iterator reverse_iterator;
-    unsigned	size() {
+    unsigned	size()
+    {
         return svec.size();   // Number of elements
     }
-    iterator	begin() {
+    iterator	begin()
+    {
         return svec.begin();
     }
-    iterator	end()	 {
+    iterator	end()
+    {
         return svec.end();
     }
-    reverse_iterator rbegin() {
+    reverse_iterator rbegin()
+    {
         return svec.rbegin();
     }
-    reverse_iterator rend()	  {
+    reverse_iterator rend()
+    {
         return svec.rend();
     }
     // Get/put at position idx (0 based)
-    Statement* operator[](int idx) {
+    Statement* operator[](int idx)
+    {
         return svec[idx];
     }
     void		putAt(int idx, Statement* s);
@@ -222,7 +252,8 @@ public:
     char*		prints();								// Print to string (for debugging)
     void		dump();									// Print to standard error for debugging
     void		printNums(std::ostream& os);
-    void		clear() {
+    void		clear()
+    {
         svec.clear();
     }
     bool		operator==(const StatementVec& o) const	// Compare if equal
@@ -233,16 +264,19 @@ public:
     {
         return svec < o.svec;
     }
-    void		append(Statement* s) {
+    void		append(Statement* s)
+    {
         svec.push_back(s);
     }
-    void		erase(iterator it) {
+    void		erase(iterator it)
+    {
         svec.erase(it);
     }
 };	// class StatementVec
 
 // For various purposes, we need sets of locations (registers or memory)
-class LocationSet {
+class LocationSet
+{
     // We use a standard set, but with a special "less than" operator so that the sets are ordered
     // by expression value. If this is not done, then two expressions with the same value (say r[10])
     // but that happen to have different addresses (because they came from different statements)
@@ -256,24 +290,30 @@ public:
     LocationSet& operator=(const LocationSet& o); // Assignment
     void		makeUnion(LocationSet& other);			// Set union
     void		makeDiff (LocationSet& other);			// Set difference
-    void		clear() {
+    void		clear()
+    {
         lset.clear();   // Clear the set
     }
-    iterator	begin() {
+    iterator	begin()
+    {
         return lset.begin();
     }
-    iterator	end()	 {
+    iterator	end()
+    {
         return lset.end();
     }
-    void		insert(Exp* loc) {
+    void		insert(Exp* loc)
+    {
         lset.insert(loc);   // Insert the given location
     }
     void		remove(Exp* loc);						// Remove the given location
-    void		remove(iterator ll) {
+    void		remove(iterator ll)
+    {
         lset.erase(ll);   // Remove location, given iterator
     }
     void		removeIfDefines(StatementSet& given);	// Remove locs defined in given
-    unsigned	size() const {
+    unsigned	size() const
+    {
         return lset.size();   // Number of elements
     }
     bool		operator==(const LocationSet& o) const; // Compare
@@ -284,7 +324,8 @@ public:
     bool		exists(Exp* e); 						// Return true if the location exists in the set
     Exp*		findNS(Exp* e);							// Find location e (no subscripts); NULL if not found
     // Return an iterator to the found item (or end() if not). Only really makes sense if e has a wildcard
-    iterator	find(Exp* e) {
+    iterator	find(Exp* e)
+    {
         return lset.find(e);
     }
     // Find a location with a different def, but same expression. For example, pass r28{10},
@@ -294,7 +335,8 @@ public:
 };	// class LocationSet
 
 #if 0
-class LocationList {
+class LocationList
+{
     std::list<Exp*> llist;
 public:
     typedef std::list<Exp*>::iterator iterator;
@@ -304,20 +346,24 @@ public:
     LocationList& operator=(const LocationList& o); // Assignment
     //void		makeUnion(LocationSet& other);			// Set union
     //void		makeDiff (LocationSet& other);			// Set difference
-    void		clear() {
+    void		clear()
+    {
         llist.clear();   // Clear the set
     }
-    iterator	begin() {
+    iterator	begin()
+    {
         return llist.begin();
     }
-    iterator	end()	 {
+    iterator	end()
+    {
         return llist.end();
     }
     //void		insert(Exp* loc) {llist.insert(loc);}	// Insert the given location
     //void		remove(Exp* loc);						// Remove the given location
     //void		remove(iterator ll);					// Remove location, given iterator
     //void		removeIfDefines(StatementSet& given);	// Remove locs defined in given
-    unsigned	size() const {
+    unsigned	size() const
+    {
         return llist.size();   // Number of elements
     }
     bool		operator==(const LocationSet& o) const; // Compare

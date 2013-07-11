@@ -1,5 +1,7 @@
-struct nlist {
-    union {
+struct nlist
+{
+    union
+    {
         char      *n_name;   /* for use when in-core */
         long       n_strx;   /* index into file string table */
     } n_un;

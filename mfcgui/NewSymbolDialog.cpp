@@ -64,18 +64,23 @@ void CNewSymbolDialog::OnOK()
     Type *type = Type::parseType(typestr);
 
     TypedExp *old_exp;
-    if (GetCheckedRadioButton(IDC_LOCAL, IDC_GLOBAL) == IDC_LOCAL) {
-        assert(proc);
-        if (proc->findSymbolFor(exp, oldname, old_exp)) {
-            proc->symbols.erase(oldname);
+    if (GetCheckedRadioButton(IDC_LOCAL, IDC_GLOBAL) == IDC_LOCAL)
+        {
+            assert(proc);
+            if (proc->findSymbolFor(exp, oldname, old_exp))
+                {
+                    proc->symbols.erase(oldname);
+                }
+            proc->symbols[nam] = new TypedExp(type, exp);
         }
-        proc->symbols[nam] = new TypedExp(type, exp);
-    } else {
-        if (prog.findSymbolFor(exp, oldname, old_exp)) {
-            prog.symbols.erase(oldname);
+    else
+        {
+            if (prog.findSymbolFor(exp, oldname, old_exp))
+                {
+                    prog.symbols.erase(oldname);
+                }
+            prog.symbols[nam] = new TypedExp(type, exp);
         }
-        prog.symbols[nam] = new TypedExp(type, exp);
-    }
 
     CDialog::OnOK();
 }
@@ -84,25 +89,29 @@ BOOL CNewSymbolDialog::OnInitDialog()
 {
     CDialog::OnInitDialog();
 
-    if (exp) {
-        std::stringstream os;
-        exp->print(os);
-        std::string s = os.str();
-        TypedExp *s_exp;
-        m_exp.SetWindowText(s.c_str());
-        s = "";
-        if (proc) proc->findSymbolFor(exp, s, s_exp);
-        else prog.findSymbolFor(exp, s, s_exp);
-        m_name.SetWindowText(s.c_str());
-    }
+    if (exp)
+        {
+            std::stringstream os;
+            exp->print(os);
+            std::string s = os.str();
+            TypedExp *s_exp;
+            m_exp.SetWindowText(s.c_str());
+            s = "";
+            if (proc) proc->findSymbolFor(exp, s, s_exp);
+            else prog.findSymbolFor(exp, s, s_exp);
+            m_name.SetWindowText(s.c_str());
+        }
 
-    if (proc) {
-        CheckRadioButton(IDC_LOCAL, IDC_GLOBAL, IDC_LOCAL);
-    } else {
-        CheckRadioButton(IDC_LOCAL, IDC_GLOBAL, IDC_GLOBAL);
-        CWnd *local = this->GetDlgItem(IDC_LOCAL);
-        local->ShowWindow(SW_HIDE);
-    }
+    if (proc)
+        {
+            CheckRadioButton(IDC_LOCAL, IDC_GLOBAL, IDC_LOCAL);
+        }
+    else
+        {
+            CheckRadioButton(IDC_LOCAL, IDC_GLOBAL, IDC_GLOBAL);
+            CWnd *local = this->GetDlgItem(IDC_LOCAL);
+            local->ShowWindow(SW_HIDE);
+        }
 
     return TRUE;  // return TRUE unless you set the focus to a control
     // EXCEPTION: OCX Property Pages should return FALSE

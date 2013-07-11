@@ -358,22 +358,26 @@ static void yyunput YY_PROTO(( YY_SSLScanner_CHAR c, YY_SSLScanner_CHAR *buf_ptr
 /* c++ */
 #ifndef YY_SSLScanner_ECHO_NOCODE
 void YY_SSLScanner_CLASS::yy___echo()
-{   YY_SSLScanner_ECHO_CODE
+{
+    YY_SSLScanner_ECHO_CODE
 }
 #endif
 #ifndef YY_SSLScanner_INPUT_NOCODE
 int  YY_SSLScanner_CLASS::yy___input(char * buffer,int &result,int max_size)
-{   YY_SSLScanner_INPUT_CODE
+{
+    YY_SSLScanner_INPUT_CODE
 }
 #endif
 #ifndef YY_SSLScanner_FATAL_ERROR_NOCODE
 void YY_SSLScanner_CLASS::yy___fatal_error(char *msg)
-{   YY_SSLScanner_FATAL_ERROR_CODE
+{
+    YY_SSLScanner_FATAL_ERROR_CODE
 }
 #endif
 #ifndef YY_SSLScanner_WRAP_NOCODE
 int  YY_SSLScanner_CLASS::yy___wrap()
-{   YY_SSLScanner_WRAP_CODE
+{
+    YY_SSLScanner_WRAP_CODE
 }
 #endif
 void YY_SSLScanner_CLASS::yy_initialize()
@@ -395,11 +399,13 @@ void YY_SSLScanner_CLASS::yy_initialize()
 }
 
 YY_SSLScanner_CLASS::YY_SSLScanner_CLASS(YY_SSLScanner_CONSTRUCTOR_PARAM) YY_SSLScanner_CONSTRUCTOR_INIT
-{   yy_initialize();
+{
+    yy_initialize();
     YY_SSLScanner_CONSTRUCTOR_CODE;
 }
 YY_SSLScanner_CLASS::~YY_SSLScanner_CLASS()
-{   YY_SSLScanner_DESTRUCTOR_CODE;
+{
+    YY_SSLScanner_DESTRUCTOR_CODE;
     if(YY_SSLScanner_CURRENT_BUFFER)
         YY_SSLScanner_DELETE_BUFFER(YY_SSLScanner_CURRENT_BUFFER);
 }
@@ -419,7 +425,8 @@ YY_SSLScanner_CLASS::~YY_SSLScanner_CLASS()
 #define YY_END_OF_BUFFER 123
 typedef int yy_state_type;
 static const short int yy_acclist[480] =
-{   0,
+{
+    0,
     123,  120,  122,  118,  120,  122,  121,  122,   71,  120,
     122,  109,  120,  122,  120,  122,16503,  113,  120,  122,
     39,  120,  122,   37,  120,  122,   40,  120,  122,   45,
@@ -475,7 +482,8 @@ static const short int yy_acclist[480] =
 } ;
 
 static const short int yy_accept[337] =
-{   0,
+{
+    0,
     1,    1,    1,    2,    4,    7,    9,   12,   15,   18,
     21,   24,   27,   30,   33,   36,   38,   41,   44,   47,
     50,   53,   56,   59,   62,   65,   68,   71,   74,   77,
@@ -516,7 +524,8 @@ static const short int yy_accept[337] =
 } ;
 
 static const YY_CHAR yy_ec[128] =
-{   0,
+{
+    0,
     1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -534,7 +543,8 @@ static const YY_CHAR yy_ec[128] =
 } ;
 
 static const YY_CHAR yy_meta[75] =
-{   0,
+{
+    0,
     1,    1,    2,    3,    4,    1,    1,    1,    1,    1,
     5,    6,    1,    1,    7,    1,    8,    8,    8,    8,
     1,    1,    1,    1,    1,    1,    9,    9,    9,    9,
@@ -546,7 +556,8 @@ static const YY_CHAR yy_meta[75] =
 } ;
 
 static const short int yy_base[348] =
-{   0,
+{
+    0,
     0,    0,  260,  993,  256,    0,  993,  993,  240,  993,
     235,  993,   71,  182,   59,  220,   76,   77,   83,   92,
     61,  993,   82,  209,   62,  993,   70,   88,   82,  102,
@@ -588,7 +599,8 @@ static const short int yy_base[348] =
 } ;
 
 static const short int yy_def[348] =
-{   0,
+{
+    0,
     335,    1,  335,  335,  335,  336,  335,  335,  337,  335,
     338,  335,  339,  335,  335,  340,  335,  335,  335,  335,
     335,  335,  335,  335,  335,  335,  341,  341,  341,  341,
@@ -630,7 +642,8 @@ static const short int yy_def[348] =
 } ;
 
 static const short int yy_nxt[1068] =
-{   0,
+{
+    0,
     4,    5,    6,    7,    8,    9,   10,   11,   12,    8,
     8,   13,   14,   15,   16,   17,   18,   19,   20,   19,
     21,   22,   23,   24,   25,   26,   27,   28,   29,   27,
@@ -751,7 +764,8 @@ static const short int yy_nxt[1068] =
 } ;
 
 static const short int yy_chk[1068] =
-{   0,
+{
+    0,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
     1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -876,7 +890,8 @@ static YY_CHAR *yy_last_accepting_cpos;
 
 #if YY_SSLScanner_DEBUG != 0
 static const short int yy_rule_linenum[122] =
-{   0,
+{
+    0,
     64,   65,   66,   67,   68,   69,   70,   74,   75,   79,
     80,   84,   85,   86,   87,   89,   94,   95,   99,  100,
     101,  102,  103,  104,  105,  106,  107,  108,  113,  114,
@@ -948,770 +963,772 @@ YY_SSLScanner_LEX_RETURN YY_SSLScanner_CLASS::YY_SSLScanner_LEX ( YY_SSLScanner_
     if ( yy_init )
 {
 
-{
-    YY_USER_INIT;
-}
-if ( ! yy_start )
-        yy_start = 1;       /* first start state */
+    {
+        YY_USER_INIT;
+    }
+    if ( ! yy_start )
+            yy_start = 1;       /* first start state */
 
-    if ( ! yy___in )
-        yy___in = YY_SSLScanner_IFILE_DEFAULT;
+        if ( ! yy___in )
+            yy___in = YY_SSLScanner_IFILE_DEFAULT;
 
-    if ( ! yy___out )
-        yy___out = YY_SSLScanner_OFILE_DEFAULT;
+        if ( ! yy___out )
+            yy___out = YY_SSLScanner_OFILE_DEFAULT;
 
-    if ( YY_SSLScanner_CURRENT_BUFFER )
-        YY_SSLScanner_INIT_BUFFER( YY_SSLScanner_CURRENT_BUFFER, yy___in );
-    else
-        YY_SSLScanner_CURRENT_BUFFER = YY_SSLScanner_CREATE_BUFFER( yy___in, YY_BUF_SIZE );
+        if ( YY_SSLScanner_CURRENT_BUFFER )
+            YY_SSLScanner_INIT_BUFFER( YY_SSLScanner_CURRENT_BUFFER, yy___in );
+        else
+            YY_SSLScanner_CURRENT_BUFFER = YY_SSLScanner_CREATE_BUFFER( yy___in, YY_BUF_SIZE );
 
-    YY_SSLScanner_LOAD_BUFFER_STATE();
-    yy_init=0;
-}
+        YY_SSLScanner_LOAD_BUFFER_STATE();
+        yy_init=0;
+    }
 
 while ( 1 )         /* loops until end-of-file is reached */
 {
-/* % yymore()-related code goes here */
+    /* % yymore()-related code goes here */
 #line 429 "//usr/local/lib/flexskel.cc"
-yy_cp = yy_c_buf_p;
+    yy_cp = yy_c_buf_p;
 
-/* support of yy___text */
-*yy_cp = yy_hold_char;
+    /* support of yy___text */
+    *yy_cp = yy_hold_char;
 
-/* yy_bp points to the position in yy_ch_buf of the start of the
- * current run.
- */
-yy_bp = yy_cp;
+    /* yy_bp points to the position in yy_ch_buf of the start of the
+     * current run.
+     */
+    yy_bp = yy_cp;
 
-/* % code to set up and find next match goes here */
-yy_current_state = yy_start;
-yy_state_ptr = yy_state_buf;
-*yy_state_ptr++ = yy_current_state;
+    /* % code to set up and find next match goes here */
+    yy_current_state = yy_start;
+    yy_state_ptr = yy_state_buf;
+    *yy_state_ptr++ = yy_current_state;
 yy_match:
-do
-{
-    register YY_CHAR yy_c = yy_ec[*yy_cp];
-        while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
+    do
         {
-            yy_current_state = yy_def[yy_current_state];
-            if ( yy_current_state >= 336 )
-                yy_c = yy_meta[yy_c];
-        }
-        yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-        *yy_state_ptr++ = yy_current_state;
-        ++yy_cp;
-    }
-    while ( yy_current_state != 335 );
+            register YY_CHAR yy_c = yy_ec[*yy_cp];
+                while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
+                    {
+                        yy_current_state = yy_def[yy_current_state];
+                        if ( yy_current_state >= 336 )
+                            yy_c = yy_meta[yy_c];
+                    }
+                yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+                *yy_state_ptr++ = yy_current_state;
+                ++yy_cp;
+            }
+        while ( yy_current_state != 335 );
 #line 440 "//usr/local/lib/flexskel.cc"
 
 yy_find_action:
-    /* % code to find the action number goes here */
-    yy_current_state = *--yy_state_ptr;
-    yy_lp = yy_accept[yy_current_state];
-find_rule: /* we branch to this label when backtracking */
-    for ( ; ; ) /* until we find what rule we matched */
-    {
-        if ( yy_lp && yy_lp < yy_accept[yy_current_state + 1] )
-        {
-            yy_act = yy_acclist[yy_lp];
-            if ( yy_act & YY_TRAILING_HEAD_MASK ||
-                    yy_looking_for_trail_begin )
-            {
-                if ( yy_act == yy_looking_for_trail_begin )
-                {
-                    yy_looking_for_trail_begin = 0;
-                    yy_act &= ~YY_TRAILING_HEAD_MASK;
-                    break;
-                }
-            }
-            else if ( yy_act & YY_TRAILING_MASK )
-            {
-                yy_looking_for_trail_begin = yy_act & ~YY_TRAILING_MASK;
-                yy_looking_for_trail_begin |= YY_TRAILING_HEAD_MASK;
-            }
-            else
-            {
-                yy_full_match = yy_cp;
-                yy_full_state = yy_state_ptr;
-                yy_full_lp = yy_lp;
-                break;
-            }
-            ++yy_lp;
-            goto find_rule;
-        }
-        --yy_cp;
+        /* % code to find the action number goes here */
         yy_current_state = *--yy_state_ptr;
         yy_lp = yy_accept[yy_current_state];
-    }
+find_rule: /* we branch to this label when backtracking */
+        for ( ; ; ) /* until we find what rule we matched */
+            {
+                if ( yy_lp && yy_lp < yy_accept[yy_current_state + 1] )
+                    {
+                        yy_act = yy_acclist[yy_lp];
+                        if ( yy_act & YY_TRAILING_HEAD_MASK ||
+                                yy_looking_for_trail_begin )
+                            {
+                                if ( yy_act == yy_looking_for_trail_begin )
+                                    {
+                                        yy_looking_for_trail_begin = 0;
+                                        yy_act &= ~YY_TRAILING_HEAD_MASK;
+                                        break;
+                                    }
+                            }
+                        else if ( yy_act & YY_TRAILING_MASK )
+                            {
+                                yy_looking_for_trail_begin = yy_act & ~YY_TRAILING_MASK;
+                                yy_looking_for_trail_begin |= YY_TRAILING_HEAD_MASK;
+                            }
+                        else
+                            {
+                                yy_full_match = yy_cp;
+                                yy_full_state = yy_state_ptr;
+                                yy_full_lp = yy_lp;
+                                break;
+                            }
+                        ++yy_lp;
+                        goto find_rule;
+                    }
+                --yy_cp;
+                yy_current_state = *--yy_state_ptr;
+                yy_lp = yy_accept[yy_current_state];
+            }
 #line 443 "//usr/local/lib/flexskel.cc"
 
-    YY_DO_BEFORE_ACTION;
-    YY_USER_ACTION;
+        YY_DO_BEFORE_ACTION;
+        YY_USER_ACTION;
 
 do_action:      /* this label is used only to access EOF actions */
 #if YY_SSLScanner_DEBUG != 0
-    if ( yy___flex_debug )
-    {
-        if ( yy_act == 0 )
+        if ( yy___flex_debug )
+            {
+                if ( yy_act == 0 )
 #ifndef YY_SSLScanner_IOSTREAM
-            fprintf( yy___stderr , "--scanner backtracking\n" );
+                    fprintf( yy___stderr , "--scanner backtracking\n" );
 #else
-            yy___stderr <<"--scanner backtracking"<<endl;
+                    yy___stderr <<"--scanner backtracking"<<endl;
 #endif
-        else if ( yy_act < YY_END_OF_BUFFER -1 )
+                else if ( yy_act < YY_END_OF_BUFFER -1 )
 #ifndef YY_SSLScanner_IOSTREAM
-            fprintf( yy___stderr ,
-                     "--accepting rule at line %d (\"%s\")\n",
-                     yy_rule_linenum[yy_act], yy___text );
+                    fprintf( yy___stderr ,
+                             "--accepting rule at line %d (\"%s\")\n",
+                             yy_rule_linenum[yy_act], yy___text );
 #else
-            yy___stderr <<"--accepting rule at line "
-            <<(int)yy_rule_linenum[yy_act]
-            <<" (\""<<(char *)yy___text<<"\")"<<endl;
+                    yy___stderr <<"--accepting rule at line "
+                    <<(int)yy_rule_linenum[yy_act]
+                    <<" (\""<<(char *)yy___text<<"\")"<<endl;
 #endif
-        else if ( yy_act == YY_END_OF_BUFFER -1 )
+                else if ( yy_act == YY_END_OF_BUFFER -1 )
 #ifndef YY_SSLScanner_IOSTREAM
-            fprintf( yy___stderr ,
-                     "--accepting default rule (\"%s\")\n",
-                     yy___text );
+                    fprintf( yy___stderr ,
+                             "--accepting default rule (\"%s\")\n",
+                             yy___text );
 #else
-            yy___stderr <<"--accepting default rule"
-            <<" (\""<<(char *)yy___text<<"\")"<<endl;
+                    yy___stderr <<"--accepting default rule"
+                    <<" (\""<<(char *)yy___text<<"\")"<<endl;
 #endif
-        else if ( yy_act == YY_END_OF_BUFFER )
+                else if ( yy_act == YY_END_OF_BUFFER )
 #ifndef YY_SSLScanner_IOSTREAM
-            fprintf( yy___stderr , "--(end of buffer or a NUL)\n" );
+                    fprintf( yy___stderr , "--(end of buffer or a NUL)\n" );
 #else
-            yy___stderr <<"--(end of buffer or a NUL)"<<endl;
+                    yy___stderr <<"--(end of buffer or a NUL)"<<endl;
 #endif
-        else
+                else
 #ifndef YY_SSLScanner_IOSTREAM
-            fprintf( yy___stderr , "--EOF\n" );
+                    fprintf( yy___stderr , "--EOF\n" );
 #else
-            yy___stderr <<"--EOF"<<endl;
+                    yy___stderr <<"--EOF"<<endl;
 #endif
-    }
+            }
 #endif
-    switch ( yy_act )
-    {
-        /* % actions go here */
-    case 1:
+        switch ( yy_act )
+            {
+                /* % actions go here */
+            case 1:
 #line 65 "sslscanner.l"
-    case 2:
+            case 2:
 #line 65 "sslscanner.l"
-    { return SSLParser::TOK_INTEGER; }
-    YY_BREAK
-    case 3:
+            { return SSLParser::TOK_INTEGER; }
+            YY_BREAK
+            case 3:
 #line 67 "sslscanner.l"
-    case 4:
+            case 4:
 #line 67 "sslscanner.l"
-    { return SSLParser::TOK_FLOAT; }
-    YY_BREAK
-    case 5:
+            { return SSLParser::TOK_FLOAT; }
+            YY_BREAK
+            case 5:
 #line 68 "sslscanner.l"
-    { return SSLParser::OPERAND; }
-    YY_BREAK
-    case 6:
+            { return SSLParser::OPERAND; }
+            YY_BREAK
+            case 6:
 #line 70 "sslscanner.l"
-    case 7:
+            case 7:
 #line 70 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::ENDIANNESS;
-    }
-    YY_BREAK
-    case 8:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::ENDIANNESS;
+            }
+            YY_BREAK
+            case 8:
 #line 75 "sslscanner.l"
-    case 9:
+            case 9:
 #line 75 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::BIG;
-    }
-    YY_BREAK
-    case 10:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::BIG;
+            }
+            YY_BREAK
+            case 10:
 #line 80 "sslscanner.l"
-    case 11:
+            case 11:
 #line 80 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::LITTLE;
-    }
-    YY_BREAK
-    case 12:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::LITTLE;
+            }
+            YY_BREAK
+            case 12:
 #line 84 "sslscanner.l"
-    { return SSLParser::COVERS; }
-    YY_BREAK
-    case 13:
+            { return SSLParser::COVERS; }
+            YY_BREAK
+            case 13:
 #line 85 "sslscanner.l"
-    { return SSLParser::SHARES; }
-    YY_BREAK
-    case 14:
+            { return SSLParser::SHARES; }
+            YY_BREAK
+            case 14:
 #line 86 "sslscanner.l"
-    { return SSLParser::FAST; }
-    YY_BREAK
-    case 15:
+            { return SSLParser::FAST; }
+            YY_BREAK
+            case 15:
 #line 87 "sslscanner.l"
-    { return SSLParser::FETCHEXEC; }
-    YY_BREAK
-    case 16:
+            { return SSLParser::FETCHEXEC; }
+            YY_BREAK
+            case 16:
 #line 89 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::ASSIGNTYPE;
-    }
-    YY_BREAK
-    case 17:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::ASSIGNTYPE;
+            }
+            YY_BREAK
+            case 17:
 #line 95 "sslscanner.l"
-    case 18:
+            case 18:
 #line 95 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::LOG_OP;
-    }
-    YY_BREAK
-    case 19:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::LOG_OP;
+            }
+            YY_BREAK
+            case 19:
 #line 100 "sslscanner.l"
-    case 20:
+            case 20:
 #line 101 "sslscanner.l"
-    case 21:
+            case 21:
 #line 102 "sslscanner.l"
-    case 22:
+            case 22:
 #line 103 "sslscanner.l"
-    case 23:
+            case 23:
 #line 104 "sslscanner.l"
-    case 24:
+            case 24:
 #line 105 "sslscanner.l"
-    case 25:
+            case 25:
 #line 106 "sslscanner.l"
-    case 26:
+            case 26:
 #line 107 "sslscanner.l"
-    case 27:
+            case 27:
 #line 108 "sslscanner.l"
-    case 28:
+            case 28:
 #line 108 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::COND_OP;
-    }
-    YY_BREAK
-    case 29:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::COND_OP;
+            }
+            YY_BREAK
+            case 29:
 #line 114 "sslscanner.l"
-    case 30:
+            case 30:
 #line 115 "sslscanner.l"
-    case 31:
+            case 31:
 #line 116 "sslscanner.l"
-    case 32:
+            case 32:
 #line 117 "sslscanner.l"
-    case 33:
+            case 33:
 #line 118 "sslscanner.l"
-    case 34:
+            case 34:
 #line 119 "sslscanner.l"
-    case 35:
+            case 35:
 #line 120 "sslscanner.l"
-    case 36:
+            case 36:
 #line 121 "sslscanner.l"
-    case 37:
+            case 37:
 #line 122 "sslscanner.l"
-    case 38:
+            case 38:
 #line 122 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::BIT_OP;
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::BIT_OP;
 
-    }
-    YY_BREAK
-    case 39:
+            }
+            YY_BREAK
+            case 39:
 #line 128 "sslscanner.l"
-    case 40:
+            case 40:
 #line 129 "sslscanner.l"
-    case 41:
+            case 41:
 #line 130 "sslscanner.l"
-    case 42:
+            case 42:
 #line 131 "sslscanner.l"
-    case 43:
+            case 43:
 #line 132 "sslscanner.l"
-    case 44:
+            case 44:
 #line 133 "sslscanner.l"
-    case 45:
+            case 45:
 #line 134 "sslscanner.l"
-    case 46:
+            case 46:
 #line 134 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::ARITH_OP;
-    }
-    YY_BREAK
-    case 47:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::ARITH_OP;
+            }
+            YY_BREAK
+            case 47:
 #line 139 "sslscanner.l"
-    case 48:
+            case 48:
 #line 140 "sslscanner.l"
-    case 49:
+            case 49:
 #line 141 "sslscanner.l"
-    case 50:
+            case 50:
 #line 142 "sslscanner.l"
-    case 51:
+            case 51:
 #line 143 "sslscanner.l"
-    case 52:
+            case 52:
 #line 144 "sslscanner.l"
-    case 53:
+            case 53:
 #line 145 "sslscanner.l"
-    case 54:
+            case 54:
 #line 146 "sslscanner.l"
-    case 55:
+            case 55:
 #line 147 "sslscanner.l"
-    case 56:
+            case 56:
 #line 148 "sslscanner.l"
-    case 57:
+            case 57:
 #line 149 "sslscanner.l"
-    case 58:
+            case 58:
 #line 150 "sslscanner.l"
-    case 59:
+            case 59:
 #line 151 "sslscanner.l"
-    case 60:
+            case 60:
 #line 152 "sslscanner.l"
-    case 61:
+            case 61:
 #line 152 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::FARITH_OP;
-    }
-    YY_BREAK
-    case 62:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::FARITH_OP;
+            }
+            YY_BREAK
+            case 62:
 #line 156 "sslscanner.l"
-    {
-        return SSLParser::NOT;
-    }
-    YY_BREAK
-    case 63:
+            {
+                return SSLParser::NOT;
+            }
+            YY_BREAK
+            case 63:
 #line 159 "sslscanner.l"
-    {
-        return SSLParser::LNOT;
-    }
-    YY_BREAK
-    case 64:
+            {
+                return SSLParser::LNOT;
+            }
+            YY_BREAK
+            case 64:
 #line 162 "sslscanner.l"
-    {
-        return SSLParser::FNEG;
-    }
-    YY_BREAK
-    case 65:
+            {
+                return SSLParser::FNEG;
+            }
+            YY_BREAK
+            case 65:
 #line 165 "sslscanner.l"
-    {
-        return SSLParser::THEN;
-    }
-    YY_BREAK
-    case 66:
+            {
+                return SSLParser::THEN;
+            }
+            YY_BREAK
+            case 66:
 #line 168 "sslscanner.l"
-    {
-        return SSLParser::INDEX;
-    }
-    YY_BREAK
-    case 67:
+            {
+                return SSLParser::INDEX;
+            }
+            YY_BREAK
+            case 67:
 #line 171 "sslscanner.l"
-    {
-        return SSLParser::EQUATE;
-    }
-    YY_BREAK
-    case 68:
+            {
+                return SSLParser::EQUATE;
+            }
+            YY_BREAK
+            case 68:
 #line 174 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::ASSIGN;
-    }
-    YY_BREAK
-    case 69:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::ASSIGN;
+            }
+            YY_BREAK
+            case 69:
 #line 178 "sslscanner.l"
-    {
-        return SSLParser::TO;
-    }
-    YY_BREAK
-    case 70:
+            {
+                return SSLParser::TO;
+            }
+            YY_BREAK
+            case 70:
 #line 181 "sslscanner.l"
-    {
-        return SSLParser::COLON;
-    }
-    YY_BREAK
-    case 71:
+            {
+                return SSLParser::COLON;
+            }
+            YY_BREAK
+            case 71:
 #line 184 "sslscanner.l"
-    {
-        return SSLParser::S_E;
-    }
-    YY_BREAK
-    case 72:
+            {
+                return SSLParser::S_E;
+            }
+            YY_BREAK
+            case 72:
 #line 187 "sslscanner.l"
-    {
-        return SSLParser::AT;
-    }
-    YY_BREAK
-    case 73:
+            {
+                return SSLParser::AT;
+            }
+            YY_BREAK
+            case 73:
 #line 190 "sslscanner.l"
-    {
-        return SSLParser::ADDR;
-    }
-    YY_BREAK
-    case 74:
+            {
+                return SSLParser::ADDR;
+            }
+            YY_BREAK
+            case 74:
 #line 194 "sslscanner.l"
-    case 75:
+            case 75:
 #line 195 "sslscanner.l"
-    case 76:
+            case 76:
 #line 196 "sslscanner.l"
-    case 77:
+            case 77:
 #line 197 "sslscanner.l"
-    case 78:
+            case 78:
 #line 198 "sslscanner.l"
-    case 79:
+            case 79:
 #line 199 "sslscanner.l"
-    case 80:
+            case 80:
 #line 200 "sslscanner.l"
-    case 81:
+            case 81:
 #line 200 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        yylval.str[strlen(yylval.str)-1] = '\0';
-        return SSLParser::CONV_FUNC;
-    }
-    YY_BREAK
-    case 82:
+            {
+                yylval.str = strdup(yytext);
+                yylval.str[strlen(yylval.str)-1] = '\0';
+                return SSLParser::CONV_FUNC;
+            }
+            YY_BREAK
+            case 82:
 #line 205 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        yylval.str[strlen(yylval.str)-1] = '\0';
-        return SSLParser::TRUNC_FUNC;
-    }
-    YY_BREAK
-    case 83:
+            {
+                yylval.str = strdup(yytext);
+                yylval.str[strlen(yylval.str)-1] = '\0';
+                return SSLParser::TRUNC_FUNC;
+            }
+            YY_BREAK
+            case 83:
 #line 210 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        yylval.str[strlen(yylval.str)-1] = '\0';
-        return SSLParser::FABS_FUNC;
-    }
-    YY_BREAK
-    case 84:
+            {
+                yylval.str = strdup(yytext);
+                yylval.str[strlen(yylval.str)-1] = '\0';
+                return SSLParser::FABS_FUNC;
+            }
+            YY_BREAK
+            case 84:
 #line 216 "sslscanner.l"
-    case 85:
+            case 85:
 #line 216 "sslscanner.l"
-    {
-        return SSLParser::FLAGMACRO;
-    }
-    YY_BREAK
-    case 86:
+            {
+                return SSLParser::FLAGMACRO;
+            }
+            YY_BREAK
+            case 86:
 #line 219 "sslscanner.l"
-    {	return SSLParser::FPOP; }
-    YY_BREAK
-    case 87:
+            {	return SSLParser::FPOP; }
+            YY_BREAK
+            case 87:
 #line 220 "sslscanner.l"
-    {	return SSLParser::FPUSH; }
-    YY_BREAK
-    case 88:
+            {	return SSLParser::FPUSH; }
+            YY_BREAK
+            case 88:
 #line 222 "sslscanner.l"
-    case 89:
+            case 89:
 #line 223 "sslscanner.l"
-    case 90:
+            case 90:
 #line 224 "sslscanner.l"
-    case 91:
+            case 91:
 #line 225 "sslscanner.l"
-    case 92:
+            case 92:
 #line 226 "sslscanner.l"
-    case 93:
+            case 93:
 #line 227 "sslscanner.l"
-    case 94:
+            case 94:
 #line 228 "sslscanner.l"
-    case 95:
+            case 95:
 #line 229 "sslscanner.l"
-    case 96:
+            case 96:
 #line 229 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        yylval.str[strlen(yylval.str)-1] = '\0';
-        return SSLParser::TRANSCEND;
-    }
-    YY_BREAK
-    case 97:
+            {
+                yylval.str = strdup(yytext);
+                yylval.str[strlen(yylval.str)-1] = '\0';
+                return SSLParser::TRANSCEND;
+            }
+            YY_BREAK
+            case 97:
 #line 235 "sslscanner.l"
-    {
-        return SSLParser::SUCCESSOR;
-    }
-    YY_BREAK
-    case 98:
+            {
+                return SSLParser::SUCCESSOR;
+            }
+            YY_BREAK
+            case 98:
 #line 239 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::TEMP;
-    }
-    YY_BREAK
-    case 99:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::TEMP;
+            }
+            YY_BREAK
+            case 99:
 #line 244 "sslscanner.l"
-    {	return SSLParser::REG_IDX; }
-    YY_BREAK
-    case 100:
+            {	return SSLParser::REG_IDX; }
+            YY_BREAK
+            case 100:
 #line 245 "sslscanner.l"
-    {   yylval.str = strdup(yytext);
-        return SSLParser::REG_NUM;
-    }
-    YY_BREAK
-    case 101:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::REG_NUM;
+            }
+            YY_BREAK
+            case 101:
 #line 247 "sslscanner.l"
-    {	return SSLParser::MEM_IDX; }
-    YY_BREAK
-    case 102:
+            {	return SSLParser::MEM_IDX; }
+            YY_BREAK
+            case 102:
 #line 248 "sslscanner.l"
-    {	return yytext[0];	}
-    YY_BREAK
-    case 103:
+            {	return yytext[0];	}
+            YY_BREAK
+            case 103:
 #line 249 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::REG_ID;
-    }
-    YY_BREAK
-    case 104:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::REG_ID;
+            }
+            YY_BREAK
+            case 104:
 #line 253 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        yylval.str[strlen(yylval.str)-1] = '\0';
-        return SSLParser::NAME_CALL;
-    }
-    YY_BREAK
-    case 105:
+            {
+                yylval.str = strdup(yytext);
+                yylval.str[strlen(yylval.str)-1] = '\0';
+                return SSLParser::NAME_CALL;
+            }
+            YY_BREAK
+            case 105:
 #line 258 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        yylval.str[strlen(yylval.str)-1] = '\0';
-        return SSLParser::NAME_LOOKUP;
-    }
-    YY_BREAK
-    case 106:
+            {
+                yylval.str = strdup(yytext);
+                yylval.str[strlen(yylval.str)-1] = '\0';
+                return SSLParser::NAME_LOOKUP;
+            }
+            YY_BREAK
+            case 106:
 #line 263 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::NAME;
-    }
-    YY_BREAK
-    case 107:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::NAME;
+            }
+            YY_BREAK
+            case 107:
 #line 268 "sslscanner.l"
-    case 108:
+            case 108:
 #line 268 "sslscanner.l"
-    {
-        yylval.str = strdup(yytext);
-        return SSLParser::DECOR;
-    }
-    YY_BREAK
-    case 109:
+            {
+                yylval.str = strdup(yytext);
+                return SSLParser::DECOR;
+            }
+            YY_BREAK
+            case 109:
 #line 272 "sslscanner.l"
-    {	return yytext[0];	}
-    YY_BREAK
-    case 110:
+            {	return yytext[0];	}
+            YY_BREAK
+            case 110:
 #line 273 "sslscanner.l"
-    {	return yytext[0];	}
-    YY_BREAK
-    case 111:
+            {	return yytext[0];	}
+            YY_BREAK
+            case 111:
 #line 274 "sslscanner.l"
-    {	return yytext[0];	}
-    YY_BREAK
-    case 112:
+            {	return yytext[0];	}
+            YY_BREAK
+            case 112:
 #line 275 "sslscanner.l"
-    {	return yytext[0];	}
-    YY_BREAK
-    case 113:
+            {	return yytext[0];	}
+            YY_BREAK
+            case 113:
 #line 276 "sslscanner.l"
-    {	return yytext[0];	}
-    YY_BREAK
-    case 114:
+            {	return yytext[0];	}
+            YY_BREAK
+            case 114:
 #line 277 "sslscanner.l"
-    {
-        yylval.dbl = atof(yytext);
-        return SSLParser::FLOATNUM;
-    }
-    YY_BREAK
-    case 115:
+            {
+                yylval.dbl = atof(yytext);
+                return SSLParser::FLOATNUM;
+            }
+            YY_BREAK
+            case 115:
 #line 281 "sslscanner.l"
-    {
-        yylval.num = strtol(yytext,0,10);
-        return SSLParser::NUM;
-    }
-    YY_BREAK
-    case 116:
+            {
+                yylval.num = strtol(yytext,0,10);
+                return SSLParser::NUM;
+            }
+            YY_BREAK
+            case 116:
 #line 286 "sslscanner.l"
-    {
-        yylval.num = strtol(yytext,0,16);
-        return SSLParser::NUM;
-    }
-    YY_BREAK
-    case 117:
+            {
+                yylval.num = strtol(yytext,0,16);
+                return SSLParser::NUM;
+            }
+            YY_BREAK
+            case 117:
 #line 291 "sslscanner.l"
-    {
-        // a power of two
-        int sign = (yytext[0] == '-' ? -1 : 1);
-        char* start = yytext + (sign == -1 ? 4:3);
+            {
+                // a power of two
+                int sign = (yytext[0] == '-' ? -1 : 1);
+                char* start = yytext + (sign == -1 ? 4:3);
 
-        // David - changed to << for more efficient and
-        // not depend on the <cmath> anymore.
-        yylval.num = 1 << (strtol(start,0,10) * sign);
-        // yylval.num = (int)pow(2,strtol(start,0,10)) * sign;
-        return SSLParser::NUM;
-    }
-    YY_BREAK
-    case 118:
+                // David - changed to << for more efficient and
+                // not depend on the <cmath> anymore.
+                yylval.num = 1 << (strtol(start,0,10) * sign);
+                // yylval.num = (int)pow(2,strtol(start,0,10)) * sign;
+                return SSLParser::NUM;
+            }
+            YY_BREAK
+            case 118:
 #line 303 "sslscanner.l"
-        ;
-        YY_BREAK
-    case 119:
+                ;
+                YY_BREAK
+            case 119:
 #line 304 "sslscanner.l"
-        ;	/* comment */
-        YY_BREAK
-    case 120:
+                ;	/* comment */
+                YY_BREAK
+            case 120:
 #line 305 "sslscanner.l"
-        ;
-        YY_BREAK
-    case 121:
+                ;
+                YY_BREAK
+            case 121:
 #line 306 "sslscanner.l"
-    {   // funky print-next-line-for-debug token
-        if (yyleng > MAX_LINE)
-        {
-            std::cerr << theLine + 1 << ": line too long.\n";
-            exit(1);
-        }
-        // saves the next line
-        strcpy(lineBuf, yytext+1);
-        theLine++;
-        // reparse from char 1
-        // give back all but the \n to rescan
-        yyless(1);
+            {
+                // funky print-next-line-for-debug token
+                if (yyleng > MAX_LINE)
+                    {
+                        std::cerr << theLine + 1 << ": line too long.\n";
+                        exit(1);
+                    }
+                // saves the next line
+                strcpy(lineBuf, yytext+1);
+                theLine++;
+                // reparse from char 1
+                // give back all but the \n to rescan
+                yyless(1);
 
-        // echo the line if line tracing is turned on
-        if (traceLines)
-            std::cerr << lineBuf << std::endl;
+                // echo the line if line tracing is turned on
+                if (traceLines)
+                    std::cerr << lineBuf << std::endl;
 
-        // Quell a warning
-        yy_last_accepting_state = 0;
-        yy_last_accepting_cpos = 0;
-    }
-    YY_BREAK
-    case 122:
+                // Quell a warning
+                yy_last_accepting_state = 0;
+                yy_last_accepting_cpos = 0;
+            }
+            YY_BREAK
+            case 122:
 #line 327 "sslscanner.l"
-        ECHO;
-        YY_BREAK
-    case YY_STATE_EOF(INITIAL):
-        yyterminate();
+                ECHO;
+                YY_BREAK
+            case YY_STATE_EOF(INITIAL):
+                yyterminate();
 #line 493 "//usr/local/lib/flexskel.cc"
 
-    case YY_END_OF_BUFFER:
-    {
-        /* amount of text matched not including the EOB char */
-        int yy_amount_of_matched_text = yy_cp - yy___text - 1;
-
-        /* undo the effects of YY_DO_BEFORE_ACTION */
-        *yy_cp = yy_hold_char;
-
-        /* note that here we test for yy_c_buf_p "<=" to the position
-         * of the first EOB in the buffer, since yy_c_buf_p will
-         * already have been incremented past the NUL character
-         * (since all states make transitions on EOB to the end-
-         * of-buffer state).  Contrast this with the test in yyinput().
-         */
-        if ( yy_c_buf_p <= &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
-            /* this was really a NUL */
-        {
-            yy_state_type yy_next_state;
-
-            yy_c_buf_p = yy___text + yy_amount_of_matched_text;
-
-            yy_current_state = yy_get_previous_state();
-
-            /* okay, we're now positioned to make the
-             * NUL transition.  We couldn't have
-             * yy_get_previous_state() go ahead and do it
-             * for us because it doesn't know how to deal
-             * with the possibility of jamming (and we
-             * don't want to build jamming into it because
-             * then it will run more slowly)
-             */
-
-            yy_next_state = yy_try_NUL_trans( yy_current_state );
-
-            yy_bp = yy___text + YY_MORE_ADJ;
-
-            if ( yy_next_state )
+            case YY_END_OF_BUFFER:
             {
-                /* consume the NUL */
-                yy_cp = ++yy_c_buf_p;
-                yy_current_state = yy_next_state;
-                goto yy_match;
-            }
+                /* amount of text matched not including the EOB char */
+                int yy_amount_of_matched_text = yy_cp - yy___text - 1;
 
-            else
-            {
-                /* % code to do backtracking for compressed tables and set up yy_cp goes here */
+                /* undo the effects of YY_DO_BEFORE_ACTION */
+                *yy_cp = yy_hold_char;
+
+                /* note that here we test for yy_c_buf_p "<=" to the position
+                 * of the first EOB in the buffer, since yy_c_buf_p will
+                 * already have been incremented past the NUL character
+                 * (since all states make transitions on EOB to the end-
+                 * of-buffer state).  Contrast this with the test in yyinput().
+                 */
+                if ( yy_c_buf_p <= &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
+                    /* this was really a NUL */
+                    {
+                        yy_state_type yy_next_state;
+
+                        yy_c_buf_p = yy___text + yy_amount_of_matched_text;
+
+                        yy_current_state = yy_get_previous_state();
+
+                        /* okay, we're now positioned to make the
+                         * NUL transition.  We couldn't have
+                         * yy_get_previous_state() go ahead and do it
+                         * for us because it doesn't know how to deal
+                         * with the possibility of jamming (and we
+                         * don't want to build jamming into it because
+                         * then it will run more slowly)
+                         */
+
+                        yy_next_state = yy_try_NUL_trans( yy_current_state );
+
+                        yy_bp = yy___text + YY_MORE_ADJ;
+
+                        if ( yy_next_state )
+                            {
+                                /* consume the NUL */
+                                yy_cp = ++yy_c_buf_p;
+                                yy_current_state = yy_next_state;
+                                goto yy_match;
+                            }
+
+                        else
+                            {
+                                /* % code to do backtracking for compressed tables and set up yy_cp goes here */
 #line 541 "//usr/local/lib/flexskel.cc"
-                goto yy_find_action;
+                                goto yy_find_action;
+                            }
+                    }
+
+                else switch ( yy_get_next_buffer() )
+                        {
+                        case EOB_ACT_END_OF_FILE:
+                        {
+                            yy_did_buffer_switch_on_eof = 0;
+
+                            if ( yywrap() )
+                                {
+                                    /* note: because we've taken care in
+                                     * yy_get_next_buffer() to have set up yy___text,
+                                     * we can now set up yy_c_buf_p so that if some
+                                     * total hoser (like flex itself) wants
+                                     * to call the scanner after we return the
+                                     * YY_NULL, it'll still work - another YY_NULL
+                                     * will get returned.
+                                     */
+                                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
+
+                                    yy_act = YY_STATE_EOF((yy_start - 1) / 2);
+                                    goto do_action;
+                                }
+
+                            else
+                                {
+                                    if ( ! yy_did_buffer_switch_on_eof )
+                                        YY_NEW_FILE;
+                                }
+                        }
+                        break;
+
+                        case EOB_ACT_CONTINUE_SCAN:
+                            yy_c_buf_p = yy___text + yy_amount_of_matched_text;
+
+                            yy_current_state = yy_get_previous_state();
+
+                            yy_cp = yy_c_buf_p;
+                            yy_bp = yy___text + YY_MORE_ADJ;
+                            goto yy_match;
+
+                        case EOB_ACT_LAST_MATCH:
+                            yy_c_buf_p =
+                                &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars];
+
+                            yy_current_state = yy_get_previous_state();
+
+                            yy_cp = yy_c_buf_p;
+                            yy_bp = yy___text + YY_MORE_ADJ;
+                            goto yy_find_action;
+                        }
+                break;
             }
-        }
 
-        else switch ( yy_get_next_buffer() )
-            {
-            case EOB_ACT_END_OF_FILE:
-            {
-                yy_did_buffer_switch_on_eof = 0;
-
-                if ( yywrap() )
-                {
-                    /* note: because we've taken care in
-                     * yy_get_next_buffer() to have set up yy___text,
-                     * we can now set up yy_c_buf_p so that if some
-                     * total hoser (like flex itself) wants
-                     * to call the scanner after we return the
-                     * YY_NULL, it'll still work - another YY_NULL
-                     * will get returned.
-                     */
-                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
-
-                    yy_act = YY_STATE_EOF((yy_start - 1) / 2);
-                    goto do_action;
-                }
-
-                else
-                {
-                    if ( ! yy_did_buffer_switch_on_eof )
-                        YY_NEW_FILE;
-                }
-            }
-            break;
-
-            case EOB_ACT_CONTINUE_SCAN:
-                yy_c_buf_p = yy___text + yy_amount_of_matched_text;
-
-                yy_current_state = yy_get_previous_state();
-
-                yy_cp = yy_c_buf_p;
-                yy_bp = yy___text + YY_MORE_ADJ;
-                goto yy_match;
-
-            case EOB_ACT_LAST_MATCH:
-                yy_c_buf_p =
-                    &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars];
-
-                yy_current_state = yy_get_previous_state();
-
-                yy_cp = yy_c_buf_p;
-                yy_bp = yy___text + YY_MORE_ADJ;
-                goto yy_find_action;
-            }
-        break;
-    }
-
-    default:
+            default:
 #if YY_SSLScanner_DEBUG != 0
 #ifndef YY_SSLScanner_IOSTREAM
-        fprintf(yy___stderr , "action # %d\n", yy_act );
+                fprintf(yy___stderr , "action # %d\n", yy_act );
 #else
-        yy___stderr <<"action # "<<(int)yy_act<<endl;
+                yy___stderr <<"action # "<<(int)yy_act<<endl;
 #endif
 #endif
-        YY_FATAL_ERROR(
-            "fatal flex scanner internal error--no action found" );
+                YY_FATAL_ERROR(
+                    "fatal flex scanner internal error--no action found" );
+            }
     }
-}
 yyterminate();/* avoid the no return value error message on MS-C7/dos */
 }
 
@@ -1756,34 +1773,34 @@ int YY_SSLScanner_CLASS::yy_get_next_buffer()
         yy_n_chars = 0;
 
     else
-    {
-        int num_to_read = YY_SSLScanner_CURRENT_BUFFER->yy_buf_size - number_to_move - 1;
+        {
+            int num_to_read = YY_SSLScanner_CURRENT_BUFFER->yy_buf_size - number_to_move - 1;
 
-        if ( num_to_read > YY_READ_BUF_SIZE )
-            num_to_read = YY_READ_BUF_SIZE;
+            if ( num_to_read > YY_READ_BUF_SIZE )
+                num_to_read = YY_READ_BUF_SIZE;
 
-        else if ( num_to_read <= 0 )
-            YY_FATAL_ERROR( "fatal error - scanner input buffer overflow" );
+            else if ( num_to_read <= 0 )
+                YY_FATAL_ERROR( "fatal error - scanner input buffer overflow" );
 
-        /* read in more data */
-        YY_INPUT( (&YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move]),
-                  yy_n_chars, num_to_read );
-    }
+            /* read in more data */
+            YY_INPUT( (&YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move]),
+                      yy_n_chars, num_to_read );
+        }
 
     if ( yy_n_chars == 0 )
-    {
-        if ( number_to_move - YY_MORE_ADJ == 1 )
         {
-            ret_val = EOB_ACT_END_OF_FILE;
-            YY_SSLScanner_CURRENT_BUFFER->yy_eof_status = EOF_DONE;
-        }
+            if ( number_to_move - YY_MORE_ADJ == 1 )
+                {
+                    ret_val = EOB_ACT_END_OF_FILE;
+                    YY_SSLScanner_CURRENT_BUFFER->yy_eof_status = EOF_DONE;
+                }
 
-        else
-        {
-            ret_val = EOB_ACT_LAST_MATCH;
-            YY_SSLScanner_CURRENT_BUFFER->yy_eof_status = EOF_PENDING;
+            else
+                {
+                    ret_val = EOB_ACT_LAST_MATCH;
+                    YY_SSLScanner_CURRENT_BUFFER->yy_eof_status = EOF_PENDING;
+                }
         }
-    }
 
     else
         ret_val = EOB_ACT_CONTINUE_SCAN;
@@ -1826,19 +1843,19 @@ long YY_SSLScanner_CLASS::yy_get_previous_state_()
 #line 717 "//usr/local/lib/flexskel.cc"
 
     for ( yy_cp = yy___text + YY_MORE_ADJ; yy_cp < yy_c_buf_p; ++yy_cp )
-    {
-        /* % code to find the next state goes here */
-        register YY_CHAR yy_c = (*yy_cp ? yy_ec[*yy_cp] : 1);
-        while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
         {
-            yy_current_state = yy_def[yy_current_state];
-            if ( yy_current_state >= 336 )
-                yy_c = yy_meta[yy_c];
-        }
-        yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-        *yy_state_ptr++ = yy_current_state;
+            /* % code to find the next state goes here */
+            register YY_CHAR yy_c = (*yy_cp ? yy_ec[*yy_cp] : 1);
+            while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
+                {
+                    yy_current_state = yy_def[yy_current_state];
+                    if ( yy_current_state >= 336 )
+                        yy_c = yy_meta[yy_c];
+                }
+            yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+            *yy_state_ptr++ = yy_current_state;
 #line 721 "//usr/local/lib/flexskel.cc"
-    }
+        }
 
 #ifndef YY_USE_CLASS
     return ( yy_current_state );
@@ -1875,11 +1892,11 @@ long YY_SSLScanner_CLASS::yy_try_NUL_trans_(long yy_current_state_)
 
     register YY_CHAR yy_c = 1;
     while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
-    {
-        yy_current_state = yy_def[yy_current_state];
-        if ( yy_current_state >= 336 )
-            yy_c = yy_meta[yy_c];
-    }
+        {
+            yy_current_state = yy_def[yy_current_state];
+            if ( yy_current_state >= 336 )
+                yy_c = yy_meta[yy_c];
+        }
     yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
     *yy_state_ptr++ = yy_current_state;
     yy_is_jam = (yy_current_state == 335);
@@ -1911,23 +1928,24 @@ void YY_SSLScanner_CLASS::yyunput( YY_SSLScanner_CHAR c, YY_SSLScanner_CHAR *yy_
     *yy_cp = yy_hold_char;
 
     if ( yy_cp < YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf + 2 )
-    {   /* need to shift things up to make room */
-        register int number_to_move = yy_n_chars + 2; /* +2 for EOB chars */
-        register YY_SSLScanner_CHAR *dest =
-            &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[YY_SSLScanner_CURRENT_BUFFER->yy_buf_size + 2];
-        register YY_SSLScanner_CHAR *source =
-            &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move];
+        {
+            /* need to shift things up to make room */
+            register int number_to_move = yy_n_chars + 2; /* +2 for EOB chars */
+            register YY_SSLScanner_CHAR *dest =
+                &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[YY_SSLScanner_CURRENT_BUFFER->yy_buf_size + 2];
+            register YY_SSLScanner_CHAR *source =
+                &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[number_to_move];
 
-        while ( source > YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf )
-            *--dest = *--source;
+            while ( source > YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf )
+                *--dest = *--source;
 
-        yy_cp += dest - source;
-        yy_bp += dest - source;
-        yy_n_chars = YY_SSLScanner_CURRENT_BUFFER->yy_buf_size;
+            yy_cp += dest - source;
+            yy_bp += dest - source;
+            yy_n_chars = YY_SSLScanner_CURRENT_BUFFER->yy_buf_size;
 
-        if ( yy_cp < YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf + 2 )
-            YY_FATAL_ERROR( "flex scanner push-back overflow" );
-    }
+            if ( yy_cp < YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf + 2 )
+                YY_FATAL_ERROR( "flex scanner push-back overflow" );
+        }
 
     if ( yy_cp > yy_bp && yy_cp[-1] == '\n' )
         yy_cp[-2] = '\n';
@@ -1956,60 +1974,61 @@ int YY_SSLScanner_CLASS::input()
     *yy_cp = yy_hold_char;
 
     if ( *yy_c_buf_p == YY_END_OF_BUFFER_CHAR )
-    {
-        /* yy_c_buf_p now points to the character we want to return.
-         * If this occurs *before* the EOB characters, then it's a
-         * valid NUL; if not, then we've hit the end of the buffer.
-         */
-        if ( yy_c_buf_p < &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
-            /* this was really a NUL */
-            *yy_c_buf_p = '\0';
+        {
+            /* yy_c_buf_p now points to the character we want to return.
+             * If this occurs *before* the EOB characters, then it's a
+             * valid NUL; if not, then we've hit the end of the buffer.
+             */
+            if ( yy_c_buf_p < &YY_SSLScanner_CURRENT_BUFFER->yy_ch_buf[yy_n_chars] )
+                /* this was really a NUL */
+                *yy_c_buf_p = '\0';
 
-        else
-        {   /* need more input */
-            yy___text = yy_c_buf_p;
-            ++yy_c_buf_p;
-
-            switch ( yy_get_next_buffer() )
-            {
-            case EOB_ACT_END_OF_FILE:
-            {
-                if ( yywrap() )
+            else
                 {
-                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
-                    return ( EOF );
+                    /* need more input */
+                    yy___text = yy_c_buf_p;
+                    ++yy_c_buf_p;
+
+                    switch ( yy_get_next_buffer() )
+                        {
+                        case EOB_ACT_END_OF_FILE:
+                        {
+                            if ( yywrap() )
+                                {
+                                    yy_c_buf_p = yy___text + YY_MORE_ADJ;
+                                    return ( EOF );
+                                }
+
+                            YY_NEW_FILE;
+#ifndef YY_USE_CLASS
+#ifdef __cplusplus
+                            return ( yyinput() );
+#else
+                            return ( input() );
+#endif
+#else
+                            return ( input() );
+#endif
+                        }
+                        break;
+
+                        case EOB_ACT_CONTINUE_SCAN:
+                            yy_c_buf_p = yy___text + YY_MORE_ADJ;
+                            break;
+
+                        case EOB_ACT_LAST_MATCH:
+#ifndef YY_USE_CLASS
+#ifdef __cplusplus
+                            YY_FATAL_ERROR( "unexpected last match in yyinput()" );
+#else
+                            YY_FATAL_ERROR( "unexpected last match in input()" );
+#endif
+#else
+                            YY_FATAL_ERROR( "unexpected last match in YY_SSLScanner_CLASS::input()" );
+#endif
+                        }
                 }
-
-                YY_NEW_FILE;
-#ifndef YY_USE_CLASS
-#ifdef __cplusplus
-                return ( yyinput() );
-#else
-                return ( input() );
-#endif
-#else
-                return ( input() );
-#endif
-            }
-            break;
-
-            case EOB_ACT_CONTINUE_SCAN:
-                yy_c_buf_p = yy___text + YY_MORE_ADJ;
-                break;
-
-            case EOB_ACT_LAST_MATCH:
-#ifndef YY_USE_CLASS
-#ifdef __cplusplus
-                YY_FATAL_ERROR( "unexpected last match in yyinput()" );
-#else
-                YY_FATAL_ERROR( "unexpected last match in input()" );
-#endif
-#else
-                YY_FATAL_ERROR( "unexpected last match in YY_SSLScanner_CLASS::input()" );
-#endif
-            }
         }
-    }
 
     c = *yy_c_buf_p;
     yy_hold_char = *++yy_c_buf_p;
@@ -2051,12 +2070,12 @@ void YY_SSLScanner_CLASS::YY_SSLScanner_SWITCH_TO_BUFFER( YY_BUFFER_STATE new_bu
         return;
 
     if ( YY_SSLScanner_CURRENT_BUFFER )
-    {
-        /* flush out information for old buffer */
-        *yy_c_buf_p = yy_hold_char;
-        YY_SSLScanner_CURRENT_BUFFER->yy_buf_pos = yy_c_buf_p;
-        YY_SSLScanner_CURRENT_BUFFER->yy_n_chars = yy_n_chars;
-    }
+        {
+            /* flush out information for old buffer */
+            *yy_c_buf_p = yy_hold_char;
+            YY_SSLScanner_CURRENT_BUFFER->yy_buf_pos = yy_c_buf_p;
+            YY_SSLScanner_CURRENT_BUFFER->yy_n_chars = yy_n_chars;
+        }
 
     YY_SSLScanner_CURRENT_BUFFER = new_buffer;
     YY_SSLScanner_LOAD_BUFFER_STATE();

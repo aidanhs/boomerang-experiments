@@ -1,13 +1,16 @@
 char gca[5] = {2, 4, 6, 8, 10};
-void mid(char ca[]) {
+void mid(char ca[])
+{
     printf("Middle elment is %d\n", ca[2]);
 }
 
-void fst(char ca[]) {
+void fst(char ca[])
+{
     printf("First element is %d\n", ca[10]);
 }
 
-int main() {
+int main()
+{
     int i, sum = 0;
     mid(gca);
     fst(gca - 10);		// Pass the address of the "-10th" element

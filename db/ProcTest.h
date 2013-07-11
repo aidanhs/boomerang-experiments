@@ -16,7 +16,8 @@
 #include "proc.h"
 #include "prog.h"
 
-class ProcTest : public CppUnit::TestCase {
+class ProcTest : public CppUnit::TestCase
+{
 protected:
     Proc*  m_proc;
 

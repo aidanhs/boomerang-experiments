@@ -72,7 +72,8 @@ typedef std::map<ADDRESS, PBB, std::less<ADDRESS> >	  MAPBB;
  * Control Flow Graph class. Contains all the BasicBlock objects for a procedure.  These BBs contain all the RTLs for
  * the procedure, so by traversing the Cfg, one traverses the whole procedure.
  *============================================================================*/
-class Cfg {
+class Cfg
+{
     /*
      * Pointer to the UserProc object that contains this CFG object
      */
@@ -149,7 +150,8 @@ public:
     /*
      * Get the number of BBs
      */
-    unsigned	getNumBBs() {
+    unsigned	getNumBBs()
+    {
         return m_listBB.size();
     }
 
@@ -217,10 +219,12 @@ public:
      * An alternative to the above is to use begin() and end():
      */
     typedef		BB_IT iterator;
-    iterator	begin() {
+    iterator	begin()
+    {
         return m_listBB.begin();
     }
-    iterator	end()	 {
+    iterator	end()
+    {
         return m_listBB.end();
     }
 
@@ -387,7 +391,8 @@ public:
     std::vector<PBB> m_vectorBB; // faster access
 
     /* return a bb given an address */
-    PBB			bbForAddr(ADDRESS addr) {
+    PBB			bbForAddr(ADDRESS addr)
+    {
         return m_mapBB[addr];
     }
 
@@ -451,10 +456,12 @@ public:
     /*
      * Get the entry-point or exit BB
      */
-    PBB			getEntryBB() {
+    PBB			getEntryBB()
+    {
         return entryBB;
     }
-    PBB			getExitBB()	 {
+    PBB			getExitBB()
+    {
         return exitBB;
     }
 
@@ -494,7 +501,8 @@ public:
     {
         return bImplicitsDone;
     }
-    void	setImplicitsDone() {					// Call when implicits have been created
+    void	setImplicitsDone()  					// Call when implicits have been created
+    {
         bImplicitsDone = true;
     }
 
@@ -504,7 +512,8 @@ public:
     void removeUsedGlobals(std::set<Global*> &unusedGlobals);
 
 protected:
-    void	addBB(PBB bb) {
+    void	addBB(PBB bb)
+    {
         m_listBB.push_back(bb);
     }
     friend class XMLProgParser;

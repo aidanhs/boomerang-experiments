@@ -40,7 +40,8 @@
 class SSLScanner;
 
 #line 66 "sslparser.y"
-typedef union {
+typedef union
+{
     Exp*			exp;
     char*			str;
     int				num;

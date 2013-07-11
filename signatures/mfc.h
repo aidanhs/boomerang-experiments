@@ -3,33 +3,39 @@
 
 /* Must include windows.h before this file */
 
-typedef struct {
+typedef struct
+{
     void*	vt;
 } CObject;
 
-typedef struct {
+typedef struct
+{
     void	*vt;
     char	filler[28];
     void*	hWnd;
 } CWnd;
 
-typedef struct {
+typedef struct
+{
     CObject obj;
     HGDIOBJ m_hObject;
 } CGdiObject;
 
-typedef struct {
+typedef struct
+{
     CGdiObject g;
 } CBrush;
 
-typedef struct {
+typedef struct
+{
     CObject obj;
     HDC		m_hDC;
     HDC		m_attribDC;
     BOOL	bIsPrinting;
 } CDC;
 
-typedef struct	{
+typedef struct
+{
     CDC		cdc;
     HWND	m_hWnd;
     PAINTSTRUCT m_ps;
@@ -63,7 +69,8 @@ void CDC_FillRect(CDC* this, RECT* r, CBrush* br);
 void ??0CString@@QAE@PBD@Z(CString* this, char* sz);   /* CString
 											constructor with C string */
 void ??1CString@@QAE@XZ(CString* this);			 /* CString destructor */
-typedef struct {
+typedef struct
+{
     CObject obj;		/* More... */
 } CObList;
 int ?FindIndex@CObList@@QBEPAU__POSITION@@H@Z(	/* CObList::FindIndex */

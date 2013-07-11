@@ -44,19 +44,22 @@ Win32BinaryFile::Win32BinaryFile() : m_pFileName(0)
 
 Win32BinaryFile::~Win32BinaryFile()
 {
-    for (int i=0; i < m_iNumSections; i++) {
-        if (m_pSections[i].pSectionName)
-            delete [] m_pSections[i].pSectionName;
-    }
+    for (int i=0; i < m_iNumSections; i++)
+        {
+            if (m_pSections[i].pSectionName)
+                delete [] m_pSections[i].pSectionName;
+        }
     if (m_pSections) delete [] m_pSections;
 }
 
-bool Win32BinaryFile::Open(const char* sName) {
+bool Win32BinaryFile::Open(const char* sName)
+{
     //return Load(sName) != 0;
     return false;
 }
 
-void Win32BinaryFile::Close() {
+void Win32BinaryFile::Close()
+{
     UnLoad();
 }
 
@@ -81,7 +84,8 @@ ADDRESS Win32BinaryFile::GetEntryPoint()
 // to WinMain (with no other calls inbetween)
 // This pattern should work for "old style" and "new style" PE executables,
 // as well as console mode PE files
-ADDRESS Win32BinaryFile::GetMainEntryPoint() {
+ADDRESS Win32BinaryFile::GetMainEntryPoint()
+{
     ADDRESS aMain = GetAddressByName ("main", true);
     if (aMain != NO_ADDRESS)
         return aMain;
@@ -107,84 +111,98 @@ ADDRESS Win32BinaryFile::GetMainEntryPoint() {
         return LMMH(m_pPEHeader->EntrypointRVA) + LMMH(m_pPEHeader->Imagebase);
 
     gap = 0xF0000000;	// Large positive number (in case no ordinary calls)
-    while (p < lim) {
-        op1 = *(unsigned char*)(p + base);
-        op2 = *(unsigned char*)(p + base + 1);
-        if (op1 == 0xE8) {
-            // An ordinary call; this could be to winmain/main
-            lastOrdCall = p;
-            gap = 0;
-        }
-        else if (op1 == 0xFF && op2 == 0x15) { // Opcode FF 15 is indirect call
-            // Get the 4 byte address from the instruction
-            addr = LMMH(*(p + base + 2));
+    while (p < lim)
+        {
+            op1 = *(unsigned char*)(p + base);
+            op2 = *(unsigned char*)(p + base + 1);
+            if (op1 == 0xE8)
+                {
+                    // An ordinary call; this could be to winmain/main
+                    lastOrdCall = p;
+                    gap = 0;
+                }
+            else if (op1 == 0xFF && op2 == 0x15)   // Opcode FF 15 is indirect call
+                {
+                    // Get the 4 byte address from the instruction
+                    addr = LMMH(*(p + base + 2));
 //			const char *c = dlprocptrs[addr].c_str();
 //printf("Checking %x finding %s\n", addr, c);
-            if (dlprocptrs[addr] == "exit") {
-                if (gap <= 10) {
-                    // This is it. The instruction at lastOrdCall is (win)main
-                    addr = LMMH(*(lastOrdCall + base + 1));
-                    addr += lastOrdCall + 5;	// Addr is dest of call
+                    if (dlprocptrs[addr] == "exit")
+                        {
+                            if (gap <= 10)
+                                {
+                                    // This is it. The instruction at lastOrdCall is (win)main
+                                    addr = LMMH(*(lastOrdCall + base + 1));
+                                    addr += lastOrdCall + 5;	// Addr is dest of call
 //printf("*** MAIN AT 0x%x ***\n", addr);
-                    return addr + LMMH(m_pPEHeader->Imagebase);
+                                    return addr + LMMH(m_pPEHeader->Imagebase);
+                                }
+                        }
                 }
-            }
+            int size = microX86Dis(p + base);
+            if (size == 0x40)
+                {
+                    fprintf(stderr, "Warning! Microdisassembler out of step at offset 0x%x\n", p);
+                    size = 1;
+                }
+            p += size;
+            gap++;
         }
-        int size = microX86Dis(p + base);
-        if (size == 0x40) {
-            fprintf(stderr, "Warning! Microdisassembler out of step at offset 0x%x\n", p);
-            size = 1;
-        }
-        p += size;
-        gap++;
-    }
 
     // For VS.NET, need an o,d favourite: find a call with three pushes in the first 100 instuctions
     int count = 100;
     int pushes = 0;
     p = LMMH(m_pPEHeader->EntrypointRVA);
-    while (count > 0) {
-        op1 = *(unsigned char*)(p + base);
-        if (op1 == 0xE8) {			// CALL opcode
-            if (pushes == 3) {
-                // Get the offset
-                int off = LMMH(*(p + base + 1));
-                unsigned dest = (unsigned)p + 5 + off;
-                // Check for a jump there
-                op1 = *(unsigned char*)(dest + base);
-                if (op1 == 0xE9) {
-                    // Follow that jump
-                    off = LMMH(*(dest + base + 1));
-                    dest = dest + 5 + off;
+    while (count > 0)
+        {
+            op1 = *(unsigned char*)(p + base);
+            if (op1 == 0xE8)  			// CALL opcode
+                {
+                    if (pushes == 3)
+                        {
+                            // Get the offset
+                            int off = LMMH(*(p + base + 1));
+                            unsigned dest = (unsigned)p + 5 + off;
+                            // Check for a jump there
+                            op1 = *(unsigned char*)(dest + base);
+                            if (op1 == 0xE9)
+                                {
+                                    // Follow that jump
+                                    off = LMMH(*(dest + base + 1));
+                                    dest = dest + 5 + off;
+                                }
+                            return dest + LMMH(m_pPEHeader->Imagebase);
+                        }
+                    else
+                        pushes = 0;			// Assume pushes don't accumulate over calls
                 }
-                return dest + LMMH(m_pPEHeader->Imagebase);
-            } else
-                pushes = 0;			// Assume pushes don't accumulate over calls
-        }
-        else if (op1 >= 0x50 && op1 <= 0x57)	// PUSH opcode
-            pushes++;
-        else if (op1 == 0xFF) {
-            // FF 35 is push m[K]
-            op2 = *(unsigned char*)(p + 1 + base);
-            if (op2 == 0x35)
+            else if (op1 >= 0x50 && op1 <= 0x57)	// PUSH opcode
                 pushes++;
-        }
-        else if (op1 == 0xE9) {
-            // Follow the jump
-            int off = LMMH(*(p + base + 1));
-            p += off+5;
-        }
+            else if (op1 == 0xFF)
+                {
+                    // FF 35 is push m[K]
+                    op2 = *(unsigned char*)(p + 1 + base);
+                    if (op2 == 0x35)
+                        pushes++;
+                }
+            else if (op1 == 0xE9)
+                {
+                    // Follow the jump
+                    int off = LMMH(*(p + base + 1));
+                    p += off+5;
+                }
 
 
-        int size = microX86Dis(p + base);
-        if (size == 0x40) {
-            fprintf(stderr, "Warning! Microdisassembler out of step at offset 0x%x\n", p);
-            size = 1;
+            int size = microX86Dis(p + base);
+            if (size == 0x40)
+                {
+                    fprintf(stderr, "Warning! Microdisassembler out of step at offset 0x%x\n", p);
+                    size = 1;
+                }
+            p += size;
+            if (p >= textSize)
+                break;
         }
-        p += size;
-        if (p >= textSize)
-            break;
-    }
 
     return NO_ADDRESS;
 }
@@ -208,26 +226,29 @@ bool Win32BinaryFile::RealLoad(const char* sName)
 
     base = (char *)malloc(LMMH(tmphdr.ImageSize));
 
-    if (!base) {
-        fprintf(stderr,"Cannot allocate memory for copy of image\n");
-        return false;
-    }
+    if (!base)
+        {
+            fprintf(stderr,"Cannot allocate memory for copy of image\n");
+            return false;
+        }
 
     fseek(fp, 0, SEEK_SET);
 
     fread(base, LMMH(tmphdr.HeaderSize), 1, fp);
 
     m_pHeader = (Header *)base;
-    if (m_pHeader->sigLo!='M' || m_pHeader->sigHi!='Z') {
-        fprintf(stderr,"error loading file %s, bad magic\n", sName);
-        return false;
-    }
+    if (m_pHeader->sigLo!='M' || m_pHeader->sigHi!='Z')
+        {
+            fprintf(stderr,"error loading file %s, bad magic\n", sName);
+            return false;
+        }
 
     m_pPEHeader = (PEHeader *)(base+peoff);
-    if (m_pPEHeader->sigLo!='P' || m_pPEHeader->sigHi!='E') {
-        fprintf(stderr,"error loading file %s, bad PE magic\n", sName);
-        return false;
-    }
+    if (m_pPEHeader->sigLo!='P' || m_pPEHeader->sigHi!='E')
+        {
+            fprintf(stderr,"error loading file %s, bad PE magic\n", sName);
+            return false;
+        }
 
 //printf("Image Base %08X, real base %p\n", LMMH(m_pPEHeader->Imagebase), base);
 
@@ -235,63 +256,69 @@ bool Win32BinaryFile::RealLoad(const char* sName)
     m_iNumSections = LH(&m_pPEHeader->numObjects);
     m_pSections = new SectionInfo[m_iNumSections];
     SectionInfo *reloc = NULL;
-    for (int i=0; i<m_iNumSections; i++, o++) {
-        //	printf("%.8s RVA=%08X Offset=%08X size=%08X\n", (char*)o->ObjectName, LMMH(o->RVA),
-        //	LMMH(o->PhysicalOffset), LMMH(o->VirtualSize));
-        m_pSections[i].pSectionName = new char[9];
-        strncpy(m_pSections[i].pSectionName, o->ObjectName, 8);
-        if (!strcmp(m_pSections[i].pSectionName, ".reloc"))
-            reloc = &m_pSections[i];
-        m_pSections[i].uNativeAddr=(ADDRESS)(LMMH(o->RVA) + LMMH(m_pPEHeader->Imagebase));
-        m_pSections[i].uHostAddr=(ADDRESS)(LMMH(o->RVA) + base);
-        m_pSections[i].uSectionSize=LMMH(o->VirtualSize);
-        DWord Flags = LMMH(o->Flags);
-        m_pSections[i].bBss		= Flags&0x80?1:0;
-        m_pSections[i].bCode		= Flags&0x20?1:0;
-        m_pSections[i].bData		= Flags&0x40?1:0;
-        m_pSections[i].bReadOnly	= Flags&0x80000000?0:1;
-        fseek(fp, LMMH(o->PhysicalOffset), SEEK_SET);
-        memset(base + LMMH(o->RVA), 0, LMMH(o->VirtualSize));
-        fread(base + LMMH(o->RVA), LMMH(o->PhysicalSize), 1, fp);
-    }
+    for (int i=0; i<m_iNumSections; i++, o++)
+        {
+            //	printf("%.8s RVA=%08X Offset=%08X size=%08X\n", (char*)o->ObjectName, LMMH(o->RVA),
+            //	LMMH(o->PhysicalOffset), LMMH(o->VirtualSize));
+            m_pSections[i].pSectionName = new char[9];
+            strncpy(m_pSections[i].pSectionName, o->ObjectName, 8);
+            if (!strcmp(m_pSections[i].pSectionName, ".reloc"))
+                reloc = &m_pSections[i];
+            m_pSections[i].uNativeAddr=(ADDRESS)(LMMH(o->RVA) + LMMH(m_pPEHeader->Imagebase));
+            m_pSections[i].uHostAddr=(ADDRESS)(LMMH(o->RVA) + base);
+            m_pSections[i].uSectionSize=LMMH(o->VirtualSize);
+            DWord Flags = LMMH(o->Flags);
+            m_pSections[i].bBss		= Flags&0x80?1:0;
+            m_pSections[i].bCode		= Flags&0x20?1:0;
+            m_pSections[i].bData		= Flags&0x40?1:0;
+            m_pSections[i].bReadOnly	= Flags&0x80000000?0:1;
+            fseek(fp, LMMH(o->PhysicalOffset), SEEK_SET);
+            memset(base + LMMH(o->RVA), 0, LMMH(o->VirtualSize));
+            fread(base + LMMH(o->RVA), LMMH(o->PhysicalSize), 1, fp);
+        }
 
     // Add the Import Address Table entries to the symbol table
     PEImportDtor* id = (PEImportDtor*) (LMMH(m_pPEHeader->ImportTableRVA) + base);
-    while (id->name != 0) {
-        char* dllName = LMMH(id->name) + base;
-        unsigned thunk = id->originalFirstThunk ? id->originalFirstThunk : id->firstThunk;
-        unsigned* iat = (unsigned*)(LMMH(thunk) + base);
-        unsigned iatEntry = LMMH(*iat);
-        ADDRESS paddr = LMMH(id->firstThunk) + LMMH(m_pPEHeader->Imagebase);
-        while (iatEntry) {
-            if (iatEntry >> 31) {
-                // This is an ordinal number (stupid idea)
-                std::ostringstream ost;
-                std::string nodots(dllName);
-                int len = nodots.size();
-                for (int j=0; j < len; j++)
-                    if (nodots[j] == '.')
-                        nodots[j] = '_';	// Dots can't be in identifiers
-                ost << nodots << "_" << (iatEntry & 0x7FFFFFFF);
-                dlprocptrs[paddr] = ost.str();
-                // printf("Added symbol %s value %x\n", ost.str().c_str(), paddr);
-            } else {
-                // Normal case (IMAGE_IMPORT_BY_NAME). Skip the useless hint (2 bytes)
-                std::string name((const char*)(iatEntry+2+base));
-                dlprocptrs[paddr] = name;
-                if ((unsigned)paddr != (unsigned)iat - (unsigned)base + LMMH(m_pPEHeader->Imagebase))
-                    dlprocptrs[(unsigned)iat - (unsigned)base + LMMH(m_pPEHeader->Imagebase)]
-                        = std::string("old_") + name; // add both possibilities
-                // printf("Added symbol %s value %x\n", name.c_str(), paddr);
-                // printf("Also added old_%s value %x\n", name.c_str(), (int)iat - (int)base +
-                // 		LMMH(m_pPEHeader->Imagebase));
-            }
-            iat++;
-            iatEntry = LMMH(*iat);
-            paddr+=4;
+    while (id->name != 0)
+        {
+            char* dllName = LMMH(id->name) + base;
+            unsigned thunk = id->originalFirstThunk ? id->originalFirstThunk : id->firstThunk;
+            unsigned* iat = (unsigned*)(LMMH(thunk) + base);
+            unsigned iatEntry = LMMH(*iat);
+            ADDRESS paddr = LMMH(id->firstThunk) + LMMH(m_pPEHeader->Imagebase);
+            while (iatEntry)
+                {
+                    if (iatEntry >> 31)
+                        {
+                            // This is an ordinal number (stupid idea)
+                            std::ostringstream ost;
+                            std::string nodots(dllName);
+                            int len = nodots.size();
+                            for (int j=0; j < len; j++)
+                                if (nodots[j] == '.')
+                                    nodots[j] = '_';	// Dots can't be in identifiers
+                            ost << nodots << "_" << (iatEntry & 0x7FFFFFFF);
+                            dlprocptrs[paddr] = ost.str();
+                            // printf("Added symbol %s value %x\n", ost.str().c_str(), paddr);
+                        }
+                    else
+                        {
+                            // Normal case (IMAGE_IMPORT_BY_NAME). Skip the useless hint (2 bytes)
+                            std::string name((const char*)(iatEntry+2+base));
+                            dlprocptrs[paddr] = name;
+                            if ((unsigned)paddr != (unsigned)iat - (unsigned)base + LMMH(m_pPEHeader->Imagebase))
+                                dlprocptrs[(unsigned)iat - (unsigned)base + LMMH(m_pPEHeader->Imagebase)]
+                                    = std::string("old_") + name; // add both possibilities
+                            // printf("Added symbol %s value %x\n", name.c_str(), paddr);
+                            // printf("Also added old_%s value %x\n", name.c_str(), (int)iat - (int)base +
+                            // 		LMMH(m_pPEHeader->Imagebase));
+                        }
+                    iat++;
+                    iatEntry = LMMH(*iat);
+                    paddr+=4;
+                }
+            id++;
         }
-        id++;
-    }
 
     // Was hoping that _main or main would turn up here for Borland console mode programs. No such luck.
     // I think IDA Pro must find it by a combination of FLIRT and some pattern matching
@@ -301,11 +328,12 @@ bool Win32BinaryFile::RealLoad(const char* sName)
 
     // Give the entry point a symbol
     ADDRESS entry = GetMainEntryPoint();
-    if (entry != NO_ADDRESS) {
-        std::map<ADDRESS, std::string>::iterator it = dlprocptrs.find(entry);
-        if (it == dlprocptrs.end())
-            dlprocptrs[entry] = "main";
-    }
+    if (entry != NO_ADDRESS)
+        {
+            std::map<ADDRESS, std::string>::iterator it = dlprocptrs.find(entry);
+            if (it == dlprocptrs.end())
+                dlprocptrs[entry] = "main";
+        }
 
     // Give a name to any jumps you find to these import entries
     // NOTE: VERY early MSVC specific!! Temporary till we can think of a better way.
@@ -325,28 +353,30 @@ bool Win32BinaryFile::RealLoad(const char* sName)
 // with sometimes two static libs in a row. So keep going until there is about 0x60 bytes with no match.
 // Note: slight chance of coming across a misaligned match; probability is about 1/65536 times dozens
 // in 2^32 ~= 10^-13
-void Win32BinaryFile::findJumps(ADDRESS curr) {
+void Win32BinaryFile::findJumps(ADDRESS curr)
+{
     int cnt = 0;			// Count of bytes with no match
     SectionInfo* sec = GetSectionInfoByName(".text");
     if (sec == NULL) sec = GetSectionInfoByName("CODE");
     assert(sec);
     // Add to native addr to get host:
     int delta = sec->uHostAddr - sec->uNativeAddr;
-    while (cnt < 0x60) {	// Max of 0x60 bytes without a match
-        curr -= 2;			// Has to be on 2-byte boundary
-        cnt += 2;
-        if (LH(delta+curr) != 0xFF + (0x25<<8)) continue;
-        ADDRESS operand = LMMH2(delta+curr+2);
-        std::map<ADDRESS, std::string>::iterator it;
-        it = dlprocptrs.find(operand);
-        if (it == dlprocptrs.end()) continue;
-        std::string sym = it->second;
-        dlprocptrs[operand] = "__imp_" + sym;
-        dlprocptrs[curr] = sym;		 // Add new entry
-        // std::cerr << "Added " << sym << " at 0x" << std::hex << curr << "\n";
-        curr -= 4;					// Next match is at least 4+2 bytes away
-        cnt = 0;
-    }
+    while (cnt < 0x60)  	// Max of 0x60 bytes without a match
+        {
+            curr -= 2;			// Has to be on 2-byte boundary
+            cnt += 2;
+            if (LH(delta+curr) != 0xFF + (0x25<<8)) continue;
+            ADDRESS operand = LMMH2(delta+curr+2);
+            std::map<ADDRESS, std::string>::iterator it;
+            it = dlprocptrs.find(operand);
+            if (it == dlprocptrs.end()) continue;
+            std::string sym = it->second;
+            dlprocptrs[operand] = "__imp_" + sym;
+            dlprocptrs[curr] = sym;		 // Add new entry
+            // std::cerr << "Added " << sym << " at 0x" << std::hex << curr << "\n";
+            curr -= 4;					// Next match is at least 4+2 bytes away
+            cnt = 0;
+        }
 }
 
 // Clean up and unload the binary image
@@ -372,16 +402,18 @@ char* Win32BinaryFile::SymbolByAddress(ADDRESS dwAddr)
 }
 
 ADDRESS Win32BinaryFile::GetAddressByName(const char* pName,
-        bool bNoTypeOK /* = false */) {
+        bool bNoTypeOK /* = false */)
+{
     // This is "looking up the wrong way" and hopefully is uncommon
     // Use linear search
     std::map<ADDRESS, std::string>::iterator it = dlprocptrs.begin();
-    while (it != dlprocptrs.end()) {
-        // std::cerr << "Symbol: " << it->second.c_str() << " at 0x" << std::hex << it->first << "\n";
-        if (strcmp(it->second.c_str(), pName) == 0)
-            return it->first;
-        it++;
-    }
+    while (it != dlprocptrs.end())
+        {
+            // std::cerr << "Symbol: " << it->second.c_str() << " at 0x" << std::hex << it->first << "\n";
+            if (strcmp(it->second.c_str(), pName) == 0)
+                return it->first;
+            it++;
+        }
     return NO_ADDRESS;
 }
 
@@ -396,14 +428,16 @@ bool Win32BinaryFile::DisplayDetails(const char* fileName, FILE* f
     return false;
 }
 
-int Win32BinaryFile::win32Read2(short* ps) const {
+int Win32BinaryFile::win32Read2(short* ps) const
+{
     unsigned char* p = (unsigned char*)ps;
     // Little endian
     int n = (int)(p[0] + (p[1] << 8));
     return n;
 }
 
-int Win32BinaryFile::win32Read4(int* pi) const {
+int Win32BinaryFile::win32Read4(int* pi) const
+{
     short* p = (short*)pi;
     int n1 = win32Read2(p);
     int n2 = win32Read2(p+1);
@@ -412,7 +446,8 @@ int Win32BinaryFile::win32Read4(int* pi) const {
 }
 
 // Read 2 bytes from given native address
-int Win32BinaryFile::readNative1(ADDRESS nat) {
+int Win32BinaryFile::readNative1(ADDRESS nat)
+{
     PSectionInfo si = GetSectionInfoByAddr(nat);
     if (si == 0)
         si = GetSectionInfo(0);
@@ -421,7 +456,8 @@ int Win32BinaryFile::readNative1(ADDRESS nat) {
 }
 
 // Read 2 bytes from given native address
-int Win32BinaryFile::readNative2(ADDRESS nat) {
+int Win32BinaryFile::readNative2(ADDRESS nat)
+{
     PSectionInfo si = GetSectionInfoByAddr(nat);
     if (si == 0) return 0;
     ADDRESS host = si->uHostAddr - si->uNativeAddr + nat;
@@ -430,7 +466,8 @@ int Win32BinaryFile::readNative2(ADDRESS nat) {
 }
 
 // Read 4 bytes from given native address
-int Win32BinaryFile::readNative4(ADDRESS nat) {
+int Win32BinaryFile::readNative4(ADDRESS nat)
+{
     PSectionInfo si = GetSectionInfoByAddr(nat);
     if (si == 0) return 0;
     ADDRESS host = si->uHostAddr - si->uNativeAddr + nat;
@@ -439,7 +476,8 @@ int Win32BinaryFile::readNative4(ADDRESS nat) {
 }
 
 // Read 8 bytes from given native address
-QWord Win32BinaryFile::readNative8(ADDRESS nat) {
+QWord Win32BinaryFile::readNative8(ADDRESS nat)
+{
     int raw[2];
 #ifdef WORDS_BIGENDIAN		// This tests the host machine
     // Source and host are different endianness
@@ -454,7 +492,8 @@ QWord Win32BinaryFile::readNative8(ADDRESS nat) {
 }
 
 // Read 4 bytes as a float
-float Win32BinaryFile::readNativeFloat4(ADDRESS nat) {
+float Win32BinaryFile::readNativeFloat4(ADDRESS nat)
+{
     int raw = readNative4(nat);
     // Ugh! gcc says that reinterpreting from int to float is invalid!!
     //return reinterpret_cast<float>(raw);		// Note: cast, not convert!!
@@ -462,7 +501,8 @@ float Win32BinaryFile::readNativeFloat4(ADDRESS nat) {
 }
 
 // Read 8 bytes as a float
-double Win32BinaryFile::readNativeFloat8(ADDRESS nat) {
+double Win32BinaryFile::readNativeFloat8(ADDRESS nat)
+{
     int raw[2];
 #ifdef WORDS_BIGENDIAN		// This tests the host machine
     // Source and host are different endianness

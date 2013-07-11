@@ -4,7 +4,8 @@
 
 #include "type.h"
 
-class DfaTest : public CppUnit::TestCase {
+class DfaTest : public CppUnit::TestCase
+{
 protected:
 
 public:

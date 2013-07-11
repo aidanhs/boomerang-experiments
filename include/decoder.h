@@ -34,7 +34,8 @@ class Prog;
 // These are the instruction classes defined in "A Transformational Approach to
 // Binary Translation of Delayed Branches" for SPARC instructions.
 // Extended for HPPA. Ignored by machines with no delay slots
-enum ICLASS {
+enum ICLASS
+{
     NCT,			// Non Control Transfer
     SD,				// Static Delayed
     DD,				// Dynamic Delayed
@@ -54,7 +55,8 @@ enum ICLASS {
  * calling the decoder. This prevents excessive use of confusing
  * reference parameters.
  *============================================================================*/
-struct DecodeResult {
+struct DecodeResult
+{
     /*
      * Resets all the fields to their default values.
      */
@@ -99,7 +101,8 @@ struct DecodeResult {
 /*==============================================================================
  * The NJMCDecoder class is a class that contains NJMC generated decoding methods.
  *============================================================================*/
-class NJMCDecoder {
+class NJMCDecoder
+{
 protected:
     Prog*		prog;
 public:
@@ -120,14 +123,16 @@ public:
      */
     virtual int decodeAssemblyInstruction (ADDRESS pc, int delta) = 0;
 
-    RTLInstDict& getRTLDict() {
+    RTLInstDict& getRTLDict()
+    {
         return RTLDict;
     }
 
     void		computedJump(const char* name, int size, Exp* dest, ADDRESS pc, std::list<Statement*>* stmts,
                              DecodeResult& result);
 
-    Prog*		getProg() {
+    Prog*		getProg()
+    {
         return prog;
     }
 

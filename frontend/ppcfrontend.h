@@ -24,7 +24,8 @@ public:
      */
     virtual ~PPCFrontEnd();
 
-    virtual platform getFrontEndId() {
+    virtual platform getFrontEndId()
+    {
         return PLAT_PPC;
     }
 

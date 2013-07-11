@@ -35,7 +35,8 @@
 suite->addTest(new CppUnit::TestCaller<FrontPentTest> ("FrontPentTest", \
 	&FrontPentTest::name, *this))
 
-void FrontPentTest::registerTests(CppUnit::TestSuite* suite) {
+void FrontPentTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(test1);
     MYTEST(test2);
     MYTEST(test3);
@@ -56,7 +57,8 @@ int FrontPentTest::countTestCases () const
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void FrontPentTest::setUp () {
+void FrontPentTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -66,14 +68,16 @@ void FrontPentTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void FrontPentTest::tearDown () {
+void FrontPentTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		FrontPentTest::test1
  * OVERVIEW:		Test decoding some pentium instructions
  *============================================================================*/
-void FrontPentTest::test1 () {
+void FrontPentTest::test1 ()
+{
     std::ostringstream ost;
 
     BinaryFile *pBF = BinaryFileFactory::Load(HELLO_PENT);
@@ -116,7 +120,8 @@ void FrontPentTest::test1 () {
     delete pBF;
 }
 
-void FrontPentTest::test2() {
+void FrontPentTest::test2()
+{
     DecodeResult inst;
     std::string expected;
 
@@ -153,7 +158,8 @@ void FrontPentTest::test2() {
     delete pBF;
 }
 
-void FrontPentTest::test3() {
+void FrontPentTest::test3()
+{
     DecodeResult inst;
     std::string expected;
 
@@ -186,7 +192,8 @@ void FrontPentTest::test3() {
     delete pBF;
 }
 
-void FrontPentTest::testBranch() {
+void FrontPentTest::testBranch()
+{
     DecodeResult inst;
     std::string expected;
 
@@ -228,7 +235,8 @@ void FrontPentTest::testBranch() {
     delete pBF;
 }
 
-void FrontPentTest::testFindMain() {
+void FrontPentTest::testFindMain()
+{
     // Test the algorithm for finding main, when there is a call to __libc_start_main
     // Also tests the loader hack
     BinaryFile* pBF = BinaryFileFactory::Load(FEDORA2_TRUE);

@@ -57,12 +57,12 @@ PSectionInfo BinaryFile::GetSectionInfo(int idx) const
 int BinaryFile::GetSectionIndexByName(const char* sName)
 {
     for (int i=0; i < m_iNumSections; i++)
-    {
-        if (strcmp(m_pSections[i].pSectionName, sName) == 0)
         {
-            return i;
+            if (strcmp(m_pSections[i].pSectionName, sName) == 0)
+                {
+                    return i;
+                }
         }
-    }
     return -1;
 }
 
@@ -70,15 +70,15 @@ PSectionInfo BinaryFile::GetSectionInfoByAddr(ADDRESS uEntry) const
 {
     PSectionInfo pSect;
     for (int i=0; i < m_iNumSections; i++)
-    {
-        pSect = &m_pSections[i];
-        if ((uEntry >= pSect->uNativeAddr) &&
-                (uEntry < pSect->uNativeAddr + pSect->uSectionSize))
         {
-            // We have the right section
-            return pSect;
+            pSect = &m_pSections[i];
+            if ((uEntry >= pSect->uNativeAddr) &&
+                    (uEntry < pSect->uNativeAddr + pSect->uSectionSize))
+                {
+                    // We have the right section
+                    return pSect;
+                }
         }
-    }
     // Failed to find the address
     return NULL;
 }
@@ -187,27 +187,30 @@ void BinaryFile::getTextLimits()
     limitTextLow = 0xFFFFFFFF;
     limitTextHigh = 0;
     textDelta = 0;
-    for (int i=0; i < n; i++) {
-        SectionInfo* pSect = GetSectionInfo(i);
-        if (pSect->bCode) {
-            // The .plt section is an anomaly. It's code, but we never want to
-            // decode it, and in Sparc ELF files, it's actually in the data
-            // segment (so it can be modified). For now, we make this ugly
-            // exception
-            if (strcmp(".plt", pSect->pSectionName) == 0)
-                continue;
-            if (pSect->uNativeAddr < limitTextLow)
-                limitTextLow = pSect->uNativeAddr;
-            ADDRESS hiAddress = pSect->uNativeAddr + pSect->uSectionSize;
-            if (hiAddress > limitTextHigh)
-                limitTextHigh = hiAddress;
-            if (textDelta == 0)
-                textDelta = pSect->uHostAddr - pSect->uNativeAddr;
-            else {
-                if (textDelta != (int) (pSect->uHostAddr - pSect->uNativeAddr))
-                    std::cerr << "warning: textDelta different for section " << pSect->pSectionName <<
-                              " (ignoring).\n";
-            }
+    for (int i=0; i < n; i++)
+        {
+            SectionInfo* pSect = GetSectionInfo(i);
+            if (pSect->bCode)
+                {
+                    // The .plt section is an anomaly. It's code, but we never want to
+                    // decode it, and in Sparc ELF files, it's actually in the data
+                    // segment (so it can be modified). For now, we make this ugly
+                    // exception
+                    if (strcmp(".plt", pSect->pSectionName) == 0)
+                        continue;
+                    if (pSect->uNativeAddr < limitTextLow)
+                        limitTextLow = pSect->uNativeAddr;
+                    ADDRESS hiAddress = pSect->uNativeAddr + pSect->uSectionSize;
+                    if (hiAddress > limitTextHigh)
+                        limitTextHigh = hiAddress;
+                    if (textDelta == 0)
+                        textDelta = pSect->uHostAddr - pSect->uNativeAddr;
+                    else
+                        {
+                            if (textDelta != (int) (pSect->uHostAddr - pSect->uNativeAddr))
+                                std::cerr << "warning: textDelta different for section " << pSect->pSectionName <<
+                                          " (ignoring).\n";
+                        }
+                }
         }
-    }
 }

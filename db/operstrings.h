@@ -3,7 +3,8 @@
 // so don't be surprised if the strings become out of date.
 char* operStringsMinusOne[] = {"opWild"			// Hope this single element array coalesces with operStrings
                               };												// Catches opWild, which has the value -1
-char* operStrings[] = {
+char* operStrings[] =
+{
     "opPlus",				// Binary addition
     "opMinus",				// Binary subtraction
     "opMult",				// Multiplication

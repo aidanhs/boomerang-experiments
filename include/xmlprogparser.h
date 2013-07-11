@@ -37,7 +37,8 @@ class RTL;
 
 #define MAX_STACK 1024
 
-typedef struct {
+typedef struct
+{
     const char *tag;
     void (XMLProgParser::*start_proc)(const char**);
     void (XMLProgParser::*end_proc)(Context *c, int e);

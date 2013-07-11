@@ -121,10 +121,11 @@ BOOL CSaveLoadDialog::OnInitDialog()
 
     prog.setWatcher(this);
 
-    if ((m_thread = CreateThread(NULL, 0, dosaveload, (LPVOID)m_save, 0, &m_thread_id)) == NULL) {
-        MessageBox("Cannot create new thread to load/save file", "Error", MB_ICONEXCLAMATION|MB_OK);
-        return IDCANCEL;
-    }
+    if ((m_thread = CreateThread(NULL, 0, dosaveload, (LPVOID)m_save, 0, &m_thread_id)) == NULL)
+        {
+            MessageBox("Cannot create new thread to load/save file", "Error", MB_ICONEXCLAMATION|MB_OK);
+            return IDCANCEL;
+        }
 
     return TRUE;  // return TRUE unless you set the focus to a control
     // EXCEPTION: OCX Property Pages should return FALSE

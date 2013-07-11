@@ -50,7 +50,8 @@ class Signature;
 class Statement;
 
 // Control flow types
-enum INSTTYPE {
+enum INSTTYPE
+{
     I_UNCOND,				 // unconditional branch
     I_COND,					 // conditional branch
     I_N_COND,				 // case branch
@@ -61,7 +62,8 @@ enum INSTTYPE {
 };
 
 // Put the target queue logic into this small class
-class TargetQueue {
+class TargetQueue
+{
     std::queue<ADDRESS> targets;
 
 public:
@@ -104,7 +106,8 @@ public:
 
 typedef bool (*PHELPER)(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
-class FrontEnd {
+class FrontEnd
+{
 protected:
 //	  const int NOP_SIZE;			// Size of a no-op instruction (in bytes)
 //	  const int NOP_INST;			// No-op pattern
@@ -130,12 +133,14 @@ public:
     static FrontEnd*	Load(const char *fname, Prog* prog);
 
     // Add a symbol to the loader
-    void		AddSymbol(ADDRESS addr, const char *nam) {
+    void		AddSymbol(ADDRESS addr, const char *nam)
+    {
         pBF->AddSymbol(addr, nam);
     }
 
     // Add a "hint" that an instruction at the given address references a named global
-    void		addRefHint(ADDRESS addr, const char *nam) {
+    void		addRefHint(ADDRESS addr, const char *nam)
+    {
         refHints[addr] = nam;
     }
 
@@ -155,7 +160,8 @@ public:
 
     bool		isWin32();					// Is this a win32 frontend?
 
-    BinaryFile 	*getBinaryFile() {
+    BinaryFile 	*getBinaryFile()
+    {
         return pBF;
     }
 
@@ -169,7 +175,8 @@ public:
     /*
      * Accessor function to get the decoder.
      */
-    NJMCDecoder *getDecoder() {
+    NJMCDecoder *getDecoder()
+    {
         return decoder;
     }
 
@@ -218,7 +225,8 @@ public:
      * Given the dest of a call, determine if this is a machine specific helper function with special semantics.
      * If so, return true and set the semantics in lrtl.  addr is the native address of the call instruction
      */
-    virtual bool		helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl) {
+    virtual bool		helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl)
+    {
         return false;
     }
 
@@ -259,7 +267,8 @@ public:
      * decoded indirect call statements in a new decode following analysis of such instructions. The CFG is
      * incomplete in these cases, and needs to be restarted from scratch
      */
-    void		addDecodedRtl(ADDRESS a, RTL* rtl) {
+    void		addDecodedRtl(ADDRESS a, RTL* rtl)
+    {
         previouslyDecoded[a] = rtl;
     }
 
