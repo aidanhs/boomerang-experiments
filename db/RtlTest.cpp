@@ -36,7 +36,8 @@
 suite->addTest(new CppUnit::TestCaller<RtlTest> ("RtlTest", \
     &RtlTest::name, *this))
 
-void RtlTest::registerTests(CppUnit::TestSuite* suite) {
+void RtlTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(testAppend);
     MYTEST(testClone);
     MYTEST(testVisitor);
@@ -55,7 +56,8 @@ int RtlTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void RtlTest::setUp () {
+void RtlTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -65,14 +67,16 @@ void RtlTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void RtlTest::tearDown () {
+void RtlTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        RtlTest::testAppend
  * OVERVIEW:        Test appendExp and printing of RTLs
  *============================================================================*/
-void RtlTest::testAppend () {
+void RtlTest::testAppend ()
+{
     AssignExp* e = new AssignExp(32,
                                  new Unary(opRegOf, new Const(8)),
                                  new Binary(opPlus,
@@ -95,7 +99,8 @@ void RtlTest::testAppend () {
  * FUNCTION:        RtlTest::testClone
  * OVERVIEW:        Test constructor from list of expressions; cloning of RTLs
  *============================================================================*/
-void RtlTest::testClone () {
+void RtlTest::testClone ()
+{
     AssignExp* e1 = new AssignExp(32,
                                   new Unary(opRegOf, new Const(8)),
                                   new Binary(opPlus,
@@ -127,42 +132,52 @@ void RtlTest::testClone () {
  * NOTES:           Stub class to test.
  *============================================================================*/
 
-class RTLVisitorStub : public RTLVisitor {
+class RTLVisitorStub : public RTLVisitor
+{
 public:
     bool a, b, c, d, e, f, g;
 
-    void clear() {
+    void clear()
+    {
         a = b = c = d = e = f = false;
     }
-    RTLVisitorStub() {
+    RTLVisitorStub()
+    {
         clear();
     }
     virtual ~RTLVisitorStub() { }
-    virtual bool visit(RTL *rtl)        {
+    virtual bool visit(RTL *rtl)
+    {
         a = true;
         return false;
     }
-    virtual bool visit(HLJump *rtl)     {
+    virtual bool visit(HLJump *rtl)
+    {
         b = true;
         return false;
     }
-    virtual bool visit(HLJcond *rtl)    {
+    virtual bool visit(HLJcond *rtl)
+    {
         c = true;
         return false;
     }
-    virtual bool visit(HLNwayJump *rtl) {
+    virtual bool visit(HLNwayJump *rtl)
+    {
         d = true;
         return false;
     }
-    virtual bool visit(HLCall *rtl)     {
+    virtual bool visit(HLCall *rtl)
+    {
         e = true;
         return false;
     }
-    virtual bool visit(HLReturn *rtl)   {
+    virtual bool visit(HLReturn *rtl)
+    {
         f = true;
         return false;
     }
-    virtual bool visit(HLScond *rtl)    {
+    virtual bool visit(HLScond *rtl)
+    {
         g = true;
         return false;
     }
@@ -228,7 +243,8 @@ void RtlTest::testVisitor()
  * FUNCTION:        RtlTest::testIsCompare
  * OVERVIEW:        Test the isCompare function
  *============================================================================*/
-void RtlTest::testIsCompare () {
+void RtlTest::testIsCompare ()
+{
     BinaryFile *pBF = BinaryFile::Load(SWITCH_SPARC);
     CPPUNIT_ASSERT(pBF != 0);
     CPPUNIT_ASSERT(pBF->GetMachine() == MACHINE_SPARC);

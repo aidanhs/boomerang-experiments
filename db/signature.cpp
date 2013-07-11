@@ -41,9 +41,11 @@
 
 #define VERBOSE Boomerang::get()->vFlag
 
-namespace CallingConvention {
+namespace CallingConvention
+{
 
-class Win32Signature : public Signature {
+class Win32Signature : public Signature
+{
 public:
     Win32Signature(const char *nam);
     Win32Signature(Signature &old);
@@ -65,8 +67,10 @@ public:
     virtual Exp *getStackWildcard();
 };
 
-namespace StdC {
-class PentiumSignature : public Signature {
+namespace StdC
+{
+class PentiumSignature : public Signature
+{
 public:
     PentiumSignature(const char *nam);
     PentiumSignature(Signature &old);
@@ -88,7 +92,8 @@ public:
     virtual Exp *getStackWildcard();
 };
 
-class SparcSignature : public Signature {
+class SparcSignature : public Signature
+{
 public:
     SparcSignature(const char *nam);
     SparcSignature(Signature &old);
@@ -141,49 +146,57 @@ bool CallingConvention::Win32Signature::qualified(UserProc *p, Signature &candid
     std::string feid(p->getProg()->getFrontEndId());
     if (feid != "pentium" || !p->getProg()->isWin32()) return false;
 
-    if (VERBOSE) {
-        std::cerr << "consider promotion to stdc win32 signature for " << p->getName() << std::endl;
-    }
+    if (VERBOSE)
+        {
+            std::cerr << "consider promotion to stdc win32 signature for " << p->getName() << std::endl;
+        }
 
     bool gotcorrectret1 = false;
     bool gotcorrectret2 = false;
     StatementList internal;
     p->getInternalStatements(internal);
     StmtListIter it;
-    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
-        AssignExp *e = dynamic_cast<AssignExp*>(s);
-        if (e == NULL) continue;
-        if (VERBOSE) {
-            std::cerr << "internal: ";
-            e->print(std::cerr);
-            std::cerr << std::endl;
+    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it))
+        {
+            AssignExp *e = dynamic_cast<AssignExp*>(s);
+            if (e == NULL) continue;
+            if (VERBOSE)
+                {
+                    std::cerr << "internal: ";
+                    e->print(std::cerr);
+                    std::cerr << std::endl;
+                }
+            if (e->getLeft()->getOper() == opPC)
+                {
+                    if (e->getRight()->isMemOf() &&
+                            e->getRight()->getSubExp1()->isRegOf() &&
+                            e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                            ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                            == 28)
+                        {
+                            if (VERBOSE)
+                                std::cerr << "got pc = m[r[28]]" << std::endl;
+                            gotcorrectret1 = true;
+                        }
+                }
+            else if (e->getLeft()->isRegOf() &&
+                     e->getLeft()->getSubExp1()->isIntConst() &&
+                     ((Const*)e->getLeft()->getSubExp1())->getInt() == 28)
+                {
+                    if (e->getRight()->getOper() == opPlus &&
+                            e->getRight()->getSubExp1()->isRegOf() &&
+                            e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                            ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                            == 28 &&
+                            e->getRight()->getSubExp2()->isIntConst() &&
+                            ((Const*)e->getRight()->getSubExp2())->getInt() == 4)
+                        {
+                            if (VERBOSE)
+                                std::cerr << "got r[28] = r[28] + 4" << std::endl;
+                            gotcorrectret2 = true;
+                        }
+                }
         }
-        if (e->getLeft()->getOper() == opPC) {
-            if (e->getRight()->isMemOf() &&
-                    e->getRight()->getSubExp1()->isRegOf() &&
-                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-                    == 28) {
-                if (VERBOSE)
-                    std::cerr << "got pc = m[r[28]]" << std::endl;
-                gotcorrectret1 = true;
-            }
-        } else if (e->getLeft()->isRegOf() &&
-                   e->getLeft()->getSubExp1()->isIntConst() &&
-                   ((Const*)e->getLeft()->getSubExp1())->getInt() == 28) {
-            if (e->getRight()->getOper() == opPlus &&
-                    e->getRight()->getSubExp1()->isRegOf() &&
-                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-                    == 28 &&
-                    e->getRight()->getSubExp2()->isIntConst() &&
-                    ((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
-                if (VERBOSE)
-                    std::cerr << "got r[28] = r[28] + 4" << std::endl;
-                gotcorrectret2 = true;
-            }
-        }
-    }
     return gotcorrectret1 && gotcorrectret2;
 }
 
@@ -195,23 +208,24 @@ bool CallingConvention::Win32Signature::serialize(std::ostream &ouf, int len)
     saveValue(ouf, type, false);
     saveString(ouf, name);
 
-    for (unsigned i = 0; i < params.size(); i++) {
-        saveFID(ouf, FID_SIGNATURE_PARAM);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    for (unsigned i = 0; i < params.size(); i++)
+        {
+            saveFID(ouf, FID_SIGNATURE_PARAM);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        saveString(ouf, params[i]->getName());
-        int l;
-        params[i]->getType()->serialize(ouf, l);
+            saveString(ouf, params[i]->getName());
+            int l;
+            params[i]->getType()->serialize(ouf, l);
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
     saveFID(ouf, FID_SIGNATURE_END);
     saveLen(ouf, 0);
@@ -222,22 +236,23 @@ bool CallingConvention::Win32Signature::serialize(std::ostream &ouf, int len)
 
 bool CallingConvention::Win32Signature::deserialize_fid(std::istream &inf, int fid)
 {
-    switch(fid) {
-    case FID_SIGNATURE_PARAM:
-    {
-        std::streampos pos = inf.tellg();
-        int len = loadLen(inf);
-        std::string nam;
-        loadString(inf, nam);
-        Type *t = Type::deserialize(inf);
-        params.push_back(new Parameter(t, nam.c_str()));
-        std::streampos now = inf.tellg();
-        assert(len == (now - pos));
-    }
-    break;
-    default:
-        return Signature::deserialize_fid(inf, fid);
-    }
+    switch(fid)
+        {
+        case FID_SIGNATURE_PARAM:
+        {
+            std::streampos pos = inf.tellg();
+            int len = loadLen(inf);
+            std::string nam;
+            loadString(inf, nam);
+            Type *t = Type::deserialize(inf);
+            params.push_back(new Parameter(t, nam.c_str()));
+            std::streampos now = inf.tellg();
+            assert(len == (now - pos));
+        }
+        break;
+        default:
+            return Signature::deserialize_fid(inf, fid);
+        }
     return true;
 }
 
@@ -322,35 +337,41 @@ bool CallingConvention::StdC::PentiumSignature::qualified(UserProc *p, Signature
     p->getInternalStatements(internal);
     internal.append(p->getCFG()->getReachExit());
     StmtListIter it;
-    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
-        AssignExp *e = dynamic_cast<AssignExp*>(s);
-        if (e == NULL) continue;
-        if (e->getLeft()->getOper() == opPC) {
-            if (e->getRight()->isMemOf() &&
-                    e->getRight()->getSubExp1()->isRegOf() &&
-                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-                    == 28) {
-                if (VERBOSE)
-                    std::cerr << "got pc = m[r[28]]" << std::endl;
-                gotcorrectret1 = true;
-            }
-        } else if (e->getLeft()->isRegOf() &&
-                   e->getLeft()->getSubExp1()->isIntConst() &&
-                   ((Const*)e->getLeft()->getSubExp1())->getInt() == 28) {
-            if (e->getRight()->getOper() == opPlus &&
-                    e->getRight()->getSubExp1()->isRegOf() &&
-                    e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
-                    ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
-                    == 28 &&
-                    e->getRight()->getSubExp2()->isIntConst() &&
-                    ((Const*)e->getRight()->getSubExp2())->getInt() == 4) {
-                if (VERBOSE)
-                    std::cerr << "got r[28] = r[28] + 4" << std::endl;
-                gotcorrectret2 = true;
-            }
+    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it))
+        {
+            AssignExp *e = dynamic_cast<AssignExp*>(s);
+            if (e == NULL) continue;
+            if (e->getLeft()->getOper() == opPC)
+                {
+                    if (e->getRight()->isMemOf() &&
+                            e->getRight()->getSubExp1()->isRegOf() &&
+                            e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                            ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                            == 28)
+                        {
+                            if (VERBOSE)
+                                std::cerr << "got pc = m[r[28]]" << std::endl;
+                            gotcorrectret1 = true;
+                        }
+                }
+            else if (e->getLeft()->isRegOf() &&
+                     e->getLeft()->getSubExp1()->isIntConst() &&
+                     ((Const*)e->getLeft()->getSubExp1())->getInt() == 28)
+                {
+                    if (e->getRight()->getOper() == opPlus &&
+                            e->getRight()->getSubExp1()->isRegOf() &&
+                            e->getRight()->getSubExp1()->getSubExp1()->isIntConst() &&
+                            ((Const*)e->getRight()->getSubExp1()->getSubExp1())->getInt()
+                            == 28 &&
+                            e->getRight()->getSubExp2()->isIntConst() &&
+                            ((Const*)e->getRight()->getSubExp2())->getInt() == 4)
+                        {
+                            if (VERBOSE)
+                                std::cerr << "got r[28] = r[28] + 4" << std::endl;
+                            gotcorrectret2 = true;
+                        }
+                }
         }
-    }
     return gotcorrectret1 && gotcorrectret2;
 }
 
@@ -362,23 +383,24 @@ bool CallingConvention::StdC::PentiumSignature::serialize(std::ostream &ouf, int
     saveValue(ouf, type, false);
     saveString(ouf, name);
 
-    for (unsigned i = 0; i < params.size(); i++) {
-        saveFID(ouf, FID_SIGNATURE_PARAM);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    for (unsigned i = 0; i < params.size(); i++)
+        {
+            saveFID(ouf, FID_SIGNATURE_PARAM);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        saveString(ouf, params[i]->getName());
-        int l;
-        params[i]->getType()->serialize(ouf, l);
+            saveString(ouf, params[i]->getName());
+            int l;
+            params[i]->getType()->serialize(ouf, l);
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
     saveFID(ouf, FID_SIGNATURE_END);
     saveLen(ouf, 0);
@@ -389,22 +411,23 @@ bool CallingConvention::StdC::PentiumSignature::serialize(std::ostream &ouf, int
 
 bool CallingConvention::StdC::PentiumSignature::deserialize_fid(std::istream &inf, int fid)
 {
-    switch(fid) {
-    case FID_SIGNATURE_PARAM:
-    {
-        std::streampos pos = inf.tellg();
-        int len = loadLen(inf);
-        std::string nam;
-        loadString(inf, nam);
-        Type *t = Type::deserialize(inf);
-        params.push_back(new Parameter(t, nam.c_str()));
-        std::streampos now = inf.tellg();
-        assert(len == (now - pos));
-    }
-    break;
-    default:
-        return Signature::deserialize_fid(inf, fid);
-    }
+    switch(fid)
+        {
+        case FID_SIGNATURE_PARAM:
+        {
+            std::streampos pos = inf.tellg();
+            int len = loadLen(inf);
+            std::string nam;
+            loadString(inf, nam);
+            Type *t = Type::deserialize(inf);
+            params.push_back(new Parameter(t, nam.c_str()));
+            std::streampos now = inf.tellg();
+            assert(len == (now - pos));
+        }
+        break;
+        default:
+            return Signature::deserialize_fid(inf, fid);
+        }
     return true;
 }
 
@@ -442,7 +465,8 @@ Exp *CallingConvention::StdC::PentiumSignature::getStackWildcard()
 
 
 void CallingConvention::StdC::PentiumSignature::getInternalStatements(
-    StatementList &stmts) {
+    StatementList &stmts)
+{
     static AssignExp *fixpc = new AssignExp(new Terminal(opPC),
                                             new Unary(opMemOf, new Unary(opRegOf, new Const(28))));
     static AssignExp *fixesp = new AssignExp(new Unary(opRegOf, new Const(28)),
@@ -453,14 +477,17 @@ void CallingConvention::StdC::PentiumSignature::getInternalStatements(
 }
 
 CallingConvention::StdC::SparcSignature::SparcSignature(const char *nam) :
-    Signature(nam) {
+    Signature(nam)
+{
 }
 
 CallingConvention::StdC::SparcSignature::SparcSignature(Signature &old) :
-    Signature(old) {
+    Signature(old)
+{
 }
 
-Signature *CallingConvention::StdC::SparcSignature::clone() {
+Signature *CallingConvention::StdC::SparcSignature::clone()
+{
     SparcSignature *n = new SparcSignature(name.c_str());
     n->params = params;
     n->ellipsis = ellipsis;
@@ -469,13 +496,15 @@ Signature *CallingConvention::StdC::SparcSignature::clone() {
 }
 
 bool CallingConvention::StdC::SparcSignature::operator==(const Signature&
-        other) const {
+        other) const
+{
     // TODO
     return false;
 }
 
 bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p,
-        Signature &candidate) {
+        Signature &candidate)
+{
     std::string feid(p->getProg()->getFrontEndId());
     if (feid != "sparc") return false;
 
@@ -485,30 +514,32 @@ bool CallingConvention::StdC::SparcSignature::qualified(UserProc *p,
 }
 
 bool CallingConvention::StdC::SparcSignature::serialize(std::ostream &ouf,
-        int len) {
+        int len)
+{
     std::streampos st = ouf.tellp();
 
     char type = 0;
     saveValue(ouf, type, false);
     saveString(ouf, name);
 
-    for (unsigned i = 0; i < params.size(); i++) {
-        saveFID(ouf, FID_SIGNATURE_PARAM);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    for (unsigned i = 0; i < params.size(); i++)
+        {
+            saveFID(ouf, FID_SIGNATURE_PARAM);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        saveString(ouf, params[i]->getName());
-        int l;
-        params[i]->getType()->serialize(ouf, l);
+            saveString(ouf, params[i]->getName());
+            int l;
+            params[i]->getType()->serialize(ouf, l);
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
     saveFID(ouf, FID_SIGNATURE_END);
     saveLen(ouf, 0);
@@ -519,22 +550,23 @@ bool CallingConvention::StdC::SparcSignature::serialize(std::ostream &ouf,
 
 bool CallingConvention::StdC::SparcSignature::deserialize_fid(std::istream &inf, int fid)
 {
-    switch(fid) {
-    case FID_SIGNATURE_PARAM:
-    {
-        std::streampos pos = inf.tellg();
-        int len = loadLen(inf);
-        std::string nam;
-        loadString(inf, nam);
-        Type *t = Type::deserialize(inf);
-        params.push_back(new Parameter(t, nam.c_str()));
-        std::streampos now = inf.tellg();
-        assert(len == (now - pos));
-    }
-    break;
-    default:
-        return Signature::deserialize_fid(inf, fid);
-    }
+    switch(fid)
+        {
+        case FID_SIGNATURE_PARAM:
+        {
+            std::streampos pos = inf.tellg();
+            int len = loadLen(inf);
+            std::string nam;
+            loadString(inf, nam);
+            Type *t = Type::deserialize(inf);
+            params.push_back(new Parameter(t, nam.c_str()));
+            std::streampos now = inf.tellg();
+            assert(len == (now - pos));
+        }
+        break;
+        default:
+            return Signature::deserialize_fid(inf, fid);
+        }
     return true;
 }
 
@@ -558,27 +590,29 @@ Exp *CallingConvention::StdC::SparcSignature::getParamExp(int n)
     // and actual parameters are seen in %o0, %o1, ... at the start of the
     // procedure
     // return new Unary(opRegOf, new Const((int)(24 + n)));
-    if (n >= 6) {
-        // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
-        // m[%esp+96], etc.
-        return new Unary(opMemOf,
-                         new Binary(opPlus,
-                                    new Unary(opRegOf, new Const(14)),      // %o6 == %sp
-                                    new Const(92 + (n-6)*4)));
-    }
+    if (n >= 6)
+        {
+            // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
+            // m[%esp+96], etc.
+            return new Unary(opMemOf,
+                             new Binary(opPlus,
+                                        new Unary(opRegOf, new Const(14)),      // %o6 == %sp
+                                        new Const(92 + (n-6)*4)));
+        }
     return new Unary(opRegOf, new Const((int)(8 + n)));
 }
 
 Exp *CallingConvention::StdC::SparcSignature::getArgumentExp(int n)
 {
-    if (n >= 6) {
-        // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
-        // m[%esp+96], etc.
-        return new Unary(opMemOf,
-                         new Binary(opPlus,
-                                    new Unary(opRegOf, new Const(14)),      // %o6 == %sp
-                                    new Const(92 + (n-6)*4)));
-    }
+    if (n >= 6)
+        {
+            // SPARCs pass the seventh and subsequent parameters at m[%sp+92],
+            // m[%esp+96], etc.
+            return new Unary(opMemOf,
+                             new Binary(opPlus,
+                                        new Unary(opRegOf, new Const(14)),      // %o6 == %sp
+                                        new Const(92 + (n-6)*4)));
+        }
     return new Unary(opRegOf, new Const((int)(8 + n)));
 }
 
@@ -625,23 +659,24 @@ bool Signature::serialize(std::ostream &ouf, int len)
     saveValue(ouf, type, false);
     saveString(ouf, name);
 
-    for (unsigned i = 0; i < params.size(); i++) {
-        saveFID(ouf, FID_SIGNATURE_PARAM);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    for (unsigned i = 0; i < params.size(); i++)
+        {
+            saveFID(ouf, FID_SIGNATURE_PARAM);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        saveString(ouf, params[i]->getName());
-        int l;
-        params[i]->getType()->serialize(ouf, l);
+            saveString(ouf, params[i]->getName());
+            int l;
+            params[i]->getType()->serialize(ouf, l);
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
     saveFID(ouf, FID_SIGNATURE_END);
     saveLen(ouf, 0);
@@ -661,20 +696,21 @@ Signature *Signature::deserialize(std::istream &inf)
     std::string nam;
     loadString(inf, nam);
 
-    switch(type) {
-    case 0:
-        sig = new Signature(nam.c_str());
-        break;
-    case 1:
-        sig = new CallingConvention::Win32Signature(nam.c_str());
-        break;
-    case 2:
-        sig = new CallingConvention::StdC::PentiumSignature(nam.c_str());
-        break;
-    case 3:
-        sig = new CallingConvention::StdC::SparcSignature(nam.c_str());
-        break;
-    }
+    switch(type)
+        {
+        case 0:
+            sig = new Signature(nam.c_str());
+            break;
+        case 1:
+            sig = new CallingConvention::Win32Signature(nam.c_str());
+            break;
+        case 2:
+            sig = new CallingConvention::StdC::PentiumSignature(nam.c_str());
+            break;
+        case 3:
+            sig = new CallingConvention::StdC::SparcSignature(nam.c_str());
+            break;
+        }
     assert(sig);
 
     int fid;
@@ -687,22 +723,23 @@ Signature *Signature::deserialize(std::istream &inf)
 
 bool Signature::deserialize_fid(std::istream &inf, int fid)
 {
-    switch(fid) {
-    case FID_SIGNATURE_PARAM:
-    {
-        std::streampos pos = inf.tellg();
-        int len = loadLen(inf);
-        std::string nam;
-        loadString(inf, nam);
-        Type *t = Type::deserialize(inf);
-        params.push_back(new Parameter(t, nam.c_str()));
-        std::streampos now = inf.tellg();
-        assert(len == (now - pos));
-    }
-    break;
-    default:
-        return Signature::deserialize_fid(inf, fid);
-    }
+    switch(fid)
+        {
+        case FID_SIGNATURE_PARAM:
+        {
+            std::streampos pos = inf.tellg();
+            int len = loadLen(inf);
+            std::string nam;
+            loadString(inf, nam);
+            Type *t = Type::deserialize(inf);
+            params.push_back(new Parameter(t, nam.c_str()));
+            std::streampos now = inf.tellg();
+            assert(len == (now - pos));
+        }
+        break;
+        default:
+            return Signature::deserialize_fid(inf, fid);
+        }
     return true;
 }
 
@@ -740,24 +777,28 @@ void Signature::addParameter(const char *nam /*= NULL*/)
 void Signature::addParameter(Type *type, const char *nam /*= NULL*/)
 {
     std::string s;
-    if (nam == NULL) {
-        std::stringstream os;
-        os << "arg" << params.size()+1 << std::ends;
-        s = os.str();
-        nam = s.c_str();
-    }
+    if (nam == NULL)
+        {
+            std::stringstream os;
+            os << "arg" << params.size()+1 << std::ends;
+            s = os.str();
+            nam = s.c_str();
+        }
     addParameter(new Parameter(type, nam));
 }
 
 void Signature::setNumParams(int n)
 {
-    if (n < (int)params.size()) {
-        // truncate
-        params.erase(params.begin() + n, params.end());
-    } else {
-        for (int i = params.size(); i < n; i++)
-            addParameter();
-    }
+    if (n < (int)params.size())
+        {
+            // truncate
+            params.erase(params.begin() + n, params.end());
+        }
+    else
+        {
+            for (int i = params.size(); i < n; i++)
+                addParameter();
+        }
 }
 
 int Signature::getNumParams()
@@ -792,26 +833,29 @@ Exp *Signature::getArgumentExp(int n)
 
 Signature *Signature::promote(UserProc *p)
 {
-    if (CallingConvention::Win32Signature::qualified(p, *this)) {
-        Signature *sig = new CallingConvention::Win32Signature(*this);
-        sig->analyse(p);
-        delete this;
-        return sig;
-    }
+    if (CallingConvention::Win32Signature::qualified(p, *this))
+        {
+            Signature *sig = new CallingConvention::Win32Signature(*this);
+            sig->analyse(p);
+            delete this;
+            return sig;
+        }
 
-    if (CallingConvention::StdC::PentiumSignature::qualified(p, *this)) {
-        Signature *sig = new CallingConvention::StdC::PentiumSignature(*this);
-        sig->analyse(p);
-        delete this;
-        return sig;
-    }
+    if (CallingConvention::StdC::PentiumSignature::qualified(p, *this))
+        {
+            Signature *sig = new CallingConvention::StdC::PentiumSignature(*this);
+            sig->analyse(p);
+            delete this;
+            return sig;
+        }
 
-    if (CallingConvention::StdC::SparcSignature::qualified(p, *this)) {
-        Signature *sig = new CallingConvention::StdC::SparcSignature(*this);
-        sig->analyse(p);
-        delete this;
-        return sig;
-    }
+    if (CallingConvention::StdC::SparcSignature::qualified(p, *this))
+        {
+            Signature *sig = new CallingConvention::StdC::SparcSignature(*this);
+            sig->analyse(p);
+            delete this;
+            return sig;
+        }
 
     return this;
 }
@@ -819,19 +863,23 @@ Signature *Signature::promote(UserProc *p)
 Signature *Signature::instantiate(const char *str, const char *nam)
 {
     std::string s = str;
-    if (s == "-win32-pentium") {
-        return new CallingConvention::Win32Signature(nam);
-    }
-    if (s == "-stdc") {
-        // need platform too
-        assert(false);
-    }
-    if (s == "-stdc-pentium") {
-        return new CallingConvention::StdC::PentiumSignature(nam);
-    }
-    if (s == "-stdc-sparc") {
-        return new CallingConvention::StdC::SparcSignature(nam);
-    }
+    if (s == "-win32-pentium")
+        {
+            return new CallingConvention::Win32Signature(nam);
+        }
+    if (s == "-stdc")
+        {
+            // need platform too
+            assert(false);
+        }
+    if (s == "-stdc-pentium")
+        {
+            return new CallingConvention::StdC::PentiumSignature(nam);
+        }
+    if (s == "-stdc-sparc")
+        {
+            return new CallingConvention::StdC::SparcSignature(nam);
+        }
     std::cerr << "unknown signature: " << s << std::endl;
     // insert other conventions here
     assert(false);
@@ -841,10 +889,11 @@ Signature *Signature::instantiate(const char *str, const char *nam)
 void Signature::print(std::ostream &out)
 {
     out << rettype->getCtype() << " " << name << "(";
-    for (unsigned i = 0; i < params.size(); i++) {
-        out << params[i]->getType()->getCtype() << " " << params[i]->getName();
-        if (i != params.size()-1) out << ", ";
-    }
+    for (unsigned i = 0; i < params.size(); i++)
+        {
+            out << params[i]->getType()->getCtype() << " " << params[i]->getName();
+            if (i != params.size()-1) out << ", ";
+        }
     out << ")" << std::endl;
 }
 
@@ -854,56 +903,64 @@ void Signature::getInternalStatements(StatementList &stmts)
 
 void Signature::analyse(UserProc *p)
 {
-    if (VERBOSE) {
-        std::cerr << "accepted promotion" << std::endl;
-        std::cerr << "searching for creation of return value" << std::endl;
-    }
+    if (VERBOSE)
+        {
+            std::cerr << "accepted promotion" << std::endl;
+            std::cerr << "searching for creation of return value" << std::endl;
+        }
     StatementList internal;
     p->getInternalStatements(internal);
     StmtListIter it;
-    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it)) {
-        if (s->getLeft() && *s->getLeft() == *getReturnExp() &&
-                s->getRight() && !(*s->getLeft() == *s->getRight())) {
-            if (VERBOSE) {
-                std::cerr << "found: ";
-                s->printAsUse(std::cerr);
-                std::cerr << std::endl;
-            }
-            p->eraseInternalStatement(s);
-            p->getCFG()->setReturnVal(s->getRight()->clone());
-            updateParams(p, s);
-            setReturnType(new IntegerType());
+    for (Statement* s = internal.getFirst(it); s; s = internal.getNext(it))
+        {
+            if (s->getLeft() && *s->getLeft() == *getReturnExp() &&
+                    s->getRight() && !(*s->getLeft() == *s->getRight()))
+                {
+                    if (VERBOSE)
+                        {
+                            std::cerr << "found: ";
+                            s->printAsUse(std::cerr);
+                            std::cerr << std::endl;
+                        }
+                    p->eraseInternalStatement(s);
+                    p->getCFG()->setReturnVal(s->getRight()->clone());
+                    updateParams(p, s);
+                    setReturnType(new IntegerType());
+                }
         }
-    }
     StmtSetIter ll;
     StatementSet& lout = p->getCFG()->getReachExit();
-    for (Statement* s = lout.getFirst(ll); s; s = lout.getNext(ll)) {
-        if (s->getLeft() && *s->getLeft() == *getReturnExp()) {
-            if (VERBOSE) {
-                std::cerr << "found: ";
-                s->printAsUse(std::cerr);
-                std::cerr << std::endl;
-            }
-            p->getCFG()->setReturnVal(s->getLeft()->clone());
-            HLCall *call = dynamic_cast<HLCall*>(s);
-            Type *ty = NULL;
-            if (call)
-                ty = call->getLeftType();
-            if (call && ty)
-                setReturnType(ty->clone());
-            else
-                setReturnType(new IntegerType());
+    for (Statement* s = lout.getFirst(ll); s; s = lout.getNext(ll))
+        {
+            if (s->getLeft() && *s->getLeft() == *getReturnExp())
+                {
+                    if (VERBOSE)
+                        {
+                            std::cerr << "found: ";
+                            s->printAsUse(std::cerr);
+                            std::cerr << std::endl;
+                        }
+                    p->getCFG()->setReturnVal(s->getLeft()->clone());
+                    HLCall *call = dynamic_cast<HLCall*>(s);
+                    Type *ty = NULL;
+                    if (call)
+                        ty = call->getLeftType();
+                    if (call && ty)
+                        setReturnType(ty->clone());
+                    else
+                        setReturnType(new IntegerType());
+                }
         }
-    }
     if (VERBOSE)
         std::cerr << "searching for arguments in statements" << std::endl;
     StatementList stmts;
     p->getStatements(stmts);
     StmtListIter si;
-    for (Statement* s = stmts.getFirst(si); s; s = stmts.getNext(si)) {
-        if (VERBOSE) std::cerr << "updateParameters for " << s << std::endl;
-        updateParams(p, s);
-    }
+    for (Statement* s = stmts.getFirst(si); s; s = stmts.getNext(si))
+        {
+            if (VERBOSE) std::cerr << "updateParameters for " << s << std::endl;
+            updateParams(p, s);
+        }
     /*    std::cerr << "searching for arguments in internals" << std::endl;
         internal.clear();
         p->getInternalStatements(internal);
@@ -914,85 +971,100 @@ void Signature::analyse(UserProc *p)
 void Signature::updateParams(UserProc *p, Statement *stmt, bool checkreach)
 {
     int i;
-    if (usesNewParam(p, stmt, checkreach, i)) {
-        int n = getNumParams();
-        setNumParams(i+1);
-        for (; n < getNumParams(); n++) {
-            if (VERBOSE) std::cerr << "found param " << n << std::endl;
-            p->getCFG()->searchAndReplace(getParamExp(n),
-                                          new Unary(opParam, new Const((char *)getParamName(n))));
+    if (usesNewParam(p, stmt, checkreach, i))
+        {
+            int n = getNumParams();
+            setNumParams(i+1);
+            for (; n < getNumParams(); n++)
+                {
+                    if (VERBOSE) std::cerr << "found param " << n << std::endl;
+                    p->getCFG()->searchAndReplace(getParamExp(n),
+                                                  new Unary(opParam, new Const((char *)getParamName(n))));
+                }
         }
-    }
 }
 
 bool Signature::usesNewParam(UserProc *p, Statement *stmt, bool checkreach,
-                             int &n) {
+                             int &n)
+{
     n = getNumParams() - 1;
-    if (VERBOSE) {
-        std::cerr << "searching ";
-        stmt->printAsUse(std::cerr);
-        std::cerr << std::endl;
-    }
+    if (VERBOSE)
+        {
+            std::cerr << "searching ";
+            stmt->printAsUse(std::cerr);
+            std::cerr << std::endl;
+        }
     StatementSet reachin;
     stmt->getReachIn(reachin);
     for (int i = getNumParams(); i < 10; i++)
-        if (stmt->usesExp(getParamExp(i))) {
-            bool ok = true;
-            if (checkreach) {
-                bool hasDef = false;
-                StmtSetIter it1;
-                for (Statement* s1 = reachin.getFirst(it1); s1;
-                        s1 = reachin.getNext(it1)) {
-                    if (*s1->getLeft() == *getParamExp(i)) {
-                        hasDef = true;
-                        break;
+        if (stmt->usesExp(getParamExp(i)))
+            {
+                bool ok = true;
+                if (checkreach)
+                    {
+                        bool hasDef = false;
+                        StmtSetIter it1;
+                        for (Statement* s1 = reachin.getFirst(it1); s1;
+                                s1 = reachin.getNext(it1))
+                            {
+                                if (*s1->getLeft() == *getParamExp(i))
+                                    {
+                                        hasDef = true;
+                                        break;
+                                    }
+                            }
+                        if (hasDef) ok = false;
                     }
-                }
-                if (hasDef) ok = false;
+                if (ok)
+                    {
+                        n = i;
+                    }
             }
-            if (ok) {
-                n = i;
-            }
-        }
     return n > (getNumParams() - 1);
 }
 
 // Special for Mike: find the location where the first outgoing (actual)
 // parameter is conventionally held
-Exp* Signature::getFirstArgLoc(Prog* prog) {
+Exp* Signature::getFirstArgLoc(Prog* prog)
+{
     MACHINE mach = prog->getMachine();
-    switch (mach) {
-    case MACHINE_SPARC: {
-        CallingConvention::StdC::SparcSignature sig("");
-        return sig.getArgumentExp(0);
-    }
-    case MACHINE_PENTIUM: {
-        //CallingConvention::StdC::PentiumSignature sig("");
-        //Exp* e = sig.getArgumentExp(0);
-        // For now, need to work around how the above appears to be the
-        // wrong thing!
-        Exp* e = new Unary(opMemOf, new Unary(opRegOf, new Const(28)));
-        return e;
-    }
-    default:
-        std::cerr << "Signature::getFirstArgLoc: machine not handled\n";
-        assert(0);
-    }
+    switch (mach)
+        {
+        case MACHINE_SPARC:
+        {
+            CallingConvention::StdC::SparcSignature sig("");
+            return sig.getArgumentExp(0);
+        }
+        case MACHINE_PENTIUM:
+        {
+            //CallingConvention::StdC::PentiumSignature sig("");
+            //Exp* e = sig.getArgumentExp(0);
+            // For now, need to work around how the above appears to be the
+            // wrong thing!
+            Exp* e = new Unary(opMemOf, new Unary(opRegOf, new Const(28)));
+            return e;
+        }
+        default:
+            std::cerr << "Signature::getFirstArgLoc: machine not handled\n";
+            assert(0);
+        }
     return 0;
 }
 
 // A bit of a cludge. Problem is that we can't call the polymorphic
 // getReturnExp() until signature promotion has happened. For the switch
 // logic, that happens way too late. So for now, we have this cludge.
-/*static*/ Exp* Signature::getReturnExp2(BinaryFile* pBF) {
-    switch (pBF->GetMachine()) {
-    case MACHINE_SPARC:
-        return new Unary(opRegOf, new Const(8));
-    case MACHINE_PENTIUM:
-        return new Unary(opRegOf, new Const(24));
-    default:
-        std::cerr << "getReturnSig2: machine not handled\n";
-        return NULL;
-    }
+/*static*/ Exp* Signature::getReturnExp2(BinaryFile* pBF)
+{
+    switch (pBF->GetMachine())
+        {
+        case MACHINE_SPARC:
+            return new Unary(opRegOf, new Const(8));
+        case MACHINE_PENTIUM:
+            return new Unary(opRegOf, new Const(24));
+        default:
+            std::cerr << "getReturnSig2: machine not handled\n";
+            return NULL;
+        }
 }
 

@@ -108,7 +108,8 @@ class AnsiCScanner;
 
 
 #line 61 "ansi-c.y"
-typedef union {
+typedef union
+{
     int ival;
     char *str;
     Type *type;
@@ -879,7 +880,8 @@ YYENDDECLARELABEL
 /* __HAVE_NO_ALLOCA */
 #ifdef __HAVE_NO_ALLOCA
 int __alloca_free_ptr(char *ptr,char *ref)
-{   if(ptr!=ref) free(ptr);
+{
+    if(ptr!=ref) free(ptr);
     return 0;
 }
 
@@ -1099,78 +1101,78 @@ YY_AnsiCParser_PARSE_PARAM_DEF
     *++yyssp = yystate;
 
     if (yyssp >= yyss + yystacksize - 1)
-    {
-        /* Give user a chance to reallocate the stack */
-        /* Use copies of these so that the &'s don't force the real ones into memory. */
-        YY_AnsiCParser_STYPE *yyvs1 = yyvs;
-        short *yyss1 = yyss;
+        {
+            /* Give user a chance to reallocate the stack */
+            /* Use copies of these so that the &'s don't force the real ones into memory. */
+            YY_AnsiCParser_STYPE *yyvs1 = yyvs;
+            short *yyss1 = yyss;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-        YY_AnsiCParser_LTYPE *yyls1 = yyls;
+            YY_AnsiCParser_LTYPE *yyls1 = yyls;
 #endif
 
-        /* Get the current used size of the three stacks, in elements.  */
-        int size = yyssp - yyss + 1;
+            /* Get the current used size of the three stacks, in elements.  */
+            int size = yyssp - yyss + 1;
 
 #ifdef yyoverflow
-        /* Each stack pointer address is followed by the size of
-        the data in use in that stack, in bytes.  */
+            /* Each stack pointer address is followed by the size of
+            the data in use in that stack, in bytes.  */
 #ifdef YY_AnsiCParser_LSP_NEEDED
-        /* This used to be a conditional around just the two extra args,
-        but that might be undefined if yyoverflow is a macro.  */
-        yyoverflow("parser stack overflow",
-        &yyss1, size * sizeof (*yyssp),
-        &yyvs1, size * sizeof (*yyvsp),
-        &yyls1, size * sizeof (*yylsp),
-        &yystacksize);
+            /* This used to be a conditional around just the two extra args,
+            but that might be undefined if yyoverflow is a macro.  */
+            yyoverflow("parser stack overflow",
+            &yyss1, size * sizeof (*yyssp),
+            &yyvs1, size * sizeof (*yyvsp),
+            &yyls1, size * sizeof (*yylsp),
+            &yystacksize);
 #else
-        yyoverflow("parser stack overflow",
-        &yyss1, size * sizeof (*yyssp),
-        &yyvs1, size * sizeof (*yyvsp),
-        &yystacksize);
+            yyoverflow("parser stack overflow",
+            &yyss1, size * sizeof (*yyssp),
+            &yyvs1, size * sizeof (*yyvsp),
+            &yystacksize);
 #endif
 
-        yyss = yyss1;
-        yyvs = yyvs1;
+            yyss = yyss1;
+            yyvs = yyvs1;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-        yyls = yyls1;
+            yyls = yyls1;
 #endif
 #else /* no yyoverflow */
-        /* Extend the stack our own way.  */
-        if (yystacksize >= YYMAXDEPTH)
-        {
-            YY_AnsiCParser_ERROR("parser stack overflow");
-            __ALLOCA_return(2);
-        }
-        yystacksize *= 2;
-        if (yystacksize > YYMAXDEPTH)
-            yystacksize = YYMAXDEPTH;
-        yyss = (short *) __ALLOCA_alloca (yystacksize * sizeof (*yyssp));
-        __yy_bcopy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
-        __ALLOCA_free(yyss1,yyssa);
-        yyvs = (YY_AnsiCParser_STYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yyvsp));
-        __yy_bcopy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
-        __ALLOCA_free(yyvs1,yyvsa);
+            /* Extend the stack our own way.  */
+            if (yystacksize >= YYMAXDEPTH)
+                {
+                    YY_AnsiCParser_ERROR("parser stack overflow");
+                    __ALLOCA_return(2);
+                }
+            yystacksize *= 2;
+            if (yystacksize > YYMAXDEPTH)
+                yystacksize = YYMAXDEPTH;
+            yyss = (short *) __ALLOCA_alloca (yystacksize * sizeof (*yyssp));
+            __yy_bcopy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+            __ALLOCA_free(yyss1,yyssa);
+            yyvs = (YY_AnsiCParser_STYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yyvsp));
+            __yy_bcopy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+            __ALLOCA_free(yyvs1,yyvsa);
 #ifdef YY_AnsiCParser_LSP_NEEDED
-        yyls = (YY_AnsiCParser_LTYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yylsp));
-        __yy_bcopy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
-        __ALLOCA_free(yyls1,yylsa);
+            yyls = (YY_AnsiCParser_LTYPE *) __ALLOCA_alloca (yystacksize * sizeof (*yylsp));
+            __yy_bcopy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+            __ALLOCA_free(yyls1,yylsa);
 #endif
 #endif /* no yyoverflow */
 
-        yyssp = yyss + size - 1;
-        yyvsp = yyvs + size - 1;
+            yyssp = yyss + size - 1;
+            yyvsp = yyvs + size - 1;
 #ifdef YY_AnsiCParser_LSP_NEEDED
-        yylsp = yyls + size - 1;
+            yylsp = yyls + size - 1;
 #endif
 
 #if YY_AnsiCParser_DEBUG != 0
-        if (YY_AnsiCParser_DEBUG_FLAG)
-            fprintf(stderr, "Stack size increased to %d\n", yystacksize);
+            if (YY_AnsiCParser_DEBUG_FLAG)
+                fprintf(stderr, "Stack size increased to %d\n", yystacksize);
 #endif
 
-        if (yyssp >= yyss + yystacksize - 1)
-            YYABORT;
-    }
+            if (yyssp >= yyss + yystacksize - 1)
+                YYABORT;
+        }
 
 #if YY_AnsiCParser_DEBUG != 0
     if (YY_AnsiCParser_DEBUG_FLAG)
@@ -1196,43 +1198,43 @@ YY_AnsiCParser_PARSE_PARAM_DEF
        or a valid token in external form.  */
 
     if (YY_AnsiCParser_CHAR == YYEMPTY)
-    {
+        {
 #if YY_AnsiCParser_DEBUG != 0
-        if (YY_AnsiCParser_DEBUG_FLAG)
-            fprintf(stderr, "Reading a token: ");
+            if (YY_AnsiCParser_DEBUG_FLAG)
+                fprintf(stderr, "Reading a token: ");
 #endif
-        YY_AnsiCParser_CHAR = YYLEX;
-    }
+            YY_AnsiCParser_CHAR = YYLEX;
+        }
 
     /* Convert token to internal form (in yychar1) for indexing tables with */
 
     if (YY_AnsiCParser_CHAR <= 0)           /* This means end of input. */
-    {
-        yychar1 = 0;
-        YY_AnsiCParser_CHAR = YYEOF;                /* Don't call YYLEX any more */
-
-#if YY_AnsiCParser_DEBUG != 0
-        if (YY_AnsiCParser_DEBUG_FLAG)
-            fprintf(stderr, "Now at end of input.\n");
-#endif
-    }
-    else
-    {
-        yychar1 = YYTRANSLATE(YY_AnsiCParser_CHAR);
-
-#if YY_AnsiCParser_DEBUG != 0
-        if (YY_AnsiCParser_DEBUG_FLAG)
         {
-            fprintf (stderr, "Next token is %d (%s", YY_AnsiCParser_CHAR, yytname[yychar1]);
-            /* Give the individual parser a way to print the precise meaning
-               of a token, for further debugging info.  */
-#ifdef YYPRINT
-            YYPRINT (stderr, YY_AnsiCParser_CHAR, YY_AnsiCParser_LVAL);
+            yychar1 = 0;
+            YY_AnsiCParser_CHAR = YYEOF;                /* Don't call YYLEX any more */
+
+#if YY_AnsiCParser_DEBUG != 0
+            if (YY_AnsiCParser_DEBUG_FLAG)
+                fprintf(stderr, "Now at end of input.\n");
 #endif
-            fprintf (stderr, ")\n");
         }
+    else
+        {
+            yychar1 = YYTRANSLATE(YY_AnsiCParser_CHAR);
+
+#if YY_AnsiCParser_DEBUG != 0
+            if (YY_AnsiCParser_DEBUG_FLAG)
+                {
+                    fprintf (stderr, "Next token is %d (%s", YY_AnsiCParser_CHAR, yytname[yychar1]);
+                    /* Give the individual parser a way to print the precise meaning
+                       of a token, for further debugging info.  */
+#ifdef YYPRINT
+                    YYPRINT (stderr, YY_AnsiCParser_CHAR, YY_AnsiCParser_LVAL);
 #endif
-    }
+                    fprintf (stderr, ")\n");
+                }
+#endif
+        }
 
     yyn += yychar1;
     if (yyn < 0 || yyn > YYLAST || yycheck[yyn] != yychar1)
@@ -1248,12 +1250,12 @@ YY_AnsiCParser_PARSE_PARAM_DEF
        0, or most negative number => error.  */
 
     if (yyn < 0)
-    {
-        if (yyn == YYFLAG)
-            YYGOTO(yyerrlab);
-        yyn = -yyn;
-        YYGOTO(yyreduce);
-    }
+        {
+            if (yyn == YYFLAG)
+                YYGOTO(yyerrlab);
+            yyn = -yyn;
+            YYGOTO(yyreduce);
+        }
     else if (yyn == 0)
         YYGOTO(yyerrlab);
 
@@ -1297,147 +1299,169 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 
 #if YY_AnsiCParser_DEBUG != 0
     if (YY_AnsiCParser_DEBUG_FLAG)
-    {
-        int i;
+        {
+            int i;
 
-        fprintf (stderr, "Reducing via rule %d (line %d), ",
-        yyn, yyrline[yyn]);
+            fprintf (stderr, "Reducing via rule %d (line %d), ",
+            yyn, yyrline[yyn]);
 
-        /* Print the symbols being reduced, and their result.  */
-        for (i = yyprhs[yyn]; yyrhs[i] > 0; i++)
-            fprintf (stderr, "%s ", yytname[yyrhs[i]]);
-        fprintf (stderr, " -> %s\n", yytname[yyr1[yyn]]);
-    }
+            /* Print the symbols being reduced, and their result.  */
+            for (i = yyprhs[yyn]; yyrhs[i] > 0; i++)
+                fprintf (stderr, "%s ", yytname[yyrhs[i]]);
+            fprintf (stderr, " -> %s\n", yytname[yyr1[yyn]]);
+        }
 #endif
 
 
     /* #line 811 "/usr/local/lib/bison.cc" */
 #line 1314 "ansi-c-parser.cpp"
 
-    switch (yyn) {
+    switch (yyn)
+        {
 
-    case 1:
+        case 1:
 #line 83 "ansi-c.y"
-    {   ;
-        break;
-    }
-    case 2:
+        {
+            ;
+            break;
+        }
+        case 2:
 #line 87 "ansi-c.y"
-    {   ;
-        break;
-    }
-    case 3:
+        {
+            ;
+            break;
+        }
+        case 3:
 #line 89 "ansi-c.y"
-    {   ;
-        break;
-    }
-    case 4:
+        {
+            ;
+            break;
+        }
+        case 4:
 #line 93 "ansi-c.y"
-    {   ;
-        break;
-    }
-    case 5:
+        {
+            ;
+            break;
+        }
+        case 5:
 #line 95 "ansi-c.y"
-    {   ;
-        break;
-    }
-    case 6:
+        {
+            ;
+            break;
+        }
+        case 6:
 #line 99 "ansi-c.y"
-    {   yyval.param_list = yyvsp[0].param_list;
-        yyval.param_list->push_front(yyvsp[-2].param);
-        ;
-        break;
-    }
-    case 7:
+        {
+            yyval.param_list = yyvsp[0].param_list;
+            yyval.param_list->push_front(yyvsp[-2].param);
+            ;
+            break;
+        }
+        case 7:
 #line 103 "ansi-c.y"
-    {   yyval.param_list = new std::list<Parameter*>();
-        yyval.param_list->push_back(yyvsp[0].param);
-        ;
-        break;
-    }
-    case 8:
+        {
+            yyval.param_list = new std::list<Parameter*>();
+            yyval.param_list->push_back(yyvsp[0].param);
+            ;
+            break;
+        }
+        case 8:
 #line 107 "ansi-c.y"
-    {   yyval.param_list = new std::list<Parameter*>();
-        break;
-    }
-    case 9:
+        {
+            yyval.param_list = new std::list<Parameter*>();
+            break;
+        }
+        case 9:
 #line 111 "ansi-c.y"
-    {   yyval.param = new Parameter(yyvsp[-1].type, yyvsp[0].str); ;
-        break;
-    }
-    case 10:
+        {
+            yyval.param = new Parameter(yyvsp[-1].type, yyvsp[0].str); ;
+            break;
+        }
+        case 10:
 #line 113 "ansi-c.y"
-    {   yyval.param = new Parameter(new VoidType, "..."); ;
-        break;
-    }
-    case 11:
+        {
+            yyval.param = new Parameter(new VoidType, "..."); ;
+            break;
+        }
+        case 11:
 #line 117 "ansi-c.y"
-    {   ;
-        break;
-    }
-    case 12:
+        {
+            ;
+            break;
+        }
+        case 12:
 #line 121 "ansi-c.y"
-    {   Signature *sig = Signature::instantiate(sigstr, yyvsp[-4].str);
-        sig->setReturnType(yyvsp[-5].type);
-        for (std::list<Parameter*>::iterator it = yyvsp[-2].param_list->begin();
-        it != yyvsp[-2].param_list->end(); it++)
-            if (std::string((*it)->getName()) != "...")
-                sig->addParameter(*it);
-            else {
-                sig->addEllipsis();
-                delete *it;
-            }
-        delete yyvsp[-2].param_list;
-        signatures.push_back(sig);
-        ;
-        break;
-    }
-    case 13:
+        {
+            Signature *sig = Signature::instantiate(sigstr, yyvsp[-4].str);
+            sig->setReturnType(yyvsp[-5].type);
+            for (std::list<Parameter*>::iterator it = yyvsp[-2].param_list->begin();
+            it != yyvsp[-2].param_list->end(); it++)
+                if (std::string((*it)->getName()) != "...")
+                    sig->addParameter(*it);
+                else {
+                        sig->addEllipsis();
+                        delete *it;
+                    }
+            delete yyvsp[-2].param_list;
+            signatures.push_back(sig);
+            ;
+            break;
+        }
+        case 13:
 #line 137 "ansi-c.y"
-    {   yyval.type = new CharType(); ;
-        break;
-    }
-    case 14:
+        {
+            yyval.type = new CharType(); ;
+            break;
+        }
+        case 14:
 #line 139 "ansi-c.y"
-    {   yyval.type = new IntegerType(16); ;
-        break;
-    }
-    case 15:
+        {
+            yyval.type = new IntegerType(16); ;
+            break;
+        }
+        case 15:
 #line 141 "ansi-c.y"
-    {   yyval.type = new IntegerType(); ;
-        break;
-    }
-    case 16:
+        {
+            yyval.type = new IntegerType(); ;
+            break;
+        }
+        case 16:
 #line 143 "ansi-c.y"
-    {   yyval.type = new IntegerType(); ;
-        break;
-    }
-    case 17:
+        {
+            yyval.type = new IntegerType(); ;
+            break;
+        }
+        case 17:
 #line 145 "ansi-c.y"
-    {   yyval.type = new FloatType(32); ;
-        break;
-    }
-    case 18:
+        {
+            yyval.type = new FloatType(32); ;
+            break;
+        }
+        case 18:
 #line 147 "ansi-c.y"
-    {   yyval.type = new FloatType(32); ;
-        break;
-    }
-    case 19:
+        {
+            yyval.type = new FloatType(32); ;
+            break;
+        }
+        case 19:
 #line 149 "ansi-c.y"
-    {   yyval.type = new VoidType(); ;
-        break;
-    }
-    case 20:
+        {
+            yyval.type = new VoidType(); ;
+            break;
+        }
+        case 20:
 #line 151 "ansi-c.y"
-    {   yyval.type = new PointerType(yyvsp[-1].type); ;
-        break;
-    }
-    case 21:
+        {
+            yyval.type = new PointerType(yyvsp[-1].type); ;
+            break;
+        }
+        case 21:
 #line 153 "ansi-c.y"
-    {   yyval.type = new NamedType(yyvsp[0].str); ;
-        break;
-    }
-    }
+        {
+            yyval.type = new NamedType(yyvsp[0].str); ;
+            break;
+        }
+        }
 
 #line 811 "/usr/local/lib/bison.cc"
     /* the action file gets copied in in place of this dollarsign  */
@@ -1449,13 +1473,13 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 
 #if YY_AnsiCParser_DEBUG != 0
     if (YY_AnsiCParser_DEBUG_FLAG)
-    {
-        short *ssp1 = yyss - 1;
-        fprintf (stderr, "state stack now");
-        while (ssp1 != yyssp)
-            fprintf (stderr, " %d", *++ssp1);
-        fprintf (stderr, "\n");
-    }
+        {
+            short *ssp1 = yyss - 1;
+            fprintf (stderr, "state stack now");
+            while (ssp1 != yyssp)
+                fprintf (stderr, " %d", *++ssp1);
+            fprintf (stderr, "\n");
+        }
 #endif
 
     *++yyvsp = yyval;
@@ -1463,18 +1487,18 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 #ifdef YY_AnsiCParser_LSP_NEEDED
     yylsp++;
     if (yylen == 0)
-    {
-        yylsp->first_line = YY_AnsiCParser_LLOC.first_line;
-        yylsp->first_column = YY_AnsiCParser_LLOC.first_column;
-        yylsp->last_line = (yylsp-1)->last_line;
-        yylsp->last_column = (yylsp-1)->last_column;
-        yylsp->text = 0;
-    }
+        {
+            yylsp->first_line = YY_AnsiCParser_LLOC.first_line;
+            yylsp->first_column = YY_AnsiCParser_LLOC.first_column;
+            yylsp->last_line = (yylsp-1)->last_line;
+            yylsp->last_column = (yylsp-1)->last_column;
+            yylsp->text = 0;
+        }
     else
-    {
-        yylsp->last_line = (yylsp+yylen-1)->last_line;
-        yylsp->last_column = (yylsp+yylen-1)->last_column;
-    }
+        {
+            yylsp->last_line = (yylsp+yylen-1)->last_line;
+            yylsp->last_column = (yylsp+yylen-1)->last_column;
+        }
 #endif
 
     /* Now "shift" the result of the reduction.
@@ -1496,71 +1520,71 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 
     if (! yyerrstatus)
         /* If not already recovering from an error, report this error.  */
-    {
-        ++YY_AnsiCParser_NERRS;
+        {
+            ++YY_AnsiCParser_NERRS;
 
 #ifdef YY_AnsiCParser_ERROR_VERBOSE
-        yyn = yypact[yystate];
+            yyn = yypact[yystate];
 
-        if (yyn > YYFLAG && yyn < YYLAST)
-        {
-            int size = 0;
-            char *msg;
-            int x, count;
-
-            count = 0;
-            /* Start X at -yyn if nec to avoid negative indexes in yycheck.  */
-            for (x = (yyn < 0 ? -yyn : 0);
-            x < (sizeof(yytname) / sizeof(char *)); x++)
-                if (yycheck[x + yyn] == x)
-                    size += strlen(yytname[x]) + 15, count++;
-            msg = (char *) malloc(size + 15);
-            if (msg != 0)
-            {
-                strcpy(msg, "parse error");
-
-                if (count < 5)
+            if (yyn > YYFLAG && yyn < YYLAST)
                 {
+                    int size = 0;
+                    char *msg;
+                    int x, count;
+
                     count = 0;
+                    /* Start X at -yyn if nec to avoid negative indexes in yycheck.  */
                     for (x = (yyn < 0 ? -yyn : 0);
                     x < (sizeof(yytname) / sizeof(char *)); x++)
                         if (yycheck[x + yyn] == x)
+                            size += strlen(yytname[x]) + 15, count++;
+                    msg = (char *) malloc(size + 15);
+                    if (msg != 0)
                         {
-                            strcat(msg, count == 0 ? ", expecting `" : " or `");
-                            strcat(msg, yytname[x]);
-                            strcat(msg, "'");
-                            count++;
+                            strcpy(msg, "parse error");
+
+                            if (count < 5)
+                                {
+                                    count = 0;
+                                    for (x = (yyn < 0 ? -yyn : 0);
+                                    x < (sizeof(yytname) / sizeof(char *)); x++)
+                                        if (yycheck[x + yyn] == x)
+                                            {
+                                                strcat(msg, count == 0 ? ", expecting `" : " or `");
+                                                strcat(msg, yytname[x]);
+                                                strcat(msg, "'");
+                                                count++;
+                                            }
+                                }
+                            YY_AnsiCParser_ERROR(msg);
+                            free(msg);
                         }
+                    else
+                        YY_AnsiCParser_ERROR ("parse error; also virtual memory exceeded");
                 }
-                YY_AnsiCParser_ERROR(msg);
-                free(msg);
-            }
             else
-                YY_AnsiCParser_ERROR ("parse error; also virtual memory exceeded");
-        }
-        else
 #endif /* YY_AnsiCParser_ERROR_VERBOSE */
-            YY_AnsiCParser_ERROR("parse error");
-    }
+                YY_AnsiCParser_ERROR("parse error");
+        }
 
     YYGOTO(yyerrlab1);
     YYLABEL(yyerrlab1)   /* here on error raised explicitly by an action */
 
     if (yyerrstatus == 3)
-    {
-        /* if just tried and failed to reuse lookahead token after an error, discard it.  */
+        {
+            /* if just tried and failed to reuse lookahead token after an error, discard it.  */
 
-        /* return failure if at end of input */
-        if (YY_AnsiCParser_CHAR == YYEOF)
-            YYABORT;
+            /* return failure if at end of input */
+            if (YY_AnsiCParser_CHAR == YYEOF)
+                YYABORT;
 
 #if YY_AnsiCParser_DEBUG != 0
-        if (YY_AnsiCParser_DEBUG_FLAG)
-            fprintf(stderr, "Discarding token %d (%s).\n", YY_AnsiCParser_CHAR, yytname[yychar1]);
+            if (YY_AnsiCParser_DEBUG_FLAG)
+                fprintf(stderr, "Discarding token %d (%s).\n", YY_AnsiCParser_CHAR, yytname[yychar1]);
 #endif
 
-        YY_AnsiCParser_CHAR = YYEMPTY;
-    }
+            YY_AnsiCParser_CHAR = YYEMPTY;
+        }
 
     /* Else will try to reuse lookahead token
        after shifting the error token.  */
@@ -1589,13 +1613,13 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 
 #if YY_AnsiCParser_DEBUG != 0
     if (YY_AnsiCParser_DEBUG_FLAG)
-    {
-        short *ssp1 = yyss - 1;
-        fprintf (stderr, "Error: state stack now");
-        while (ssp1 != yyssp)
-            fprintf (stderr, " %d", *++ssp1);
-        fprintf (stderr, "\n");
-    }
+        {
+            short *ssp1 = yyss - 1;
+            fprintf (stderr, "Error: state stack now");
+            while (ssp1 != yyssp)
+                fprintf (stderr, " %d", *++ssp1);
+            fprintf (stderr, "\n");
+        }
 #endif
 
     YYLABEL(yyerrhandle)
@@ -1610,12 +1634,12 @@ YY_AnsiCParser_PARSE_PARAM_DEF
 
     yyn = yytable[yyn];
     if (yyn < 0)
-    {
-        if (yyn == YYFLAG)
-            YYGOTO(yyerrpop);
-        yyn = -yyn;
-        YYGOTO(yyreduce);
-    }
+        {
+            if (yyn == YYFLAG)
+                YYGOTO(yyerrpop);
+            yyn = -yyn;
+            YYGOTO(yyreduce);
+        }
     else if (yyn == 0)
         YYGOTO(yyerrpop);
 

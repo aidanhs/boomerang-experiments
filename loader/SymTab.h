@@ -42,7 +42,8 @@
 #include <stdlib.h>                     // bsearch(), qsort()
 #include <string.h>                     // strcmp etc
 
-typedef struct tSymTabEnt {
+typedef struct tSymTabEnt
+{
     ADDRESS dwValue;                    // Value of the symbol
     char* pName;                        // Name of the symbol
 } SymTabEnt;

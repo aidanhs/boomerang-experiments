@@ -44,7 +44,8 @@ class AnsiCScanner;
 
 
 #line 61 "ansi-c.y"
-typedef union {
+typedef union
+{
     int ival;
     char *str;
     Type *type;

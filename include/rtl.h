@@ -53,7 +53,8 @@ class RTLVisitor;
  * Kinds of RTLs, or high-level register transfer lists.
  * changing the order of these will result in save files not working - trent
  *============================================================================*/
-enum RTL_KIND {
+enum RTL_KIND
+{
     HL_NONE = 0,
     CALL_RTL,
     RET_RTL,
@@ -70,7 +71,8 @@ enum RTL_KIND {
  * performed.
  * changing the order of these will result in save files not working - trent
  *============================================================================*/
-enum JCOND_TYPE {
+enum JCOND_TYPE
+{
     HLJCOND_JE = 0,          // Jump if equals
     HLJCOND_JNE,             // Jump if not equals
     HLJCOND_JSL,             // Jump if signed less
@@ -93,7 +95,8 @@ enum JCOND_TYPE {
  * Class RTL: describes low level register transfer lists (actually lists of
  * expressions)
  *============================================================================*/
-class RTL {
+class RTL
+{
 public:
     RTL();
     RTL(ADDRESS instNativeAddr, std::list<Exp*>* listExp = NULL);
@@ -110,7 +113,8 @@ public:
     virtual bool accept(RTLVisitor* visitor);
 
     // Common enquiry methods
-    RTL_KIND getKind() {
+    RTL_KIND getKind()
+    {
         return kind;
     };
     ADDRESS getAddress();               // Return RTL's native address
@@ -138,7 +142,8 @@ public:
     void appendListExp(std::list<Exp*>& le); // Append list of exps to end.
     void appendRTL(RTL& rtl);           // Append Statements from other RTL to end
     void deepCopyList(std::list<Exp*>& dest);// Make a deep copy of the list of Exp*
-    std::list<Exp*> &getList() {
+    std::list<Exp*> &getList()
+    {
         return expList;    // direct access to the list of expressions
     }
 
@@ -241,7 +246,8 @@ public:
  * instantiated as HLCalls and HLReturns respecitvely. This class also
  * represents unconditional jumps with a fixed offset (e.g BN, Ba on SPARC).
  *===========================================================================*/
-class HLJump: public RTL {
+class HLJump: public RTL
+{
 public:
     HLJump(ADDRESS instNativeAddr, std::list<Exp*>* listExp = NULL);
     HLJump(ADDRESS instNativeAddr, ADDRESS jumpDest);
@@ -313,7 +319,8 @@ protected:
 /*==============================================================================
  * HLJcond has a condition Exp in addition to the destination of the jump.
  *============================================================================*/
-class HLJcond: public HLJump, public Statement {
+class HLJcond: public HLJump, public Statement
+{
 public:
     HLJcond(ADDRESS instNativeAddr, std::list<Exp*>* listExp = NULL);
     virtual ~HLJcond();
@@ -327,13 +334,16 @@ public:
     // Set and return the JCOND_TYPE of this jcond as well as whether the
     // floating point condition codes are used.
     void setCondType(JCOND_TYPE cond, bool usesFloat = false);
-    JCOND_TYPE getCond() {
+    JCOND_TYPE getCond()
+    {
         return jtCond;
     }
-    bool isFloat() {
+    bool isFloat()
+    {
         return bFloat;
     }
-    void setFloat(bool b)      {
+    void setFloat(bool b)
+    {
         bFloat = b;
     }
 
@@ -346,7 +356,8 @@ public:
     void makeSigned();
 
     virtual void print(std::ostream& os = std::cout, bool withDF = false);
-    virtual void print(std::ostream& os) {
+    virtual void print(std::ostream& os)
+    {
         print(os, true);
     }
 
@@ -385,23 +396,28 @@ public:
     virtual void addUsedLocs(LocationSet& used);
 
     // dataflow related functions
-    virtual bool canPropagateToAll() {
+    virtual bool canPropagateToAll()
+    {
         return false;
     }
-    virtual void propagateToAll() {
+    virtual void propagateToAll()
+    {
         assert(false);
     }
 
     // get how to access this value
-    virtual Exp* getLeft() {
+    virtual Exp* getLeft()
+    {
         return NULL;
     }
-    virtual Type* getLeftType() {
+    virtual Type* getLeftType()
+    {
         return NULL;
     }
 
     // get how to replace this statement in a use
-    virtual Exp* getRight() {
+    virtual Exp* getRight()
+    {
         return pCond;
     }
 
@@ -433,7 +449,8 @@ private:
  * HLNwayJump is derived from HLJump. In addition to the destination of the
  * jump, it has a switch variable Exp.
  *============================================================================*/
-typedef struct {
+typedef struct
+{
     Exp* pSwitchVar;         // Ptr to Exp repres switch var, e.g. v[7]
     char    chForm;             // Switch form: 'A', 'O', 'R', or 'H'
     int     iLower;             // Lower bound of the switch variable
@@ -444,7 +461,8 @@ typedef struct {
     int     delta;              // Host address - Native address
 } SWITCH_INFO;
 
-class HLNwayJump: public HLJump {
+class HLNwayJump: public HLJump
+{
 public:
     HLNwayJump(ADDRESS instNativeAddr, std::list<Exp*>* listExp = NULL);
     virtual ~HLNwayJump();
@@ -496,7 +514,8 @@ private:
  * HLCall: represents a high level call. Information about parameters and
  * the like are stored here.
  *============================================================================*/
-class HLCall: public HLJump, public Statement {
+class HLCall: public HLJump, public Statement
+{
 public:
     HLCall(ADDRESS instNativeAddr, int returnTypeSize = 0,
            std::list<Exp*>* listExp = NULL);
@@ -514,13 +533,16 @@ public:
 
     void setArguments(std::vector<Exp*>& arguments); // Set call's arguments
     std::vector<Exp*>& getArguments();            // Return call's arguments
-    Exp* getArgumentExp(int i) {
+    Exp* getArgumentExp(int i)
+    {
         return arguments[i];
     }
-    void setArgumentExp(int i, Exp *e) {
+    void setArgumentExp(int i, Exp *e)
+    {
         arguments[i] = e;
     }
-    int getNumArguments() {
+    int getNumArguments()
+    {
         return arguments.size();
     }
     void setNumArguments(int i);
@@ -531,7 +553,8 @@ public:
     Exp* getReturnLoc();                // Get location used for return value
 
     virtual void print(std::ostream& os = std::cout, bool withDF = false);
-    virtual void print(std::ostream& os = std::cout) {
+    virtual void print(std::ostream& os = std::cout)
+    {
         print(os, false);
     }
 
@@ -577,21 +600,25 @@ public:
     virtual void addUsedLocs(LocationSet& used);
 
     // dataflow related functions
-    virtual bool canPropagateToAll() {
+    virtual bool canPropagateToAll()
+    {
         return false;
     }
-    virtual void propagateToAll() {
+    virtual void propagateToAll()
+    {
         assert(false);
     }
 
     // get how to access this value
-    virtual Exp* getLeft() {
+    virtual Exp* getLeft()
+    {
         return getReturnLoc();
     }
     virtual Type* getLeftType();
 
     // get how to replace this statement in a use
-    virtual Exp* getRight() {
+    virtual Exp* getRight()
+    {
         return NULL;
     }
 
@@ -610,7 +637,8 @@ public:
 
     // add statements internal to the called procedure
     // for interprocedural analysis
-    StatementList &getInternalStatements() {
+    StatementList &getInternalStatements()
+    {
         return internal;
     }
 
@@ -655,7 +683,8 @@ private:
 /*==============================================================================
  * HLReturn: represents a high level return.
  *============================================================================*/
-class HLReturn: public HLJump {
+class HLReturn: public HLJump
+{
 public:
     HLReturn(ADDRESS instNativeAddr, std::list<Exp*>* listExp = NULL);
     ~HLReturn();
@@ -685,17 +714,21 @@ public:
     // simplify all the uses/defs in this RTL
     virtual void simplify();
 
-    int getNumBytesPopped() {
+    int getNumBytesPopped()
+    {
         return nBytesPopped;
     }
-    void setNumBytesPopped(int n) {
+    void setNumBytesPopped(int n)
+    {
         nBytesPopped = n;
     }
 
-    Exp *getReturnValue() {
+    Exp *getReturnValue()
+    {
         return returnVal;
     }
-    void setReturnValue(Exp *e) {
+    void setReturnValue(Exp *e)
+    {
         if (returnVal) delete returnVal;
         returnVal = e;
     }
@@ -714,7 +747,8 @@ protected:
  * set (to 1 or 0) depending on the condition codes. It has a condition
  * Exp, similar to the HLJcond class.
  * *==========================================================================*/
-class HLScond: public RTL {
+class HLScond: public RTL
+{
 public:
     HLScond(ADDRESS instNativeAddr, std::list<Exp*>* listExp = NULL);
     virtual ~HLScond();
@@ -728,13 +762,16 @@ public:
     // Set and return the JCOND_TYPE of this scond as well as whether the
     // floating point condition codes are used.
     void setCondType(JCOND_TYPE cond, bool usesFloat = false);
-    JCOND_TYPE getCond() {
+    JCOND_TYPE getCond()
+    {
         return jtCond;
     }
-    bool isFloat() {
+    bool isFloat()
+    {
         return bFloat;
     }
-    void setFloat(bool b) {
+    void setFloat(bool b)
+    {
         bFloat = b;
     }
 
@@ -780,22 +817,26 @@ private:
  * block. It contains methods for each kind of RTL and can be used
  * to eliminate switch statements.
  */
-class RTLVisitor {
+class RTLVisitor
+{
 private:
     // the enclosing basic block
     PBB pBB;
 
 public:
-    RTLVisitor() {
+    RTLVisitor()
+    {
         pBB = NULL;
     }
     virtual ~RTLVisitor() { }
 
     // allows the container being iteratorated over to identify itself
-    PBB getBasicBlock() {
+    PBB getBasicBlock()
+    {
         return pBB;
     }
-    void setBasicBlock(PBB bb) {
+    void setBasicBlock(PBB bb)
+    {
         pBB = bb;
     }
 
@@ -817,7 +858,8 @@ public:
  * header file...
  *============================================================================*/
 
-class TableEntry {
+class TableEntry
+{
 public:
     TableEntry();
     TableEntry(std::list<std::string>& p, RTL& rtl);
@@ -844,9 +886,11 @@ public:
  *============================================================================*/
 typedef enum {PARAM_SIMPLE, PARAM_EXPR, PARAM_LAMBDA, PARAM_VARIANT} ParamKind;
 
-class ParamEntry {
+class ParamEntry
+{
 public:
-    ParamEntry() {
+    ParamEntry()
+    {
         exp = NULL;
         kind = PARAM_SIMPLE;
         type = NULL;
@@ -854,7 +898,8 @@ public:
         lhs = false;
         mark = 0;
     }
-    ~ParamEntry() {
+    ~ParamEntry()
+    {
         if (type) delete type;
         if (regType) delete regType;
     }
@@ -883,7 +928,8 @@ class PartialType;
  * instruction name and list of actual parameters.
  *============================================================================*/
 
-class RTLInstDict {
+class RTLInstDict
+{
 public:
     RTLInstDict();
     ~RTLInstDict();

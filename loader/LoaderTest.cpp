@@ -42,7 +42,8 @@
 suite->addTest(new CppUnit::TestCaller<LoaderTest> ("LoaderTest", \
     &LoaderTest::name, *this))
 
-void LoaderTest::registerTests(CppUnit::TestSuite* suite) {
+void LoaderTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(testSparcLoad);
     MYTEST(testPentiumLoad);
     MYTEST(testHppaLoad);
@@ -65,7 +66,8 @@ int LoaderTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void LoaderTest::setUp () {
+void LoaderTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -75,14 +77,16 @@ void LoaderTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void LoaderTest::tearDown () {
+void LoaderTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        LoaderTest::testSparcLoad
  * OVERVIEW:        Test loading the sparc hello world program
  *============================================================================*/
-void LoaderTest::testSparcLoad () {
+void LoaderTest::testSparcLoad ()
+{
     std::ostringstream ost;
 
     // Load SPARC hello world
@@ -92,10 +96,11 @@ void LoaderTest::testSparcLoad () {
     SectionInfo* si;
     n = pBF->GetNumSections();
     ost << "Number of sections = " << std::dec << n << "\r\n";
-    for (int i=0; i < n; i++) {
-        si = pBF->GetSectionInfo(i);
-        ost << si->pSectionName << "\t";
-    }
+    for (int i=0; i < n; i++)
+        {
+            si = pBF->GetSectionInfo(i);
+            ost << si->pSectionName << "\t";
+        }
     pBF->UnLoad();
     // Note: the string below needs to have embedded tabs. Edit with caution!
     std::string expected("Number of sections = 28\r\n\t"
@@ -111,7 +116,8 @@ void LoaderTest::testSparcLoad () {
  * FUNCTION:        LoaderTest::testPentiumLoad
  * OVERVIEW:        Test loading the pentium (Solaris) hello world program
  *============================================================================*/
-void LoaderTest::testPentiumLoad () {
+void LoaderTest::testPentiumLoad ()
+{
     std::ostringstream ost;
 
     // Load Pentium hello world
@@ -121,10 +127,11 @@ void LoaderTest::testPentiumLoad () {
     SectionInfo* si;
     n = pBF->GetNumSections();
     ost << "Number of sections = " << std::dec << n << "\r\n";
-    for (int i=0; i < n; i++) {
-        si = pBF->GetSectionInfo(i);
-        ost << si->pSectionName << "\t";
-    }
+    for (int i=0; i < n; i++)
+        {
+            si = pBF->GetSectionInfo(i);
+            ost << si->pSectionName << "\t";
+        }
     pBF->UnLoad();
     // Note: the string below needs to have embedded tabs. Edit with caution!
     // (And slightly different string to the sparc test, e.g. rel vs rela)
@@ -141,7 +148,8 @@ void LoaderTest::testPentiumLoad () {
  * FUNCTION:        LoaderTest::testHppaLoad
  * OVERVIEW:        Test loading the sparc hello world program
  *============================================================================*/
-void LoaderTest::testHppaLoad () {
+void LoaderTest::testHppaLoad ()
+{
     std::ostringstream ost;
 
     // Load HPPA hello world
@@ -151,10 +159,11 @@ void LoaderTest::testHppaLoad () {
     SectionInfo* si;
     n = pBF->GetNumSections();
     ost << "Number of sections = " << std::dec << n << "\r\n";
-    for (int i=0; i < n; i++) {
-        si = pBF->GetSectionInfo(i);
-        ost << si->pSectionName << "\t";
-    }
+    for (int i=0; i < n; i++)
+        {
+            si = pBF->GetSectionInfo(i);
+            ost << si->pSectionName << "\t";
+        }
     pBF->UnLoad();
     // Note: the string below needs to have embedded tabs. Edit with caution!
     std::string expected("Number of sections = 4\r\n"
@@ -167,7 +176,8 @@ void LoaderTest::testHppaLoad () {
  * FUNCTION:        LoaderTest::testPalmLoad
  * OVERVIEW:        Test loading the Palm 68328 Starter.prc program
  *============================================================================*/
-void LoaderTest::testPalmLoad () {
+void LoaderTest::testPalmLoad ()
+{
     std::ostringstream ost;
 
     // Load Palm Starter.prc
@@ -177,10 +187,11 @@ void LoaderTest::testPalmLoad () {
     SectionInfo* si;
     n = pBF->GetNumSections();
     ost << "Number of sections = " << std::dec << n << "\r\n";
-    for (int i=0; i < n; i++) {
-        si = pBF->GetSectionInfo(i);
-        ost << si->pSectionName << "\t";
-    }
+    for (int i=0; i < n; i++)
+        {
+            si = pBF->GetSectionInfo(i);
+            ost << si->pSectionName << "\t";
+        }
     pBF->UnLoad();
     // Note: the string below needs to have embedded tabs. Edit with caution!
     std::string expected("Number of sections = 8\r\n"
@@ -194,7 +205,8 @@ void LoaderTest::testPalmLoad () {
  * FUNCTION:        LoaderTest::testWinLoad
  * OVERVIEW:        Test loading the Windows calc.exe program
  *============================================================================*/
-void LoaderTest::testWinLoad () {
+void LoaderTest::testWinLoad ()
+{
     std::ostringstream ost;
 
     // Load Windows program calc.exe
@@ -204,10 +216,11 @@ void LoaderTest::testWinLoad () {
     SectionInfo* si;
     n = pBF->GetNumSections();
     ost << "Number of sections = " << std::dec << n << "\r\n";
-    for (int i=0; i < n; i++) {
-        si = pBF->GetSectionInfo(i);
-        ost << si->pSectionName << "\t";
-    }
+    for (int i=0; i < n; i++)
+        {
+            si = pBF->GetSectionInfo(i);
+            ost << si->pSectionName << "\t";
+        }
 
     // Note: the string below needs to have embedded tabs. Edit with caution!
     std::string expected("Number of sections = 5\r\n"
@@ -267,7 +280,8 @@ extern "C" {
 // quick.c) which used the output from a disassembly to find the lengths.
 // Best way to test, but of course this array is very dependent on the
 // exact booked in test program
-static char lengths[] = {
+static char lengths[] =
+{
     2, 2, 2, 1, 5, 2, 2, 5, 5, 3, 5, 2, 2, 5, 5, 5, 3, 4, 6, 1,
     3, 1, 1, 5, 5, 5, 3, 1, 5, 2, 5, 7, 1, 1, 1, 2, 1, 5, 1, 6,
     2, 1, 1, 3, 6, 2, 2, 6, 3, 2, 6, 1, 5, 3, 1, 1, 1, 1, 1, 1,
@@ -328,7 +342,8 @@ static char lengths[] = {
 };
 
 // text segment of hello pentium
-static char pent_hello_text[] = {
+static char pent_hello_text[] =
+{
     0x6a, 0x00, 0x6a, 0x00, 0x8b, 0xec, 0x52, 0xb8, 0x80, 0x87, 0x04, 0x08, 0x85, 0xc0, 0x74, 0x0d,
     0x68, 0x80, 0x87, 0x04, 0x08, 0xe8, 0x66, 0xff, 0xff, 0xff, 0x83, 0xc4, 0x04, 0xb8, 0x44, 0xa4,
     0x04, 0x08, 0x85, 0xc0, 0x74, 0x05, 0xe8, 0x55, 0xff, 0xff, 0xff, 0x68, 0xe0, 0x93, 0x04, 0x08,
@@ -517,7 +532,8 @@ static char pent_hello_text[] = {
     0x00, 0x5b, 0x81, 0xc3, 0x73, 0x10, 0x00, 0x00, 0x8b, 0x5d, 0xfc, 0xc9, 0xc3
 };
 
-void LoaderTest::testMicroDis1 () {
+void LoaderTest::testMicroDis1 ()
+{
     std::ostringstream ost;
 
     int i;
@@ -525,33 +541,37 @@ void LoaderTest::testMicroDis1 () {
     int totalSize = 0;
     void* p = pent_hello_text;
     i = 0;
-    while (totalSize < (int)n) {
-        int size = microX86Dis(p);
-        if (size >= 0x40) {
-            std::cout << "Not handled instruction at offset 0x" << std::hex <<
-                      (ADDRESS)p - (ADDRESS)pent_hello_text << std::endl;
-            CPPUNIT_ASSERT(size != 0x40);
-            return;
+    while (totalSize < (int)n)
+        {
+            int size = microX86Dis(p);
+            if (size >= 0x40)
+                {
+                    std::cout << "Not handled instruction at offset 0x" << std::hex <<
+                              (ADDRESS)p - (ADDRESS)pent_hello_text << std::endl;
+                    CPPUNIT_ASSERT(size != 0x40);
+                    return;
+                }
+            int expected = lengths[i++];
+            if (expected != size)
+                {
+                    std::cout << "At offset 0x" << std::hex <<
+                              (ADDRESS)p - (ADDRESS)pent_hello_text << " ("
+                              << (int)*((unsigned char*)p) << " "
+                              << (int)*((unsigned char*)p+1) << " "
+                              << (int)*((unsigned char*)p+2) << " "
+                              << (int)*((unsigned char*)p+3) << " "
+                              << ") expected " <<
+                              std::dec << expected << ", actual " << size << std::endl;
+                    CPPUNIT_ASSERT_EQUAL(expected, size);
+                }
+            p = (void*) ((char*)p + size);
+            totalSize += size;
         }
-        int expected = lengths[i++];
-        if (expected != size) {
-            std::cout << "At offset 0x" << std::hex <<
-                      (ADDRESS)p - (ADDRESS)pent_hello_text << " ("
-                      << (int)*((unsigned char*)p) << " "
-                      << (int)*((unsigned char*)p+1) << " "
-                      << (int)*((unsigned char*)p+2) << " "
-                      << (int)*((unsigned char*)p+3) << " "
-                      << ") expected " <<
-                      std::dec << expected << ", actual " << size << std::endl;
-            CPPUNIT_ASSERT_EQUAL(expected, size);
-        }
-        p = (void*) ((char*)p + size);
-        totalSize += size;
-    }
     CPPUNIT_ASSERT_EQUAL((int)n, totalSize);
 }
 
-void LoaderTest::testMicroDis2 () {
+void LoaderTest::testMicroDis2 ()
+{
 
     // Now a special test:
     // 8048910:  0f be 00            movsbl (%eax),%eax

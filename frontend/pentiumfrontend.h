@@ -19,7 +19,8 @@ public:
 
     virtual ~PentiumFrontEnd();
 
-    virtual const char *getFrontEndId() {
+    virtual const char *getFrontEndId()
+    {
         return "pentium";
     }
 

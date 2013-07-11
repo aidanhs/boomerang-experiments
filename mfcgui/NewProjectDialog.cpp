@@ -71,16 +71,17 @@ void CNewProjectDialog::OnBrowseLocation()
     CString name;
     m_name.GetWindowText(name);
     CFileDialog f(false, "bpf", name, 0, "Boomerang project files (*.bpf)|*.bpf|All files (*.*)|*.*|");
-    if (f.DoModal() != IDCANCEL) {
-        CString location = f.GetPathName();
-        CString name = f.GetFileTitle();
-        int last = 0;
-        do last = location.Find(name, last+1);
-        while (location.Find(name, last+1) != -1);
-        location.Delete(last, location.GetLength() - last);
-        m_location.SetWindowText(location);
-        m_name.SetWindowText(name);
-    }
+    if (f.DoModal() != IDCANCEL)
+        {
+            CString location = f.GetPathName();
+            CString name = f.GetFileTitle();
+            int last = 0;
+            do last = location.Find(name, last+1);
+            while (location.Find(name, last+1) != -1);
+            location.Delete(last, location.GetLength() - last);
+            m_location.SetWindowText(location);
+            m_name.SetWindowText(name);
+        }
 }
 
 void CNewProjectDialog::OnBrowseFilename()
@@ -88,17 +89,19 @@ void CNewProjectDialog::OnBrowseFilename()
     CString filename;
     m_filename.GetWindowText(filename);
     CFileDialog f(true, NULL, filename, 0, "Executables (*.exe)|*.exe|Dynamic link libraries (*.dll)|*.dll|All files (*.*)|*.*|");
-    if (f.DoModal() != IDCANCEL) {
-        m_filename.SetWindowText(f.GetPathName());
-        // If project name not entered, set it to something reasonable.
-        CString name;
-        m_name.GetWindowText(name);
-        if (name == "") {
-            m_name.SetWindowText(f.GetFileTitle());
+    if (f.DoModal() != IDCANCEL)
+        {
+            m_filename.SetWindowText(f.GetPathName());
+            // If project name not entered, set it to something reasonable.
+            CString name;
+            m_name.GetWindowText(name);
+            if (name == "")
+                {
+                    m_name.SetWindowText(f.GetFileTitle());
+                }
+            m_loader.SetCurSel(0);
+            m_frontend.SetCurSel(0);
         }
-        m_loader.SetCurSel(0);
-        m_frontend.SetCurSel(0);
-    }
 }
 
 void CNewProjectDialog::OnChangeFilename()
@@ -108,9 +111,10 @@ void CNewProjectDialog::OnChangeFilename()
     CString filename;
     m_filename.GetWindowText(filename);
     // make project name and filename the same
-    if (name == filename.Left(filename.GetLength() - 1)) {
-        m_name.SetWindowText(filename);
-    }
+    if (name == filename.Left(filename.GetLength() - 1))
+        {
+            m_name.SetWindowText(filename);
+        }
 }
 
 BOOL CNewProjectDialog::OnInitDialog()
@@ -119,10 +123,11 @@ BOOL CNewProjectDialog::OnInitDialog()
 
     CString s(prog.getProgPath().c_str());
     int r = s.ReverseFind('\\');
-    if (r == s.GetLength() - 1) {
-        s.Delete(s.GetLength() - 1);
-        r = s.ReverseFind('\\');
-    }
+    if (r == s.GetLength() - 1)
+        {
+            s.Delete(s.GetLength() - 1);
+            r = s.ReverseFind('\\');
+        }
     s.Delete(r, s.GetLength() - r);
     m_location.SetWindowText(s + "\\projects\\");
 
@@ -147,25 +152,33 @@ BOOL CNewProjectDialog::OnInitDialog()
 
 void CNewProjectDialog::OnOK()
 {
-    if (m_loader.GetCurSel() != 0) {
-        // using a loader other than win32.. eep
-        if (MessageBox("You have selected a loader that is not yet implemented, your selection will be ignored. Continue?",
-                       "Unimplemented loader", MB_YESNO) == IDYES) {
-            m_loader.SetCurSel(0);
-        } else return;
-    }
-    if (m_frontend.GetCurSel() != 0) {
-        // using a decoder other than pentium.. eep
-        if (m_frontend.GetCurSel() == 1) {
-            if (MessageBox("The SPARC front end is functional, however, there are no loaders currently implemented that can load binaries "
-                           "that would conceivably contain SPARC code.  It is therefore recommended that you dont select the SPARC front end, "
-                           "however, if you know what you are doing, feel free to give it a go.  Continue?",
-                           "No good loader ok?", MB_YESNO) == IDNO) return;
-        } else if (MessageBox("You have selected a front end that is not yet implemented, your selection will be ignored. Continue?",
-                              "Unimplemented front end", MB_YESNO) == IDYES) {
-            m_frontend.SetCurSel(0);
-        } else return;
-    }
+    if (m_loader.GetCurSel() != 0)
+        {
+            // using a loader other than win32.. eep
+            if (MessageBox("You have selected a loader that is not yet implemented, your selection will be ignored. Continue?",
+                           "Unimplemented loader", MB_YESNO) == IDYES)
+                {
+                    m_loader.SetCurSel(0);
+                }
+            else return;
+        }
+    if (m_frontend.GetCurSel() != 0)
+        {
+            // using a decoder other than pentium.. eep
+            if (m_frontend.GetCurSel() == 1)
+                {
+                    if (MessageBox("The SPARC front end is functional, however, there are no loaders currently implemented that can load binaries "
+                                   "that would conceivably contain SPARC code.  It is therefore recommended that you dont select the SPARC front end, "
+                                   "however, if you know what you are doing, feel free to give it a go.  Continue?",
+                                   "No good loader ok?", MB_YESNO) == IDNO) return;
+                }
+            else if (MessageBox("You have selected a front end that is not yet implemented, your selection will be ignored. Continue?",
+                                "Unimplemented front end", MB_YESNO) == IDYES)
+                {
+                    m_frontend.SetCurSel(0);
+                }
+            else return;
+        }
 
     CString filename;
     m_filename.GetWindowText(filename);
@@ -177,39 +190,45 @@ void CNewProjectDialog::OnOK()
     m_location.GetWindowText(location);
     prog.location = std::string(location);
 
-    if (prog.location == "" || prog.filename == "" || prog.project == "") {
-        MessageBox("You must enter a name, location, filename to decompile!");
-        return;
-    }
+    if (prog.location == "" || prog.filename == "" || prog.project == "")
+        {
+            MessageBox("You must enter a name, location, filename to decompile!");
+            return;
+        }
 
     assert(SetCurrentDirectory(prog.location.c_str()));
 
-    if (prog.location.at(prog.location.length()-1) != '\\') {
-        prog.location += "\\";
-    }
+    if (prog.location.at(prog.location.length()-1) != '\\')
+        {
+            prog.location += "\\";
+        }
     prog.location += prog.project;
     prog.location += ".bpf";
 
     assert(m_loader.GetCurSel() == 0);
     prog.pBF = new Win32BinaryFile();
-    if (!prog.pBF->RealLoad(filename)) {
-        MessageBox("The loader you have selected is unable to load the requested file.  Make sure you have both the filename and the correct loader selected.",
-                   "Bad loader", MB_OK);
-        delete prog.pBF;
-        prog.pBF = NULL;
-        return;
-    }
+    if (!prog.pBF->RealLoad(filename))
+        {
+            MessageBox("The loader you have selected is unable to load the requested file.  Make sure you have both the filename and the correct loader selected.",
+                       "Bad loader", MB_OK);
+            delete prog.pBF;
+            prog.pBF = NULL;
+            return;
+        }
     prog.getTextLimits();
     assert(m_frontend.GetCurSel() == 0 || m_frontend.GetCurSel() == 1);
-    if (m_frontend_n == 1) {
-        bool readResult = prog.RTLDict.readSSLFile(prog.getProgPath() + "..\\specs\\sparc.ssl", false);
-        assert(readResult);
-        prog.pFE = new SparcFrontEnd(prog.textDelta, prog.limitTextHigh);
-    } else {
-        bool readResult = prog.RTLDict.readSSLFile(prog.getProgPath() + "..\\specs\\pentium.ssl", false);
-        assert(readResult);
-        prog.pFE = new PentiumFrontEnd(prog.textDelta, prog.limitTextHigh);
-    }
+    if (m_frontend_n == 1)
+        {
+            bool readResult = prog.RTLDict.readSSLFile(prog.getProgPath() + "..\\specs\\sparc.ssl", false);
+            assert(readResult);
+            prog.pFE = new SparcFrontEnd(prog.textDelta, prog.limitTextHigh);
+        }
+    else
+        {
+            bool readResult = prog.RTLDict.readSSLFile(prog.getProgPath() + "..\\specs\\pentium.ssl", false);
+            assert(readResult);
+            prog.pFE = new PentiumFrontEnd(prog.textDelta, prog.limitTextHigh);
+        }
 
     prog.readLibParams();
 

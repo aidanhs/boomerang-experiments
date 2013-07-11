@@ -8,7 +8,8 @@ int fib (int x)
 }
 
 int main (void)
-{   int number, value;
+{
+    int number, value;
 
     printf ("Input number: ");
     scanf ("%d", &number);

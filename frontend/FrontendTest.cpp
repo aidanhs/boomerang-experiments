@@ -29,7 +29,8 @@
 suite->addTest(new CppUnit::TestCaller<FrontendTest> ("testExp", \
     &FrontendTest::name, *this))
 
-void FrontendTest::registerTests(CppUnit::TestSuite* suite) {
+void FrontendTest::registerTests(CppUnit::TestSuite* suite)
+{
     MYTEST(test1);
 }
 
@@ -45,7 +46,8 @@ int FrontendTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void FrontendTest::setUp () {
+void FrontendTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -55,13 +57,15 @@ void FrontendTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void FrontendTest::tearDown () {
+void FrontendTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:        FrontendTest::test1
  * OVERVIEW:        Test loading the sparc hello world program
  *============================================================================*/
-void FrontendTest::test1 () {
+void FrontendTest::test1 ()
+{
 }
 

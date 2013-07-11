@@ -6,10 +6,12 @@ public:
     BinaryFileStub(); // Constructor
     virtual       ~BinaryFileStub() { }
     virtual void  UnLoad() { }                    // Unload the image
-    bool        GetNextMember() {
+    bool        GetNextMember()
+    {
         return false;   // Load next member of archive
     }
-    virtual bool  Open(const char* sName) {
+    virtual bool  Open(const char* sName)
+    {
         return false;   // Open for r/w; pv
     }
     virtual void  Close() { }                     // Close file opened with Open()

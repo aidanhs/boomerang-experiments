@@ -78,7 +78,8 @@ Proc::Proc(Prog *prog, ADDRESS uNative, Signature *sig)
  * PARAMETERS:      <none>
  * RETURNS:         the name of this procedure
  *============================================================================*/
-const char* Proc::getName() {
+const char* Proc::getName()
+{
     assert(signature);
     return signature->getName();
 }
@@ -89,7 +90,8 @@ const char* Proc::getName() {
  * PARAMETERS:      new name
  * RETURNS:         <nothing>
  *============================================================================*/
-void Proc::setName(const char *nam) {
+void Proc::setName(const char *nam)
+{
     assert(signature);
     signature->setName(nam);
 }
@@ -101,18 +103,22 @@ void Proc::setName(const char *nam) {
  * PARAMETERS:      <none>
  * RETURNS:         the native address of this procedure (entry point)
  *============================================================================*/
-ADDRESS Proc::getNativeAddress() {
+ADDRESS Proc::getNativeAddress()
+{
     return address;
 }
 
-void Proc::setNativeAddress(ADDRESS a) {
+void Proc::setNativeAddress(ADDRESS a)
+{
     address = a;
 }
 
-void Proc::setBytesPopped(int n) {
-    if (bytesPopped == 0) {
-        bytesPopped = n;
-    }
+void Proc::setBytesPopped(int n)
+{
+    if (bytesPopped == 0)
+        {
+            bytesPopped = n;
+        }
     assert(bytesPopped == n);
 }
 
@@ -122,7 +128,8 @@ void Proc::setBytesPopped(int n) {
  * PARAMETERS:    address
  * RETURNS:       true if it does
  *============================================================================*/
-bool UserProc::containsAddr(ADDRESS uAddr) {
+bool UserProc::containsAddr(ADDRESS uAddr)
+{
     BB_IT it;
     for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it))
         if (bb->getRTLs() && bb->getLowAddr() <= uAddr &&
@@ -138,7 +145,8 @@ bool UserProc::containsAddr(ADDRESS uAddr) {
  *                  proc -
  * RETURNS:         os
  *============================================================================*/
-std::ostream& operator<<(std::ostream& os, Proc& proc) {
+std::ostream& operator<<(std::ostream& os, Proc& proc)
+{
     return proc.put(os);
 }
 
@@ -156,23 +164,27 @@ std::ostream& operator<<(std::ostream& os, Proc& proc) {
  * RETURNS:        <nothing>, but may add or delete elements from actuals
  *============================================================================*/
 #if 0       // FIXME: Need to think about whether we have a Parameters class
-bool isInt(const Exp* ss) {
+bool isInt(const Exp* ss)
+{
     assert(ss->getOper() == opTypedExp);
     return ((TypedExp*)ss)->getType().getType() == INTEGER;
 }
-bool isFlt(const Exp* ss) {
+bool isFlt(const Exp* ss)
+{
     assert(ss->getOper() == opTypedExp);
     Type& ty = ((TypedExp*)ss)->getType();
     return (ty.getType() == FLOATP) && (ty.getSize() == 32);
 }
-bool isDbl(const Exp* ss) {
+bool isDbl(const Exp* ss)
+{
     assert(ss->getOper() == opTypedExp);
     Type& ty = ((TypedExp*)ss)->getType();
     return (ty.getType() == FLOATP) && (ty.getSize() == 64);
 }
 
 void Proc::matchParams(std::list<Exp*>& actuals, UserProc& caller,
-                       const Parameters& outgoing) const {
+                       const Parameters& outgoing) const
+{
     int intSize = outgoing.getIntSize();    // Int size for the source machine
 
     int currSlot = -1;              // Current parameter slot number
@@ -181,125 +193,137 @@ void Proc::matchParams(std::list<Exp*>& actuals, UserProc& caller,
     std::list<Exp*>::const_iterator it = parameters.begin();
     std::list<Exp*>::iterator ita = actuals.begin();
 #if 0           // I believe this should be done later - MVE
-    if (isAggregateUsed()) {
-        // Need to match the aggregate parameter separately, before the main
-        // loop
-        if (ita == actuals.end())
-            insertParams(1, actuals, ita, name, outgoing);
-        else ita++;
-        assert(it != parameters.end());
-        it++;
-        ordParam++;
-    }
+    if (isAggregateUsed())
+        {
+            // Need to match the aggregate parameter separately, before the main
+            // loop
+            if (ita == actuals.end())
+                insertParams(1, actuals, ita, name, outgoing);
+            else ita++;
+            assert(it != parameters.end());
+            it++;
+            ordParam++;
+        }
 #endif
     // Loop through each formal parameter. There should be no gaps in the formal
     // parameters, because that's the job of missingParamCheck()
     int firstOff;
-    for (; it != parameters.end(); it++) {
-        // If the current formal is varargs, then leave the remaining actuals
-        // as they are
-        const Type& ty = it->getType();
-        if (ty.getType() == VARARGS) return;
+    for (; it != parameters.end(); it++)
+        {
+            // If the current formal is varargs, then leave the remaining actuals
+            // as they are
+            const Type& ty = it->getType();
+            if (ty.getType() == VARARGS) return;
 
-        // Note that we can't call outgoing.getParamSlot here because these are
-        // *formal* parameters (could be different locations to outgoing params)
-        // (Besides, it could be a library function with no parameter locations)
-        currSlot += currSize;
-        // Perform alignment, if needed. Note that it's OK to use the outgoing
-        // parameters, as we assume that the alignment is the same for incoming
-        outgoing.alignSlotNumber(currSlot, ty);
-        currSize = ty.getSize() / 8 / intSize;  // Current size in slots
-        // Ensure that small types still occupy one slot minimum
-        if (currSize == 0) currSize = 1;
+            // Note that we can't call outgoing.getParamSlot here because these are
+            // *formal* parameters (could be different locations to outgoing params)
+            // (Besides, it could be a library function with no parameter locations)
+            currSlot += currSize;
+            // Perform alignment, if needed. Note that it's OK to use the outgoing
+            // parameters, as we assume that the alignment is the same for incoming
+            outgoing.alignSlotNumber(currSlot, ty);
+            currSize = ty.getSize() / 8 / intSize;  // Current size in slots
+            // Ensure that small types still occupy one slot minimum
+            if (currSize == 0) currSize = 1;
 //cout << "matchParams: Proc " << name << ": formal " << *it << ", actual "; if (ita != actuals.end()) cout << *ita; cout << std::endl;  // HACK
-        // We need to find the subset of actuals with the same slot number
-        std::list<Exp*>::iterator itst = ita;      // Remember start of this set
-        int numAct = 0;                         // The count of this set
-        int actSlot, actSize = 0, nextActSlot;
-        if (ita != actuals.end()) {
-            actSize = 1;            // Example: int const 0
-            nextActSlot = actSlot = outgoing.getParamSlot(*ita, actSize,
-                                    ita == actuals.begin(), firstOff);
-            ita++;
-            numAct = 1;
-        }
-        while (ita != actuals.end()) {
-            nextActSlot = outgoing.getParamSlot(*ita, actSize, false, firstOff);
-            if (actSlot != nextActSlot) break;
-            numAct++;
-            ita++;
-        }
-        // if (actSize == 0) this means that we have run out of actual
-        // parameters. If (currSlot < actSlot) it means that there is a gap
-        // in the actual parameters. Either way, we need to insert one of the
-        // dreaded "hidden" (actual)parameters appropriate to the formal
-        // parameter (in size and type).
-        if ((actSize == 0) || (currSlot < actSlot)) {
-            const Exp** newActual = outgoing.getActParamLoc(ty, currSlot);
-            actuals.insert(itst, *newActual);
-            ita = itst;             // Still need to deal with this actual
-            std::ostringstream ost;
-            ost << "adding hidden parameter " << *newActual <<
-                " to call to " << name;
-            warning(str(ost));
-            delete newActual;
-            continue;               // Move to the next formal parameter
-        }
-        if (numAct > 1) {
-            // This means that there are several actual parameters to choose
-            // from, which all have the same slot number. This can happen in
-            // architectures like pa-risc, where different registers are used
-            // for different types of parameters, and they all could be live
+            // We need to find the subset of actuals with the same slot number
+            std::list<Exp*>::iterator itst = ita;      // Remember start of this set
+            int numAct = 0;                         // The count of this set
+            int actSlot, actSize = 0, nextActSlot;
+            if (ita != actuals.end())
+                {
+                    actSize = 1;            // Example: int const 0
+                    nextActSlot = actSlot = outgoing.getParamSlot(*ita, actSize,
+                                            ita == actuals.begin(), firstOff);
+                    ita++;
+                    numAct = 1;
+                }
+            while (ita != actuals.end())
+                {
+                    nextActSlot = outgoing.getParamSlot(*ita, actSize, false, firstOff);
+                    if (actSlot != nextActSlot) break;
+                    numAct++;
+                    ita++;
+                }
+            // if (actSize == 0) this means that we have run out of actual
+            // parameters. If (currSlot < actSlot) it means that there is a gap
+            // in the actual parameters. Either way, we need to insert one of the
+            // dreaded "hidden" (actual)parameters appropriate to the formal
+            // parameter (in size and type).
+            if ((actSize == 0) || (currSlot < actSlot))
+                {
+                    const Exp** newActual = outgoing.getActParamLoc(ty, currSlot);
+                    actuals.insert(itst, *newActual);
+                    ita = itst;             // Still need to deal with this actual
+                    std::ostringstream ost;
+                    ost << "adding hidden parameter " << *newActual <<
+                        " to call to " << name;
+                    warning(str(ost));
+                    delete newActual;
+                    continue;               // Move to the next formal parameter
+                }
+            if (numAct > 1)
+                {
+                    // This means that there are several actual parameters to choose
+                    // from, which all have the same slot number. This can happen in
+                    // architectures like pa-risc, where different registers are used
+                    // for different types of parameters, and they all could be live
 
-            // The rules depend on the basic type. Integer parameters can
-            // overlap (e.g. 68K, often pass one long to cover two shorts).
-            // This doesn't happen with floats, because values don't concaten-
-            // ate the same way. So the size can be used to choose the right
-            // floating point location (e.g. pa-risc)
-            std::list<Exp*>::iterator ch;  // Iterator to chosen item in actuals
-            if (!it->getType()->isFloat())
-                // Integer, pointer, etc. For now, assume all the same
-                ch = find_if(itst, ita, isInt);
-            else {
-                int size = it->getType().getSize();
-                if (size == 32)
-                    ch = find_if(itst, ita, isFlt);
-                else if (size == 64)
-                    ch = find_if(itst, ita, isDbl);
-                else assert(0);
-            }
-            if (ch == ita) {
-                std::ostringstream ost;
-                ost << "Parameter " << dec << ordParam << " of proc " << name <<
-                    " has no actual parameter of suitable type (slot " <<
-                    currSlot << ")";
-                error(str(ost));
-            } else {
-                // Eliminate all entries in actuals from itst up to but not
-                // including ita, except the ch one
-                // In other words, of all the actual parameter witht the same
-                // slot number, keep only ch
-                for (; itst != ita; itst++)
-                    if (itst != ch)
-                        actuals.erase(itst);
-            }
-        }
+                    // The rules depend on the basic type. Integer parameters can
+                    // overlap (e.g. 68K, often pass one long to cover two shorts).
+                    // This doesn't happen with floats, because values don't concaten-
+                    // ate the same way. So the size can be used to choose the right
+                    // floating point location (e.g. pa-risc)
+                    std::list<Exp*>::iterator ch;  // Iterator to chosen item in actuals
+                    if (!it->getType()->isFloat())
+                        // Integer, pointer, etc. For now, assume all the same
+                        ch = find_if(itst, ita, isInt);
+                    else
+                        {
+                            int size = it->getType().getSize();
+                            if (size == 32)
+                                ch = find_if(itst, ita, isFlt);
+                            else if (size == 64)
+                                ch = find_if(itst, ita, isDbl);
+                            else assert(0);
+                        }
+                    if (ch == ita)
+                        {
+                            std::ostringstream ost;
+                            ost << "Parameter " << dec << ordParam << " of proc " << name <<
+                                " has no actual parameter of suitable type (slot " <<
+                                currSlot << ")";
+                            error(str(ost));
+                        }
+                    else
+                        {
+                            // Eliminate all entries in actuals from itst up to but not
+                            // including ita, except the ch one
+                            // In other words, of all the actual parameter witht the same
+                            // slot number, keep only ch
+                            for (; itst != ita; itst++)
+                                if (itst != ch)
+                                    actuals.erase(itst);
+                        }
+                }
 
-        // Check that the sizes at least are compatible
-        // For example, sometimes 2 ints are passed for a formal double or long
-        if (currSize > actSize) {
-            // Check for the 2 int case. itst would point to the first, and
-            // ita (if not end) points to the second
-            if ((actSize == 1) && (currSize == 2) && (ita != actuals.end()) &&
-                    (ita->getType().getSize() == itst->getType().getSize())) {
-                // Let this through, by just skipping the second int
-                // It's up to the back end to cope with this situation
-                ita++;
-            }
-        }
+            // Check that the sizes at least are compatible
+            // For example, sometimes 2 ints are passed for a formal double or long
+            if (currSize > actSize)
+                {
+                    // Check for the 2 int case. itst would point to the first, and
+                    // ita (if not end) points to the second
+                    if ((actSize == 1) && (currSize == 2) && (ita != actuals.end()) &&
+                            (ita->getType().getSize() == itst->getType().getSize()))
+                        {
+                            // Let this through, by just skipping the second int
+                            // It's up to the back end to cope with this situation
+                            ita++;
+                        }
+                }
 
-        ordParam++;
-    }
+            ordParam++;
+        }
     // At this point, any excess actuals can be discarded
     actuals.erase(ita, actuals.end());
 }
@@ -317,7 +341,8 @@ void Proc::matchParams(std::list<Exp*>& actuals, UserProc& caller,
  * PARAMETERS:      actuals: list of actual parameters
  * RETURNS:         Ptr to a list of Types, same size as actuals
  *============================================================================*/
-std::list<Type>* Proc::getParamTypeList(const std::list<Exp*>& actuals) {
+std::list<Type>* Proc::getParamTypeList(const std::list<Exp*>& actuals)
+{
     std::list<Type>* result = new std::list<Type>;
     const Parameters& outgoing = prog.csrSrc.getOutgoingParamSpec();
     int intSize = outgoing.getIntSize();    // Int size for the source machine
@@ -328,120 +353,136 @@ std::list<Type>* Proc::getParamTypeList(const std::list<Exp*>& actuals) {
     std::list<Exp*>::const_iterator it = parameters.begin();
     std::list<Exp*>::const_iterator ita = actuals.begin();
     std::list<Exp*>::const_iterator itaa;
-    if (isAggregateUsed()) {
-        // The first parameter is a DATA_ADDRESS
-        result->push_back(Type(DATA_ADDRESS));
-        if (it != parameters.end()) it++;
-        if (ita != actuals.end()) ita++;
-    }
+    if (isAggregateUsed())
+        {
+            // The first parameter is a DATA_ADDRESS
+            result->push_back(Type(DATA_ADDRESS));
+            if (it != parameters.end()) it++;
+            if (ita != actuals.end()) ita++;
+        }
     int firstOff;
-    for (; it != parameters.end(); it++) {
-        if (ita == actuals.end())
-            // Run out of actual parameters. Can happen with varargs
-            break;
-        currForSlot += currForSize;
-        // Perform alignment, if needed. Note that it's OK to use the outgoing
-        // parameters, as we assume that the alignment is the same for incoming
-        Type ty = it->getType();
-        outgoing.alignSlotNumber(currForSlot, ty);
-        currForSize = ty.getSize() / 8 / intSize;  // Current size in slots
-        // Ensure that small types still occupy one slot minimum
-        if (currForSize == 0) currForSize = 1;
-        int actSize = 1;        // Default to 1 (e.g. int consts)
-        // Look at the current actual parameter, to get its size
-        if (ita->getFirstIdx() == idVar) {
-            // Just use the size from the Exp*'s Type
-            int bytes = ita->getType().getSize() / 8;
-            if (bytes && (bytes < intSize)) {
-                std::ostringstream ost;
-                ost << "getParamTypelist: one of those evil sub-integer "
-                    "parameter passings at call to " << name;
-                warning(str(ost));
-                actSize = 1;
-            }
+    for (; it != parameters.end(); it++)
+        {
+            if (ita == actuals.end())
+                // Run out of actual parameters. Can happen with varargs
+                break;
+            currForSlot += currForSize;
+            // Perform alignment, if needed. Note that it's OK to use the outgoing
+            // parameters, as we assume that the alignment is the same for incoming
+            Type ty = it->getType();
+            outgoing.alignSlotNumber(currForSlot, ty);
+            currForSize = ty.getSize() / 8 / intSize;  // Current size in slots
+            // Ensure that small types still occupy one slot minimum
+            if (currForSize == 0) currForSize = 1;
+            int actSize = 1;        // Default to 1 (e.g. int consts)
+            // Look at the current actual parameter, to get its size
+            if (ita->getFirstIdx() == idVar)
+                {
+                    // Just use the size from the Exp*'s Type
+                    int bytes = ita->getType().getSize() / 8;
+                    if (bytes && (bytes < intSize))
+                        {
+                            std::ostringstream ost;
+                            ost << "getParamTypelist: one of those evil sub-integer "
+                                "parameter passings at call to " << name;
+                            warning(str(ost));
+                            actSize = 1;
+                        }
+                    else
+                        actSize = bytes / intSize;
+                }
             else
-                actSize = bytes / intSize;
-        } else {
-            // MVE: not sure that this is the best way to find the size
-            outgoing.getParamSlot(*ita, actSize, ita == actuals.begin(),
-                                  firstOff);
-        }
-        ita++;
-        // If the current formal is varargs, that's a special case
-        // Similarly, if all the arguments are unknown
-        /*LOC_TYPE lt = ty.getType();
-        if ((lt == VARARGS) || (lt == UNKNOWN)) {
-            // We want to give all the remaining actuals their own type
-            ita--;
-            while (ita != actuals.end()) {
-                result->push_back(ita->getType());
-                ita++;
-            }
-            break;
-        } */
-        // If the sizes are the same, then we can use the formal's type
-        if (currForSize == actSize)
-            result->push_back(ty);
-        // Else there is an overlap. We get the type of the first formal,
-        // and widen it for the number of formals that this actual covers
-        else if (actSize > currForSize) {
-            Type first = ty;
-            int combinedSize = ty.getSize();
-            while ((actSize > currForSize) && (it != parameters.end())) {
-                currForSlot += currForSize;
-                ty = (++it)->getType();
-                outgoing.alignSlotNumber(currForSlot, ty);
-                currForSize += ty.getSize() / 8 / intSize;
-                combinedSize += ty.getSize();
-            }
-            if (actSize != currForSize) {
-                // Something has gone wrong with the matching process
-                std::ostringstream ost;
-                ost << "getParamTypeList: Actual parameter " << dec << ordParam
-                    << " does not match with formals in proc " << name;
-                error(str(ost));
-            }
-            first.setSize(combinedSize);
-            result->push_back(first);
-        }
-        // Could be overlapping parameters, e.g. two ints passed as a
-        // double or long. ita points to the second int (unless end)
-        else if ((actSize == 1) && (currForSize == 2) && (ita != actuals.end())
-                 && (itaa = ita, (*--itaa).getType() == ita->getType())) {
-            // Let this through, with the type of the formal
+                {
+                    // MVE: not sure that this is the best way to find the size
+                    outgoing.getParamSlot(*ita, actSize, ita == actuals.begin(),
+                                          firstOff);
+                }
             ita++;
+            // If the current formal is varargs, that's a special case
+            // Similarly, if all the arguments are unknown
+            /*LOC_TYPE lt = ty.getType();
+            if ((lt == VARARGS) || (lt == UNKNOWN)) {
+                // We want to give all the remaining actuals their own type
+                ita--;
+                while (ita != actuals.end()) {
+                    result->push_back(ita->getType());
+                    ita++;
+                }
+                break;
+            } */
+            // If the sizes are the same, then we can use the formal's type
+            if (currForSize == actSize)
+                result->push_back(ty);
+            // Else there is an overlap. We get the type of the first formal,
+            // and widen it for the number of formals that this actual covers
+            else if (actSize > currForSize)
+                {
+                    Type first = ty;
+                    int combinedSize = ty.getSize();
+                    while ((actSize > currForSize) && (it != parameters.end()))
+                        {
+                            currForSlot += currForSize;
+                            ty = (++it)->getType();
+                            outgoing.alignSlotNumber(currForSlot, ty);
+                            currForSize += ty.getSize() / 8 / intSize;
+                            combinedSize += ty.getSize();
+                        }
+                    if (actSize != currForSize)
+                        {
+                            // Something has gone wrong with the matching process
+                            std::ostringstream ost;
+                            ost << "getParamTypeList: Actual parameter " << dec << ordParam
+                                << " does not match with formals in proc " << name;
+                            error(str(ost));
+                        }
+                    first.setSize(combinedSize);
+                    result->push_back(first);
+                }
+            // Could be overlapping parameters, e.g. two ints passed as a
+            // double or long. ita points to the second int (unless end)
+            else if ((actSize == 1) && (currForSize == 2) && (ita != actuals.end())
+                     && (itaa = ita, (*--itaa).getType() == ita->getType()))
+                {
+                    // Let this through, with the type of the formal
+                    ita++;
+                    ordParam++;
+                    result->push_back(ty);
+                }
+            else
+                {
+                    assert(actSize > currForSize);
+                }
             ordParam++;
-            result->push_back(ty);
         }
-        else {
-            assert(actSize > currForSize);
-        }
-        ordParam++;
-    }
     return result;
 }
 #endif
 
-Prog *Proc::getProg() {
+Prog *Proc::getProg()
+{
     return prog;
 }
 
-Proc *Proc::getFirstCaller() {
-    if (m_firstCaller == NULL && m_firstCallerAddr != NO_ADDRESS) {
-        m_firstCaller = prog->findProc(m_firstCallerAddr);
-        m_firstCallerAddr = NO_ADDRESS;
-    }
+Proc *Proc::getFirstCaller()
+{
+    if (m_firstCaller == NULL && m_firstCallerAddr != NO_ADDRESS)
+        {
+            m_firstCaller = prog->findProc(m_firstCallerAddr);
+            m_firstCallerAddr = NO_ADDRESS;
+        }
 
     return m_firstCaller;
 }
 
-Signature *Proc::getSignature() {
+Signature *Proc::getSignature()
+{
     assert(signature);
     return signature;
 }
 
 // deserialize a procedure
-Proc *Proc::deserialize(Prog *prog, std::istream &inf) {
+Proc *Proc::deserialize(Prog *prog, std::istream &inf)
+{
     /*
      * These values are ordered in the save file because I think they are
      * concrete and necessary to create the specific subclass of Proc.
@@ -473,24 +514,26 @@ Proc *Proc::deserialize(Prog *prog, std::istream &inf) {
     return p;
 }
 
-bool Proc::deserialize_fid(std::istream &inf, int fid) {
-    switch(fid) {
-    case FID_PROC_SIGNATURE:
-    {
-        int len = loadLen(inf);
-        std::streampos pos = inf.tellg();
-        signature = Signature::deserialize(prog, inf);
-        assert(signature);
-        assert((int)(inf.tellg() - pos) == len);
-    }
-    break;
-    case FID_PROC_FIRSTCALLER:
-        loadValue(inf, m_firstCallerAddr);
+bool Proc::deserialize_fid(std::istream &inf, int fid)
+{
+    switch(fid)
+        {
+        case FID_PROC_SIGNATURE:
+        {
+            int len = loadLen(inf);
+            std::streampos pos = inf.tellg();
+            signature = Signature::deserialize(prog, inf);
+            assert(signature);
+            assert((int)(inf.tellg() - pos) == len);
+        }
         break;
-    default:
-        skipFID(inf, fid);
-        return false;
-    }
+        case FID_PROC_FIRSTCALLER:
+            loadValue(inf, m_firstCallerAddr);
+            break;
+        default:
+            skipFID(inf, fid);
+            return false;
+        }
 
     return true;
 }
@@ -507,7 +550,8 @@ bool Proc::deserialize_fid(std::istream &inf, int fid) {
  * RETURNS:         <nothing>
  *============================================================================*/
 LibProc::LibProc(Prog *prog, std::string& name, ADDRESS uNative) :
-    Proc(prog, uNative, NULL) {
+    Proc(prog, uNative, NULL)
+{
     signature = prog->getLibSignature(name.c_str());
 }
 
@@ -515,33 +559,36 @@ LibProc::~LibProc()
 {}
 
 // serialize this procedure
-bool LibProc::serialize(std::ostream &ouf, int &len) {
+bool LibProc::serialize(std::ostream &ouf, int &len)
+{
     std::streampos st = ouf.tellp();
 
     char type = 0;
     saveValue(ouf, type, false);
     saveValue(ouf, address, false);
 
-    if (signature) {
-        saveFID(ouf, FID_PROC_SIGNATURE);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    if (signature)
+        {
+            saveFID(ouf, FID_PROC_SIGNATURE);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        assert(signature->serialize(ouf, len));
+            assert(signature->serialize(ouf, len));
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
-    if (m_firstCaller) {
-        saveFID(ouf, FID_PROC_FIRSTCALLER);
-        saveValue(ouf, m_firstCaller->getNativeAddress());
-    }
+    if (m_firstCaller)
+        {
+            saveFID(ouf, FID_PROC_FIRSTCALLER);
+            saveValue(ouf, m_firstCaller->getNativeAddress());
+        }
     saveFID(ouf, FID_PROC_END);
     saveLen(ouf, 0);
 
@@ -550,16 +597,19 @@ bool LibProc::serialize(std::ostream &ouf, int &len) {
 }
 
 // deserialize the rest of this procedure
-bool LibProc::deserialize_fid(std::istream &inf, int fid) {
-    switch (fid) {
-    default:
-        return Proc::deserialize_fid(inf, fid);
-    }
+bool LibProc::deserialize_fid(std::istream &inf, int fid)
+{
+    switch (fid)
+        {
+        default:
+            return Proc::deserialize_fid(inf, fid);
+        }
 
     return true;
 }
 
-void LibProc::getInternalStatements(StatementList &internal) {
+void LibProc::getInternalStatements(StatementList &internal)
+{
     signature->getInternalStatements(internal);
 }
 
@@ -569,7 +619,8 @@ void LibProc::getInternalStatements(StatementList &internal) {
  * PARAMETERS:      os -
  * RETURNS:         os
  *============================================================================*/
-std::ostream& LibProc::put(std::ostream& os) {
+std::ostream& LibProc::put(std::ostream& os)
+{
     os << "library procedure `" << signature->getName() << "' resides at 0x";
     return os << std::hex << address << std::endl;
 }
@@ -588,11 +639,13 @@ std::ostream& LibProc::put(std::ostream& os) {
 UserProc::UserProc(Prog *prog, std::string& name, ADDRESS uNative) :
     Proc(prog, uNative, new Signature(name.c_str())),
     cfg(new Cfg()), decoded(false), decompiled(false), decompiled_down(false),
-    stmts_init(false), returnIsSet(false), isSymbolic(false), uniqueID(0) {
+    stmts_init(false), returnIsSet(false), isSymbolic(false), uniqueID(0)
+{
     cfg->setProc(this);              // Initialise cfg.myProc
 }
 
-UserProc::~UserProc() {
+UserProc::~UserProc()
+{
     if (cfg)
         delete cfg;
 }
@@ -603,7 +656,8 @@ UserProc::~UserProc() {
  * PARAMETERS:
  * RETURNS:
  *============================================================================*/
-bool UserProc::isDecoded() {
+bool UserProc::isDecoded()
+{
     return decoded;
 }
 
@@ -613,7 +667,8 @@ bool UserProc::isDecoded() {
  * PARAMETERS:      os -
  * RETURNS:         os
  *============================================================================*/
-std::ostream& UserProc::put(std::ostream& os) {
+std::ostream& UserProc::put(std::ostream& os)
+{
     os << "user procedure `" << signature->getName() << "' resides at 0x";
     return os << std::hex << address << std::endl;
 }
@@ -624,7 +679,8 @@ std::ostream& UserProc::put(std::ostream& os) {
  * PARAMETERS:      <none>
  * RETURNS:         a pointer to the CFG
  *============================================================================*/
-Cfg* UserProc::getCFG() {
+Cfg* UserProc::getCFG()
+{
     return cfg;
 }
 
@@ -635,7 +691,8 @@ Cfg* UserProc::getCFG() {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void UserProc::deleteCFG() {
+void UserProc::deleteCFG()
+{
     delete cfg;
     cfg = NULL;
 }
@@ -649,7 +706,8 @@ void UserProc::deleteCFG() {
  * RETURNS:         the number of bytes allocated for locals on
  *                  the stack
  *============================================================================*/
-int UserProc::getLocalsSize() {
+int UserProc::getLocalsSize()
+{
     if (prologue != NULL)
         return prologue->getLocalsSize();
     else
@@ -663,11 +721,13 @@ int UserProc::getLocalsSize() {
  * RETURNS:     An integer value of the first symbolic local declared. For e.g
                 variable v12, it returns 12. If no locals, returns -1.
  *============================================================================*/
-int UserProc::getFirstLocalIndex() {
+int UserProc::getFirstLocalIndex()
+{
     std::vector<TypedExp*>::iterator it = locals.begin();
-    if (it == locals.end()) {
-        return -1;
-    }
+    if (it == locals.end())
+        {
+            return -1;
+        }
     return (*it)->getVarIndex();
 }
 #endif
@@ -680,11 +740,13 @@ int UserProc::getFirstLocalIndex() {
  * RETURNS:     An integer value of the first symbolic local declared. For e.g
                 variable v12, it returns 12. If no locals, returns -1.
  *============================================================================*/
-int UserProc::getLastLocalIndex() {
+int UserProc::getLastLocalIndex()
+{
     std::vector<TypedExp*>::iterator it = locals.end(); // just after end
-    if (it == locals.begin()) { // must be empty
-        return -1;
-    }
+    if (it == locals.begin())   // must be empty
+        {
+            return -1;
+        }
     it--;           // point to last element
     return it->getSecondIdx();
 }
@@ -695,7 +757,8 @@ int UserProc::getLastLocalIndex() {
  * PARAMETERS:  None
  * RETURNS:     A reference to the list of the procedure's symbolic locals.
  *============================================================================*/
-std::vector<TypedExp*>& UserProc::getSymbolicLocals() {
+std::vector<TypedExp*>& UserProc::getSymbolicLocals()
+{
     return locals;
 }
 #endif
@@ -706,7 +769,8 @@ std::vector<TypedExp*>& UserProc::getSymbolicLocals() {
  * PARAMETERS:
  * RETURNS:
  *============================================================================*/
-void UserProc::setDecoded() {
+void UserProc::setDecoded()
+{
     decoded = true;
 }
 
@@ -716,7 +780,8 @@ void UserProc::setDecoded() {
  * PARAMETERS:
  * RETURNS:
  *============================================================================*/
-void UserProc::unDecode() {
+void UserProc::unDecode()
+{
     cfg->clear();
     decoded = false;
 }
@@ -727,7 +792,8 @@ void UserProc::unDecode() {
  * PARAMETERS:
  * RETURNS:     Pointer to the entry point BB, or NULL if not found
  *============================================================================*/
-PBB UserProc::getEntryBB() {
+PBB UserProc::getEntryBB()
+{
     return cfg->getEntryBB();
 }
 
@@ -737,14 +803,16 @@ PBB UserProc::getEntryBB() {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void UserProc::setEntryBB() {
+void UserProc::setEntryBB()
+{
     std::list<PBB>::iterator bbit;
     PBB pBB = cfg->getFirstBB(bbit);        // Get an iterator to the first BB
     // Usually, but not always, this will be the first BB, or at least in the
     // first few
-    while (pBB && address != pBB->getLowAddr()) {
-        pBB = cfg->getNextBB(bbit);
-    }
+    while (pBB && address != pBB->getLowAddr())
+        {
+            pBB = cfg->getNextBB(bbit);
+        }
     cfg->setEntryBB(pBB);
 }
 
@@ -754,16 +822,19 @@ void UserProc::setEntryBB() {
  * PARAMETERS:      <none>
  * RETURNS:         Constant reference to the set
  *============================================================================*/
-std::set<Proc*>& UserProc::getCallees() {
-    if (calleeAddrSet.begin() != calleeAddrSet.end()) {
-        for (std::set<ADDRESS>::iterator it = calleeAddrSet.begin();
-                it != calleeAddrSet.end(); it++) {
-            Proc *p = prog->findProc(*it);
-            if (p)
-                calleeSet.insert(p);
+std::set<Proc*>& UserProc::getCallees()
+{
+    if (calleeAddrSet.begin() != calleeAddrSet.end())
+        {
+            for (std::set<ADDRESS>::iterator it = calleeAddrSet.begin();
+                    it != calleeAddrSet.end(); it++)
+                {
+                    Proc *p = prog->findProc(*it);
+                    if (p)
+                        calleeSet.insert(p);
+                }
+            calleeAddrSet.clear();
         }
-        calleeAddrSet.clear();
-    }
     return calleeSet;
 }
 
@@ -773,63 +844,69 @@ std::set<Proc*>& UserProc::getCallees() {
  * PARAMETERS:      A pointer to the Proc object for the callee
  * RETURNS:         <nothing>
  *============================================================================*/
-void UserProc::setCallee(Proc* callee) {
+void UserProc::setCallee(Proc* callee)
+{
     calleeSet.insert(callee);
 }
 
 // serialize this procedure
-bool UserProc::serialize(std::ostream &ouf, int &len) {
+bool UserProc::serialize(std::ostream &ouf, int &len)
+{
     std::streampos st = ouf.tellp();
 
     char type = 1;
     saveValue(ouf, type, false);
     saveValue(ouf, address, false);
 
-    if (signature) {
-        saveFID(ouf, FID_PROC_SIGNATURE);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    if (signature)
+        {
+            saveFID(ouf, FID_PROC_SIGNATURE);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        assert(signature->serialize(ouf, len));
+            assert(signature->serialize(ouf, len));
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
     saveFID(ouf, FID_PROC_DECODED);
     saveValue(ouf, decoded);
 
-    if (cfg) {
-        saveFID(ouf, FID_CFG);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    if (cfg)
+        {
+            saveFID(ouf, FID_CFG);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        assert(cfg->serialize(ouf, len));
+            assert(cfg->serialize(ouf, len));
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
-    if (m_firstCaller) {
-        saveFID(ouf, FID_PROC_FIRSTCALLER);
-        saveValue(ouf, m_firstCaller->getNativeAddress());
-    }
+    if (m_firstCaller)
+        {
+            saveFID(ouf, FID_PROC_FIRSTCALLER);
+            saveValue(ouf, m_firstCaller->getNativeAddress());
+        }
 
     for (std::set<Proc *>::iterator it = calleeSet.begin();
-            it != calleeSet.end(); it++) {
-        saveFID(ouf, FID_PROC_CALLEE);
-        saveValue(ouf, (*it)->getNativeAddress());
-    }
+            it != calleeSet.end(); it++)
+        {
+            saveFID(ouf, FID_PROC_CALLEE);
+            saveValue(ouf, (*it)->getNativeAddress());
+        }
 
     saveFID(ouf, FID_PROC_END);
     saveLen(ouf, 0);
@@ -838,45 +915,49 @@ bool UserProc::serialize(std::ostream &ouf, int &len) {
     return true;
 }
 
-bool UserProc::deserialize_fid(std::istream &inf, int fid) {
+bool UserProc::deserialize_fid(std::istream &inf, int fid)
+{
     ADDRESS a;
 
-    switch (fid) {
-    case FID_PROC_DECODED:
-        loadValue(inf, decoded);
+    switch (fid)
+        {
+        case FID_PROC_DECODED:
+            loadValue(inf, decoded);
+            break;
+        case FID_CFG:
+        {
+            int len = loadLen(inf);
+            std::streampos pos = inf.tellg();
+            assert(cfg);
+            assert(cfg->deserialize(inf));
+            assert((int)(inf.tellg() - pos) == len);
+        }
         break;
-    case FID_CFG:
-    {
-        int len = loadLen(inf);
-        std::streampos pos = inf.tellg();
-        assert(cfg);
-        assert(cfg->deserialize(inf));
-        assert((int)(inf.tellg() - pos) == len);
-    }
-    break;
-    case FID_PROC_CALLEE:
-        loadValue(inf, a);
-        calleeAddrSet.insert(a);
-        break;
-    default:
-        return Proc::deserialize_fid(inf, fid);
-    }
+        case FID_PROC_CALLEE:
+            loadValue(inf, a);
+            calleeAddrSet.insert(a);
+            break;
+        default:
+            return Proc::deserialize_fid(inf, fid);
+        }
 
     return true;
 }
 
-void UserProc::generateCode(HLLCode *hll) {
+void UserProc::generateCode(HLLCode *hll)
+{
     assert(cfg);
     assert(getEntryBB());
 
     cfg->structure();
     replaceExpressionsWithGlobals();
-    if (!Boomerang::get()->noLocals) {
-        while (nameStackLocations())
-            replaceExpressionsWithSymbols();
-        while (nameRegisters())
-            replaceExpressionsWithSymbols();
-    }
+    if (!Boomerang::get()->noLocals)
+        {
+            while (nameStackLocations())
+                replaceExpressionsWithSymbols();
+            while (nameRegisters())
+                replaceExpressionsWithSymbols();
+        }
     if (VERBOSE || Boomerang::get()->printRtl)
         print(std::cerr);
 
@@ -896,117 +977,137 @@ void UserProc::generateCode(HLLCode *hll) {
 }
 
 // print this userproc, maining for debugging
-void UserProc::print(std::ostream &out, bool withDF) {
+void UserProc::print(std::ostream &out, bool withDF)
+{
     signature->print(out);
     cfg->print(out, withDF);
 }
 
 // initialise all statements
-void UserProc::initStatements() {
+void UserProc::initStatements()
+{
     if (stmts_init)
         return;         // Already done
     stmts_init = true;  // Only do this once
     BB_IT it;
-    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
-        std::list<RTL*> *rtls = bb->getRTLs();
-        for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end();
-                rit++) {
-            RTL *rtl = *rit;
-            for (std::list<Exp*>::iterator it = rtl->getList().begin();
-                    it != rtl->getList().end(); it++) {
-                Statement *e = dynamic_cast<Statement*>(*it);
-                if (e == NULL) continue;
-                e->setProc(this);
-                e->setBB(bb);
-            }
-            if (rtl->getKind() == CALL_RTL) {
-                HLCall *call = (HLCall*)rtl;
-                call->setProc(this);   // Different statement to its assignments
-                call->setBB(bb);
-                StatementList &internal = call->getInternalStatements();
-                StmtListIter it1;
-                for (Statement* s1 = internal.getFirst(it1); s1;
-                        s1 = internal.getNext(it1)) {
-                    s1->setProc(this);
-                    s1->setBB(bb);
+    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it))
+        {
+            std::list<RTL*> *rtls = bb->getRTLs();
+            for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end();
+                    rit++)
+                {
+                    RTL *rtl = *rit;
+                    for (std::list<Exp*>::iterator it = rtl->getList().begin();
+                            it != rtl->getList().end(); it++)
+                        {
+                            Statement *e = dynamic_cast<Statement*>(*it);
+                            if (e == NULL) continue;
+                            e->setProc(this);
+                            e->setBB(bb);
+                        }
+                    if (rtl->getKind() == CALL_RTL)
+                        {
+                            HLCall *call = (HLCall*)rtl;
+                            call->setProc(this);   // Different statement to its assignments
+                            call->setBB(bb);
+                            StatementList &internal = call->getInternalStatements();
+                            StmtListIter it1;
+                            for (Statement* s1 = internal.getFirst(it1); s1;
+                                    s1 = internal.getNext(it1))
+                                {
+                                    s1->setProc(this);
+                                    s1->setBB(bb);
+                                }
+                        }
+                    if (rtl->getKind() == JCOND_RTL)
+                        {
+                            HLJcond *jcond = (HLJcond*)rtl;
+                            jcond->setProc(this);
+                            jcond->setBB(bb);
+                        }
                 }
-            }
-            if (rtl->getKind() == JCOND_RTL) {
-                HLJcond *jcond = (HLJcond*)rtl;
-                jcond->setProc(this);
-                jcond->setBB(bb);
-            }
         }
-    }
 }
 
 // get all statements
 // Get to a statement list, so they come out in a reasonable and consistent
 // order
-void UserProc::getStatements(StatementList &stmts) {
+void UserProc::getStatements(StatementList &stmts)
+{
     BB_IT it;
-    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
-        std::list<RTL*> *rtls = bb->getRTLs();
-        for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end();
-                rit++) {
-            RTL *rtl = *rit;
-            for (std::list<Exp*>::iterator it = rtl->getList().begin();
-                    it != rtl->getList().end(); it++) {
-                Statement *e = dynamic_cast<Statement*>(*it);
-                if (e == NULL) continue;
-                stmts.append(e);
-                e->setProc(this);
-                e->setBB(bb);
-            }
-            if (rtl->getKind() == CALL_RTL) {
-                HLCall *call = (HLCall*)rtl;
-                stmts.append(call);
-                call->setProc(this);
-                StatementList &internal = call->getInternalStatements();
-                StmtListIter it1;
-                for (Statement* s1 = internal.getFirst(it1); s1;
-                        s1 = internal.getNext(it1)) {
-                    stmts.append(s1);
-                    s1->setProc(this);
-                    s1->setBB(bb);
+    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it))
+        {
+            std::list<RTL*> *rtls = bb->getRTLs();
+            for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end();
+                    rit++)
+                {
+                    RTL *rtl = *rit;
+                    for (std::list<Exp*>::iterator it = rtl->getList().begin();
+                            it != rtl->getList().end(); it++)
+                        {
+                            Statement *e = dynamic_cast<Statement*>(*it);
+                            if (e == NULL) continue;
+                            stmts.append(e);
+                            e->setProc(this);
+                            e->setBB(bb);
+                        }
+                    if (rtl->getKind() == CALL_RTL)
+                        {
+                            HLCall *call = (HLCall*)rtl;
+                            stmts.append(call);
+                            call->setProc(this);
+                            StatementList &internal = call->getInternalStatements();
+                            StmtListIter it1;
+                            for (Statement* s1 = internal.getFirst(it1); s1;
+                                    s1 = internal.getNext(it1))
+                                {
+                                    stmts.append(s1);
+                                    s1->setProc(this);
+                                    s1->setBB(bb);
+                                }
+                        }
+                    if (rtl->getKind() == JCOND_RTL)
+                        {
+                            HLJcond *jcond = (HLJcond*)rtl;
+                            stmts.append(jcond);
+                            jcond->setProc(this);
+                            jcond->setBB(bb);
+                        }
                 }
-            }
-            if (rtl->getKind() == JCOND_RTL) {
-                HLJcond *jcond = (HLJcond*)rtl;
-                stmts.append(jcond);
-                jcond->setProc(this);
-                jcond->setBB(bb);
-            }
         }
-    }
 }
 
 // remove a statement
-void UserProc::removeStatement(Statement *stmt) {
+void UserProc::removeStatement(Statement *stmt)
+{
     // remove from BB/RTL
     PBB bb = stmt->getBB();         // Get our enclosing BB
     std::list<RTL*> *rtls = bb->getRTLs();
     for (std::list<RTL*>::iterator rit = rtls->begin(); rit != rtls->end();
-            rit++) {
-        RTL *rtl = *rit;
-        for (std::list<Exp*>::iterator it = rtl->getList().begin();
-                it != rtl->getList().end(); it++) {
-            Statement *e = dynamic_cast<Statement*>(*it);
-            if (e == NULL) continue;
-            if (e == stmt) {
-                stmt->updateDfForErase();
-                rtl->getList().erase(it);
-                return;
-            }
+            rit++)
+        {
+            RTL *rtl = *rit;
+            for (std::list<Exp*>::iterator it = rtl->getList().begin();
+                    it != rtl->getList().end(); it++)
+                {
+                    Statement *e = dynamic_cast<Statement*>(*it);
+                    if (e == NULL) continue;
+                    if (e == stmt)
+                        {
+                            stmt->updateDfForErase();
+                            rtl->getList().erase(it);
+                            return;
+                        }
+                }
+            if (rtl->getKind() == CALL_RTL)
+                {
+                    HLCall *call = (HLCall*)rtl;
+                    assert(call != stmt);
+                    StatementList &internal = call->getInternalStatements();
+                    if (internal.remove(stmt))
+                        stmt->updateDfForErase();
+                }
         }
-        if (rtl->getKind() == CALL_RTL) {
-            HLCall *call = (HLCall*)rtl;
-            assert(call != stmt);
-            StatementList &internal = call->getInternalStatements();
-            if (internal.remove(stmt))
-                stmt->updateDfForErase();
-        }
-    }
 }
 
 // Perform "on the way down" decompilation processing
@@ -1014,7 +1115,8 @@ void UserProc::removeStatement(Statement *stmt) {
 // At present, we summarise the dataflow (so that call statements which call
 // this proc can have dataflow accurately propagated through them), and
 // find the use-before-define locations (formal parameters) for later use
-void UserProc::decompile_down() {
+void UserProc::decompile_down()
+{
     initStatements();           // Ensure all statements have proc field set
     // Summarise the data flow. Note that this is not the final dataflow;
     // it assumes no uses or kills in call statements.
@@ -1025,48 +1127,56 @@ void UserProc::decompile_down() {
     // getLiveEntry()
     cfg->computeDataflow();
 
-    if (VERBOSE) {
-        StmtSetIter oo;
-        StatementSet* reachExit = cfg->getReachExit();
-        if (reachExit) {
-            std::cerr << "reachExit for proc " << getName() <<
-                      " (on way down):\n";
-            for (Statement* s = reachExit->getFirst(oo); s;
-                    s = reachExit->getNext(oo)) {
-                s->printAsUse(std::cerr);
-                std::cerr << ", ";
-            }
+    if (VERBOSE)
+        {
+            StmtSetIter oo;
+            StatementSet* reachExit = cfg->getReachExit();
+            if (reachExit)
+                {
+                    std::cerr << "reachExit for proc " << getName() <<
+                              " (on way down):\n";
+                    for (Statement* s = reachExit->getFirst(oo); s;
+                            s = reachExit->getNext(oo))
+                        {
+                            s->printAsUse(std::cerr);
+                            std::cerr << ", ";
+                        }
+                }
+            else std::cerr << "No reach exit!";
+            StatementSet* availExit = cfg->getAvailExit();
+            if (availExit)
+                {
+                    std::cerr << "AvailExit is at 0x" << std::hex << (unsigned)cfg->getAvailExit() << "\n";
+                    std::cerr << "\navailExit for proc " << getName() <<
+                              " (on way down):\n";
+                    for (Statement* s = availExit->getFirst(oo); s;
+                            s = availExit->getNext(oo))
+                        {
+                            s->printAsUse(std::cerr);
+                            std::cerr << ", ";
+                        }
+                }
+            else std::cerr << "No avail exit!";
+            LocationSet* liveEntry = cfg->getLiveEntry();
+            if (liveEntry)
+                {
+                    std::cerr << "\nliveEntry for proc " << getName() <<
+                              " (on way down):\n";
+                    LocSetIter ll;
+                    for (Exp* loc = liveEntry->getFirst(ll); loc;
+                            loc = liveEntry->getNext(ll))
+                        {
+                            std::cerr << loc << ", ";
+                        }
+                }
+            else std::cerr << "No live entry!";
+            std::cerr << "\n--\n";
         }
-        else std::cerr << "No reach exit!";
-        StatementSet* availExit = cfg->getAvailExit();
-        if (availExit) {
-            std::cerr << "AvailExit is at 0x" << std::hex << (unsigned)cfg->getAvailExit() << "\n";
-            std::cerr << "\navailExit for proc " << getName() <<
-                      " (on way down):\n";
-            for (Statement* s = availExit->getFirst(oo); s;
-                    s = availExit->getNext(oo)) {
-                s->printAsUse(std::cerr);
-                std::cerr << ", ";
-            }
-        }
-        else std::cerr << "No avail exit!";
-        LocationSet* liveEntry = cfg->getLiveEntry();
-        if (liveEntry) {
-            std::cerr << "\nliveEntry for proc " << getName() <<
-                      " (on way down):\n";
-            LocSetIter ll;
-            for (Exp* loc = liveEntry->getFirst(ll); loc;
-                    loc = liveEntry->getNext(ll)) {
-                std::cerr << loc << ", ";
-            }
-        }
-        else std::cerr << "No live entry!";
-        std::cerr << "\n--\n";
-    }
 }
 
 // decompile this userproc
-void UserProc::decompile() {
+void UserProc::decompile()
+{
     // Prevent infinite loops when there are cycles in the call graph
     if (decompiled_down) return;
 
@@ -1084,27 +1194,31 @@ void UserProc::decompile() {
 
     // Look at each call, to perform a depth first search.
     BB_IT it;
-    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
-        if (bb->getType() == CALL) {
-            // The call RTL will be the last in this BB
-            HLCall* call = (HLCall*)bb->getRTLs()->back();
-            call->decompile();
+    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it))
+        {
+            if (bb->getType() == CALL)
+                {
+                    // The call RTL will be the last in this BB
+                    HLCall* call = (HLCall*)bb->getRTLs()->back();
+                    call->decompile();
+                }
         }
-    }
 
-    if (VERBOSE) {
-        std::cerr << "decompiling (back): " << getName() << std::endl;
-        print(std::cerr, false);    // First time no df so it's readable!
-    }
+    if (VERBOSE)
+        {
+            std::cerr << "decompiling (back): " << getName() << std::endl;
+            print(std::cerr, false);    // First time no df so it's readable!
+        }
     bool change = true;
-    while (change) {
-        change = false;
-        recalcDataflow();
-        if (VERBOSE) print(std::cerr, true);
-        change |= propagateAndRemoveStatements();
-        change |= removeNullStatements();
-        change |= removeDeadStatements();
-    }
+    while (change)
+        {
+            change = false;
+            recalcDataflow();
+            if (VERBOSE) print(std::cerr, true);
+            change |= propagateAndRemoveStatements();
+            change |= removeNullStatements();
+            change |= removeDeadStatements();
+        }
     if (!Boomerang::get()->noRemoveInternal)
         moveInternalStatements();
     cfg->compressCfg();
@@ -1125,107 +1239,123 @@ void UserProc::decompile() {
     // Truncate the number of arguments to calls (only needed for calls
     // promoteSignature has converted some
     // involved in cycles in the call graph, e.g. recursive calls)
-    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it)) {
-        if (bb->getType() == CALL) {
-            // The call RTL will be the last in this BB
-            HLCall* call = (HLCall*)bb->getRTLs()->back();
-            call->truncateArguments();
+    for (PBB bb = cfg->getFirstBB(it); bb; bb = cfg->getNextBB(it))
+        {
+            if (bb->getType() == CALL)
+                {
+                    // The call RTL will be the last in this BB
+                    HLCall* call = (HLCall*)bb->getRTLs()->back();
+                    call->truncateArguments();
+                }
         }
-    }
 
     decompiled = true;          // Now fully decompiled
 }
 
-void UserProc::replaceExpressionsWithGlobals() {
+void UserProc::replaceExpressionsWithGlobals()
+{
     Exp *match = new Unary(opMemOf, new Terminal(opWild));
     StatementList stmts;
     getStatements(stmts);
 
     // replace expressions with symbols
     StmtListIter it;
-    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        Exp *memof;
-        const char *global;
+    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            Exp *memof;
+            const char *global;
 
-        if (s->search(match, memof)) {
-            if (memof->getSubExp1()->getOper() == opIntConst &&
-                    (global =
-                         prog->getGlobal(((Const*)memof->getSubExp1())->getInt()))) {
-                s->searchAndReplace(memof,
-                                    new Unary(opGlobal, new Const((char*)global)));
-            }
+            if (s->search(match, memof))
+                {
+                    if (memof->getSubExp1()->getOper() == opIntConst &&
+                            (global =
+                                 prog->getGlobal(((Const*)memof->getSubExp1())->getInt())))
+                        {
+                            s->searchAndReplace(memof,
+                                                new Unary(opGlobal, new Const((char*)global)));
+                        }
+                }
         }
-    }
 
     // replace expressions with symbols in the return value
     for (std::map<Exp*, Exp*>::iterator it1 = symbolMap.begin();
-            it1 != symbolMap.end(); it1++) {
-        bool change;
-        Exp *e = cfg->getReturnVal()->clone();
-        if (e == NULL) break;
-        if (VERBOSE) {
-            std::cerr << "return value: ";
-            e->print(std::cerr);
-            std::cerr << " replace ";
-            (*it1).first->print(std::cerr);
-            std::cerr << " with ";
-            (*it1).second->print(std::cerr);
-            std::cerr << std::endl;
+            it1 != symbolMap.end(); it1++)
+        {
+            bool change;
+            Exp *e = cfg->getReturnVal()->clone();
+            if (e == NULL) break;
+            if (VERBOSE)
+                {
+                    std::cerr << "return value: ";
+                    e->print(std::cerr);
+                    std::cerr << " replace ";
+                    (*it1).first->print(std::cerr);
+                    std::cerr << " with ";
+                    (*it1).second->print(std::cerr);
+                    std::cerr << std::endl;
+                }
+            Exp *memof;
+            const char *global;
+            if (e->search(match, memof) &&
+                    memof->getSubExp1()->getOper() == opIntConst &&
+                    (global =
+                         prog->getGlobal(((Const*)memof->getSubExp1())->getInt())))
+                {
+                    e->searchReplaceAll(memof,
+                                        new Unary(opGlobal, new Const((char*)global)), change);
+                }
+            if (VERBOSE)
+                {
+                    std::cerr << "  after: ";
+                    e->print(std::cerr);
+                    std::cerr << std::endl;
+                }
+            if (change) cfg->setReturnVal(e->clone());
         }
-        Exp *memof;
-        const char *global;
-        if (e->search(match, memof) &&
-                memof->getSubExp1()->getOper() == opIntConst &&
-                (global =
-                     prog->getGlobal(((Const*)memof->getSubExp1())->getInt()))) {
-            e->searchReplaceAll(memof,
-                                new Unary(opGlobal, new Const((char*)global)), change);
-        }
-        if (VERBOSE) {
-            std::cerr << "  after: ";
-            e->print(std::cerr);
-            std::cerr << std::endl;
-        }
-        if (change) cfg->setReturnVal(e->clone());
-    }
     delete match;
 }
 
-void UserProc::replaceExpressionsWithSymbols() {
+void UserProc::replaceExpressionsWithSymbols()
+{
     StatementList stmts;
     getStatements(stmts);
 
     // replace expressions in regular statements with symbols
     StmtListIter it;
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        for (std::map<Exp*, Exp*>::iterator it1 = symbolMap.begin();
-                it1 != symbolMap.end(); it1++) {
-            s->searchAndReplace((*it1).first, (*it1).second);
-            if (VERBOSE) {
-                Exp* ee = dynamic_cast<Exp*>(s);
-                if (ee) std::cerr << "Std stmt: replace " << (*it1).first <<
-                                      " with " << (*it1).second << " in " << ee << std::endl;
-            }
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            for (std::map<Exp*, Exp*>::iterator it1 = symbolMap.begin();
+                    it1 != symbolMap.end(); it1++)
+                {
+                    s->searchAndReplace((*it1).first, (*it1).second);
+                    if (VERBOSE)
+                        {
+                            Exp* ee = dynamic_cast<Exp*>(s);
+                            if (ee) std::cerr << "Std stmt: replace " << (*it1).first <<
+                                                  " with " << (*it1).second << " in " << ee << std::endl;
+                        }
+                }
         }
-    }
 
     // replace expressions with symbols in the return value
     for (std::map<Exp*, Exp*>::iterator it1 = symbolMap.begin();
-            it1 != symbolMap.end(); it1++) {
-        bool change;
-        Exp *e = cfg->getReturnVal();
-        if (e == NULL) break;
-        e = e->clone();
-        if (VERBOSE) std::cerr << "return value: " << e << " replace " <<
-                                   (*it1).first << " with " << (*it1).second << " in " << e <<
-                                   std::endl;
-        e = e->searchReplaceAll((*it1).first, (*it1).second, change);
-        if (VERBOSE) std::cerr << "  after: " << e << std::endl;
-        if (change) cfg->setReturnVal(e->clone());
-    }
+            it1 != symbolMap.end(); it1++)
+        {
+            bool change;
+            Exp *e = cfg->getReturnVal();
+            if (e == NULL) break;
+            e = e->clone();
+            if (VERBOSE) std::cerr << "return value: " << e << " replace " <<
+                                       (*it1).first << " with " << (*it1).second << " in " << e <<
+                                       std::endl;
+            e = e->searchReplaceAll((*it1).first, (*it1).second, change);
+            if (VERBOSE) std::cerr << "  after: " << e << std::endl;
+            if (change) cfg->setReturnVal(e->clone());
+        }
 }
 
-bool UserProc::nameStackLocations() {
+bool UserProc::nameStackLocations()
+{
     Exp *match = signature->getStackWildcard();
     if (match == NULL) return false;
 
@@ -1234,34 +1364,39 @@ bool UserProc::nameStackLocations() {
     getStatements(stmts);
     // create a symbol for every memory reference
     StmtListIter it;
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        Exp *memref;
-        if (s->search(match, memref)) {
-            if (symbolMap.find(memref) == symbolMap.end()) {
-                if (VERBOSE) {
-                    std::cerr << "stack location found: ";
-                    memref->print(std::cerr);
-                    std::cerr << std::endl;
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            Exp *memref;
+            if (s->search(match, memref))
+                {
+                    if (symbolMap.find(memref) == symbolMap.end())
+                        {
+                            if (VERBOSE)
+                                {
+                                    std::cerr << "stack location found: ";
+                                    memref->print(std::cerr);
+                                    std::cerr << std::endl;
+                                }
+                            std::ostringstream os;
+                            os << "local" << locals.size();
+                            std::string name = os.str();
+                            symbolMap[memref->clone()] =
+                                new Unary(opLocal, new Const(strdup(name.c_str())));
+                            locals[name] = new IntegerType();
+                        }
+                    assert(symbolMap.find(memref) != symbolMap.end());
+                    std::string name = ((Const*)symbolMap[memref]->getSubExp1())
+                                       ->getStr();
+                    locals[name] = s->updateType(memref, locals[name]);
+                    found = true;
                 }
-                std::ostringstream os;
-                os << "local" << locals.size();
-                std::string name = os.str();
-                symbolMap[memref->clone()] =
-                    new Unary(opLocal, new Const(strdup(name.c_str())));
-                locals[name] = new IntegerType();
-            }
-            assert(symbolMap.find(memref) != symbolMap.end());
-            std::string name = ((Const*)symbolMap[memref]->getSubExp1())
-                               ->getStr();
-            locals[name] = s->updateType(memref, locals[name]);
-            found = true;
         }
-    }
     delete match;
     return found;
 }
 
-bool UserProc::nameRegisters() {
+bool UserProc::nameRegisters()
+{
     Exp *match = new Unary(opRegOf, new Terminal(opWild));
     if (match == NULL) return false;
     bool found = false;
@@ -1270,124 +1405,142 @@ bool UserProc::nameRegisters() {
     getStatements(stmts);
     // create a symbol for every register
     StmtListIter it;
-    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        Exp *memref;
-        if (s->search(match, memref)) {
-            if (symbolMap.find(memref) == symbolMap.end()) {
-                if (VERBOSE)
-                    std::cerr << "register found: " << memref << std::endl;
-                std::ostringstream os;
-                os << "local" << locals.size();
-                std::string name = os.str();
-                symbolMap[memref->clone()] =
-                    new Unary(opLocal, new Const(strdup(name.c_str())));
-                locals[name] = new IntegerType();
-            }
-            assert(symbolMap.find(memref) != symbolMap.end());
-            std::string name = ((Const*)symbolMap[memref]->getSubExp1())->
-                               getStr();
-            locals[name] = s->updateType(memref, locals[name]);
-            found = true;
+    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            Exp *memref;
+            if (s->search(match, memref))
+                {
+                    if (symbolMap.find(memref) == symbolMap.end())
+                        {
+                            if (VERBOSE)
+                                std::cerr << "register found: " << memref << std::endl;
+                            std::ostringstream os;
+                            os << "local" << locals.size();
+                            std::string name = os.str();
+                            symbolMap[memref->clone()] =
+                                new Unary(opLocal, new Const(strdup(name.c_str())));
+                            locals[name] = new IntegerType();
+                        }
+                    assert(symbolMap.find(memref) != symbolMap.end());
+                    std::string name = ((Const*)symbolMap[memref]->getSubExp1())->
+                                       getStr();
+                    locals[name] = s->updateType(memref, locals[name]);
+                    found = true;
+                }
         }
-    }
     delete match;
     return found;
 }
 
-bool UserProc::removeNullStatements() {
+bool UserProc::removeNullStatements()
+{
     bool change = false;
     StatementList stmts;
     getStatements(stmts);
     // remove null code
     StmtListIter it;
-    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        AssignExp *e = dynamic_cast<AssignExp*>(s);
-        if (e == NULL) continue;
-        if (*e->getSubExp1() == *e->getSubExp2()) {
-            // A statement of the form x := x
-            // Note that Statement::updateDfForErase() will propagate the DF
-            if (VERBOSE) {
-                std::cerr << "removing null code: ";
-                e->print(std::cerr);
-                std::cerr << std::endl;
-            }
-            removeStatement(e);
-            // remove from reach sets
-            StatementSet &reachout = s->getBB()->getReachOut();
-            if (reachout.remove(s))
-                cfg->updateReaches();
-            change = true;
+    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            AssignExp *e = dynamic_cast<AssignExp*>(s);
+            if (e == NULL) continue;
+            if (*e->getSubExp1() == *e->getSubExp2())
+                {
+                    // A statement of the form x := x
+                    // Note that Statement::updateDfForErase() will propagate the DF
+                    if (VERBOSE)
+                        {
+                            std::cerr << "removing null code: ";
+                            e->print(std::cerr);
+                            std::cerr << std::endl;
+                        }
+                    removeStatement(e);
+                    // remove from reach sets
+                    StatementSet &reachout = s->getBB()->getReachOut();
+                    if (reachout.remove(s))
+                        cfg->updateReaches();
+                    change = true;
+                }
         }
-    }
     return change;
 }
 
-bool UserProc::removeDeadStatements() {
+bool UserProc::removeDeadStatements()
+{
     bool change = false;
     StatementList stmts;
     getStatements(stmts);
     // remove dead code
     StmtListIter it;
-    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
+    for (Statement*s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
 #if 1       // This seems so simple... remove statements with no usedBy MVE
-        AssignExp* asgn = dynamic_cast<AssignExp*>(s);
-        if (asgn == NULL)
-            // Never remove a call or jcond; they have important side effects
-            continue;
-        if (getCFG()->getReachExit()->exists(s))
-            // Don't remove unused code that reaches the exit
-            // These will be handled later by moveInternalStatements()
-            continue;
-        if (s->getNumUsedBy() == 0) {
-            if (VERBOSE) std::cerr << "Removing unused statement " << s << "\n";
-            removeStatement(s);
-            change = true;
-        }
-#else       // Why so complex? Is there a catch? MVE
-        StatementSet dead;
-        s->getDeadStatements(dead);
-        StmtSetIter it1;
-        for (Statement* s1 = dead.getFirst(it1); s1; s1 = dead.getNext(it1)) {
-            if (getCFG()->getReachExit().exists(s1))
+            AssignExp* asgn = dynamic_cast<AssignExp*>(s);
+            if (asgn == NULL)
+                // Never remove a call or jcond; they have important side effects
                 continue;
-            if (!s1->getLeft()->isMemOf()) {
-                // hack: if the dead statement has a use which would make
-                // this statement useless if propagated, leave it
-                StatementSet uses;
-                s1->getUses(uses);
-                bool matchingUse = false;
-                StmtSetIter it2;
-                for (Statement* s2 = uses.getFirst(it2); s2;
-                        s2 = uses.getNext(it2)) {
-                    AssignExp *e = dynamic_cast<AssignExp*>(s2);
-                    if (e == NULL || s1->getLeft() == NULL) continue;
-                    if (*e->getSubExp2() == *s1->getLeft()) {
-                        matchingUse = true;
-                        break;
-                    }
+            if (getCFG()->getReachExit()->exists(s))
+                // Don't remove unused code that reaches the exit
+                // These will be handled later by moveInternalStatements()
+                continue;
+            if (s->getNumUsedBy() == 0)
+                {
+                    if (VERBOSE) std::cerr << "Removing unused statement " << s << "\n";
+                    removeStatement(s);
+                    change = true;
                 }
-                HLCall *call = dynamic_cast<HLCall*>(*it1);
-                if (matchingUse && call == NULL) continue;
-                if (VERBOSE) {
-                    std::cerr << "removing dead code: ";
-                    s1->printAsUse(std::cerr);
-                    std::cerr << std::endl;
-                }
-                if (call == NULL) {
-                    removeStatement(s1);
+#else       // Why so complex? Is there a catch? MVE
+            StatementSet dead;
+            s->getDeadStatements(dead);
+            StmtSetIter it1;
+            for (Statement* s1 = dead.getFirst(it1); s1; s1 = dead.getNext(it1))
+                {
+                    if (getCFG()->getReachExit().exists(s1))
+                        continue;
+                    if (!s1->getLeft()->isMemOf())
+                        {
+                            // hack: if the dead statement has a use which would make
+                            // this statement useless if propagated, leave it
+                            StatementSet uses;
+                            s1->getUses(uses);
+                            bool matchingUse = false;
+                            StmtSetIter it2;
+                            for (Statement* s2 = uses.getFirst(it2); s2;
+                                    s2 = uses.getNext(it2))
+                                {
+                                    AssignExp *e = dynamic_cast<AssignExp*>(s2);
+                                    if (e == NULL || s1->getLeft() == NULL) continue;
+                                    if (*e->getSubExp2() == *s1->getLeft())
+                                        {
+                                            matchingUse = true;
+                                            break;
+                                        }
+                                }
+                            HLCall *call = dynamic_cast<HLCall*>(*it1);
+                            if (matchingUse && call == NULL) continue;
+                            if (VERBOSE)
+                                {
+                                    std::cerr << "removing dead code: ";
+                                    s1->printAsUse(std::cerr);
+                                    std::cerr << std::endl;
+                                }
+                            if (call == NULL)
+                                {
+                                    removeStatement(s1);
 //std::cerr << "After remove, BB is"; s1->getBB()->print(std::cerr, true);
-                } else {
-                    call->setIgnoreReturnLoc(true);
+                                }
+                            else
+                                {
+                                    call->setIgnoreReturnLoc(true);
+                                }
+                            // remove from reach sets
+                            StatementSet &reachout = s1->getBB()->getReachOut();
+                            reachout.remove(s1);
+                            cfg->updateReaches();
+                            change = true;
+                        }
                 }
-                // remove from reach sets
-                StatementSet &reachout = s1->getBB()->getReachOut();
-                reachout.remove(s1);
-                cfg->updateReaches();
-                change = true;
-            }
-        }
 #endif
-    }
+        }
     if (VERBOSE && change)
         print(std::cerr, true);
     return change;
@@ -1395,37 +1548,43 @@ bool UserProc::removeDeadStatements() {
 
 // Find assignments that have no uses, but which reach the end of the proc.
 // These are moved from the cfg to the set of internal statements
-void UserProc::moveInternalStatements() {
+void UserProc::moveInternalStatements()
+{
     StatementList stmts;
     getStatements(stmts);
     // remove any statements that have no uses and reach the end of this proc
     StmtListIter it;
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        AssignExp *e = dynamic_cast<AssignExp *>(s);
-        if (e == NULL) continue;
-        if (s->getNumUsedBy() == 0 &&
-                s->getNumUses() == 0 &&           // ? why this condition?
-                cfg->getReachExit()->exists(s)) {
-            // move this to an internal statement
-            if (VERBOSE) {
-                std::cerr << "internalising: ";
-                s->printAsUse(std::cerr);
-                std::cerr << std::endl;
-            }
-            // This reaches the end of the proc. Save it in case it's for
-            // the return location
-            internal.append(s);
-            removeStatement(s);
-            cfg->getReachExit()->remove(s);
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            AssignExp *e = dynamic_cast<AssignExp *>(s);
+            if (e == NULL) continue;
+            if (s->getNumUsedBy() == 0 &&
+                    s->getNumUses() == 0 &&           // ? why this condition?
+                    cfg->getReachExit()->exists(s))
+                {
+                    // move this to an internal statement
+                    if (VERBOSE)
+                        {
+                            std::cerr << "internalising: ";
+                            s->printAsUse(std::cerr);
+                            std::cerr << std::endl;
+                        }
+                    // This reaches the end of the proc. Save it in case it's for
+                    // the return location
+                    internal.append(s);
+                    removeStatement(s);
+                    cfg->getReachExit()->remove(s);
+                }
         }
-    }
 }
 
-void UserProc::eraseInternalStatement(Statement *stmt) {
+void UserProc::eraseInternalStatement(Statement *stmt)
+{
     internal.remove(stmt);
 }
 
-void UserProc::inlineConstants() {
+void UserProc::inlineConstants()
+{
     StatementList stmts;
     getStatements(stmts);
     // inline any constants in the statement
@@ -1435,69 +1594,83 @@ void UserProc::inlineConstants() {
 }
 
 // bMemProp set to true if a memory location is propagated
-bool UserProc::propagateAndRemoveStatements() {
+bool UserProc::propagateAndRemoveStatements()
+{
     bool change = false;
     StatementList stmts;
     getStatements(stmts);
     // propagate any statements that can be removed
     StmtListIter it;
-    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it)) {
-        AssignExp *assign = dynamic_cast<AssignExp*>(*it);
-        if (assign && *assign->getSubExp1() == *assign->getSubExp2())
-            continue;
-        Exp* rhs = s->getRight();
-        if (s->canPropagateToAll()) {
-            if (cfg->getReachExit()->exists(s)) {
-                if (s->getNumUses() != 0) {
-                    // tempories that store the results of calls are ok
-                    if (rhs &&
-                            s->findDef(rhs) &&
-                            !s->findDef(rhs)->getRight()) {
-                        if (VERBOSE) {
-                            std::cerr << "allowing propagation of temporary: ";
-                            s->printAsUse(std::cerr);
-                            std::cerr << std::endl;
+    for (Statement* s = stmts.getFirst(it); s; s = stmts.getNext(it))
+        {
+            AssignExp *assign = dynamic_cast<AssignExp*>(*it);
+            if (assign && *assign->getSubExp1() == *assign->getSubExp2())
+                continue;
+            Exp* rhs = s->getRight();
+            if (s->canPropagateToAll())
+                {
+                    if (cfg->getReachExit()->exists(s))
+                        {
+                            if (s->getNumUses() != 0)
+                                {
+                                    // tempories that store the results of calls are ok
+                                    if (rhs &&
+                                            s->findDef(rhs) &&
+                                            !s->findDef(rhs)->getRight())
+                                        {
+                                            if (VERBOSE)
+                                                {
+                                                    std::cerr << "allowing propagation of temporary: ";
+                                                    s->printAsUse(std::cerr);
+                                                    std::cerr << std::endl;
+                                                }
+                                        }
+                                    else
+                                        continue;
+                                }
+                            else
+                                {
+                                    if (Boomerang::get()->noRemoveInternal)
+                                        continue;
+                                    // new internal statement
+                                    if (VERBOSE)
+                                        {
+                                            std::cerr << "new internal statement: ";
+                                            s->printAsUse(std::cerr);
+                                            std::cerr << std::endl;
+                                        }
+                                    internal.append(s);
+                                }
                         }
-                    } else
-                        continue;
-                } else {
-                    if (Boomerang::get()->noRemoveInternal)
-                        continue;
-                    // new internal statement
-                    if (VERBOSE) {
-                        std::cerr << "new internal statement: ";
-                        s->printAsUse(std::cerr);
-                        std::cerr << std::endl;
-                    }
-                    internal.append(s);
-                }
-            }
-            s->propagateToAll();
-            removeStatement(s);
-            // remove from reach sets
-            StatementSet &reachout = s->getBB()->getReachOut();
+                    s->propagateToAll();
+                    removeStatement(s);
+                    // remove from reach sets
+                    StatementSet &reachout = s->getBB()->getReachOut();
 #if 0
-            if (reachout.remove(s))
-                cfg->updateReaches();
+                    if (reachout.remove(s))
+                        cfg->updateReaches();
 #else
-            reachout.remove(s);
-            recalcDataflow();       // Fix alias problems
+                    reachout.remove(s);
+                    recalcDataflow();       // Fix alias problems
 #endif
-            if (VERBOSE) {
-                // debug: print
-                print(std::cerr, true);
-            }
-            change = true;
+                    if (VERBOSE)
+                        {
+                            // debug: print
+                            print(std::cerr, true);
+                        }
+                    change = true;
+                }
         }
-    }
     return change;
 }
 
-void UserProc::promoteSignature() {
+void UserProc::promoteSignature()
+{
     signature = signature->promote(this);
 }
 
-Exp* UserProc::newLocal(Type* ty) {
+Exp* UserProc::newLocal(Type* ty)
+{
     std::ostringstream os;
     os << "local" << locals.size();
     std::string name = os.str();
@@ -1505,7 +1678,8 @@ Exp* UserProc::newLocal(Type* ty) {
     return new Unary(opLocal, new Const(strdup(name.c_str())));
 }
 
-void UserProc::recalcDataflow() {
+void UserProc::recalcDataflow()
+{
     if (VERBOSE) std::cerr << "Recalculating dataflow\n";
     cfg->computeDataflow();
     StatementList stmts;

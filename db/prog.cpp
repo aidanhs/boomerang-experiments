@@ -60,7 +60,8 @@ Prog::Prog()
       pFE(NULL),
       globalMap(NULL),
       m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
-      m_iNumberedProc(1) {
+      m_iNumberedProc(1)
+{
     // Default constructor
 }
 
@@ -69,7 +70,8 @@ Prog::Prog(BinaryFile *pBF, FrontEnd *pFE)
       pFE(pFE),
       globalMap(NULL),
       m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
-      m_iNumberedProc(1) {
+      m_iNumberedProc(1)
+{
 }
 
 Prog::Prog(const char* name)
@@ -78,170 +80,192 @@ Prog::Prog(const char* name)
       globalMap(NULL),
       m_name(name),
       m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
-      m_iNumberedProc(1) {
+      m_iNumberedProc(1)
+{
     // Constructor taking a name. Technically, the allocation of the
     // space for the name could fail, but this is unlikely
 }
 
-Prog::~Prog() {
+Prog::~Prog()
+{
     if (pBF) delete pBF;
     if (pFE) delete pFE;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-            it++) {
-        if (*it)
-            delete *it;
-    }
+            it++)
+        {
+            if (*it)
+                delete *it;
+        }
     m_procs.clear();
 }
 
-void Prog::setName (const char *name) {    // Assign a name to this program
+void Prog::setName (const char *name)      // Assign a name to this program
+{
     m_name = name;
 }
 
-char* Prog::getName() {
+char* Prog::getName()
+{
     return (char*) m_name.c_str();
 }
 
 // well form the entire program
-bool Prog::wellForm() {
+bool Prog::wellForm()
+{
     bool wellformed = true;
 
     for (std::list<Proc *>::iterator it = m_procs.begin(); it != m_procs.end();
             it++)
-        if (!(*it)->isLib()) {
-            UserProc *u = (UserProc*)*it;
-            wellformed &= u->getCFG()->wellFormCfg();
-        }
+        if (!(*it)->isLib())
+            {
+                UserProc *u = (UserProc*)*it;
+                wellformed &= u->getCFG()->wellFormCfg();
+            }
     return wellformed;
 }
 
 // Analyse any procedures that are decoded
-void Prog::analyse() {
+void Prog::analyse()
+{
     Analysis *analysis = new Analysis();
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-            it++) {
-        Proc *pProc = *it;
-        if (pProc->isLib()) continue;
-        UserProc *p = (UserProc*)pProc;
-        if (!p->isDecoded()) continue;
+            it++)
+        {
+            Proc *pProc = *it;
+            if (pProc->isLib()) continue;
+            UserProc *p = (UserProc*)pProc;
+            if (!p->isDecoded()) continue;
 
-        // need to do this somewhere
-        p->getCFG()->sortByAddress();
+            // need to do this somewhere
+            p->getCFG()->sortByAddress();
 
-        // decoded userproc.. analyse it
-        analysis->analyse(p);
-    }
+            // decoded userproc.. analyse it
+            analysis->analyse(p);
+        }
 }
 
 // Do decompilation
-void Prog::decompile() {
+void Prog::decompile()
+{
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-            it++) {
-        Proc *pProc = *it;
-        if (pProc->isLib()) continue;
-        UserProc *p = (UserProc*)pProc;
-        if (!p->isDecoded()) continue;
+            it++)
+        {
+            Proc *pProc = *it;
+            if (pProc->isLib()) continue;
+            UserProc *p = (UserProc*)pProc;
+            if (!p->isDecoded()) continue;
 
-        // decoded userproc.. decompile it
-        p->decompile();
-    }
+            // decoded userproc.. decompile it
+            p->decompile();
+        }
 }
 
-void Prog::generateDotFile() {
+void Prog::generateDotFile()
+{
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-            it++) {
-        Proc *pProc = *it;
-        if (pProc->isLib()) continue;
-        UserProc *p = (UserProc*)pProc;
-        if (!p->isDecoded()) continue;
-        p->getCFG()->generateDotFile(Boomerang::get()->dotFile);
-    }
+            it++)
+        {
+            Proc *pProc = *it;
+            if (pProc->isLib()) continue;
+            UserProc *p = (UserProc*)pProc;
+            if (!p->isDecoded()) continue;
+            p->getCFG()->generateDotFile(Boomerang::get()->dotFile);
+        }
 }
 
-void Prog::generateCode(std::ostream &os) {
+void Prog::generateCode(std::ostream &os)
+{
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-            it++) {
-        Proc *pProc = *it;
-        if (pProc->isLib()) continue;
-        UserProc *p = (UserProc*)pProc;
-        if (!p->isDecoded()) continue;
-        HLLCode *code = Boomerang::getHLLCode(p);
-        p->generateCode(code);
-        code->print(os);
-        delete code;
-    }
+            it++)
+        {
+            Proc *pProc = *it;
+            if (pProc->isLib()) continue;
+            UserProc *p = (UserProc*)pProc;
+            if (!p->isDecoded()) continue;
+            HLLCode *code = Boomerang::getHLLCode(p);
+            p->generateCode(code);
+            code->print(os);
+            delete code;
+        }
 }
 
 // Print this program, mainly for debugging
-void Prog::print(std::ostream &out, bool withDF) {
+void Prog::print(std::ostream &out, bool withDF)
+{
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-            it++) {
-        Proc *pProc = *it;
-        if (pProc->isLib()) continue;
-        UserProc *p = (UserProc*)pProc;
-        if (!p->isDecoded()) continue;
+            it++)
+        {
+            Proc *pProc = *it;
+            if (pProc->isLib()) continue;
+            UserProc *p = (UserProc*)pProc;
+            if (!p->isDecoded()) continue;
 
-        // decoded userproc.. print it
-        p->print(out, withDF);
-    }
+            // decoded userproc.. print it
+            p->print(out, withDF);
+        }
 }
 
-void Prog::deserialize(std::istream &inf) {
+void Prog::deserialize(std::istream &inf)
+{
     int fid;
     int len;
     int nProcs, cProcs = 0;
     loadValue(inf, nProcs, false);
 
-    while ((fid = loadFID(inf)) != -1) {
-        switch (fid) {
+    while ((fid = loadFID(inf)) != -1)
+        {
+            switch (fid)
+                {
 //            case FID_PROJECT_NAME:
 //                loadString(inf, project);
 //                break;
 //            case FID_FILENAME:
 //                loadString(inf, filename);
 //                break;
-        case FID_FRONTEND:
-        {
-            len = loadLen(inf);
-            std::streampos pos = inf.tellg();
+                case FID_FRONTEND:
+                {
+                    len = loadLen(inf);
+                    std::streampos pos = inf.tellg();
 
-            //loadValue(inf, limitTextLow, false);
-            //loadValue(inf, limitTextHigh, false);
-            //loadValue(inf, textDelta, false);
+                    //loadValue(inf, limitTextLow, false);
+                    //loadValue(inf, limitTextHigh, false);
+                    //loadValue(inf, textDelta, false);
 
-            std::string frontend;
-            loadString(inf, frontend);
-            pFE = FrontEnd::createById(frontend, pBF);
-            assert(pFE);
+                    std::string frontend;
+                    loadString(inf, frontend);
+                    pFE = FrontEnd::createById(frontend, pBF);
+                    assert(pFE);
 
-            assert((int)(inf.tellg() - pos) == len);
-        }
-        break;
-        case FID_PROC:
-        {
-            len = loadLen(inf);
-            std::streampos pos = inf.tellg();
-            Proc *pProc = Proc::deserialize(this, inf);
-            assert((int)(inf.tellg() - pos) == len);
-            assert(pProc);
-            m_procs.push_back(pProc);   // Append this to list of procs
-            m_procLabels[pProc->getNativeAddress()] = pProc;
-            // alert the watcher of a new proc
-            if (m_watcher) m_watcher->alert_new(pProc);
-            cProcs++;
-        }
-        break;
-        default:
-            skipFID(inf, fid);
-        }
+                    assert((int)(inf.tellg() - pos) == len);
+                }
+                break;
+                case FID_PROC:
+                {
+                    len = loadLen(inf);
+                    std::streampos pos = inf.tellg();
+                    Proc *pProc = Proc::deserialize(this, inf);
+                    assert((int)(inf.tellg() - pos) == len);
+                    assert(pProc);
+                    m_procs.push_back(pProc);   // Append this to list of procs
+                    m_procLabels[pProc->getNativeAddress()] = pProc;
+                    // alert the watcher of a new proc
+                    if (m_watcher) m_watcher->alert_new(pProc);
+                    cProcs++;
+                }
+                break;
+                default:
+                    skipFID(inf, fid);
+                }
 
-        if (m_watcher) {
-            m_watcher->alert_progress(cProcs, nProcs);
+            if (m_watcher)
+                {
+                    m_watcher->alert_progress(cProcs, nProcs);
+                }
         }
-    }
 }
 
-bool Prog::serialize(std::ostream &ouf, int &len) {
+bool Prog::serialize(std::ostream &ouf, int &len)
+{
     int fid;
     //std::streampos st = ouf.tellp();
 
@@ -285,30 +309,32 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
 #ifndef WIN32
         std::list<Proc *>::iterator
 #endif
-        it = m_procs.begin(); it != m_procs.end(); it++) {
-        Proc *p = *it;
+        it = m_procs.begin(); it != m_procs.end(); it++)
+        {
+            Proc *p = *it;
 
-        fid = FID_PROC;
-        saveFID(ouf, fid);
+            fid = FID_PROC;
+            saveFID(ouf, fid);
 
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        assert(p->serialize(ouf, len));
+            assert(p->serialize(ouf, len));
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-        cProcs++;
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+            cProcs++;
 
-        if (m_watcher) {
-            m_watcher->alert_progress(cProcs, nProcs);
+            if (m_watcher)
+                {
+                    m_watcher->alert_progress(cProcs, nProcs);
+                }
         }
-    }
 
     // ouf.close();     // Don't close streams, only files or file streams
     return true;
@@ -316,7 +342,8 @@ bool Prog::serialize(std::ostream &ouf, int &len) {
 
 
 // clear the current project
-void Prog::clear() {
+void Prog::clear()
+{
     m_name = std::string("");
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
             it++)
@@ -344,7 +371,8 @@ void Prog::clear() {
  * RETURNS:     Pointer to the Proc object, or 0 if this is a deleted (not to
  *                be decoded) address
  *============================================================================*/
-Proc* Prog::setNewProc(ADDRESS uAddr) {
+Proc* Prog::setNewProc(ADDRESS uAddr)
+{
     // this test fails when decoding sparc, why?  Please investigate - trent
     //assert(uAddr >= limitTextLow && uAddr < limitTextHigh);
     // Check if we already have this proc
@@ -356,12 +384,13 @@ Proc* Prog::setNewProc(ADDRESS uAddr) {
         return pProc;
     char* pName = pBF->SymbolByAddress(uAddr);
     bool bLib = pBF->IsDynamicLinkedProc(uAddr);
-    if (pName == 0) {
-        // No name. Give it a numbered name
-        std::ostringstream ost;
-        ost << "proc" << m_iNumberedProc++;
-        pName = strdup(ost.str().c_str());
-    }
+    if (pName == 0)
+        {
+            // No name. Give it a numbered name
+            std::ostringstream ost;
+            ost << "proc" << m_iNumberedProc++;
+            pName = strdup(ost.str().c_str());
+        }
     pProc = newProc(pName, uAddr, bLib);
     return pProc;
 }
@@ -376,7 +405,8 @@ Proc* Prog::setNewProc(ADDRESS uAddr) {
  *                 bLib: If true, this will be a libProc; else a UserProc
  * RETURNS:        A pointer to the new Proc object
  *============================================================================*/
-Proc* Prog::newProc (const char* name, ADDRESS uNative, bool bLib /*= false*/) {
+Proc* Prog::newProc (const char* name, ADDRESS uNative, bool bLib /*= false*/)
+{
     Proc* pProc;
     std::string sname(name);
     if (bLib)
@@ -397,7 +427,8 @@ Proc* Prog::newProc (const char* name, ADDRESS uNative, bool bLib /*= false*/) {
  * PARAMETERS:     proc: pointer to the UserProc object to be removed
  * RETURNS:        <nothing>
  *============================================================================*/
-void Prog::remProc(UserProc* uProc) {
+void Prog::remProc(UserProc* uProc)
+{
     // Delete the cfg etc.
     uProc->deleteCFG();
 
@@ -407,10 +438,11 @@ void Prog::remProc(UserProc* uProc) {
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
             it++)
-        if (*it == uProc) {
-            m_procs.erase(it);
-            break;
-        }
+        if (*it == uProc)
+            {
+                m_procs.erase(it);
+                break;
+            }
 
     // Delete the UserProc object as well
     delete uProc;
@@ -422,7 +454,8 @@ void Prog::remProc(UserProc* uProc) {
  * PARAMETERS:  None
  * RETURNS:     The number of procedures
  *============================================================================*/
-int Prog::getNumProcs() {
+int Prog::getNumProcs()
+{
     return m_procs.size();
 }
 
@@ -433,7 +466,8 @@ int Prog::getNumProcs() {
  * PARAMETERS:  Index of the proc
  * RETURNS:     Pointer to the Proc object, or 0 if index invalid
  *============================================================================*/
-Proc* Prog::getProc(int idx) const {
+Proc* Prog::getProc(int idx) const
+{
     // Return the indexed procedure. If this is used often, we should use
     // a vector instead of a list
     // If index is invalid, result will be 0
@@ -453,7 +487,8 @@ Proc* Prog::getProc(int idx) const {
  * PARAMETERS:  Native address of the procedure entry point
  * RETURNS:     Pointer to the Proc object, or 0 if none, or -1 if deleted
  *============================================================================*/
-Proc* Prog::findProc(ADDRESS uAddr) const {
+Proc* Prog::findProc(ADDRESS uAddr) const
+{
     PROGMAP::const_iterator it;
     it = m_procLabels.find(uAddr);
     if (it == m_procLabels.end())
@@ -462,7 +497,8 @@ Proc* Prog::findProc(ADDRESS uAddr) const {
         return (*it).second;
 }
 
-Proc* Prog::findProc(const char *name) const {
+Proc* Prog::findProc(const char *name) const
+{
     std::list<Proc *>::const_iterator it;
     for (it = m_procs.begin(); it != m_procs.end(); it++)
         if (!strcmp((*it)->getName(), name))
@@ -471,22 +507,26 @@ Proc* Prog::findProc(const char *name) const {
 }
 
 // get a library procedure by name
-LibProc *Prog::getLibraryProc(const char *nam) {
+LibProc *Prog::getLibraryProc(const char *nam)
+{
     Proc *p = findProc(nam);
     if (p && p->isLib())
         return (LibProc*)p;
     return (LibProc*)newProc(nam, NO_ADDRESS, true);
 }
 
-Signature* Prog::getLibSignature(const char *nam) {
+Signature* Prog::getLibSignature(const char *nam)
+{
     return pFE->getLibSignature(nam);
 }
 
-const char *Prog::getFrontEndId() {
+const char *Prog::getFrontEndId()
+{
     return pFE->getFrontEndId();
 }
 
-bool Prog::isWin32() {
+bool Prog::isWin32()
+{
     return pFE->isWin32();
 }
 
@@ -503,7 +543,8 @@ void Prog::makeGlobal(ADDRESS uaddr, const char *name)
 }
 
 // get a string constant at a given address if appropriate
-char *Prog::getStringConstant(ADDRESS uaddr) {
+char *Prog::getStringConstant(ADDRESS uaddr)
+{
     if (pBF->isReadOnly(uaddr))
         return (char *)(uaddr + pBF->getTextDelta());
     return NULL;
@@ -516,18 +557,20 @@ char *Prog::getStringConstant(ADDRESS uaddr) {
  * PARAMETERS:  Native address to search for
  * RETURNS:     Pointer to the Proc object, or 0 if none, or -1 if deleted
  *============================================================================*/
-Proc* Prog::findContainingProc(ADDRESS uAddr) const {
+Proc* Prog::findContainingProc(ADDRESS uAddr) const
+{
     for (std::list<Proc*>::const_iterator it = m_procs.begin();
-            it != m_procs.end(); it++) {
-        Proc *p = (*it);
-        if (p->getNativeAddress() == uAddr)
-            return p;
-        if (p->isLib()) continue;
+            it != m_procs.end(); it++)
+        {
+            Proc *p = (*it);
+            if (p->getNativeAddress() == uAddr)
+                return p;
+            if (p->isLib()) continue;
 
-        UserProc *u = (UserProc *)p;
-        if (u->containsAddr(uAddr))
-            return p;
-    }
+            UserProc *u = (UserProc *)p;
+            if (u->containsAddr(uAddr))
+                return p;
+        }
     return NULL;
 }
 
@@ -537,7 +580,8 @@ Proc* Prog::findContainingProc(ADDRESS uAddr) const {
  * PARAMETERS:  Native address of the procedure entry point
  * RETURNS:     True if a real (non deleted) proc
  *============================================================================*/
-bool Prog::isProcLabel (ADDRESS addr) {
+bool Prog::isProcLabel (ADDRESS addr)
+{
     if (m_procLabels[addr] == 0)
         return false;
     return true;
@@ -549,11 +593,13 @@ bool Prog::isProcLabel (ADDRESS addr) {
  * PARAMETERS:  None
  * RETURNS:     A string with the name
  *============================================================================*/
-std::string Prog::getNameNoPath() const {
+std::string Prog::getNameNoPath() const
+{
     unsigned n = m_name.rfind("/");
-    if (n == std::string::npos) {
-        return m_name;
-    }
+    if (n == std::string::npos)
+        {
+            return m_name;
+        }
 
     return m_name.substr(n+1);
 }
@@ -565,7 +611,8 @@ std::string Prog::getNameNoPath() const {
  * PARAMETERS:  it: An uninitialised PROGMAP::const_iterator
  * RETURNS:     A pointer to the first Proc object; could be 0 if none
  *============================================================================*/
-Proc* Prog::getFirstProc(PROGMAP::const_iterator& it) {
+Proc* Prog::getFirstProc(PROGMAP::const_iterator& it)
+{
     it = m_procLabels.begin();
     while (it != m_procLabels.end() && (it->second == (Proc*) -1))
         it++;
@@ -582,7 +629,8 @@ Proc* Prog::getFirstProc(PROGMAP::const_iterator& it) {
  * PARAMETERS:  it: A PROGMAP::const_iterator as above
  * RETURNS:     A pointer to the next Proc object; could be 0 if no more
  *============================================================================*/
-Proc* Prog::getNextProc(PROGMAP::const_iterator& it) {
+Proc* Prog::getNextProc(PROGMAP::const_iterator& it)
+{
     it++;
     while (it != m_procLabels.end() && (it->second == (Proc*) -1))
         it++;
@@ -602,7 +650,8 @@ Proc* Prog::getNextProc(PROGMAP::const_iterator& it) {
  * RETURNS:     Host pointer if in range; NULL if not
  *              Also sets 2 reference parameters (see above)
  *============================================================================*/
-const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
+const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta)
+{
     delta=0;
     last=0;
 #ifdef WIN32
@@ -612,18 +661,19 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
     int n = pBF->GetNumSections();
     int i;
     // Search all code and read-only sections
-    for (i=0; i < n; i++) {
-        SectionInfo* pSect = pBF->GetSectionInfo(i);
-        if ((!pSect->bCode) && (!pSect->bReadOnly))
-            continue;
-        if ((uAddr < pSect->uNativeAddr) ||
-                (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
-            continue;           // Try the next section
-        delta = pSect->uHostAddr - pSect->uNativeAddr;
-        last = (const char*) (pSect->uHostAddr + pSect->uSectionSize);
-        const char* p = (const char *) (uAddr + delta);
-        return p;
-    }
+    for (i=0; i < n; i++)
+        {
+            SectionInfo* pSect = pBF->GetSectionInfo(i);
+            if ((!pSect->bCode) && (!pSect->bReadOnly))
+                continue;
+            if ((uAddr < pSect->uNativeAddr) ||
+                    (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
+                continue;           // Try the next section
+            delta = pSect->uHostAddr - pSect->uNativeAddr;
+            last = (const char*) (pSect->uHostAddr + pSect->uSectionSize);
+            const char* p = (const char *) (uAddr + delta);
+            return p;
+        }
     return NULL;
 #endif
 }

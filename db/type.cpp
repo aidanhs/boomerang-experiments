@@ -318,21 +318,23 @@ bool FloatType::operator-=(const Type& other) const
  *============================================================================*/
 bool IntegerType::operator<(const Type& other) const
 {
-    if (other.isInteger()) {
-        if (size > ((IntegerType&)other).size)
-            return false;
-        if (signd && ((IntegerType&)other).signd)
-            return false;
-    }
+    if (other.isInteger())
+        {
+            if (size > ((IntegerType&)other).size)
+                return false;
+            if (signd && ((IntegerType&)other).signd)
+                return false;
+        }
     return true;
 }
 
 bool FloatType::operator<(const Type& other) const
 {
-    if (other.isFloat()) {
-        if (size > ((FloatType&)other).size)
-            return false;
-    }
+    if (other.isFloat())
+        {
+            if (size > ((FloatType&)other).size)
+                return false;
+        }
     return true;
 }
 
@@ -383,72 +385,79 @@ const char *FuncType::getCtype() const
         return "void (void)";
     std::string s = signature->getReturnType()->getCtype();
     s += " (";
-    for (int i = 0; i < signature->getNumParams(); i++) {
-        if (i != 0) s += ", ";
-        s += signature->getParamType(i)->getCtype();
-    }
+    for (int i = 0; i < signature->getNumParams(); i++)
+        {
+            if (i != 0) s += ", ";
+            s += signature->getParamType(i)->getCtype();
+        }
     s += ")";
     return s.c_str();
 }
 
 const char *IntegerType::getCtype() const
 {
-    if (signd) {
-        switch(size) {
-        case 32:
-            return "int";
-            break;
-        case 16:
-            return "short";
-            break;
-        case  8:
-            return "char";
-            break;
-        case  1:
-            return "bool";
-            break;
-        case 64:
-            return "long long";
-            break;
-        default:
-            return "?";
+    if (signd)
+        {
+            switch(size)
+                {
+                case 32:
+                    return "int";
+                    break;
+                case 16:
+                    return "short";
+                    break;
+                case  8:
+                    return "char";
+                    break;
+                case  1:
+                    return "bool";
+                    break;
+                case 64:
+                    return "long long";
+                    break;
+                default:
+                    return "?";
+                }
         }
-    } else {
-        switch (size) {
-        case 32:
-            return "unsigned int";
-            break;
-        case 16:
-            return "unsigned short";
-            break;
-        case  8:
-            return "unsigned char";
-            break;
-        case  1:
-            return "bool";
-            break;
-        case 64:
-            return "unsigned long long";
-            break;
-        default:
-            return "?";
+    else
+        {
+            switch (size)
+                {
+                case 32:
+                    return "unsigned int";
+                    break;
+                case 16:
+                    return "unsigned short";
+                    break;
+                case  8:
+                    return "unsigned char";
+                    break;
+                case  1:
+                    return "bool";
+                    break;
+                case 64:
+                    return "unsigned long long";
+                    break;
+                default:
+                    return "?";
+                }
         }
-    }
 }
 
 const char *FloatType::getCtype() const
 {
-    switch (size) {
-    case 32:
-        return "float";
-        break;
-    case 64:
-        return "double";
-        break;
-    default:
-        return "double";
-        break;
-    }
+    switch (size)
+        {
+        case 32:
+            return "float";
+            break;
+        case 64:
+            return "double";
+            break;
+        default:
+            return "double";
+            break;
+        }
 }
 
 const char *BooleanType::getCtype() const
@@ -485,33 +494,34 @@ Type* Type::getTempType(const std::string& name)
     Type* ty;
     char ctype = ' ';
     if (name.size() > 3) ctype = name[3];
-    switch (ctype) {
-        // They are all int32, except for a few specials
-    case 'f':
-        ty = new FloatType(32);
-        break;
-    case 'd':
-        ty = new FloatType(64);
-        break;
-    case 'F':
-        ty = new FloatType(80);
-        break;
-    case 'D':
-        ty = new FloatType(128);
-        break;
-    case 'l':
-        ty = new IntegerType(64);
-        break;
-    case 'h':
-        ty = new IntegerType(16);
-        break;
-    case 'b':
-        ty = new IntegerType(8);
-        break;
-    default:
-        ty = new IntegerType(32);
-        break;
-    }
+    switch (ctype)
+        {
+            // They are all int32, except for a few specials
+        case 'f':
+            ty = new FloatType(32);
+            break;
+        case 'd':
+            ty = new FloatType(64);
+            break;
+        case 'F':
+            ty = new FloatType(80);
+            break;
+        case 'D':
+            ty = new FloatType(128);
+            break;
+        case 'l':
+            ty = new IntegerType(64);
+            break;
+        case 'h':
+            ty = new IntegerType(16);
+            break;
+        case 'b':
+            ty = new IntegerType(8);
+            break;
+        default:
+            ty = new IntegerType(32);
+            break;
+        }
     return ty;
 }
 
@@ -527,32 +537,34 @@ Type* Type::getTempType(const std::string& name)
  *============================================================================*/
 std::string IntegerType::getTempName() const
 {
-    switch( size ) {
-    case 1:  /* Treat as a tmpb */
-    case 8:
-        return std::string("tmpb");
-    case 16:
-        return std::string("tmph");
-    case 32:
-        return std::string("tmpi");
-    case 64:
-        return std::string("tmpl");
-    }
+    switch( size )
+        {
+        case 1:  /* Treat as a tmpb */
+        case 8:
+            return std::string("tmpb");
+        case 16:
+            return std::string("tmph");
+        case 32:
+            return std::string("tmpi");
+        case 64:
+            return std::string("tmpl");
+        }
     return std::string("tmp");
 }
 
 std::string FloatType::getTempName() const
 {
-    switch( size ) {
-    case 32:
-        return std::string("tmpf");
-    case 64:
-        return std::string("tmpd");
-    case 80:
-        return std::string("tmpF");
-    case 128:
-        return std::string("tmpD");
-    }
+    switch( size )
+        {
+        case 32:
+            return std::string("tmpf");
+        case 64:
+            return std::string("tmpd");
+        case 80:
+            return std::string("tmpF");
+        case 128:
+            return std::string("tmpD");
+        }
     return std::string("tmp");
 }
 
@@ -616,21 +628,22 @@ bool FuncType::serialize(std::ostream &ouf, int &len)
 
     saveValue(ouf, 'F', false);
 
-    if (signature) {
-        saveFID(ouf, FID_TYPE_SIGNATURE);
-        std::streampos pos = ouf.tellp();
-        int len = -1;
-        saveLen(ouf, -1, true);
-        std::streampos posa = ouf.tellp();
+    if (signature)
+        {
+            saveFID(ouf, FID_TYPE_SIGNATURE);
+            std::streampos pos = ouf.tellp();
+            int len = -1;
+            saveLen(ouf, -1, true);
+            std::streampos posa = ouf.tellp();
 
-        assert(signature->serialize(ouf, len));
+            assert(signature->serialize(ouf, len));
 
-        std::streampos now = ouf.tellp();
-        assert((int)(now - posa) == len);
-        ouf.seekp(pos);
-        saveLen(ouf, len, true);
-        ouf.seekp(now);
-    }
+            std::streampos now = ouf.tellp();
+            assert((int)(now - posa) == len);
+            ouf.seekp(pos);
+            saveLen(ouf, len, true);
+            ouf.seekp(now);
+        }
 
     saveFID(ouf, FID_TYPE_END);
     saveLen(ouf, 0);
@@ -703,36 +716,37 @@ Type *Type::deserialize(std::istream &inf)
     char type;
     loadValue(inf, type, false);
 
-    switch(type) {
-    case 'i':
-        t = new IntegerType();
+    switch(type)
+        {
+        case 'i':
+            t = new IntegerType();
+            break;
+        case 'f':
+            t = new FloatType();
+            break;
+        case 'v':
+            t = new VoidType();
+            break;
+        case 'F':
+            t = new FuncType();
+            break;
+        case 'b':
+            t = new BooleanType();
+            break;
+        case 'c':
+            t = new CharType();
+            break;
+        case 'p':
+        {
+            Type *to = Type::deserialize(inf);
+            t = new PointerType(to);
+        }
         break;
-    case 'f':
-        t = new FloatType();
-        break;
-    case 'v':
-        t = new VoidType();
-        break;
-    case 'F':
-        t = new FuncType();
-        break;
-    case 'b':
-        t = new BooleanType();
-        break;
-    case 'c':
-        t = new CharType();
-        break;
-    case 'p':
-    {
-        Type *to = Type::deserialize(inf);
-        t = new PointerType(to);
-    }
-    break;
-    case 'n':
-        break;
-    default:
-        assert(false);
-    }
+        case 'n':
+            break;
+        default:
+            assert(false);
+        }
 
     int fid;
     while ((fid = loadFID(inf)) != -1 && fid != FID_TYPE_END)
@@ -744,37 +758,39 @@ Type *Type::deserialize(std::istream &inf)
 
 bool IntegerType::deserialize_fid(std::istream &inf, int fid)
 {
-    switch (fid) {
-    case FID_TYPE_SIZE:
-    {
-        loadValue(inf, size);
-    }
-    break;
-    case FID_TYPE_SIGN:
-    {
-        loadValue(inf, signd);
-    }
-    break;
-    default:
-        skipFID(inf, fid);
-        return false;
-    }
+    switch (fid)
+        {
+        case FID_TYPE_SIZE:
+        {
+            loadValue(inf, size);
+        }
+        break;
+        case FID_TYPE_SIGN:
+        {
+            loadValue(inf, signd);
+        }
+        break;
+        default:
+            skipFID(inf, fid);
+            return false;
+        }
 
     return true;
 }
 
 bool FloatType::deserialize_fid(std::istream &inf, int fid)
 {
-    switch (fid) {
-    case FID_TYPE_SIZE:
-    {
-        loadValue(inf, size);
-    }
-    break;
-    default:
-        skipFID(inf, fid);
-        return false;
-    }
+    switch (fid)
+        {
+        case FID_TYPE_SIZE:
+        {
+            loadValue(inf, size);
+        }
+        break;
+        default:
+            skipFID(inf, fid);
+            return false;
+        }
 
     return true;
 }
@@ -787,17 +803,18 @@ bool VoidType::deserialize_fid(std::istream &inf, int fid)
 
 bool FuncType::deserialize_fid(std::istream &inf, int fid)
 {
-    switch (fid) {
-    case FID_TYPE_SIGNATURE:
-    {
-        //signature = Signature::deserialize(inf);  // HACK!
-        assert(signature);
-    }
-    break;
-    default:
-        skipFID(inf, fid);
-        return false;
-    }
+    switch (fid)
+        {
+        case FID_TYPE_SIGNATURE:
+        {
+            //signature = Signature::deserialize(inf);  // HACK!
+            assert(signature);
+        }
+        break;
+        default:
+            skipFID(inf, fid);
+            return false;
+        }
 
     return true;
 }

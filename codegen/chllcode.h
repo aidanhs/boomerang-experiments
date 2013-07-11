@@ -27,7 +27,8 @@ class BasicBlock;
 class Exp;
 class Proc;
 
-class CHLLCode : public HLLCode {
+class CHLLCode : public HLLCode
+{
 private:
     std::list<char *> lines;
 

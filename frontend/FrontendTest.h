@@ -4,7 +4,8 @@
 #include "BinaryFile.h"
 
 
-class FrontendTest : public CppUnit::TestCase {
+class FrontendTest : public CppUnit::TestCase
+{
 protected:
 
 public:

@@ -27,7 +27,8 @@
 typedef std::map<ADDRESS, ADDRESS>::iterator COV_IT;     // Iterator types
 typedef std::map<ADDRESS, ADDRESS>::const_iterator COV_CIT;
 
-class Coverage {
+class Coverage
+{
     // The following map represents a set of [start, finish+1] pairs
     std::map<ADDRESS, ADDRESS>    ranges;
 

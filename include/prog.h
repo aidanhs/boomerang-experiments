@@ -54,7 +54,8 @@ class Signature;
 
 typedef std::map<ADDRESS, Proc*, std::less<ADDRESS> > PROGMAP;
 
-class ProgWatcher {
+class ProgWatcher
+{
 public:
     ProgWatcher() { }
 
@@ -66,7 +67,8 @@ public:
     virtual void alert_progress(unsigned long off, unsigned long size) = 0;
 };
 
-class Prog {
+class Prog
+{
 public:
     Prog();                     // Default constructor
     Prog(BinaryFile *pBF, FrontEnd *pFE);
@@ -111,13 +113,15 @@ public:
 
     // Get the watcher.. other classes (such as the decoder) can alert
     // the watcher when there are changes.
-    ProgWatcher *getWatcher() {
+    ProgWatcher *getWatcher()
+    {
         return m_watcher;
     }
 
     // Indicate that a watcher would like to be updated of status (only 1
     // watcher allowed at the moment, old watchers will be disconnected).
-    void setWatcher(ProgWatcher *p) {
+    void setWatcher(ProgWatcher *p)
+    {
         m_watcher = p;
     }
 
@@ -175,14 +179,17 @@ public:
         return pBF->GetSectionInfoByAddr(a);
     }
     bool processProc(int addr, UserProc* proc)  // Decode a proc
-    {   std::ofstream os;
+    {
+        std::ofstream os;
         return pFE->processProc((unsigned)addr, proc, os);
     }
     // Read 2 or 4 bytes given a native address
-    int readNative2(ADDRESS a) {
+    int readNative2(ADDRESS a)
+    {
         return pBF->readNative2(a);
     }
-    int readNative4(ADDRESS a) {
+    int readNative4(ADDRESS a)
+    {
         return pBF->readNative4(a);
     }
 

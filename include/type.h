@@ -44,28 +44,36 @@ public:
     static Type* parseType(const char *str); // parse a C type
 
     // runtime type information
-    virtual bool isVoid() const {
+    virtual bool isVoid() const
+    {
         return false;
     }
-    virtual bool isFunc() const {
+    virtual bool isFunc() const
+    {
         return false;
     }
-    virtual bool isBoolean() const {
+    virtual bool isBoolean() const
+    {
         return false;
     }
-    virtual bool isChar() const {
+    virtual bool isChar() const
+    {
         return false;
     }
-    virtual bool isInteger() const {
+    virtual bool isInteger() const
+    {
         return false;
     }
-    virtual bool isFloat() const {
+    virtual bool isFloat() const
+    {
         return false;
     }
-    virtual bool isPointer() const {
+    virtual bool isPointer() const
+    {
         return false;
     }
-    virtual bool isNamed() const {
+    virtual bool isNamed() const
+    {
         return false;
     }
 
@@ -92,11 +100,13 @@ public:
     static Type *deserialize(std::istream &inf);
 };
 
-class VoidType : public Type {
+class VoidType : public Type
+{
 public:
     VoidType();
     virtual ~VoidType();
-    virtual bool isVoid() const {
+    virtual bool isVoid() const
+    {
         return true;
     }
 
@@ -114,13 +124,15 @@ public:
     virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
-class FuncType : public Type {
+class FuncType : public Type
+{
 private:
     Signature *signature;
 public:
     FuncType(Signature *sig = NULL);
     virtual ~FuncType();
-    virtual bool isFunc() const {
+    virtual bool isFunc() const
+    {
         return true;
     }
 
@@ -138,7 +150,8 @@ public:
     virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
-class IntegerType : public Type {
+class IntegerType : public Type
+{
 private:
     int         size;               // Size in bits, e.g. 16
     bool        signd;              // True if a signed quantity
@@ -146,7 +159,8 @@ private:
 public:
     IntegerType(int sz = 32, bool sign = true);
     virtual ~IntegerType();
-    virtual bool isInteger() const {
+    virtual bool isInteger() const
+    {
         return true;
     }
 
@@ -157,10 +171,12 @@ public:
     virtual bool    operator< (const Type& other) const;
 
     virtual int     getSize() const;
-    bool    isSigned() {
+    bool    isSigned()
+    {
         return signd;
     }
-    void    setSigned(bool b) {
+    void    setSigned(bool b)
+    {
         signd = b;
     }
 
@@ -172,14 +188,16 @@ public:
     virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
-class FloatType : public Type {
+class FloatType : public Type
+{
 private:
     int         size;               // Size in bits, e.g. 16
 
 public:
     FloatType(int sz = 64);
     virtual ~FloatType();
-    virtual bool isFloat() const {
+    virtual bool isFloat() const
+    {
         return true;
     }
 
@@ -199,11 +217,13 @@ public:
     virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
-class BooleanType : public Type {
+class BooleanType : public Type
+{
 public:
     BooleanType();
     virtual ~BooleanType();
-    virtual bool isBoolean() const {
+    virtual bool isBoolean() const
+    {
         return true;
     }
 
@@ -221,11 +241,13 @@ public:
     virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
-class CharType : public Type {
+class CharType : public Type
+{
 public:
     CharType();
     virtual ~CharType();
-    virtual bool isChar() const {
+    virtual bool isChar() const
+    {
         return true;
     }
 
@@ -244,17 +266,20 @@ public:
 };
 
 
-class PointerType : public Type {
+class PointerType : public Type
+{
 private:
     Type *points_to;
 
 public:
     PointerType(Type *p);
     virtual ~PointerType();
-    virtual bool isPointer() const {
+    virtual bool isPointer() const
+    {
         return true;
     }
-    Type *getPointsTo() {
+    Type *getPointsTo()
+    {
         return points_to;
     }
 
@@ -272,17 +297,20 @@ public:
     virtual	bool deserialize_fid(std::istream &inf, int fid);
 };
 
-class NamedType : public Type {
+class NamedType : public Type
+{
 private:
     std::string name;
 
 public:
     NamedType(const char *name);
     virtual ~NamedType();
-    virtual bool isNamed() const {
+    virtual bool isNamed() const
+    {
         return true;
     }
-    const char *getName() {
+    const char *getName()
+    {
         return name.c_str();
     }
 

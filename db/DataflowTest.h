@@ -16,7 +16,8 @@
 #include "proc.h"
 #include "prog.h"
 
-class DataflowTest : public CppUnit::TestCase {
+class DataflowTest : public CppUnit::TestCase
+{
 protected:
 
 public:

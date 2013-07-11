@@ -28,7 +28,8 @@ public:
      */
     virtual ~SparcFrontEnd();
 
-    virtual const char *getFrontEndId() {
+    virtual const char *getFrontEndId()
+    {
         return "sparc";
     }
 

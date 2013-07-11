@@ -39,7 +39,8 @@ class LocationSet;      // Actually declared in exp.h
 // A class to implement sets of statements
 // We may choose to implement these very differently one day
 typedef std::set<Statement*>::iterator StmtSetIter;
-class StatementSet {
+class StatementSet
+{
     std::set<Statement*> sset;          // For now, use use standard sets
 
 public:
@@ -48,12 +49,14 @@ public:
     void make_isect(StatementSet& other);    // Set intersection
     bool isSubSetOf(StatementSet& other);    // subset relation
 
-    int size() {
+    int size()
+    {
         return sset.size();   // Number of elements
     }
     Statement* getFirst(StmtSetIter& it);   // Get the first Statement
     Statement* getNext (StmtSetIter& it);   // Get next
-    void insert(Statement* s) {
+    void insert(Statement* s)
+    {
         sset.insert(s);   // Insertion
     }
     bool remove(Statement* s);              // Removal; rets false if not found
@@ -62,7 +65,8 @@ public:
     bool exists(Statement* s);              // Search; returns false if !found
     bool defines(Exp* loc);                 // Search; returns true if any
     // statement defines loc
-    void clear() {
+    void clear()
+    {
         sset.clear();   // Clear the set
     }
     bool operator==(const StatementSet& o) const // Compare
@@ -75,18 +79,21 @@ public:
 // Ugh - we also need lists of Statements for the internal statements
 typedef std::list<Statement*>::iterator StmtListIter;
 typedef std::list<Statement*>::reverse_iterator StmtListRevIter;
-class StatementList {
+class StatementList
+{
     std::list<Statement*> slist;          // For now, use use standard list
 
 public:
-    int size() {
+    int size()
+    {
         return slist.size();   // Number of elements
     }
     Statement* getFirst(StmtListIter& it);   // Get the first Statement
     Statement* getNext (StmtListIter& it);   // Get next
     Statement* getLast (StmtListRevIter& it);// Get the last Statement
     Statement* getPrev (StmtListRevIter& it);// Get previous
-    void append(Statement* s) {
+    void append(Statement* s)
+    {
         slist.push_back(s);   // Insert at end
     }
     void append(StatementList& sl);         // Append whole StatementList
@@ -94,7 +101,8 @@ public:
     bool remove(Statement* s);              // Removal; rets false if not found
     // This one is needed where you remove in the middle of a loop
     // Use like this: it = mystatementlist.remove(it);
-    StmtListIter StatementList::remove(StmtListIter it) {
+    StmtListIter StatementList::remove(StmtListIter it)
+    {
         return slist.erase(it);
     }
     bool exists(Statement* s);  // Find; returns false if not found
@@ -106,7 +114,8 @@ public:
 /* Statements define values that are used in expressions.
  * They are akin to "definition" in the Dragon Book.
  */
-class Statement {
+class Statement
+{
 protected:
     PBB pbb;  // contains a pointer to the enclosing BB
     UserProc *proc; // procedure containing this statement
@@ -117,10 +126,12 @@ protected:
 public:
 
     Statement() : pbb(NULL), proc(NULL) { }
-    virtual ~Statement() {
+    virtual ~Statement()
+    {
     }
 
-    void setProc(UserProc *p) {
+    void setProc(UserProc *p)
+    {
         proc = p;
     }
 
@@ -189,13 +200,16 @@ public:
     // get my uses' definitions (ud chain)
     //
     void calcUses(StatementSet &uses, Cfg* cfg);
-    int getNumUses() {
+    int getNumUses()
+    {
         return uses.size();
     }
-    StatementSet &getUses() {
+    StatementSet &getUses()
+    {
         return uses;
     }
-    void clearUses() {
+    void clearUses()
+    {
         uses.clear();
         usedBy.clear();
     }
@@ -204,7 +218,8 @@ public:
     // usedBy: du chain (my def's uses)
     //
     void calcUsedBy(StatementSet &usedBy);
-    int getNumUsedBy() {
+    int getNumUsedBy()
+    {
         return usedBy.size();
     }
 
@@ -212,10 +227,12 @@ public:
     void updateDfForErase();
 
     // get/set the enclosing BB
-    PBB getBB() {
+    PBB getBB()
+    {
         return pbb;
     }
-    void setBB(PBB bb) {
+    void setBB(PBB bb)
+    {
         pbb = bb;
     }
 

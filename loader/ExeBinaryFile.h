@@ -30,7 +30,8 @@
 
 #include "BinaryFile.h"
 
-typedef struct {            /*        PSP structure                 */
+typedef struct              /*        PSP structure                 */
+{
     SWord int20h;           /* interrupt 20h                        */
     SWord eof;              /* segment, end of allocation block     */
     Byte res1;              /* reserved                             */
@@ -49,7 +50,8 @@ typedef struct {            /*        PSP structure                 */
     Byte cmdTail[0x80];     /* command tail and disk transfer area  */
 } PSP;
 
-typedef struct {            /*      EXE file header          */
+typedef struct              /*      EXE file header          */
+{
     Byte   sigLo;          /* .EXE signature: 0x4D 0x5A     */
     Byte   sigHi;
     SWord  lastPageSize;   /* Size of the last page         */
