@@ -157,7 +157,7 @@ public:
      */
     const Cfg&	operator=(const Cfg& other); /* Copy constructor */
 
-class BBAlreadyExistsError : public std::exception {
+    class BBAlreadyExistsError : public std::exception {
     public:
         PBB pBB;
         BBAlreadyExistsError(PBB pBB) : pBB(pBB) { }

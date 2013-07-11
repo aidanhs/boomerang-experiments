@@ -345,7 +345,7 @@ public:
     // Set convert if an indirect call is changed to direct (otherwise, no change)
     // Set force to true to propagate even memofs (for switch analysis)
     bool		propagateTo(bool& convert, std::map<Exp*, int, lessExpStar>* destCounts = NULL,
-                      LocationSet* usedByDomPhi = NULL, bool force = false);
+                            LocationSet* usedByDomPhi = NULL, bool force = false);
     bool		propagateFlagsTo();
 
     // code generation
@@ -693,12 +693,12 @@ private:
 public:
     // Constructor, subexpression
     PhiAssign(Exp* lhs)
-            : Assignment(lhs) {
+        : Assignment(lhs) {
         kind = STMT_PHIASSIGN;
     }
     // Constructor, type and subexpression
     PhiAssign(Type* ty, Exp* lhs)
-            : Assignment(ty, lhs) {
+        : Assignment(ty, lhs) {
         kind = STMT_PHIASSIGN;
     }
     // Copy constructor (not currently used or implemented)

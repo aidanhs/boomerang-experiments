@@ -158,7 +158,7 @@ typedef struct {
 
 class Win32BinaryFile : public BinaryFile {
 public:
-						Win32BinaryFile();		// Default constructor
+    Win32BinaryFile();		// Default constructor
     virtual				~Win32BinaryFile();		// Destructor
     virtual bool		Open(const char* sName);// Open the file for r/w; ???
     virtual void		Close();				// Close file opened with Open()

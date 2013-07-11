@@ -28,7 +28,7 @@ PF_InvokeServiceFunc LoaderWrapper<ExeBinaryFile,ILoader>::m_invokeService=0;
 #define LH(p)  ((int)((uint8_t *)(p))[0] + ((int)((uint8_t *)(p))[1] << 8))
 
 ExeBinaryFile::ExeBinaryFile(PF_ObjectParams *par) {
-	// here we can check for proper version of the boomerang platform
+    // here we can check for proper version of the boomerang platform
 }
 
 bool ExeBinaryFile::RealLoad(const char* sName) {
@@ -50,13 +50,13 @@ bool ExeBinaryFile::RealLoad(const char* sName) {
 
     /* Open the input file */
     if ((fp = fopen(sName, "rb")) == NULL) {
-		THROW << "Could not open file " << sName;
+        THROW << "Could not open file " << sName;
         return 0;
     }
 
     /* Read in first 2 uint8_ts to check EXE signature */
     if (fread(m_pHeader, 1, 2, fp) != 2) {
-		THROW << "Cannot read file  " << sName;
+        THROW << "Cannot read file  " << sName;
         return 0;
     }
 
@@ -119,12 +119,13 @@ bool ExeBinaryFile::RealLoad(const char* sName) {
 
         // Initial PC and SP. Note that we fake the seg:offset by putting
         // the segment in the top half, and offset int he bottom
-		//TODO: Inform boomerang engine that initiali PC and SP have given values.
+        //TODO: Inform boomerang engine that initiali PC and SP have given values.
         //m_uInitPC = ((LH(&m_pHeader->initCS)) << 16) + LH(&m_pHeader->initIP);
         //m_uInitSP = ((LH(&m_pHeader->initSS)) << 16) + LH(&m_pHeader->initSP);
-    } else {	/* COM file
-		 * In this case the load module size is just the file length
-		*/
+    } else {
+        /* COM file
+        	 * In this case the load module size is just the file length
+        	*/
         fseek(fp, 0, SEEK_END);
         cb = ftell(fp);
 
@@ -132,8 +133,8 @@ bool ExeBinaryFile::RealLoad(const char* sName) {
          * This is also the implied start address so if we load the image
          * at offset 100H addresses should all line up properly again.
         */
-		//TODO: Inform boomerang engine that initiali PC and SP have given values.
-		//m_uInitPC = 0x100;
+        //TODO: Inform boomerang engine that initiali PC and SP have given values.
+        //m_uInitPC = 0x100;
         //m_uInitSP = 0xFFFE;
         m_cReloc = 0;
 
@@ -160,30 +161,30 @@ bool ExeBinaryFile::RealLoad(const char* sName) {
     }
 
     fclose(fp);
-	//TODO: Tell boomerang engines that following sections exist in the binary
-/*
-    m_pSections[0].pSectionName = const_cast<char *>("$HEADER");	// Special header section
-//	m_pSections[0].fSectionFlags = ST_HEADER;
-    m_pSections[0].uNativeAddr = 0;				// Not applicable
-    m_pSections[0].uHostAddr = (uint32_t)m_pHeader;
-    m_pSections[0].uSectionSize = sizeof(exeHeader);
-    m_pSections[0].uSectionEntrySize = 1;		// Not applicable
+    //TODO: Tell boomerang engines that following sections exist in the binary
+    /*
+        m_pSections[0].pSectionName = const_cast<char *>("$HEADER");	// Special header section
+    //	m_pSections[0].fSectionFlags = ST_HEADER;
+        m_pSections[0].uNativeAddr = 0;				// Not applicable
+        m_pSections[0].uHostAddr = (uint32_t)m_pHeader;
+        m_pSections[0].uSectionSize = sizeof(exeHeader);
+        m_pSections[0].uSectionEntrySize = 1;		// Not applicable
 
-    m_pSections[1].pSectionName = const_cast<char *>(".text");		// The text and data section
-    m_pSections[1].bCode = true;
-    m_pSections[1].bData = true;
-    m_pSections[1].uNativeAddr = 0;
-    m_pSections[1].uHostAddr = (uint32_t)m_pImage;
-    m_pSections[1].uSectionSize = m_cbImage;
-    m_pSections[1].uSectionEntrySize = 1;		// Not applicable
+        m_pSections[1].pSectionName = const_cast<char *>(".text");		// The text and data section
+        m_pSections[1].bCode = true;
+        m_pSections[1].bData = true;
+        m_pSections[1].uNativeAddr = 0;
+        m_pSections[1].uHostAddr = (uint32_t)m_pImage;
+        m_pSections[1].uSectionSize = m_cbImage;
+        m_pSections[1].uSectionEntrySize = 1;		// Not applicable
 
-    m_pSections[2].pSectionName = const_cast<char *>("$RELOC");		// Special relocation section
-//	m_pSections[2].fSectionFlags = ST_RELOC;	// Give it a special flag
-    m_pSections[2].uNativeAddr = 0;				// Not applicable
-    m_pSections[2].uHostAddr = (uint32_t)m_pRelocTable;
-    m_pSections[2].uSectionSize = sizeof(uint32_t) * m_cReloc;
-    m_pSections[2].uSectionEntrySize = sizeof(uint32_t);
-*/
+        m_pSections[2].pSectionName = const_cast<char *>("$RELOC");		// Special relocation section
+    //	m_pSections[2].fSectionFlags = ST_RELOC;	// Give it a special flag
+        m_pSections[2].uNativeAddr = 0;				// Not applicable
+        m_pSections[2].uHostAddr = (uint32_t)m_pRelocTable;
+        m_pSections[2].uSectionSize = sizeof(uint32_t) * m_cReloc;
+        m_pSections[2].uSectionEntrySize = sizeof(uint32_t);
+    */
 
     return 1;
 

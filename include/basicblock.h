@@ -314,7 +314,7 @@ public:
      */
     void		resetDFASets();
 
-class LastStatementNotABranchError : public std::exception {
+    class LastStatementNotABranchError : public std::exception {
     public:
         Statement *stmt;
         LastStatementNotABranchError(Statement *stmt) : stmt(stmt) { }
@@ -325,7 +325,7 @@ class LastStatementNotABranchError : public std::exception {
     /* set the condition */
     void		setCond(Exp *e) throw(LastStatementNotABranchError);
 
-class LastStatementNotAGotoError : public std::exception {
+    class LastStatementNotAGotoError : public std::exception {
     public:
         Statement *stmt;
         LastStatementNotAGotoError(Statement *stmt) : stmt(stmt) { }
@@ -553,7 +553,7 @@ protected:
 
 public:
     void		generateCode(HLLCode *hll, int indLevel, PBB latch, std::list<PBB> &followSet,
-                       std::list<PBB> &gotoSet, UserProc* proc);
+                             std::list<PBB> &gotoSet, UserProc* proc);
     // For prepending phi functions
     void		prependStmt(Statement* s, UserProc* proc);
 

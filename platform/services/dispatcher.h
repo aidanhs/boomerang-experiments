@@ -5,7 +5,7 @@ template<class T>
 class Dispatcher
 {
 public:
-	static int32_t invoke(const char * serviceName, void * serviceParams);
+    static int32_t invoke(const char * serviceName, void * serviceParams);
 };
 class LoaderDispatcher : public Dispatcher<int>
 {

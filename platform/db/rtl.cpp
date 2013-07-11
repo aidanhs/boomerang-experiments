@@ -17,7 +17,7 @@
 
 /*
  * $Revision: 1.38 $	// 1.33.2.3
- * 
+ *
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  * 15 May 02 - Mike: Fixed a nasty bug in updateExp (when update with same
@@ -28,7 +28,7 @@
 #include <cassert>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <iomanip>			// For setfill
 #include <sstream>
@@ -54,7 +54,7 @@
 
 /******************************************************************************
  * RTL methods.
- * Class RTL represents low-level register transfer lists. 
+ * Class RTL represents low-level register transfer lists.
  *****************************************************************************/
 
 /*==============================================================================
@@ -64,7 +64,7 @@
  * RETURNS:			N/a
  *============================================================================*/
 RTL::RTL()
-  : nativeAddr(0)
+    : nativeAddr(0)
 { }
 
 /*==============================================================================
@@ -75,9 +75,9 @@ RTL::RTL()
  * RETURNS:			N/a
  *============================================================================*/
 RTL::RTL(ADDRESS instNativeAddr, std::list<Statement*>* listStmt /*= NULL*/)
-	: nativeAddr(instNativeAddr) {
-	if (listStmt)
-		stmtList = *listStmt;
+    : nativeAddr(instNativeAddr) {
+    if (listStmt)
+        stmtList = *listStmt;
 }
 
 /*==============================================================================
@@ -88,10 +88,10 @@ RTL::RTL(ADDRESS instNativeAddr, std::list<Statement*>* listStmt /*= NULL*/)
  * RETURNS:			N/a
  *============================================================================*/
 RTL::RTL(const RTL& other) : nativeAddr(other.nativeAddr) {
-	std::list<Statement*>::const_iterator it;
-	for (it = other.stmtList.begin(); it != other.stmtList.end(); it++) {
-		stmtList.push_back((*it)->clone());
-	}
+    std::list<Statement*>::const_iterator it;
+    for (it = other.stmtList.begin(); it != other.stmtList.end(); it++) {
+        stmtList.push_back((*it)->clone());
+    }
 }
 
 /*==============================================================================
@@ -109,15 +109,15 @@ RTL::~RTL() { }
  * RETURNS:			a reference to this object
  *============================================================================*/
 RTL& RTL::operator=(RTL& other) {
-	if (this != &other) {
-		// Do a deep copy always
-		iterator it;
-		for (it = other.stmtList.begin(); it != other.stmtList.end(); it++)
-			stmtList.push_back((*it)->clone());
-		
-		nativeAddr = other.nativeAddr;
-	}
-	return *this;
+    if (this != &other) {
+        // Do a deep copy always
+        iterator it;
+        for (it = other.stmtList.begin(); it != other.stmtList.end(); it++)
+            stmtList.push_back((*it)->clone());
+
+        nativeAddr = other.nativeAddr;
+    }
+    return *this;
 }
 
 /*==============================================================================
@@ -128,26 +128,26 @@ RTL& RTL::operator=(RTL& other) {
  * RETURNS:			Pointer to a new RTL that is a clone of this one
  *============================================================================*/
 RTL* RTL::clone() {
-	std::list<Statement*> le;
-	iterator it;
+    std::list<Statement*> le;
+    iterator it;
 
-	for (it = stmtList.begin(); it != stmtList.end(); it++) {
-		le.push_back((*it)->clone());
-	}
-	
-	RTL* ret = new RTL(nativeAddr, &le);
-	return ret;
+    for (it = stmtList.begin(); it != stmtList.end(); it++) {
+        le.push_back((*it)->clone());
+    }
+
+    RTL* ret = new RTL(nativeAddr, &le);
+    return ret;
 }
 
 // visit this RTL, and all its Statements
 bool RTL::accept(StmtVisitor* visitor) {
-	// Might want to do something at the RTL level:
-	if (!visitor->visit(this)) return false;
-	iterator it;
-	for (it = stmtList.begin(); it != stmtList.end(); it++) {
-		if (! (*it)->accept(visitor)) return false;
-	}
-	return true;
+    // Might want to do something at the RTL level:
+    if (!visitor->visit(this)) return false;
+    iterator it;
+    for (it = stmtList.begin(); it != stmtList.end(); it++) {
+        if (! (*it)->accept(visitor)) return false;
+    }
+    return true;
 }
 
 /*==============================================================================
@@ -157,11 +157,11 @@ bool RTL::accept(StmtVisitor* visitor) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::deepCopyList(std::list<Statement*>& dest) {
-	std::list<Statement*>::iterator it;
+    std::list<Statement*>::iterator it;
 
-	for (it = stmtList.begin(); it != stmtList.end(); it++) {
-		dest.push_back((*it)->clone());
-	}
+    for (it = stmtList.begin(); it != stmtList.end(); it++) {
+        dest.push_back((*it)->clone());
+    }
 }
 
 /*==============================================================================
@@ -174,14 +174,14 @@ void RTL::deepCopyList(std::list<Statement*>& dest) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::appendStmt(Statement* s) {
-	if (stmtList.size()) {
-		if (stmtList.back()->isFlagAssgn()) {
-			iterator it = stmtList.end();
-			stmtList.insert(--it, s);
-			return;
-		}
-	}
-	stmtList.push_back(s);
+    if (stmtList.size()) {
+        if (stmtList.back()->isFlagAssgn()) {
+            iterator it = stmtList.end();
+            stmtList.insert(--it, s);
+            return;
+        }
+    }
+    stmtList.push_back(s);
 }
 
 /*==============================================================================
@@ -192,7 +192,7 @@ void RTL::appendStmt(Statement* s) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::prependStmt(Statement* s) {
-	stmtList.push_front(s);
+    stmtList.push_front(s);
 }
 
 /*==============================================================================
@@ -203,10 +203,10 @@ void RTL::prependStmt(Statement* s) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::appendListStmt(std::list<Statement*>& le) {
-	iterator it;
-	for (it = le.begin();  it != le.end();	it++) {
-		stmtList.insert(stmtList.end(), (*it)->clone());
-	}
+    iterator it;
+    for (it = le.begin();  it != le.end();	it++) {
+        stmtList.insert(stmtList.end(), (*it)->clone());
+    }
 }
 
 /*==============================================================================
@@ -217,7 +217,7 @@ void RTL::appendListStmt(std::list<Statement*>& le) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::appendRTL(RTL& r) {
-	appendListStmt(r.stmtList);
+    appendListStmt(r.stmtList);
 }
 
 /*==============================================================================
@@ -229,19 +229,19 @@ void RTL::appendRTL(RTL& r) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::insertStmt(Statement* s, unsigned i) {
-	// Check that position i is not out of bounds
-	assert (i < stmtList.size() || stmtList.size() == 0);
+    // Check that position i is not out of bounds
+    assert (i < stmtList.size() || stmtList.size() == 0);
 
-	// Find the position
-	iterator pp = stmtList.begin();
-	for (; i > 0; i--, pp++);
+    // Find the position
+    iterator pp = stmtList.begin();
+    for (; i > 0; i--, pp++);
 
-	// Do the insertion
-	stmtList.insert(pp, s);
+    // Do the insertion
+    stmtList.insert(pp, s);
 }
 
 void RTL::insertStmt(Statement* s, iterator it) {
-	stmtList.insert(it, s);
+    stmtList.insert(it, s);
 }
 
 /*==============================================================================
@@ -252,48 +252,48 @@ void RTL::insertStmt(Statement* s, iterator it) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::updateStmt(Statement *s, unsigned i) {
-	// Check that position i is not out of bounds
-	assert (i < stmtList.size());
+    // Check that position i is not out of bounds
+    assert (i < stmtList.size());
 
-	// Find the position
-	iterator pp = stmtList.begin();
-	for (; i > 0; i--, pp++);	 
+    // Find the position
+    iterator pp = stmtList.begin();
+    for (; i > 0; i--, pp++);
 
-	// Note that sometimes we might update even when we don't know if it's
-	// needed, e.g. after a searchReplace.
-	// In that case, don't update, and especially don't delete the existing
-	// statement (because it's also the one we are updating!)
-	if (*pp != s) {
-		// Do the update
-		if (*pp) ;//delete *pp;
-		*pp = s;
-	}
+    // Note that sometimes we might update even when we don't know if it's
+    // needed, e.g. after a searchReplace.
+    // In that case, don't update, and especially don't delete the existing
+    // statement (because it's also the one we are updating!)
+    if (*pp != s) {
+        // Do the update
+        if (*pp) ;//delete *pp;
+        *pp = s;
+    }
 }
 
 void RTL::deleteStmt(unsigned i) {
-	// check that position i is not out of bounds
-	assert (i < stmtList.size());
+    // check that position i is not out of bounds
+    assert (i < stmtList.size());
 
-	// find the position
-	iterator pp = stmtList.begin();
-	for (; i > 0; i--, pp++);	 
+    // find the position
+    iterator pp = stmtList.begin();
+    for (; i > 0; i--, pp++);
 
-	// do the delete
-	stmtList.erase(pp);
+    // do the delete
+    stmtList.erase(pp);
 }
 
 void RTL::deleteLastStmt() {
-	assert(stmtList.size());
-	stmtList.erase(--stmtList.end());
+    assert(stmtList.size());
+    stmtList.erase(--stmtList.end());
 }
 
 void RTL::replaceLastStmt(Statement* repl) {
-	assert(stmtList.size());
-	Statement*& last = stmtList.back();
-	last = repl;
+    assert(stmtList.size());
+    Statement*& last = stmtList.back();
+    last = repl;
 }
 
-	
+
 /*==============================================================================
  * FUNCTION:		RTL::getNumStmt
  * OVERVIEW:		Get the number of Statements in this RTL
@@ -301,7 +301,7 @@ void RTL::replaceLastStmt(Statement* repl) {
  * RETURNS:			Integer number of Statements
  *============================================================================*/
 int RTL::getNumStmt() {
-	return stmtList.size();
+    return stmtList.size();
 }
 
 /*==============================================================================
@@ -313,12 +313,12 @@ int RTL::getNumStmt() {
  *					of bounds
  *============================================================================*/
 Statement* RTL::elementAt(unsigned i) {
-	iterator it;
-	for (it = stmtList.begin();	 i > 0 && it != stmtList.end();	 i--, it++);
-	if (it == stmtList.end()) {
-		return NULL;
-	}
-	return *it;
+    iterator it;
+    for (it = stmtList.begin();	 i > 0 && it != stmtList.end();	 i--, it++);
+    if (it == stmtList.end()) {
+        return NULL;
+    }
+    return *it;
 }
 
 /*==============================================================================
@@ -329,50 +329,50 @@ Statement* RTL::elementAt(unsigned i) {
  *============================================================================*/
 void RTL::print(std::ostream& os /*= cout*/, bool html /*=false*/) {
 
-	if (html)
-		os << "<tr><td>";
-	// print out the instruction address of this RTL
-	os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
-	os << std::dec << std::setfill(' ');	  // Ugh - why is this needed?
-	if (html)
-		os << "</td>";
+    if (html)
+        os << "<tr><td>";
+    // print out the instruction address of this RTL
+    os << std::hex << std::setfill('0') << std::setw(8) << nativeAddr;
+    os << std::dec << std::setfill(' ');	  // Ugh - why is this needed?
+    if (html)
+        os << "</td>";
 
-	// Print the statements
-	// First line has 8 extra chars as above
-	bool bFirst = true;
-	iterator ss;
-	for (ss = stmtList.begin(); ss != stmtList.end(); ss++) {
-		Statement* stmt = *ss;
-		if (html) {
-			if (!bFirst) os << "<tr><td></td>";
-			os << "<td width=\"50\" align=\"center\">";
-		} else {
-			if (bFirst) os << " ";
-			else		os << std::setw(9) << " ";
-		}
-		if (stmt) stmt->print(os, html);
-		// Note: we only put newlines where needed. So none at the end of
-		// Statement::print; one here to separate from other statements
-		if (html)
-			os << "</td></tr>";
-		os << "\n";
-		bFirst = false;
-	}
-	if (stmtList.empty()) os << std::endl;	   // New line for NOP
+    // Print the statements
+    // First line has 8 extra chars as above
+    bool bFirst = true;
+    iterator ss;
+    for (ss = stmtList.begin(); ss != stmtList.end(); ss++) {
+        Statement* stmt = *ss;
+        if (html) {
+            if (!bFirst) os << "<tr><td></td>";
+            os << "<td width=\"50\" align=\"center\">";
+        } else {
+            if (bFirst) os << " ";
+            else		os << std::setw(9) << " ";
+        }
+        if (stmt) stmt->print(os, html);
+        // Note: we only put newlines where needed. So none at the end of
+        // Statement::print; one here to separate from other statements
+        if (html)
+            os << "</td></tr>";
+        os << "\n";
+        bFirst = false;
+    }
+    if (stmtList.empty()) os << std::endl;	   // New line for NOP
 }
 
 void RTL::dump() {
-	print(std::cerr);
+    print(std::cerr);
 }
 
 extern char debug_buffer[];
 
 char* RTL::prints() {
-	  std::ostringstream ost;
-	  print(ost);
-	  strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
-	  debug_buffer[DEBUG_BUFSIZE-1] = '\0';
-	  return debug_buffer;
+    std::ostringstream ost;
+    print(ost);
+    strncpy(debug_buffer, ost.str().c_str(), DEBUG_BUFSIZE-1);
+    debug_buffer[DEBUG_BUFSIZE-1] = '\0';
+    return debug_buffer;
 }
 
 /*==============================================================================
@@ -384,9 +384,12 @@ char* RTL::prints() {
  * RETURNS:			copy of os (for concatenation)
  *============================================================================*/
 std::ostream& operator<<(std::ostream& os, RTL* r) {
-	if (r == NULL) {os << "NULL "; return os;}
-	r->print(os);
-	return os;
+    if (r == NULL) {
+        os << "NULL ";
+        return os;
+    }
+    r->print(os);
+    return os;
 }
 
 /*==============================================================================
@@ -396,7 +399,7 @@ std::ostream& operator<<(std::ostream& os, RTL* r) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::updateAddress(ADDRESS addr) {
-	nativeAddr = addr;
+    nativeAddr = addr;
 }
 
 /*==============================================================================
@@ -407,10 +410,10 @@ void RTL::updateAddress(ADDRESS addr) {
  * RETURNS:			<nothing>
  *============================================================================*/
 bool RTL::searchAndReplace(Exp* search, Exp* replace) {
-	bool ch = false;
-	for (iterator it = stmtList.begin(); it != stmtList.end(); it++)
-		ch |= (*it)->searchAndReplace(search, replace);
-	return ch;
+    bool ch = false;
+    for (iterator it = stmtList.begin(); it != stmtList.end(); it++)
+        ch |= (*it)->searchAndReplace(search, replace);
+    return ch;
 }
 
 /*==============================================================================
@@ -422,16 +425,16 @@ bool RTL::searchAndReplace(Exp* search, Exp* replace) {
  * RETURNS:			true if there were any matches
  *============================================================================*/
 bool RTL::searchAll(Exp* search, std::list<Exp *> &result) {
-	bool found = false;
-	for (iterator it = stmtList.begin(); it != stmtList.end(); it++) {
-		Statement *e = *it;
-		Exp* res;
-		if (e->search(search, res)) {
-			found = true;
-			result.push_back(res);
-		}
-	}
-	return found;
+    bool found = false;
+    for (iterator it = stmtList.begin(); it != stmtList.end(); it++) {
+        Statement *e = *it;
+        Exp* res;
+        if (e->search(search, res)) {
+            found = true;
+            result.push_back(res);
+        }
+    }
+    return found;
 }
 
 /*==============================================================================
@@ -441,7 +444,7 @@ bool RTL::searchAll(Exp* search, std::list<Exp *> &result) {
  * RETURNS:			Nothing
  *============================================================================*/
 void RTL::clear() {
-	stmtList.clear();
+    stmtList.clear();
 }
 
 /*==============================================================================
@@ -461,13 +464,13 @@ void RTL::clear() {
  * RETURNS:			<nothing>
  *============================================================================*/
 void RTL::insertAssign(Exp* pLhs, Exp* pRhs, bool prep,
-						Type* type /*= NULL */) {
-	// Generate the assignment expression
-	Assign* asgn = new Assign(type, pLhs, pRhs);
-	if (prep)
-		prependStmt(asgn);
-	else
-		appendStmt(asgn);
+                       Type* type /*= NULL */) {
+    // Generate the assignment expression
+    Assign* asgn = new Assign(type, pLhs, pRhs);
+    if (prep)
+        prependStmt(asgn);
+    else
+        appendStmt(asgn);
 }
 
 /*==============================================================================
@@ -489,33 +492,33 @@ void RTL::insertAssign(Exp* pLhs, Exp* pRhs, bool prep,
  * RETURNS:			<nothing>
  *============================================================================*/
 void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, Type* type	 /* NULL */) {
-	iterator it;
-	// First skip all assignments with temps on LHS
-	for (it = stmtList.begin(); it != stmtList.end(); it++) {
-		Statement *s = *it;
-		if (!s->isAssign())
-			break;
-		Exp* LHS = ((Assign*)s)->getLeft();
-		if (LHS->isTemp())
-			break;
-	}
+    iterator it;
+    // First skip all assignments with temps on LHS
+    for (it = stmtList.begin(); it != stmtList.end(); it++) {
+        Statement *s = *it;
+        if (!s->isAssign())
+            break;
+        Exp* LHS = ((Assign*)s)->getLeft();
+        if (LHS->isTemp())
+            break;
+    }
 
-	// Now check if the next Stmt is an assignment
-	if ((it == stmtList.end()) || !(*it)->isAssign()) {
-		// There isn't an assignment following. Use the previous Exp to insert
-		// before
-		if (it != stmtList.begin())
-			it--;
-	}
+    // Now check if the next Stmt is an assignment
+    if ((it == stmtList.end()) || !(*it)->isAssign()) {
+        // There isn't an assignment following. Use the previous Exp to insert
+        // before
+        if (it != stmtList.begin())
+            it--;
+    }
 
-	if (type == NULL)
-		type = getType();
+    if (type == NULL)
+        type = getType();
 
-	// Generate the assignment expression
-	Assign* asgn = new Assign(type, pLhs, pRhs);
+    // Generate the assignment expression
+    Assign* asgn = new Assign(type, pLhs, pRhs);
 
-	// Insert before "it"
-	stmtList.insert(it, asgn);
+    // Insert before "it"
+    stmtList.insert(it, asgn);
 }
 
 /*==============================================================================
@@ -528,13 +531,13 @@ void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, Type* type	 /* NULL */) {
  * RETURNS:			A pointer to the type
  *============================================================================*/
 Type* RTL::getType() {
-	iterator it;
-	for (it = stmtList.begin(); it != stmtList.end(); it++) {
-		Statement *e = *it;
-		if (e->isAssign())
-			return ((Assign*)e)->getType();
-	}
-	return new IntegerType();	//	Default to 32 bit integer if no assignments
+    iterator it;
+    for (it = stmtList.begin(); it != stmtList.end(); it++) {
+        Statement *e = *it;
+        if (e->isAssign())
+            return ((Assign*)e)->getType();
+    }
+    return new IntegerType();	//	Default to 32 bit integer if no assignments
 }
 
 /*==============================================================================
@@ -545,55 +548,55 @@ Type* RTL::getType() {
  * RETURNS:		  Boolean as above
  *============================================================================*/
 bool RTL::areFlagsAffected() {
-	if (stmtList.size() == 0) return false;
-	// Get an iterator to the last RT
-	iterator it = stmtList.end();
-	if (it == stmtList.begin())
-		return false;			// Not expressions at all
-	it--;						// Will now point to the end of the list
-	Statement *e = *it;
-	// If it is a flag call, then the CCs are affected
-	return e->isFlagAssgn();
+    if (stmtList.size() == 0) return false;
+    // Get an iterator to the last RT
+    iterator it = stmtList.end();
+    if (it == stmtList.begin())
+        return false;			// Not expressions at all
+    it--;						// Will now point to the end of the list
+    Statement *e = *it;
+    // If it is a flag call, then the CCs are affected
+    return e->isFlagAssgn();
 }
 
 void RTL::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
-	for (iterator it = stmtList.begin();
-	  it != stmtList.end(); it++) {
-		(*it)->generateCode(hll, pbb, indLevel);
-	}
+    for (iterator it = stmtList.begin();
+            it != stmtList.end(); it++) {
+        (*it)->generateCode(hll, pbb, indLevel);
+    }
 }
 
 void RTL::simplify() {
-	for (iterator it = stmtList.begin(); it != stmtList.end(); /*it++*/) {
-		Statement *s = *it;
-		s->simplify();		  
-		if (s->isBranch()) {
-			Exp *cond =	 ((BranchStatement*)s)->getCondExpr();
-			if (cond && cond->getOper() == opIntConst) {
-				if (((Const*)cond)->getInt() == 0) {
-					if (VERBOSE)
-						LOG << "removing branch with false condition at " << getAddress()  << " " << *it << "\n";
-					it = stmtList.erase(it);
-					continue;
-				} else {
-					if (VERBOSE)
-						LOG << "replacing branch with true condition with goto at " << getAddress() << " " << *it <<
-							"\n";
-					*it = new GotoStatement(((BranchStatement*)s)->getFixedDest());
-				}
-			}
-		} else if (s->isAssign()) {
-			Exp* guard = ((Assign*)s)->getGuard();
-			if (guard && (guard->isFalse() || guard->isIntConst() && ((Const*)guard)->getInt() == 0)) {
-				// This assignment statement can be deleted
-				if (VERBOSE)
-					LOG << "removing assignment with false guard at " << getAddress() << " " << *it << "\n";
-				it = stmtList.erase(it);
-				continue;
-			}
-		}
-		it++;
-	}
+    for (iterator it = stmtList.begin(); it != stmtList.end(); /*it++*/) {
+        Statement *s = *it;
+        s->simplify();
+        if (s->isBranch()) {
+            Exp *cond =	 ((BranchStatement*)s)->getCondExpr();
+            if (cond && cond->getOper() == opIntConst) {
+                if (((Const*)cond)->getInt() == 0) {
+                    if (VERBOSE)
+                        LOG << "removing branch with false condition at " << getAddress()  << " " << *it << "\n";
+                    it = stmtList.erase(it);
+                    continue;
+                } else {
+                    if (VERBOSE)
+                        LOG << "replacing branch with true condition with goto at " << getAddress() << " " << *it <<
+                            "\n";
+                    *it = new GotoStatement(((BranchStatement*)s)->getFixedDest());
+                }
+            }
+        } else if (s->isAssign()) {
+            Exp* guard = ((Assign*)s)->getGuard();
+            if (guard && (guard->isFalse() || guard->isIntConst() && ((Const*)guard)->getInt() == 0)) {
+                // This assignment statement can be deleted
+                if (VERBOSE)
+                    LOG << "removing assignment with false guard at " << getAddress() << " " << *it << "\n";
+                it = stmtList.erase(it);
+                continue;
+            }
+        }
+        it++;
+    }
 }
 
 /*==============================================================================
@@ -609,66 +612,66 @@ void RTL::simplify() {
  * RETURNS:			True if found
  *============================================================================*/
 bool RTL::isCompare(int& iReg, Exp*& expOperand) {
-	// Expect to see a subtract, then a setting of the flags
-	// Dest of subtract should be a register (could be the always zero register)
-	if (getNumStmt() < 2) return false;
-	// Could be first some assignments to temporaries
-	// But the actual compare could also be an assignment to a temporary
-	// So we search for the first RHS with an opMinus, that has a LHS to
-	// a register (whether a temporary or a machine register)
-	int i=0;
-	Exp* rhs;
-	Statement* cur;
-	do {
-		cur = elementAt(i);
-		if (cur->getKind() != STMT_ASSIGN) return false;
-		rhs = ((Assign*)cur)->getRight();
-		i++;
-	} while (rhs->getOper() != opMinus && i < getNumStmt());
-	if (rhs->getOper() != opMinus) return false;
-	// We have a subtract assigning to a register.
-	// Check if there is a subflags last
-	Statement* last = elementAt(getNumStmt()-1);
-	if (!last->isFlagAssgn()) return false;
-	Exp* sub = ((Binary*)rhs)->getSubExp1();
-	// Should be a compare of a register and something (probably a constant)
-	if (!sub->isRegOf()) return false;
-	// Set the register and operand expression, and return true
-	iReg = ((Const*)((Unary*)sub)->getSubExp1())->getInt();
-	expOperand = ((Binary*)rhs)->getSubExp2();
-	return true;
+    // Expect to see a subtract, then a setting of the flags
+    // Dest of subtract should be a register (could be the always zero register)
+    if (getNumStmt() < 2) return false;
+    // Could be first some assignments to temporaries
+    // But the actual compare could also be an assignment to a temporary
+    // So we search for the first RHS with an opMinus, that has a LHS to
+    // a register (whether a temporary or a machine register)
+    int i=0;
+    Exp* rhs;
+    Statement* cur;
+    do {
+        cur = elementAt(i);
+        if (cur->getKind() != STMT_ASSIGN) return false;
+        rhs = ((Assign*)cur)->getRight();
+        i++;
+    } while (rhs->getOper() != opMinus && i < getNumStmt());
+    if (rhs->getOper() != opMinus) return false;
+    // We have a subtract assigning to a register.
+    // Check if there is a subflags last
+    Statement* last = elementAt(getNumStmt()-1);
+    if (!last->isFlagAssgn()) return false;
+    Exp* sub = ((Binary*)rhs)->getSubExp1();
+    // Should be a compare of a register and something (probably a constant)
+    if (!sub->isRegOf()) return false;
+    // Set the register and operand expression, and return true
+    iReg = ((Const*)((Unary*)sub)->getSubExp1())->getInt();
+    expOperand = ((Binary*)rhs)->getSubExp2();
+    return true;
 }
 
 bool RTL::isGoto() {
-	if (stmtList.empty()) return false;
-	Statement* last = stmtList.back();
-	return last->getKind() == STMT_GOTO;
+    if (stmtList.empty()) return false;
+    Statement* last = stmtList.back();
+    return last->getKind() == STMT_GOTO;
 }
 
 bool RTL::isBranch() {
-	if (stmtList.empty()) return false;
-	Statement* last = stmtList.back();
-	return last->getKind() == STMT_BRANCH;
+    if (stmtList.empty()) return false;
+    Statement* last = stmtList.back();
+    return last->getKind() == STMT_BRANCH;
 }
 
 bool RTL::isCall() {
-	if (stmtList.empty()) return false;
-	Statement* last = stmtList.back();
-	return last->getKind() == STMT_CALL;
+    if (stmtList.empty()) return false;
+    Statement* last = stmtList.back();
+    return last->getKind() == STMT_CALL;
 }
 
 // Use this slow function when you can't be sure that the HL Statement is last
 Statement* RTL::getHlStmt() {
-	reverse_iterator rit;
-	for (rit = stmtList.rbegin(); rit != stmtList.rend(); rit++) {
-		if ((*rit)->getKind() != STMT_ASSIGN)
-			return *rit;
-	}
-	return NULL;
+    reverse_iterator rit;
+    for (rit = stmtList.rbegin(); rit != stmtList.rend(); rit++) {
+        if ((*rit)->getKind() != STMT_ASSIGN)
+            return *rit;
+    }
+    return NULL;
 }
 
 int RTL::setConscripts(int n, bool bClear) {
-	StmtConscriptSetter ssc(n, bClear);
-	accept(&ssc);
-	return ssc.getLast();
+    StmtConscriptSetter ssc(n, bClear);
+    accept(&ssc);
+    return ssc.getLast();
 }

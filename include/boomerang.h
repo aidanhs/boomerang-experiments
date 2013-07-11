@@ -96,7 +96,7 @@ private:
     std::string	outputPath;
     /// Takes care of the log messages.
     Log			*	logger;
-	/// The watchers which are interested in this decompilation.
+    /// The watchers which are interested in this decompilation.
     std::set<Watcher*> watchers;
 
 
@@ -122,7 +122,7 @@ public:
         if (!boomerang) boomerang = new Boomerang();
         return boomerang;
     }
-	Project *get_project();
+    Project *get_project();
     static	const char*		getVersionStr();
     Log			&log();
     void		setLogger(Log *l) {

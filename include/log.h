@@ -50,11 +50,11 @@ public:
 };
 class NullLogger : public Log {
 public:
-	virtual Log &operator<<(const char *str) {
-		// std::cerr << str;
-		return *this;
-	}
-	virtual ~NullLogger() {};
+    virtual Log &operator<<(const char *str) {
+        // std::cerr << str;
+        return *this;
+    }
+    virtual ~NullLogger() {};
 };
 
 // For older MSVC compilers

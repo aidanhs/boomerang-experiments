@@ -37,7 +37,7 @@
     UC(p)[3])
 
 PalmBinaryFile::PalmBinaryFile()
-        : m_pImage(0), m_pData(0) {
+    : m_pImage(0), m_pData(0) {
 }
 
 PalmBinaryFile::~PalmBinaryFile() {

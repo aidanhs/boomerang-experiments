@@ -122,7 +122,7 @@ bool MachOBinaryFile::RealLoad(const char* sName) {
 #endif
 
             if (cputype == 0x7) // i386
-               imgoffs = offset;
+                imgoffs = offset;
         }
     }
 
@@ -447,7 +447,7 @@ bool MachOBinaryFile::DisplayDetails(const char* fileName, FILE* f
 
 int MachOBinaryFile::machORead2(short* ps) const {
     unsigned char* p = (unsigned char*)ps;
-    int n; 
+    int n;
     if (machine == MACHINE_PPC)
         n = (int)(p[1] + (p[0] << 8));
     else
@@ -516,8 +516,8 @@ unsigned short MachOBinaryFile::BMMHW(unsigned short x) {
 
 bool MachOBinaryFile::isReadOnly(ADDRESS uEntry) {
     for (size_t i = 0; i < sections.size(); i++)
-        if (uEntry >= BMMH(sections[i].addr) && 
-            uEntry < BMMH(sections[i].addr) + BMMH(sections[i].size))
+        if (uEntry >= BMMH(sections[i].addr) &&
+                uEntry < BMMH(sections[i].addr) + BMMH(sections[i].size))
         {
             return (BMMH(sections[i].flags) & VM_PROT_WRITE) ? 0 : 1;
         }
@@ -528,8 +528,8 @@ bool MachOBinaryFile::isReadOnly(ADDRESS uEntry) {
 bool MachOBinaryFile::isStringConstant(ADDRESS uEntry) {
     for (size_t i = 0; i < sections.size(); i++)
     {
-        if (uEntry >= BMMH(sections[i].addr) && 
-            uEntry < BMMH(sections[i].addr) + BMMH(sections[i].size))
+        if (uEntry >= BMMH(sections[i].addr) &&
+                uEntry < BMMH(sections[i].addr) + BMMH(sections[i].size))
         {
             //printf("%08x is in %s\n", uEntry, sections[i].sectname);
             if (!strcmp(sections[i].sectname, "__cstring"))
@@ -542,8 +542,8 @@ bool MachOBinaryFile::isStringConstant(ADDRESS uEntry) {
 bool MachOBinaryFile::isCFStringConstant(ADDRESS uEntry) {
     for (size_t i = 0; i < sections.size(); i++)
     {
-        if (uEntry >= BMMH(sections[i].addr) && 
-            uEntry < BMMH(sections[i].addr) + BMMH(sections[i].size))
+        if (uEntry >= BMMH(sections[i].addr) &&
+                uEntry < BMMH(sections[i].addr) + BMMH(sections[i].size))
         {
             //printf("%08x is in %s\n", uEntry, sections[i].sectname);
             if (!strcmp(sections[i].sectname, "__cfstring"))

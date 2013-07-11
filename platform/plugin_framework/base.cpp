@@ -4,11 +4,11 @@
 using namespace boost;
 namespace base
 {
-	std::string getErrorMessage()
-	{
-		char buff[1024]={};
-		return std::string(buff);
-	}
+std::string getErrorMessage()
+{
+    char buff[1024]= {};
+    return std::string(buff);
+}
 }
 
 

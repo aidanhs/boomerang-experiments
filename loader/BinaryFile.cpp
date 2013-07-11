@@ -167,12 +167,12 @@ void BinaryFile::getTextLimits() {
             else {
                 if (textDelta != (int) (pSect->uHostAddr - pSect->uNativeAddr))
                     std::cerr << "warning: textDelta different for section " << pSect->pSectionName <<
-                    " (ignoring).\n";
+                              " (ignoring).\n";
             }
         }
     }
 }
 bool BinaryFile::isReadOnly(ADDRESS uEntry) {
-        PSectionInfo p = GetSectionInfoByAddr(uEntry);
-        return p && p->bReadOnly;
-    }
+    PSectionInfo p = GetSectionInfoByAddr(uEntry);
+    return p && p->bReadOnly;
+}

@@ -11,7 +11,7 @@
 
 /*==============================================================================
  * File: register.cc
- * Desc: Register class descriptions.  Holds detailed information about 
+ * Desc: Register class descriptions.  Holds detailed information about
  *		 a single register.
  *============================================================================*/
 
@@ -45,7 +45,7 @@
  * RETURNS:		  N/A
  *============================================================================*/
 Register::Register() : name(NULL), address(NULL), mappedIndex(-1),
-	mappedOffset(-1), flt(false)
+    mappedOffset(-1), flt(false)
 {}
 
 /*==============================================================================
@@ -54,12 +54,12 @@ Register::Register() : name(NULL), address(NULL), mappedIndex(-1),
  * PARAMETERS:	  Reference to another Register object to construct from
  * RETURNS:		  N/A
  *============================================================================*/
-Register::Register(const Register& r) : name(NULL), size(r.size), 
-	address(r.address),	mappedIndex(r.mappedIndex),
-	mappedOffset(r.mappedOffset), flt(r.flt)
+Register::Register(const Register& r) : name(NULL), size(r.size),
+    address(r.address),	mappedIndex(r.mappedIndex),
+    mappedOffset(r.mappedOffset), flt(r.flt)
 {
-	if (r.name != NULL)
-		name = strdup(r.name);
+    if (r.name != NULL)
+        name = strdup(r.name);
 }
 
 /*==============================================================================
@@ -70,19 +70,19 @@ Register::Register(const Register& r) : name(NULL), size(r.size),
  *============================================================================*/
 Register Register::operator=(const Register& r2)
 {
-	// copy operator
+    // copy operator
 
-	//if (name != NULL)
-		//free(name);
-	name = r2.name;
-	size = r2.size;
-	flt	 = r2.flt;
-	address = r2.address;
+    //if (name != NULL)
+    //free(name);
+    name = r2.name;
+    size = r2.size;
+    flt	 = r2.flt;
+    address = r2.address;
 
-	mappedIndex = r2.mappedIndex;
-	mappedOffset = r2.mappedOffset;
+    mappedIndex = r2.mappedIndex;
+    mappedOffset = r2.mappedOffset;
 
-	return(*this);
+    return(*this);
 }
 
 /*==============================================================================
@@ -92,11 +92,11 @@ Register Register::operator=(const Register& r2)
  * RETURNS:		  True if the same
  *============================================================================*/
 bool Register::operator==(const Register& r2) const {
-	// compare on name
-	assert(name != NULL && r2.name != NULL);
-	if (strcmp(name, r2.name) != 0)
-		return false;
-	return true;
+    // compare on name
+    assert(name != NULL && r2.name != NULL);
+    if (strcmp(name, r2.name) != 0)
+        return false;
+    return true;
 }
 
 /*==============================================================================
@@ -107,12 +107,12 @@ bool Register::operator==(const Register& r2) const {
  *============================================================================*/
 bool Register::operator<(const Register& r2) const
 {
-	assert(name != NULL && r2.name != NULL);
+    assert(name != NULL && r2.name != NULL);
 
-	// compare on name
-	if (strcmp(name, r2.name) < 0)
-		return true;
-	return false;
+    // compare on name
+    if (strcmp(name, r2.name) < 0)
+        return true;
+    return false;
 }
 
 /*==============================================================================
@@ -123,11 +123,11 @@ bool Register::operator<(const Register& r2) const
  *============================================================================*/
 void Register::s_name(const char *s)
 {
-	assert(s != NULL);
+    assert(s != NULL);
 
-	//if (name != NULL)
-		//free(name);
-	name = strdup(s);
+    //if (name != NULL)
+    //free(name);
+    name = strdup(s);
 }
 
 /*==============================================================================
@@ -136,12 +136,12 @@ void Register::s_name(const char *s)
  * PARAMETERS:	  <none>
  * RETURNS:		  The name as a character string
  *============================================================================*/
-char *Register::g_name() const { 
-  static char outname[100];
+char *Register::g_name() const {
+    static char outname[100];
 
-  strncpy(outname, name, 100);
-  outname[99] = '\0';
-  return(outname);
+    strncpy(outname, name, 100);
+    outname[99] = '\0';
+    return(outname);
 }
 
 /*==============================================================================
@@ -152,7 +152,7 @@ char *Register::g_name() const {
  *============================================================================*/
 Type* Register::g_type() const
 {
-	if (flt)
-	   return new FloatType(size);
-	return new IntegerType(size);
+    if (flt)
+        return new FloatType(size);
+    return new IntegerType(size);
 }

@@ -1,8 +1,8 @@
 
 typedef int OptionValueType;
 typedef struct {
-  double freq;
-  int units;
+    double freq;
+    int units;
 } ValueUnion;        // this is actually a union of other stuff and this :(
 typedef unsigned char CARD8;
 typedef unsigned short CARD16;
@@ -74,10 +74,10 @@ void LoaderRefSymLists(SymList *p, ...);
 void LoaderRefSymbols(const char *p, ...);
 
 typedef struct {
-   char *                       identifier;
-   char *                       driver;
-   pointer                      commonOptions;
-   pointer                      extraOptions;
+    char *                       identifier;
+    char *                       driver;
+    pointer                      commonOptions;
+    pointer                      extraOptions;
 } IDevRec;
 typedef IDevRec *IDevPtr;
 
@@ -136,9 +136,9 @@ typedef struct {
 } confXvAdaptorRec;
 typedef confXvAdaptorRec *confXvAdaptorPtr;
 
-typedef struct { 
-	float hi;
-	float lo; 
+typedef struct {
+    float hi;
+    float lo;
 } range;
 
 typedef struct {
@@ -177,31 +177,31 @@ typedef confScreenRec *confScreenPtr;
 
 
 typedef struct {
-   char *                       identifier;
-   char *                       vendor;
-   char *                       board;
-   char *                       chipset;
-   char *                       ramdac;
-   char *                       driver;
-   confScreenPtr      		myScreenSection;
-   Bool                         claimed;
-   int                          dacSpeeds[4];
-   int                          numclocks;
-   int                          clock[128];
-   char *                       clockchip;
-   char *                       busID;
-   Bool                         active;
-   Bool                         inUse;
-   int                          videoRam;
-   int                          textClockFreq;
-   unsigned long                BiosBase;
-   unsigned long                MemBase;
-   unsigned long                IOBase;
-   int                          chipID;
-   int                          chipRev;
-   pointer                      options;
-   int                          irq;
-   int                          screen;
+    char *                       identifier;
+    char *                       vendor;
+    char *                       board;
+    char *                       chipset;
+    char *                       ramdac;
+    char *                       driver;
+    confScreenPtr      		myScreenSection;
+    Bool                         claimed;
+    int                          dacSpeeds[4];
+    int                          numclocks;
+    int                          clock[128];
+    char *                       clockchip;
+    char *                       busID;
+    Bool                         active;
+    Bool                         inUse;
+    int                          videoRam;
+    int                          textClockFreq;
+    unsigned long                BiosBase;
+    unsigned long                MemBase;
+    unsigned long                IOBase;
+    int                          chipID;
+    int                          chipRev;
+    pointer                      options;
+    int                          irq;
+    int                          screen;
 } GDevRec;
 typedef GDevRec *GDevPtr;
 
@@ -236,9 +236,9 @@ typedef resRange *resList;
 typedef int EntityList[];
 
 int xf86MatchPciInstances(const char *driverName, int vendorID,
-                      SymTabPtr chipsets, PciChipsets *PCIchipsets,
-                      GDevPtr *devList, int numDevs, DriverPtr drvp,
-                      EntityList **foundEntities);
+                          SymTabPtr chipsets, PciChipsets *PCIchipsets,
+                          GDevPtr *devList, int numDevs, DriverPtr drvp,
+                          EntityList **foundEntities);
 void Xfree(pointer p);
 
 typedef struct {
@@ -251,20 +251,20 @@ typedef struct {
     int                 myNum;
     ATOM                id;
     short               width;
-	short				height;
+    short				height;
     short               mmWidth;
-	short				mmHeight;
+    short				mmHeight;
     short               numDepths;
     unsigned char       rootDepth;
     DepthPtr            allowedDepths;
     unsigned long       rootVisual;
     unsigned long       defColormap;
     short               minInstalledCmaps;
-	short				maxInstalledCmaps;
+    short				maxInstalledCmaps;
     char                backingStoreSupport;
-	char				saveUnderSupport;
+    char				saveUnderSupport;
     unsigned long       whitePixel;
-	unsigned long		blackPixel;
+    unsigned long		blackPixel;
     unsigned long       rgf;
     GCPtr               GCperDepth[9];
     PixmapPtr           PixmapPerDepth[1];
@@ -342,15 +342,15 @@ typedef ScreenRec *ScreenPtr;
 typedef int Pix24Flags;
 typedef int MessageType;
 
-typedef struct { 
-	CARD32 red;
-	CARD32 green;
-	CARD32 blue; 
+typedef struct {
+    CARD32 red;
+    CARD32 green;
+    CARD32 blue;
 } rgb;
-typedef struct { 
-	float red;
-	float green;
-	float blue; 
+typedef struct {
+    float red;
+    float green;
+    float blue;
 } Gamma;
 
 typedef struct {
@@ -395,7 +395,7 @@ typedef struct {
     int                         PrivFlags;
 
     float                       HSync;
-	float						VRefresh;
+    float						VRefresh;
 } DisplayModeRec;
 typedef DisplayModeRec *DisplayModePtr;
 
@@ -467,7 +467,7 @@ typedef ClockRanges *ClockRangesPtr;
 typedef struct {
     int                 driverVersion;
     char *              driverName;
-                                   
+
     ScreenPtr           pScreen;
     int                 scrnIndex;
     Bool                configured;
@@ -484,7 +484,7 @@ typedef struct {
 
     int                 bitsPerPixel;
     Pix24Flags          pixmap24;
-    int                 depth;    
+    int                 depth;
     MessageType         depthFrom;
     MessageType         bitsPerPixelFrom;
     rgb                 weight;

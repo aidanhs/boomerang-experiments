@@ -37,52 +37,52 @@ template<class Wrapped,class Interface>
 class LoaderWrapper : public ILoader
 {
 public:
-	static void * create(PF_ObjectParams *par)
-	{
-		m_invokeService = par->platformServices->invokeService;
-		LoaderWrapper<Wrapped,Interface> * result = new LoaderWrapper<Wrapped,Interface>;
-		try
-		{
-			result->m_instance = new Wrapped(par);
-		}
-		catch (const StreamingException &e)
-		{
-			reportError(0, e.filename_.c_str(), e.line_, e.what());
-		}
-	    catch (const std::runtime_error & e) 
-		{
-			reportError(0,__FILE__,__LINE__,e.what());
-		}
-		return result;
-	}; 
-	static int32_t destroy(void *ptr)
-	{
-		if(!ptr)
-			return -1;
-		delete static_cast<Wrapped *>(ptr);
-		return 0;
-	};
-	//////////////////////////////////////////////////////////////////////////
-	// Wrapping the interface
-	//////////////////////////////////////////////////////////////////////////
-	bool GetEntryPoints(const char* pEntry /* = */ )
-	{
-		return m_instance->GetEntryPoints(pEntry);
-	}
-	//////////////////////////////////////////////////////////////////////////
-	// Platform services
-	//////////////////////////////////////////////////////////////////////////
-	static void reportError(void *who,const char *filename,size_t line,const char *message)
-	{
-		ReportErrorParams rep;
-		rep.filename = filename;
-		rep.line = line;
-		rep.message = message;
-		m_invokeService((const char *)"reportError", &rep);
-	}
+    static void * create(PF_ObjectParams *par)
+    {
+        m_invokeService = par->platformServices->invokeService;
+        LoaderWrapper<Wrapped,Interface> * result = new LoaderWrapper<Wrapped,Interface>;
+        try
+        {
+            result->m_instance = new Wrapped(par);
+        }
+        catch (const StreamingException &e)
+        {
+            reportError(0, e.filename_.c_str(), e.line_, e.what());
+        }
+        catch (const std::runtime_error & e)
+        {
+            reportError(0,__FILE__,__LINE__,e.what());
+        }
+        return result;
+    };
+    static int32_t destroy(void *ptr)
+    {
+        if(!ptr)
+            return -1;
+        delete static_cast<Wrapped *>(ptr);
+        return 0;
+    };
+    //////////////////////////////////////////////////////////////////////////
+    // Wrapping the interface
+    //////////////////////////////////////////////////////////////////////////
+    bool GetEntryPoints(const char* pEntry /* = */ )
+    {
+        return m_instance->GetEntryPoints(pEntry);
+    }
+    //////////////////////////////////////////////////////////////////////////
+    // Platform services
+    //////////////////////////////////////////////////////////////////////////
+    static void reportError(void *who,const char *filename,size_t line,const char *message)
+    {
+        ReportErrorParams rep;
+        rep.filename = filename;
+        rep.line = line;
+        rep.message = message;
+        m_invokeService((const char *)"reportError", &rep);
+    }
 protected:
-	static PF_InvokeServiceFunc  m_invokeService;
-	Wrapped * m_instance;
+    static PF_InvokeServiceFunc  m_invokeService;
+    Wrapped * m_instance;
 };
 typedef intptr_t ADDRESS;
 #define NO_ADDRESS ((ADDRESS)-1)

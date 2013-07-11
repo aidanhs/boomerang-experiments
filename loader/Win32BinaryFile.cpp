@@ -343,8 +343,8 @@ ADDRESS Win32BinaryFile::GetMainEntryPoint() {
                 lastcall = p;
             } else {
                 p = dest;
-				if(dest>=textSize)
-					break;
+                if(dest>=textSize)
+                    break;
                 in_mingw_CRTStartup = true;
                 continue;
             }
@@ -404,12 +404,12 @@ BOOL CALLBACK lookforsource(
 #endif
 static std::string replace_dots(const std::string &str)
 {
-	std::string nodots(str);
-	int len = nodots.size();
-	for (int j=0; j < len; j++)
-		if (nodots[j] == '.')
-			nodots[j] = '_';
-	return nodots;
+    std::string nodots(str);
+    int len = nodots.size();
+    for (int j=0; j < len; j++)
+        if (nodots[j] == '.')
+            nodots[j] = '_';
+    return nodots;
 }
 bool Win32BinaryFile::RealLoad(const char* sName) {
     m_pFileName = sName;
@@ -501,7 +501,7 @@ bool Win32BinaryFile::RealLoad(const char* sName) {
                     dlprocptrs[paddr] = name;
                     if ((unsigned)paddr != (unsigned)iat - (unsigned)base + LMMH(m_pPEHeader->Imagebase))
                         dlprocptrs[(unsigned)iat - (unsigned)base + LMMH(m_pPEHeader->Imagebase)]
-                        = std::string("old_") + name; // add both possibilities
+                            = std::string("old_") + name; // add both possibilities
                     // printf("Added symbol %s value %x\n", name.c_str(), paddr);
                     // printf("Also added old_%s value %x\n", name.c_str(), (int)iat - (int)base +
                     // 		LMMH(m_pPEHeader->Imagebase));

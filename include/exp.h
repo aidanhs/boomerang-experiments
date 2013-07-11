@@ -212,7 +212,7 @@ public:
         return op == opStrConst;
     }
     // Get string constant even if mangled
-	const char* getAnyStrConst();
+    const char* getAnyStrConst();
     // True if is flt point const
     bool		isFltConst() {
         return op == opFltConst;
@@ -280,10 +280,10 @@ public:
     // True if this is a comparison
     bool		isComparison() {
         return	 op == opEquals || op == opNotEqual ||
-                op == opGtr || op == opLess ||
-                op == opGtrUns || op == opLessUns ||
-                op == opGtrEq || op == opLessEq ||
-                op == opGtrEqUns || op == opLessEqUns;
+                 op == opGtr || op == opLess ||
+                 op == opGtrUns || op == opLessUns ||
+                 op == opGtrEq || op == opLessEq ||
+                 op == opGtrEqUns || op == opLessEqUns;
     }
     // True if this is a TypeVal
     bool		isTypeVal() {
@@ -301,8 +301,8 @@ public:
     // True if this is a location
     bool		isLocation() {
         return	op == opMemOf || op == opRegOf ||
-               op == opGlobal || op == opLocal ||
-               op == opParam;
+                op == opGlobal || op == opLocal ||
+                op == opParam;
     }
 
     // True if this is a typed expression
@@ -385,7 +385,7 @@ public:
     //	//	//	//	//	//	//	//	//
 
     void		partitionTerms(std::list<Exp*>& positives, std::list<Exp*>& negatives, std::vector<int>& integers,
-                         bool negate);
+                               bool negate);
     virtual Exp*		simplifyArith() {
         return this;
     }

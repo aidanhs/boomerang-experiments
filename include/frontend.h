@@ -217,7 +217,7 @@ public:
      * Returns true on a good decode
      */
     virtual bool		processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os, bool frag = false,
-                              bool spec = false);
+                                    bool spec = false);
 
     /*
      * Given the dest of a call, determine if this is a machine specific helper function with special semantics.

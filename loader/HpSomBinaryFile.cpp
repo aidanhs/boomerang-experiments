@@ -35,7 +35,7 @@
     UC(p)[3])
 
 HpSomBinaryFile::HpSomBinaryFile()
-        : m_pImage(0) {
+    : m_pImage(0) {
 }
 
 HpSomBinaryFile::~HpSomBinaryFile() {
@@ -477,7 +477,7 @@ std::pair<ADDRESS, int> HpSomBinaryFile::getSubspaceInfo(const char* ssname) {
     std::pair<ADDRESS, int> ret(0, 0);
     // Get the start and length of the subspace with the given name
     struct subspace_dictionary_record* subSpaces =
-                    (struct subspace_dictionary_record*)(m_pImage + UINT4(m_pImage + 0x34));
+        (struct subspace_dictionary_record*)(m_pImage + UINT4(m_pImage + 0x34));
     unsigned numSubSpaces = UINT4(m_pImage + 0x38);
     const char* spaceStrings = (const char*)
                                (m_pImage + UINT4(m_pImage + 0x44));

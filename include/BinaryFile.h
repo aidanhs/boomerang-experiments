@@ -149,7 +149,7 @@ public:
     virtual size_t	getImageSize() = 0;
 
     // returns true if the given address is in a read only section
-	// TODO: Convert this to use platform database of sections, and their info
+    // TODO: Convert this to use platform database of sections, and their info
     //virtual bool isReadOnly(ADDRESS uEntry);
     // returns true if the given address is in a "strings" section
     virtual bool isStringConstant(ADDRESS uEntry) {
@@ -233,7 +233,7 @@ public:
     virtual bool		IsDynamicLinkedProcPointer(ADDRESS uNative);
     virtual ADDRESS		IsJumpToAnotherAddr(ADDRESS uNative);
     //virtual const char*	GetDynamicProcName(ADDRESS uNative);
-	/// Uses framework services to register all found entry points
+    /// Uses framework services to register all found entry points
     virtual bool		GetEntryPoints(const char* pEntry = "main") = 0;
     virtual ADDRESS		GetMainEntryPoint() = 0;
 

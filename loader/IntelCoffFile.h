@@ -5,7 +5,7 @@
 #include "BinaryFile.h"
 #include "SymTab.h"
 #ifdef _MSC_VER
-#define PACKED 
+#define PACKED
 #else
 #define PACKED __attribute__((packed))
 #endif

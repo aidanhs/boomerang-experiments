@@ -192,7 +192,7 @@ bool IntelCoffFile::RealLoad(const char *sName) {
     struct coff_symbol *pSymbols = (struct coff_symbol *)malloc(m_Header.coff_num_syment * sizeof (struct coff_symbol));
     if ( !pSymbols )
         return false;
-	size_t num_to_read=static_cast<signed long>(m_Header.coff_num_syment * sizeof (struct coff_symbol));
+    size_t num_to_read=static_cast<signed long>(m_Header.coff_num_syment * sizeof (struct coff_symbol));
     if ( num_to_read != fread(pSymbols, sizeof (struct coff_symbol),m_Header.coff_num_syment,m_fd) )
         return false;
 
@@ -265,7 +265,7 @@ bool IntelCoffFile::RealLoad(const char *sName) {
         struct struct_coff_rel *pRel = (struct struct_coff_rel *)malloc(sizeof (struct struct_coff_rel) * psh[iSection].sch_nreloc);
         if ( !pRel )
             return false;
-		size_t num_to_read = sizeof (struct struct_coff_rel) * psh[iSection].sch_nreloc;
+        size_t num_to_read = sizeof (struct struct_coff_rel) * psh[iSection].sch_nreloc;
         if ( num_to_read != fread(pRel, sizeof (struct struct_coff_rel) , psh[iSection].sch_nreloc,m_fd ))
             return false;
 

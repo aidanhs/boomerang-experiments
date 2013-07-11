@@ -752,8 +752,8 @@ class StmtImplicitConverter : public StmtModifier {
     Cfg*		cfg;
 public:
     StmtImplicitConverter(ImplicitConverter* ic, Cfg* cfg)
-            : StmtModifier(ic, false),			// False to not ignore collectors (want to make sure that
-            cfg(cfg) { }						//  collectors have valid expressions so you can ascendType)
+        : StmtModifier(ic, false),			// False to not ignore collectors (want to make sure that
+          cfg(cfg) { }						//  collectors have valid expressions so you can ascendType)
     virtual void		visit(	    PhiAssign *s, bool& recur);
 };
 

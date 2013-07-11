@@ -126,10 +126,10 @@ public:
     }
 
     void		computedJump(const char* name, int size, Exp* dest, ADDRESS pc, std::list<Statement*>* stmts,
-                       DecodeResult& result);
+                             DecodeResult& result);
 
     void		computedCall(const char* name, int size, Exp* dest, ADDRESS pc, std::list<Statement*>* stmts,
-                       DecodeResult& result);
+                             DecodeResult& result);
 
     Prog*		getProg() {
         return prog;
@@ -163,7 +163,7 @@ protected:
      * This used to be the UNCOND_JUMP macro; it's extended to handle jumps to other procedures
      */
     void		unconditionalJump(const char* name, int size, ADDRESS relocd, int delta, ADDRESS pc,
-                            std::list<Statement*>* stmts, DecodeResult& result);
+                                  std::list<Statement*>* stmts, DecodeResult& result);
 
     /*
      * String for the constructor names (displayed with use "-c")

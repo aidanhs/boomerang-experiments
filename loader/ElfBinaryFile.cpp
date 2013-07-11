@@ -47,8 +47,8 @@
 typedef std::map<std::string, int, std::less<std::string> >		StrIntMap;
 
 ElfBinaryFile::ElfBinaryFile(bool bArchive /* = false */)
-        : BinaryFile(bArchive),	// Initialise base class
-        next_extern(0) {
+    : BinaryFile(bArchive),	// Initialise base class
+      next_extern(0) {
     m_fd = 0;
     m_pFileName = 0;
     Init();					// Initialise all the common stuff
@@ -764,7 +764,7 @@ MACHINE ElfBinaryFile::GetMachine() const {
     }
     // An unknown machine type
     std::cerr << "Error: ElfBinaryFile::GetMachine: Unsupported machine type: "
-    << machine << " (0x" << std::hex << machine << ")\n";
+              << machine << " (0x" << std::hex << machine << ")\n";
     std::cerr << "(Please add a description for this type, thanks!)\n";
     return (MACHINE)-1;
 }
@@ -1272,7 +1272,7 @@ void ElfBinaryFile::getFunctionSymbols(std::map<std::string, std::map<ADDRESS, s
     if (secIndex == 0)
     {
         fprintf(stderr, "no symtab section? Assuming stripped, looking for dynsym.\n");
-            
+
         for (i=1; i < m_iNumSections; ++i) {
             unsigned uType = m_pSections[i].uType;
             if (uType == SHT_DYNSYM) {

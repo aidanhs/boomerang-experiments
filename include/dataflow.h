@@ -115,7 +115,7 @@ public:
     void		convertImplicits(Cfg* cfg);
     // Find the locations used by a live, dominating phi-function. Also removes dead phi-funcions
     void		findLiveAtDomPhi(int n, LocationSet& usedByDomPhi, LocationSet& usedByDomPhi0,
-                           std::map<Exp*, PhiAssign*, lessExpStar>& defdByPhi);
+                                 std::map<Exp*, PhiAssign*, lessExpStar>& defdByPhi);
 #if		USE_DOMINANCE_NUMS
     void		setDominanceNums(int n, int& currNum);		// Set the dominance statement number
 #endif

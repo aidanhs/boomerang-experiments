@@ -45,7 +45,7 @@ private:
 
 public:
     Parameter(Type *type, const char *name, Exp *exp = NULL, const char *boundMax = "") :
-            type(type), name(name), exp(exp), boundMax(boundMax)	{ }
+        type(type), name(name), exp(exp), boundMax(boundMax)	{ }
     virtual				~Parameter() {
         delete type;
         delete exp;
@@ -253,7 +253,7 @@ public:
     virtual Exp			*getStackWildcard() {
         return NULL;
     }
-class StackRegisterNotDefinedException : public std::exception {
+    class StackRegisterNotDefinedException : public std::exception {
     public:
         StackRegisterNotDefinedException() { }
     };
@@ -300,8 +300,8 @@ class StackRegisterNotDefinedException : public std::exception {
     //bool		isFullSignature() {return bFullSig;}
 
     // ascii versions of platform, calling convention name
-	static const char* platformName(platform plat);
-	static const char* conventionName(callconv cc);
+    static const char* platformName(platform plat);
+    static const char* conventionName(callconv cc);
     virtual platform	getPlatform() {
         return PLAT_GENERIC;
     }

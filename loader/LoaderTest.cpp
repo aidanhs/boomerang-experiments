@@ -539,20 +539,20 @@ void LoaderTest::testMicroDis1 () {
         int size = microX86Dis(p);
         if (size >= 0x40) {
             std::cout << "Not handled instruction at offset 0x" << std::hex <<
-            (ADDRESS)p - (ADDRESS)pent_hello_text << std::endl;
+                      (ADDRESS)p - (ADDRESS)pent_hello_text << std::endl;
             CPPUNIT_ASSERT(size != 0x40);
             return;
         }
         int expected = lengths[i++];
         if (expected != size) {
             std::cout << "At offset 0x" << std::hex <<
-            (ADDRESS)p - (ADDRESS)pent_hello_text << " ("
-            << (int)*((unsigned char*)p) << " "
-            << (int)*((unsigned char*)p+1) << " "
-            << (int)*((unsigned char*)p+2) << " "
-            << (int)*((unsigned char*)p+3) << " "
-            << ") expected " <<
-            std::dec << expected << ", actual " << size << std::endl;
+                      (ADDRESS)p - (ADDRESS)pent_hello_text << " ("
+                      << (int)*((unsigned char*)p) << " "
+                      << (int)*((unsigned char*)p+1) << " "
+                      << (int)*((unsigned char*)p+2) << " "
+                      << (int)*((unsigned char*)p+3) << " "
+                      << ") expected " <<
+                      std::dec << expected << ", actual " << size << std::endl;
             CPPUNIT_ASSERT_EQUAL(expected, size);
         }
         p = (void*) ((char*)p + size);

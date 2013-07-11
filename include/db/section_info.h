@@ -44,10 +44,10 @@ struct SectionInfo {
     ADDRESS		uSectionSize;		// Size of section in bytes
     ADDRESS		uSectionEntrySize;	// Size of one section entry (if applic)
     unsigned	uType;				// Type of section (format dependent)
-	unsigned	bCode:1;			// Set if section contains instructions
-	unsigned	bData:1;			// Set if section contains data
-	unsigned	bBss:1;				// Set if section is BSS (allocated only)
-	unsigned	bReadOnly:1;		// Set if this is a read only section
+    unsigned	bCode:1;			// Set if section contains instructions
+    unsigned	bData:1;			// Set if section contains data
+    unsigned	bBss:1;				// Set if section is BSS (allocated only)
+    unsigned	bReadOnly:1;		// Set if this is a read only section
 };
 
 //typedef struct SectionInfo* PSectionInfo;

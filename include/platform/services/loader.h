@@ -3,7 +3,7 @@
 #include "platform/services/common.h"
 typedef struct SectionParams
 {
-  const char * section_name;
+    const char * section_name;
 } SectionParams;
 
 #endif

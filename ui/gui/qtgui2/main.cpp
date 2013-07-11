@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     init_dfa();
     init_sslparser();
     init_basicblock();
-    
+
     QApplication app(argc, argv);
     MainWindow mainWindow;
     mainWindow.show();

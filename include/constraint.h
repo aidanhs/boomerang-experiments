@@ -159,7 +159,7 @@ public:
     bool	solve(std::list<ConstraintMap>& solns);
 private:
     bool	doSolve(std::list<Exp*>::iterator it, ConstraintMap& extra,
-                 std::list<ConstraintMap>& solns);
+                    std::list<ConstraintMap>& solns);
     // Test for compatibility of these types. Sometimes, they are compatible
     // with an extra constraint (e.g. alpha3* is compatible with alpha4* with
     // the extra constraint that alpha3 == alpha4)
