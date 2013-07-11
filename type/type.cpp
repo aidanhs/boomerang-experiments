@@ -27,7 +27,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include "types.h"
 #include "type.h"
@@ -63,7 +63,7 @@ FuncType::FuncType(Signature *sig) : Type(eFunc), signature(sig)
 }
 
 IntegerType::IntegerType(int sz, int sign) : Type(eInteger), size(sz),
-  signedness(sign)
+    signedness(sign)
 {
 }
 
@@ -84,7 +84,7 @@ PointerType::PointerType(Type *p) : Type(ePointer), points_to(p)
 }
 
 ArrayType::ArrayType(Type *p, unsigned length) : Type(eArray), base_type(p),
-  length(length)
+    length(length)
 {
 }
 
@@ -94,7 +94,7 @@ ArrayType::ArrayType(Type *p, unsigned length) : Type(eArray), base_type(p),
 #define NO_BOUND 8*1024*1024
 
 ArrayType::ArrayType(Type *p) : Type(eArray), base_type(p),
-  length(NO_BOUND)
+    length(NO_BOUND)
 {
 }
 
@@ -147,12 +147,12 @@ CharType::~CharType()
 
 PointerType::~PointerType()
 {
-	delete points_to;
+    delete points_to;
 }
 
 ArrayType::~ArrayType()
 {
-	delete base_type;
+    delete base_type;
 }
 
 NamedType::~NamedType()
@@ -243,12 +243,24 @@ Type *SizeType::clone() const
  * PARAMETERS:      <none>
  * RETURNS:         Size of the type (in bits)
  *============================================================================*/
-int IntegerType::getSize() const { return size; }
-int   FloatType::getSize() const { return size; }
-int BooleanType::getSize() const { return 1; }
-int    CharType::getSize() const { return 8; }
-int    VoidType::getSize() const { return 0; }
-int    FuncType::getSize() const { return 0; /* always nagged me */ }
+int IntegerType::getSize() const {
+    return size;
+}
+int   FloatType::getSize() const {
+    return size;
+}
+int BooleanType::getSize() const {
+    return 1;
+}
+int    CharType::getSize() const {
+    return 8;
+}
+int    VoidType::getSize() const {
+    return 0;
+}
+int    FuncType::getSize() const {
+    return 0; /* always nagged me */
+}
 int PointerType::getSize() const {
     //points_to->getSize(); // yes, it was a good idea at the time
     return STD_SIZE;
@@ -270,7 +282,9 @@ int CompoundType::getSize() const {
         n += types[i]->getSize();
     return n;
 }
-int SizeType::getSize() const { return size; }
+int SizeType::getSize() const {
+    return size;
+}
 
 
 
@@ -359,18 +373,18 @@ Type *Type::parseType(const char *str)
  * RETURNS:         this == other
  *============================================================================*/
 bool IntegerType::operator==(const Type& other) const {
-    return other.isInteger() && 
-        // Note: zero size matches any other size (wild, or unknown, size)
-        (size==0 || ((IntegerType&)other).size==0 ||
-          size == ((IntegerType&)other).size) &&
-        (signedness < 0 || ((IntegerType&)other).signedness < 0 ||
-          signedness == ((IntegerType&)other).signedness);
+    return other.isInteger() &&
+           // Note: zero size matches any other size (wild, or unknown, size)
+           (size==0 || ((IntegerType&)other).size==0 ||
+            size == ((IntegerType&)other).size) &&
+           (signedness < 0 || ((IntegerType&)other).signedness < 0 ||
+            signedness == ((IntegerType&)other).signedness);
 }
 
 bool FloatType::operator==(const Type& other) const {
-    return other.isFloat() && 
-      (size == 0 || ((FloatType&)other).size == 0 || 
-      (size == ((FloatType&)other).size));
+    return other.isFloat() &&
+           (size == 0 || ((FloatType&)other).size == 0 ||
+            (size == ((FloatType&)other).size));
 }
 
 bool BooleanType::operator==(const Type& other) const {
@@ -461,15 +475,15 @@ bool FloatType::operator-=(const Type& other) const
 bool IntegerType::operator<(const Type& other) const {
     if (id < other.getId()) return true;
     if (id > other.getId()) return false;
-  	if (size < ((IntegerType&)other).size) return true;
-  	if (size > ((IntegerType&)other).size) return false;
-	return (signedness < ((IntegerType&)other).signedness);
+    if (size < ((IntegerType&)other).size) return true;
+    if (size > ((IntegerType&)other).size) return false;
+    return (signedness < ((IntegerType&)other).signedness);
 }
 
 bool FloatType::operator<(const Type& other) const {
     if (id < other.getId()) return true;
     if (id > other.getId()) return false;
-	return (size < ((FloatType&)other).size);
+    return (size < ((FloatType&)other).size);
 }
 
 bool VoidType::operator<(const Type& other) const {
@@ -520,7 +534,7 @@ bool CompoundType::operator<(const Type& other) const {
 bool SizeType::operator<(const Type& other) const {
     if (id < other.getId()) return true;
     if (id > other.getId()) return false;
-	return (size < ((SizeType&)other).size);
+    return (size < ((SizeType&)other).size);
 }
 
 /*==============================================================================
@@ -533,13 +547,13 @@ Exp *Type::match(Type *pattern)
 {
     if (pattern->isNamed()) {
         LOG << "type match: " << this->getCtype() << " to " <<
-          pattern->getCtype() << "\n";
-        return new Binary(opList, 
-            new Binary(opEquals, 
-                new Unary(opVar,
-                    new Const((char*)pattern->asNamed()->getName())), 
-                new TypeVal(this->clone())), 
-            new Terminal(opNil));
+            pattern->getCtype() << "\n";
+        return new Binary(opList,
+                          new Binary(opEquals,
+                                     new Unary(opVar,
+                                               new Const((char*)pattern->asNamed()->getName())),
+                                     new TypeVal(this->clone())),
+                          new Terminal(opNil));
     }
     return NULL;
 }
@@ -578,7 +592,7 @@ Exp *PointerType::match(Type *pattern)
 {
     if (pattern->isPointer()) {
         LOG << "got pointer match: " << this->getCtype() << " to " <<
-          pattern->getCtype() << "\n";
+            pattern->getCtype() << "\n";
         return points_to->match(pattern->asPointer()->getPointsTo());
     }
     return Type::match(pattern);
@@ -608,20 +622,22 @@ Exp *CompoundType::match(Type *pattern)
  * PARAMETERS:      final: if true, this is final output
  * RETURNS:         Pointer to a constant string of char
  *============================================================================*/
-const char *VoidType::getCtype(bool final) const { return "void"; }
+const char *VoidType::getCtype(bool final) const {
+    return "void";
+}
 
 const char *FuncType::getCtype(bool final) const {
     if (signature == NULL)
-	return "void (void)"; 
-    std::string s; 
+        return "void (void)";
+    std::string s;
     if (signature->getNumReturns() == 0)
         s += "void";
-    else 
+    else
         s += signature->getReturnType(0)->getCtype(final);
     s += " (";
     for (int i = 0; i < signature->getNumParams(); i++) {
-       if (i != 0) s += ", ";
-       s += signature->getParamType(i)->getCtype(final); 
+        if (i != 0) s += ", ";
+        s += signature->getParamType(i)->getCtype(final);
     }
     s += ")";
     return s.c_str();
@@ -636,13 +652,13 @@ void FuncType::getReturnAndParam(const char*& ret, const char*& param) {
     }
     if (signature->getNumReturns() == 0)
         ret = "void";
-    else 
+    else
         ret = signature->getReturnType(0)->getCtype();
-    std::string s; 
+    std::string s;
     s += " (";
     for (int i = 0; i < signature->getNumParams(); i++) {
-       if (i != 0) s += ", ";
-       s += signature->getParamType(i)->getCtype(); 
+        if (i != 0) s += ", ";
+        s += signature->getParamType(i)->getCtype();
     }
     s += ")";
     param = s.c_str();
@@ -654,45 +670,76 @@ const char *IntegerType::getCtype(bool final) const {
         if (!final && signedness == 0)
             s = "/*signed?*/";
         switch(size) {
-            case 32: s += "int"; break;
-            case 16: s += "short"; break;
-            case  8: s += "char"; break;
-            case  1: s += "bool"; break;
-            case 64: s += "long long"; break;
-            default: 
-                if (!final) s += "?";   // To indicate invalid/unknown size
-                s += "int";
+        case 32:
+            s += "int";
+            break;
+        case 16:
+            s += "short";
+            break;
+        case  8:
+            s += "char";
+            break;
+        case  1:
+            s += "bool";
+            break;
+        case 64:
+            s += "long long";
+            break;
+        default:
+            if (!final) s += "?";   // To indicate invalid/unknown size
+            s += "int";
         }
         return strdup(s.c_str());
     } else {
         switch (size) {
-            case 32: return "unsigned int"; break;
-            case 16: return "unsigned short"; break;
-            case  8: return "unsigned char"; break;
-            case  1: return "bool"; break;
-            case 64: return "unsigned long long"; break;
-            default: if (final) return "unsigned int"; 
-                else return "?unsigned int";
+        case 32:
+            return "unsigned int";
+            break;
+        case 16:
+            return "unsigned short";
+            break;
+        case  8:
+            return "unsigned char";
+            break;
+        case  1:
+            return "bool";
+            break;
+        case 64:
+            return "unsigned long long";
+            break;
+        default:
+            if (final) return "unsigned int";
+            else return "?unsigned int";
         }
     }
 }
 
 const char *FloatType::getCtype(bool final) const {
     switch (size) {
-        case 32: return "float"; break;
-        case 64: return "double"; break;
-        default: return "double"; break;
+    case 32:
+        return "float";
+        break;
+    case 64:
+        return "double";
+        break;
+    default:
+        return "double";
+        break;
     }
 }
 
-const char *BooleanType::getCtype(bool final) const { return "bool"; }
+const char *BooleanType::getCtype(bool final) const {
+    return "bool";
+}
 
-const char *CharType::getCtype(bool final) const { return "char"; }
+const char *CharType::getCtype(bool final) const {
+    return "char";
+}
 
 const char *PointerType::getCtype(bool final) const {
-     std::string s = points_to->getCtype(final);
-     s += "*";
-     return strdup(s.c_str()); // memory..
+    std::string s = points_to->getCtype(final);
+    s += "*";
+    return strdup(s.c_str()); // memory..
 }
 
 const char *ArrayType::getCtype(bool final) const {
@@ -703,7 +750,9 @@ const char *ArrayType::getCtype(bool final) const {
     return strdup(s.c_str()); // memory..
 }
 
-const char *NamedType::getCtype(bool final) const { return name.c_str(); }
+const char *NamedType::getCtype(bool final) const {
+    return name.c_str();
+}
 
 const char *CompoundType::getCtype(bool final) const {
     std::string &tmp = *(new std::string("struct { "));
@@ -740,14 +789,14 @@ void Type::addNamedType(const char *name, Type *type)
     if (namedTypes.find(name) != namedTypes.end()) {
         if (*type != *namedTypes[name]) {
             std::cerr << "addNamedType: name " << name <<
-                " type " << type->getCtype() << " != " <<
-                namedTypes[name]->getCtype() << "\n" << std::flush;
+                      " type " << type->getCtype() << " != " <<
+                      namedTypes[name]->getCtype() << "\n" << std::flush;
             assert(false);
         }
     } else {
 #if 0
         std::cerr << "Added named type" << name << " as " << type->getCtype()
-          << "\n";
+                  << "\n";
 #endif
         namedTypes[name] = type->clone();
     }
@@ -774,14 +823,30 @@ Type* Type::getTempType(const std::string& name)
     if (name.size() > 3) ctype = name[3];
     switch (ctype) {
         // They are all int32, except for a few specials
-        case 'f': ty = new FloatType(32); break;
-        case 'd': ty = new FloatType(64); break;
-        case 'F': ty = new FloatType(80); break;
-        case 'D': ty = new FloatType(128); break;
-        case 'l': ty = new IntegerType(64); break;
-        case 'h': ty = new IntegerType(16); break;
-        case 'b': ty = new IntegerType(8); break;
-        default:  ty = new IntegerType(32); break;
+    case 'f':
+        ty = new FloatType(32);
+        break;
+    case 'd':
+        ty = new FloatType(64);
+        break;
+    case 'F':
+        ty = new FloatType(80);
+        break;
+    case 'D':
+        ty = new FloatType(128);
+        break;
+    case 'l':
+        ty = new IntegerType(64);
+        break;
+    case 'h':
+        ty = new IntegerType(16);
+        break;
+    case 'b':
+        ty = new IntegerType(8);
+        break;
+    default:
+        ty = new IntegerType(32);
+        break;
     }
     return ty;
 }
@@ -793,17 +858,21 @@ Type* Type::getTempType(const std::string& name)
  *              nicer to return a unique name, but we don't know scope at
  *              this point, and even so we could still clash with a user-defined
  *              name later on :(
- * PARAMETERS:  
+ * PARAMETERS:
  * RETURNS:     a string
  *============================================================================*/
 std::string IntegerType::getTempName() const
 {
     switch( size ) {
-        case 1:  /* Treat as a tmpb */
-        case 8:  return std::string("tmpb");
-        case 16: return std::string("tmph");
-        case 32: return std::string("tmpi");
-        case 64: return std::string("tmpl");
+    case 1:  /* Treat as a tmpb */
+    case 8:
+        return std::string("tmpb");
+    case 16:
+        return std::string("tmph");
+    case 32:
+        return std::string("tmpi");
+    case 64:
+        return std::string("tmpl");
     }
     return std::string("tmp");
 }
@@ -811,10 +880,14 @@ std::string IntegerType::getTempName() const
 std::string FloatType::getTempName() const
 {
     switch( size ) {
-        case 32: return std::string("tmpf");
-        case 64: return std::string("tmpd");
-        case 80: return std::string("tmpF");
-        case 128:return std::string("tmpD");
+    case 32:
+        return std::string("tmpf");
+    case 64:
+        return std::string("tmpd");
+    case 80:
+        return std::string("tmpF");
+    case 128:
+        return std::string("tmpD");
     }
     return std::string("tmp");
 }
@@ -1041,22 +1114,28 @@ void Type::starPrint(std::ostream& os) {
 std::ostream& operator<<(std::ostream& os, Type* t) {
     if (t == NULL) return os;
     switch (t->getId()) {
-        case eInteger: {
-            int sg = ((IntegerType*)t)->getSignedness();
-            // 'j' for either i or u, don't know which
-            os << (sg == 0 ? 'j' : sg>0 ? 'i' : 'u');
-            os << std::dec << ((IntegerType*)t)->getSize();
-            break;
-        }
-        case eFloat:
-            os << 'f';
-            os << std::dec << ((FloatType*)t)->getSize();
-            break;
-        case eChar: os << 'c'; break;
-        case eBoolean: os << 'b'; break;
-        case eSize: os << std::dec << t->getSize(); break;
-        default:
-            os << "?type?";
+    case eInteger: {
+        int sg = ((IntegerType*)t)->getSignedness();
+        // 'j' for either i or u, don't know which
+        os << (sg == 0 ? 'j' : sg>0 ? 'i' : 'u');
+        os << std::dec << ((IntegerType*)t)->getSize();
+        break;
+    }
+    case eFloat:
+        os << 'f';
+        os << std::dec << ((FloatType*)t)->getSize();
+        break;
+    case eChar:
+        os << 'c';
+        break;
+    case eBoolean:
+        os << 'b';
+        break;
+    case eSize:
+        os << std::dec << t->getSize();
+        break;
+    default:
+        os << "?type?";
     }
     return os;
 }

@@ -90,19 +90,27 @@ public:
      * Get the program this procedure belongs to.
      */
     Prog *getProg();
-    void setProg(Prog *p) { prog = p; }
- 
+    void setProg(Prog *p) {
+        prog = p;
+    }
+
     /*
      * Get/Set the first procedure that calls this procedure (or null for main/start).
      */
     Proc *getFirstCaller();
-    void setFirstCaller(Proc *p) { if (m_firstCaller == NULL) m_firstCaller = p; }
+    void setFirstCaller(Proc *p) {
+        if (m_firstCaller == NULL) m_firstCaller = p;
+    }
 
     /*
      * Returns a pointer to the Signature
      */
-    Signature *getSignature() { return signature; }
-    void setSignature(Signature *sig) { signature = sig; }
+    Signature *getSignature() {
+        return signature;
+    }
+    void setSignature(Signature *sig) {
+        signature = sig;
+    }
 
     /*
      * Prints this procedure to an output stream.
@@ -166,35 +174,45 @@ public:
     /*
      * Return true if this is a library proc
      */
-    virtual bool isLib() {return false;}
+    virtual bool isLib() {
+        return false;
+    }
 
     /*
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {return false;}
+    virtual bool isAggregateUsed() {
+        return false;
+    }
 
     /*
      * OutPut operator for a Proc object.
      */
     friend std::ostream& operator<<(std::ostream& os, Proc& proc);
-    
+
     virtual Exp *getProven(Exp *left) = 0;
 
     // Set an equation as proven. Useful for some sorts of testing
-    void setProven(Exp* fact) {proven.insert(fact);}
+    void setProven(Exp* fact) {
+        proven.insert(fact);
+    }
 
     /*
      * Get the callers
      * Note: the callers will be in a random order (determined by memory
      * allocation)
      */
-    std::set<CallStatement*>& getCallers() { return callerSet; }
+    std::set<CallStatement*>& getCallers() {
+        return callerSet;
+    }
 
     /*
      * Add to the set of callers
      */
-    void addCaller(CallStatement* caller) { callerSet.insert(caller); }
+    void addCaller(CallStatement* caller) {
+        callerSet.insert(caller);
+    }
 
     /*
      * Add to a set of caller Procs
@@ -206,14 +224,22 @@ public:
     void addParameter(Exp *e);
     virtual void addReturn(Exp *e);
 
-    virtual void printCallGraphXML(std::ostream &os, int depth, 
+    virtual void printCallGraphXML(std::ostream &os, int depth,
                                    bool recurse = true);
     void printDetailsXML();
-    void clearVisited() { visited = false; }
-    bool isVisited() { return visited; }
+    void clearVisited() {
+        visited = false;
+    }
+    bool isVisited() {
+        return visited;
+    }
 
-    Cluster *getCluster() { return cluster; }
-    void setCluster(Cluster *c) { cluster = c; }
+    Cluster *getCluster() {
+        return cluster;
+    }
+    void setCluster(Cluster *c) {
+        cluster = c;
+    }
 
 protected:
 
@@ -245,7 +271,7 @@ protected:
  *============================================================================*/
 class LibProc : public Proc {
 public:
-    
+
     LibProc(Prog *prog, std::string& name, ADDRESS address);
     virtual ~LibProc();
 
@@ -254,19 +280,23 @@ public:
      * See comment for Proc::matchParams.
      */
     void matchParams(std::list<Exp*>& actuals, UserProc& caller,
-        const Parameters* outgoing, const Exp** intRetLoc) const;
+                     const Parameters* outgoing, const Exp** intRetLoc) const;
 #endif
 
     /*
      * Return true, since is a library proc
      */
-    bool isLib() {return true;}
+    bool isLib() {
+        return true;
+    }
 
     /*
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool isAggregateUsed() {return false;}
+    virtual bool isAggregateUsed() {
+        return false;
+    }
 
     virtual Exp* getProven(Exp* left);
 
@@ -297,7 +327,7 @@ class UserProc : public Proc {
      * True if this procedure has been decoded.
      */
     bool decoded;
-    
+
     // true if the procedure has been analysed.
     bool analysed;
 
@@ -325,11 +355,11 @@ class UserProc : public Proc {
      * call graph, among other things
      */
     std::set<Proc*> calleeSet;
- 
-     /*
-     * Set if visited on the way down the call tree during decompile()
-     * Used for recursion detection
-     */
+
+    /*
+    * Set if visited on the way down the call tree during decompile()
+    * Used for recursion detection
+    */
     bool decompileSeen;
 
     /*
@@ -370,7 +400,7 @@ public:
     void setDecoded();
 
     /*
-     * Removes the decoded bit and throws away all the current information 
+     * Removes the decoded bit and throws away all the current information
      * about this procedure.
      */
     void unDecode();
@@ -390,7 +420,7 @@ public:
      * Returns an abstract syntax tree for the procedure in the
      * internal representation.  This function actually _calculates_
      * this value and is expected to do so expensively.
-     */ 
+     */
     SyntaxNode *getAST();
     // print it to a file
     void printAST(SyntaxNode *a = NULL);
@@ -401,8 +431,12 @@ public:
      */
     bool isDecoded();
 
-    bool isAnalysed() { return analysed; }
-    void setAnalysed() { analysed = true; }
+    bool isAnalysed() {
+        return analysed;
+    }
+    void setAnalysed() {
+        analysed = true;
+    }
 
     /*
      * Return the number of bytes allocated for locals on the stack.
@@ -427,14 +461,16 @@ public:
     void printToLog();
 
     // simplify the statements in this proc
-    void simplify() { cfg->simplify(); }
+    void simplify() {
+        cfg->simplify();
+    }
 
     // decompile this proc
     std::set<UserProc*>* decompile();
 
     // All the decompile stuff except propagation, DFA repair, and null/unused
     // statement removal
-    void    complete(); 
+    void    complete();
 
     // Initialise the statements, e.g. proc, bb pointers
     void initStatements();
@@ -456,7 +492,7 @@ public:
     void replaceExpressionsWithLocals(bool lastPass = false);
 private:
     void searchRegularLocals(OPER minusOrPlus, bool lastPass, int sp,
-        StatementList& stmts);
+                             StatementList& stmts);
 public:
     bool removeNullStatements();
     bool removeDeadStatements();
@@ -492,7 +528,7 @@ public:
     bool prove(Exp *query);
     // helper function, should be private
     bool prover(Exp *query, std::set<PhiAssign*> &lastPhis,
-        std::map<PhiAssign*, Exp*> &cache, PhiAssign *lastPhi = NULL);    
+                std::map<PhiAssign*, Exp*> &cache, PhiAssign *lastPhi = NULL);
 
     // promote the signature if possible
     void promoteSignature();
@@ -517,10 +553,14 @@ public:
 
 #if 0
     // get the set of locations "defined" in this procedure
-    void getDefinitions(LocationSet &defs) {defs = definesSet;}
+    void getDefinitions(LocationSet &defs) {
+        defs = definesSet;
+    }
 
     // get the set of locations "returned" by this procedure
-    void getReturnSet(LocationSet &ret) {ret = returnsSet;}
+    void getReturnSet(LocationSet &ret) {
+        ret = returnsSet;
+    }
 
 #endif
 
@@ -545,7 +585,7 @@ private:
      */
     void    checkMemSize(Exp* e);
 
-    /* 
+    /*
      * Return an expression that is equivilent to e in terms of local variables.
      * Creates new locals as needed.
      */
@@ -598,12 +638,12 @@ public:
      * Return the index of the last symbolic local for the procedure.
      */
     int getLastLocalIndex();
-    
+
     /*
      * Return the list of symbolic locals for the procedure.
      */
     std::vector<TypedExp*>& getSymbolicLocals();
-    
+
     /*
      * Replace each instance of a location in this procedure with its symbolic
      * representation if it has one.
@@ -628,12 +668,14 @@ public:
     /*
      * Get the callees
      */
-    std::set<Proc*>& getCallees() { return calleeSet; }
+    std::set<Proc*>& getCallees() {
+        return calleeSet;
+    }
 
     /*
      * Add to the set of callees
      */
-    void addCallee(Proc* callee); 
+    void addCallee(Proc* callee);
 
     /*
      * Add to a set of callee Procs
@@ -649,13 +691,16 @@ public:
      * Change BB containing this statement from a COMPCALL to a CALL
      */
     void undoComputedBB(Statement* stmt) {
-        cfg->undoComputedBB(stmt); }
+        cfg->undoComputedBB(stmt);
+    }
 
     /*
      * Return true if this proc uses the special aggregate pointer as the
      * first parameter
      */
-    virtual bool isAggregateUsed() {return aggregateUsed;}
+    virtual bool isAggregateUsed() {
+        return aggregateUsed;
+    }
 
     virtual Exp* getProven(Exp* left);
 
@@ -676,7 +721,7 @@ public:
     void stripRefs();
     // Cast the constant whose conscript is num to be type ty
     void castConst(int num, Type* ty);
- 
+
 private:
     // We ensure that there is only one return statement now. See code in
     // frontend/frontend.cpp handling case STMT_RET.
@@ -685,16 +730,24 @@ private:
 public:
     ADDRESS getTheReturnAddr() {
         return theReturnStatement == NULL ? NO_ADDRESS :
-        theReturnStatement->getRetAddr();}
+               theReturnStatement->getRetAddr();
+    }
     void setTheReturnAddr(ReturnStatement* s, ADDRESS r) {
         assert(theReturnStatement == NULL);
         theReturnStatement = s;
-        theReturnStatement->setRetAddr(r);}
-    ReturnStatement* getTheReturnStatement() {return theReturnStatement;}
+        theReturnStatement->setRetAddr(r);
+    }
+    ReturnStatement* getTheReturnStatement() {
+        return theReturnStatement;
+    }
 protected:
     friend class XMLProgParser;
     UserProc() : Proc(), cfg(NULL), decoded(false), analysed(false), decompileSeen(false), decompiled(false), isRecursive(false) { }
-    void setCFG(Cfg *c) { cfg = c; }
-    void addDef(Exp *e) { definesSet.insert(e); }
+    void setCFG(Cfg *c) {
+        cfg = c;
+    }
+    void addDef(Exp *e) {
+        definesSet.insert(e);
+    }
 };      // class UserProc
 #endif

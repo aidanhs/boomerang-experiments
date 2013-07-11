@@ -69,17 +69,44 @@ public:
     // visitor functions,
     // return true to continue iterating through the expression
     // Note: you only need to override the ones that "do something"
-virtual bool visit(Unary *e,    bool& override) {override = false; return true;}
-virtual bool visit(Binary *e,   bool& override) {override = false; return true;}
-virtual bool visit(Ternary *e,  bool& override) {override = false; return true;}
-virtual bool visit(TypedExp *e, bool& override) {override = false; return true;}
-virtual bool visit(FlagDef *e,  bool& override) {override = false; return true;}
-virtual bool visit(RefExp *e,   bool& override) {override = false; return true;}
-virtual bool visit(Location *e, bool& override) {override = false; return true;}
+    virtual bool visit(Unary *e,    bool& override) {
+        override = false;
+        return true;
+    }
+    virtual bool visit(Binary *e,   bool& override) {
+        override = false;
+        return true;
+    }
+    virtual bool visit(Ternary *e,  bool& override) {
+        override = false;
+        return true;
+    }
+    virtual bool visit(TypedExp *e, bool& override) {
+        override = false;
+        return true;
+    }
+    virtual bool visit(FlagDef *e,  bool& override) {
+        override = false;
+        return true;
+    }
+    virtual bool visit(RefExp *e,   bool& override) {
+        override = false;
+        return true;
+    }
+    virtual bool visit(Location *e, bool& override) {
+        override = false;
+        return true;
+    }
 // These three have zero arity, so there is nothing to override
-virtual bool visit(Const *e   ) {return true;}
-virtual bool visit(Terminal *e) {return true;}
-virtual bool visit(TypeVal *e ) {return true;}
+    virtual bool visit(Const *e   ) {
+        return true;
+    }
+    virtual bool visit(Terminal *e) {
+        return true;
+    }
+    virtual bool visit(TypeVal *e ) {
+        return true;
+    }
 };
 
 // This class visits subexpressions, and if a location, sets the UserProc
@@ -88,7 +115,9 @@ class FixProcVisitor : public ExpVisitor {
     UserProc* proc;
 
 public:
-    void setProc(UserProc* p) { proc = p; }
+    void setProc(UserProc* p) {
+        proc = p;
+    }
     virtual bool visit(Location *e, bool& override);
     // All other virtual functions inherit from ExpVisitor, i.e. they just
     // visit their children recursively
@@ -100,8 +129,12 @@ class GetProcVisitor : public ExpVisitor {
     UserProc* proc;         // The result (or NULL)
 
 public:
-                 GetProcVisitor() {proc = NULL;}    // Constructor
-    UserProc*    getProc() {return proc;}
+    GetProcVisitor() {
+        proc = NULL;   // Constructor
+    }
+    UserProc*    getProc() {
+        return proc;
+    }
     virtual bool visit(Location *e, bool& override);
     // All others inherit and visit their children
 };
@@ -113,10 +146,14 @@ class SetConscripts : public ExpVisitor {
     bool    bInLocalGlobal;     // True when inside a local or global
     bool    bClear;             // True when clearing, not setting
 public:
-            SetConscripts(int n, bool bClear)
-              : bInLocalGlobal(false), bClear(bClear)
-                {curConscript = n;}
-    int     getLast() {return curConscript;}
+    SetConscripts(int n, bool bClear)
+        : bInLocalGlobal(false), bClear(bClear)
+    {
+        curConscript = n;
+    }
+    int     getLast() {
+        return curConscript;
+    }
     virtual bool visit(Const* e);
     virtual bool visit(Location* e, bool& override);
     virtual bool visit(Binary* b,   bool& override);
@@ -134,41 +171,94 @@ class ExpModifier {
 protected:
     bool    mod;        // Set if there is any change. Don't have to implement
 public:
-    ExpModifier() {mod = false;}
+    ExpModifier() {
+        mod = false;
+    }
     virtual ~ExpModifier() { }
-    bool    isMod() {return mod;}
-    void    clearMod() {mod = false;}
+    bool    isMod() {
+        return mod;
+    }
+    void    clearMod() {
+        mod = false;
+    }
 
     // visitor functions
     // Most times these won't be needed
     // Note: you only need to override the ones that make a cange.
     // preVisit comes before modifications to the children (if any)
-virtual Exp* preVisit(Unary *e,    bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(Binary *e,   bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(Ternary *e,  bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(TypedExp *e, bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(FlagDef *e,  bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(RefExp *e,   bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(Location *e, bool& recur) {recur = true; return e;}
-virtual Exp* preVisit(Const *e                ) {              return e;}
-virtual Exp* preVisit(Terminal *e             ) {              return e;}
-virtual Exp* preVisit(TypeVal *e              ) {              return e;}
+    virtual Exp* preVisit(Unary *e,    bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(Binary *e,   bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(Ternary *e,  bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(TypedExp *e, bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(FlagDef *e,  bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(RefExp *e,   bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(Location *e, bool& recur) {
+        recur = true;
+        return e;
+    }
+    virtual Exp* preVisit(Const *e                ) {
+        return e;
+    }
+    virtual Exp* preVisit(Terminal *e             ) {
+        return e;
+    }
+    virtual Exp* preVisit(TypeVal *e              ) {
+        return e;
+    }
 
     // postVisit comes after modifications to the children (if any)
-virtual Exp* postVisit(Unary *e)    {return e;}
-virtual Exp* postVisit(Binary *e)   {return e;}
-virtual Exp* postVisit(Ternary *e)  {return e;}
-virtual Exp* postVisit(TypedExp *e) {return e;}
-virtual Exp* postVisit(FlagDef *e)  {return e;}
-virtual Exp* postVisit(RefExp *e)   {return e;}
-virtual Exp* postVisit(Location *e) {return e;}
-virtual Exp* postVisit(Const *e)    {return e;}
-virtual Exp* postVisit(Terminal *e) {return e;}
-virtual Exp* postVisit(TypeVal *e)  {return e;}
+    virtual Exp* postVisit(Unary *e)    {
+        return e;
+    }
+    virtual Exp* postVisit(Binary *e)   {
+        return e;
+    }
+    virtual Exp* postVisit(Ternary *e)  {
+        return e;
+    }
+    virtual Exp* postVisit(TypedExp *e) {
+        return e;
+    }
+    virtual Exp* postVisit(FlagDef *e)  {
+        return e;
+    }
+    virtual Exp* postVisit(RefExp *e)   {
+        return e;
+    }
+    virtual Exp* postVisit(Location *e) {
+        return e;
+    }
+    virtual Exp* postVisit(Const *e)    {
+        return e;
+    }
+    virtual Exp* postVisit(Terminal *e) {
+        return e;
+    }
+    virtual Exp* postVisit(TypeVal *e)  {
+        return e;
+    }
 };
 
-/* 
- * The StmtVisitor class is used to iterate over all stmts in a basic 
+/*
+ * The StmtVisitor class is used to iterate over all stmts in a basic
  * block. It contains methods for each kind of Statement found in an
  * RTL and can be used to eliminate switch statements.
  * It does not visit the expressions in the statement.
@@ -179,34 +269,60 @@ private:
     PBB pBB;
 
 public:
-    StmtVisitor() { pBB = NULL; }
+    StmtVisitor() {
+        pBB = NULL;
+    }
     virtual ~StmtVisitor() { }
 
     // allows the container being iteratorated over to identify itself
-    PBB getBasicBlock() { return pBB; }
-    void setBasicBlock(PBB bb) { pBB = bb; }
+    PBB getBasicBlock() {
+        return pBB;
+    }
+    void setBasicBlock(PBB bb) {
+        pBB = bb;
+    }
 
-    // visitor functions, 
+    // visitor functions,
     // returns true to continue iterating the container
     virtual bool visit(RTL *rtl);   // By default, visits all statements
-    virtual bool visit(Assign *stmt)         { return true;}
-    virtual bool visit(PhiAssign *stmt)      { return true;}
-    virtual bool visit(ImplicitAssign *stmt) { return true;}
-    virtual bool visit(BoolAssign *stmt)  { return true;}
-    virtual bool visit(GotoStatement *stmt)  { return true;}
-    virtual bool visit(BranchStatement *stmt){ return true;}
-    virtual bool visit(CaseStatement *stmt)  { return true;}
-    virtual bool visit(CallStatement *stmt)  { return true;}
-    virtual bool visit(ReturnStatement *stmt){ return true;}
+    virtual bool visit(Assign *stmt)         {
+        return true;
+    }
+    virtual bool visit(PhiAssign *stmt)      {
+        return true;
+    }
+    virtual bool visit(ImplicitAssign *stmt) {
+        return true;
+    }
+    virtual bool visit(BoolAssign *stmt)  {
+        return true;
+    }
+    virtual bool visit(GotoStatement *stmt)  {
+        return true;
+    }
+    virtual bool visit(BranchStatement *stmt) {
+        return true;
+    }
+    virtual bool visit(CaseStatement *stmt)  {
+        return true;
+    }
+    virtual bool visit(CallStatement *stmt)  {
+        return true;
+    }
+    virtual bool visit(ReturnStatement *stmt) {
+        return true;
+    }
 };
 
 class StmtConscriptSetter : public StmtVisitor {
     int     curConscript;
     bool    bClear;
 public:
-                 StmtConscriptSetter(int n, bool bClear)
-                   : curConscript(n), bClear(bClear) {}
-    int          getLast() {return curConscript;}
+    StmtConscriptSetter(int n, bool bClear)
+        : curConscript(n), bClear(bClear) {}
+    int          getLast() {
+        return curConscript;
+    }
 
     virtual bool visit(Assign *stmt);
     virtual bool visit(PhiAssign *stmt);
@@ -223,27 +339,55 @@ public:
 class StmtExpVisitor {
 public:
     ExpVisitor*  ev;
-                 StmtExpVisitor(ExpVisitor* v) {
-                    ev = v;}
+    StmtExpVisitor(ExpVisitor* v) {
+        ev = v;
+    }
     virtual      ~StmtExpVisitor() {}
     virtual bool visit(Assign *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(PhiAssign *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(ImplicitAssign *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(BoolAssign *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(GotoStatement *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(BranchStatement *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(CaseStatement *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(CallStatement *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
     virtual bool visit(ReturnStatement *stmt, bool& override)
-        {override = false; return true;}
+    {
+        override = false;
+        return true;
+    }
 };
 
 // StmtModifier is a class that visits all statements in an RTL, and for
@@ -257,33 +401,57 @@ public:
 class StmtModifier {
 public:
     ExpModifier* mod;           // The expression modifier object
-                StmtModifier(ExpModifier* em) {mod = em;}   // Constructor
+    StmtModifier(ExpModifier* em) {
+        mod = em;   // Constructor
+    }
     virtual     ~StmtModifier() {}
     // This class' visitor functions don't return anything. Maybe we'll need
     // return values at a later stage.
-virtual void visit(Assign *s,         bool& recur) {recur = true;}
-virtual void visit(PhiAssign *s,      bool& recur) {recur = true;}
-virtual void visit(ImplicitAssign *s, bool& recur) {recur = true;}
-virtual void visit(BoolAssign *s,  bool& recur) {recur = true;}
-virtual void visit(GotoStatement *s,  bool& recur) {recur = true;}
-virtual void visit(BranchStatement *s,bool& recur) {recur = true;}
-virtual void visit(CaseStatement *s,  bool& recur) {recur = true;}
-virtual void visit(CallStatement *s,  bool& recur) {recur = true;}
-virtual void visit(ReturnStatement *s,bool& recur) {recur = true;}
+    virtual void visit(Assign *s,         bool& recur) {
+        recur = true;
+    }
+    virtual void visit(PhiAssign *s,      bool& recur) {
+        recur = true;
+    }
+    virtual void visit(ImplicitAssign *s, bool& recur) {
+        recur = true;
+    }
+    virtual void visit(BoolAssign *s,  bool& recur) {
+        recur = true;
+    }
+    virtual void visit(GotoStatement *s,  bool& recur) {
+        recur = true;
+    }
+    virtual void visit(BranchStatement *s,bool& recur) {
+        recur = true;
+    }
+    virtual void visit(CaseStatement *s,  bool& recur) {
+        recur = true;
+    }
+    virtual void visit(CallStatement *s,  bool& recur) {
+        recur = true;
+    }
+    virtual void visit(ReturnStatement *s,bool& recur) {
+        recur = true;
+    }
 };
 
 class PhiStripper : public StmtModifier {
     bool    del;            // Set true if this statment is to be deleted
 public:
-                 PhiStripper(ExpModifier* em) : StmtModifier(em) {del = false;} 
+    PhiStripper(ExpModifier* em) : StmtModifier(em) {
+        del = false;
+    }
     virtual void visit(PhiAssign* stmt, bool& recur);
-    bool    getDelete() {return del;}
+    bool    getDelete() {
+        return del;
+    }
 };
 
 // This class visits subexpressions, strips references
 class RefStripper : public ExpModifier {
 public:
-            RefStripper() {}
+    RefStripper() {}
     virtual Exp* preVisit(RefExp* ei, bool& recur);
     // All other virtual functions inherit and do nothing
 };
@@ -297,44 +465,81 @@ class CallRefsFixer : public ExpModifier {
     unsigned    mask;
     unsigned    unchanged;
 public:
-             CallRefsFixer() { mask = 1; unchanged = (unsigned)-1;}
-virtual Exp* preVisit(Unary *e,    bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(Binary *e,   bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(Ternary *e,  bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(TypedExp *e, bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(FlagDef *e,  bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(RefExp *e,   bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(Location *e, bool& recur) {
-    recur = true; mask <<= 1; return e;}
-virtual Exp* preVisit(Const *e)     { mask <<= 1; return e;}
-virtual Exp* preVisit(Terminal *e)  { mask <<= 1; return e;}
-virtual Exp* preVisit(TypeVal *e)   { mask <<= 1; return e;}
+    CallRefsFixer() {
+        mask = 1;
+        unchanged = (unsigned)-1;
+    }
+    virtual Exp* preVisit(Unary *e,    bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(Binary *e,   bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(Ternary *e,  bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(TypedExp *e, bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(FlagDef *e,  bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(RefExp *e,   bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(Location *e, bool& recur) {
+        recur = true;
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(Const *e)     {
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(Terminal *e)  {
+        mask <<= 1;
+        return e;
+    }
+    virtual Exp* preVisit(TypeVal *e)   {
+        mask <<= 1;
+        return e;
+    }
 
-virtual Exp* postVisit(Unary *e);
-virtual Exp* postVisit(Binary *e);
-virtual Exp* postVisit(Ternary *e);
-virtual Exp* postVisit(TypedExp *e);
-virtual Exp* postVisit(FlagDef *e);
-virtual Exp* postVisit(RefExp *e);
-virtual Exp* postVisit(Location *e);
-virtual Exp* postVisit(Const *e);
-virtual Exp* postVisit(Terminal *e);
-virtual Exp* postVisit(TypeVal *e);
+    virtual Exp* postVisit(Unary *e);
+    virtual Exp* postVisit(Binary *e);
+    virtual Exp* postVisit(Ternary *e);
+    virtual Exp* postVisit(TypedExp *e);
+    virtual Exp* postVisit(FlagDef *e);
+    virtual Exp* postVisit(RefExp *e);
+    virtual Exp* postVisit(Location *e);
+    virtual Exp* postVisit(Const *e);
+    virtual Exp* postVisit(Terminal *e);
+    virtual Exp* postVisit(TypeVal *e);
 };
 
 class UsedLocsFinder : public ExpVisitor {
     LocationSet* used;
 public:
-                 UsedLocsFinder(LocationSet& used) {this->used = &used;}
-                 ~UsedLocsFinder() {}
+    UsedLocsFinder(LocationSet& used) {
+        this->used = &used;
+    }
+    ~UsedLocsFinder() {}
 
-    LocationSet* getLocSet() {return used;}
+    LocationSet* getLocSet() {
+        return used;
+    }
     virtual bool visit(RefExp *e,   bool& override);
     virtual bool visit(Location *e, bool& override);
     virtual bool visit(Terminal* e);
@@ -347,8 +552,10 @@ public:
     // For example, implicit parameters and returns in CallStatements are
     // ignored (not considered used).
     bool final;
-            UsedLocsVisitor(ExpVisitor* v, bool f = false) : StmtExpVisitor(v)
-              {final = f;}
+    UsedLocsVisitor(ExpVisitor* v, bool f = false) : StmtExpVisitor(v)
+    {
+        final = f;
+    }
     virtual ~UsedLocsVisitor() {}
     // Needs special attention because the lhs of an assignment isn't used
     // (except where it's m[blah], when blah is used)
@@ -367,8 +574,10 @@ class ExpSubscripter : public ExpModifier {
     Exp*        search;
     Statement*  def;
 public:
-                ExpSubscripter(Exp* s, Statement* d) {
-                    search = s; def = d; }
+    ExpSubscripter(Exp* s, Statement* d) {
+        search = s;
+        def = d;
+    }
     virtual Exp* preVisit(Location *e, bool& recur);
     virtual Exp* preVisit(Terminal *e);
     virtual Exp* preVisit(RefExp *e,   bool& recur);
@@ -376,7 +585,7 @@ public:
 
 class StmtSubscripter : public StmtModifier {
 public:
-                StmtSubscripter(ExpModifier* em) : StmtModifier(em) {}
+    StmtSubscripter(ExpModifier* em) : StmtModifier(em) {}
     virtual     ~StmtSubscripter() {}
 
     virtual void visit(        Assign *s, bool& recur);
@@ -387,7 +596,7 @@ public:
 
 class SizeStripper : public ExpModifier {
 public:
-                SizeStripper() {}
+    SizeStripper() {}
     virtual     ~SizeStripper() {}
 
     virtual Exp* preVisit(Binary *b,   bool& recur);
@@ -398,10 +607,12 @@ class ExpConstCaster: public ExpModifier {
     Type*   ty;
     bool    changed;
 public:
-                ExpConstCaster(int num, Type* ty)
-                  : num(num), ty(ty), changed(false) {}
+    ExpConstCaster(int num, Type* ty)
+        : num(num), ty(ty), changed(false) {}
     virtual     ~ExpConstCaster() {}
-    bool        isChanged() {return changed;}
+    bool        isChanged() {
+        return changed;
+    }
 
     virtual Exp* preVisit(Const *c);
 };
@@ -409,7 +620,7 @@ public:
 class StmtConstCaster : public StmtVisitor {
     ExpConstCaster* ecc;
 public:
-                StmtConstCaster(ExpConstCaster* ecc) : ecc(ecc) {}
+    StmtConstCaster(ExpConstCaster* ecc) : ecc(ecc) {}
     virtual     ~StmtConstCaster() {};
 
     virtual bool visit(Assign *stmt);

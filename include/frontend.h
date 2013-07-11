@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1998-2001, The University of Queensland
- * Copyright (C) 2000-2001, Sun Microsystems, Inc  
+ * Copyright (C) 2000-2001, Sun Microsystems, Inc
  * Copyright (C) 2002, Trent Waddington
  *
  *
@@ -60,7 +60,7 @@ enum INSTTYPE {
     I_COMPCALL               // computed call
 };
 
-typedef bool (*PHELPER)(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl); 
+typedef bool (*PHELPER)(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
 class FrontEnd {
 protected:
@@ -85,12 +85,16 @@ public:
     static FrontEnd* Load(const char *fname);
 
     // Add a symbol to the loader
-    void AddSymbol(ADDRESS addr, const char *nam) { pBF->AddSymbol(addr, nam); }
+    void AddSymbol(ADDRESS addr, const char *nam) {
+        pBF->AddSymbol(addr, nam);
+    }
 
     // Add a "hint" that an instruction at the given address references
     // a named global
     void addRefHint(ADDRESS addr, const char *nam)
-    { refHints[addr] = nam; }
+    {
+        refHints[addr] = nam;
+    }
 
     /**
      * Destructor. Virtual to mute a warning
@@ -108,19 +112,23 @@ public:
 
     bool    isWin32();                  // Is this a win32 frontend?
 
-    BinaryFile *getBinaryFile() { return pBF; }
+    BinaryFile *getBinaryFile() {
+        return pBF;
+    }
 
     /*
      * Function to fetch the smallest machine instruction
      */
-virtual int     getInst(int addr);
+    virtual int     getInst(int addr);
 
     DecodeResult& decodeInstruction(ADDRESS pc);
 
     /*
      * Accessor function to get the decoder.
      */
-    NJMCDecoder *getDecoder() { return decoder; }
+    NJMCDecoder *getDecoder() {
+        return decoder;
+    }
 
     /*
      * Read library signatures from a file.
@@ -172,8 +180,8 @@ virtual int     getInst(int addr);
      * If spec is set, this is a speculative decode
      * Returns true on a good decode
      */
-virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
-    bool frag = false, bool spec = false);
+    virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
+                                bool frag = false, bool spec = false);
 
     /*
      * Given the dest of a call, determine if this is a machine specific
@@ -181,13 +189,14 @@ virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
      * semantics in lrtl.
      * addr is the native address of the call instruction
      */
-virtual bool    helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl) {
-        return false; }
+    virtual bool    helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl) {
+        return false;
+    }
 
     /*
      * Locate the starting address of "main", returning a native address
      */
-virtual ADDRESS getMainEntryPoint( bool &gotMain ) = 0;
+    virtual ADDRESS getMainEntryPoint( bool &gotMain ) = 0;
 
     /*
      * getInstanceFor. Get an instance of a class derived from FrontEnd,
@@ -196,18 +205,18 @@ virtual ADDRESS getMainEntryPoint( bool &gotMain ) = 0;
      * sName, loading the appropriate library using dlopen/dlsym, running
      * the "construct" function in that library, and returning the result.
      */
-static FrontEnd* getInstanceFor( const char* sName, void*& dlHandle,
-  BinaryFile *pBF, NJMCDecoder*& decoder);
+    static FrontEnd* getInstanceFor( const char* sName, void*& dlHandle,
+                                     BinaryFile *pBF, NJMCDecoder*& decoder);
 
     /*
      * Close the library opened by getInstanceFor
      */
-static void closeInstance(void* dlHandle);
+    static void closeInstance(void* dlHandle);
 
-	/*
-	 * Get a Prog object (for testing and not decoding)
-	 */
-	Prog* getProg();
+    /*
+     * Get a Prog object (for testing and not decoding)
+     */
+    Prog* getProg();
 
 };
 
@@ -238,7 +247,7 @@ bool isSwitch(PBB pBB, Exp* pDest, UserProc* pProc, BinaryFile* pBF);
  * Make use of the switch info. Should arguably be incorporated into isSwitch.
  */
 void processSwitch(PBB pBB, int delta, Cfg* pCfg, TargetQueue& targetQueue,
-    BinaryFile* pBF);
+                   BinaryFile* pBF);
 
 
 /*==============================================================================
@@ -270,7 +279,7 @@ RTL* decodeRtl(ADDRESS address, int delta, NJMCDecoder* decoder);
  *  illegal instruction, we just bail out)
  */
 bool decodeProc(ADDRESS uAddr, FrontEnd& fe, bool keep = true,
-    bool spec = false);
+                bool spec = false);
 
 // Put the target queue logic into this small class
 class TargetQueue {
@@ -278,38 +287,38 @@ class TargetQueue {
 
 public:
 
-/*
- * FUNCTION:    visit
- * OVERVIEW:    Visit a destination as a label, i.e. check whether we need to
- *              queue it as a new BB to create later.
- *              Note: at present, it is important to visit an address BEFORE
- *              an out edge is added to that address. This is because adding
- *              an out edge enters the address into the Cfg's BB map, and it
- *              looks like the BB has already been visited, and it gets
- *              overlooked. It would be better to have a scheme whereby the
- *              order of calling these functions (i.e. visit() and
- *              AddOutEdge()) did not matter.
- * PARAMETERS:  pCfg - the enclosing CFG
- *              uNewAddr - the address to be checked
- *              pNewBB - set to the lower part of the BB if the address
- *                already exists as a non explicit label (BB has to be split)
- * RETURNS:     <nothing>
- */
+    /*
+     * FUNCTION:    visit
+     * OVERVIEW:    Visit a destination as a label, i.e. check whether we need to
+     *              queue it as a new BB to create later.
+     *              Note: at present, it is important to visit an address BEFORE
+     *              an out edge is added to that address. This is because adding
+     *              an out edge enters the address into the Cfg's BB map, and it
+     *              looks like the BB has already been visited, and it gets
+     *              overlooked. It would be better to have a scheme whereby the
+     *              order of calling these functions (i.e. visit() and
+     *              AddOutEdge()) did not matter.
+     * PARAMETERS:  pCfg - the enclosing CFG
+     *              uNewAddr - the address to be checked
+     *              pNewBB - set to the lower part of the BB if the address
+     *                already exists as a non explicit label (BB has to be split)
+     * RETURNS:     <nothing>
+     */
     void visit(Cfg* pCfg, ADDRESS uNewAddr, PBB& pNewBB);
-/*
- * Provide an initial address (can call several times if there are several
- *  entry points)
- */
+    /*
+     * Provide an initial address (can call several times if there are several
+     *  entry points)
+     */
     void initial(ADDRESS uAddr);
 
 
-/*
- * FUNCTION:      nextAddress
- * OVERVIEW:      Return the next target from the queue of non-processed
- *                targets.
- * PARAMETERS:    cfg - the enclosing CFG
- * RETURNS:       The next address to process, or 0 if none (queue is empty)
- */
+    /*
+     * FUNCTION:      nextAddress
+     * OVERVIEW:      Return the next target from the queue of non-processed
+     *                targets.
+     * PARAMETERS:    cfg - the enclosing CFG
+     * RETURNS:       The next address to process, or 0 if none (queue is empty)
+     */
     ADDRESS nextAddress(Cfg* cfg);
 
 };

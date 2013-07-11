@@ -13,7 +13,7 @@
  * OVERVIEW:   The implementation of the instruction decoder for Sparc.
  *============================================================================*/
 
-/* 
+/*
  * $Revision: 1.5 $
  * 06 Jun 02 - Trent: Created.
  * 04 Dec 02 - Mike: Added dis_RegLhs() and dis_RegRhs()
@@ -31,20 +31,20 @@ class SparcDecoder : public NJMCDecoder
 public:
     /* Default constructor
      */
-	SparcDecoder();
+    SparcDecoder();
 
 
     /*
      * Decodes the machine instruction at pc and returns an RTL instance for
      * the instruction.
      */
-virtual DecodeResult& decodeInstruction (ADDRESS pc, int delta);
+    virtual DecodeResult& decodeInstruction (ADDRESS pc, int delta);
 
     /*
      * Disassembles the machine instruction at pc and returns the number of
      * bytes disassembled. Assembler output goes to global _assembly
      */
-virtual int decodeAssemblyInstruction (ADDRESS pc, int delta);
+    virtual int decodeAssemblyInstruction (ADDRESS pc, int delta);
 
     /*
      * Indicates whether the instruction at the given address is a restore instruction.
@@ -62,7 +62,7 @@ private:
 
     void    unused(int x);
     RTL*    createBranchRtl(ADDRESS pc, std::list<Statement*>* stmts,
-              const char* name);
+                            const char* name);
     bool    isFuncPrologue(ADDRESS hostPC);
     DWord   getDword(ADDRESS lc);
 

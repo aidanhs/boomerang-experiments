@@ -45,7 +45,7 @@ char* ConstraintMap::prints() {
 }
 
 void ConstraintMap::makeUnion(ConstraintMap& o) {
-              std::map<Exp*, Exp*, lessExpStar>::iterator it;
+    std::map<Exp*, Exp*, lessExpStar>::iterator it;
     std::pair<std::map<Exp*, Exp*, lessExpStar>::iterator, bool> ret;
     for (it = o.cmap.begin(); it != o.cmap.end(); it++) {
         // Note: *it is a std::pair<Exp*, Exp*>
@@ -53,16 +53,16 @@ void ConstraintMap::makeUnion(ConstraintMap& o) {
         // If an insertion occured, ret will be std::pair<where, true>
         // If no insertion occured, ret will be std::pair<where, false>
         if (ret.second == false) {
-std::cerr << "ConstraintMap::makeUnion: want to overwrite " << ret.first->first
- << " -> " << ret.first->second << " with " << it->first << " -> " << it->second
- << "\n";
+            std::cerr << "ConstraintMap::makeUnion: want to overwrite " << ret.first->first
+                      << " -> " << ret.first->second << " with " << it->first << " -> " << it->second
+                      << "\n";
             TypeVal* Tret = (TypeVal*)ret.first->second;
             Type* ty1 = Tret->getType();
             TypeVal* Toth = (TypeVal*)it->second;
             Type* ty2 = Toth->getType();
             if (*ty1 != *ty2) {
                 Tret->setType(ty1->mergeWith(ty2));
-std::cerr << "Now " << ret.first->first << " -> " << ret.first->second << "\n"; 
+                std::cerr << "Now " << ret.first->first << " -> " << ret.first->second << "\n";
             }
         }
     }
@@ -99,7 +99,7 @@ void ConstraintMap::substitute(ConstraintMap& other) {
         bool ch;
         for (cc = cmap.begin(); cc != cmap.end(); cc++) {
             Exp* newVal =
-              cc->second->searchReplaceAll(oo->first, oo->second, ch);
+                cc->second->searchReplaceAll(oo->first, oo->second, ch);
             if (ch) {
                 if (*cc->first == *newVal)
                     // e.g. was <char*> = <alpha6> now <char*> = <char*>
@@ -110,7 +110,7 @@ void ConstraintMap::substitute(ConstraintMap& other) {
                 // The existing value
                 newVal = cc->second;
             Exp* newKey =
-              cc->first-> searchReplaceAll(oo->first, oo->second, ch);
+                cc->first-> searchReplaceAll(oo->first, oo->second, ch);
             if (ch) {
                 cmap.erase(cc->first);
                 // Often end up with <char*> = <char*>
@@ -188,7 +188,7 @@ void Constraints::substIntoEquates(ConstraintMap& in) {
         for (kk = cur.begin(); kk != cur.end(); kk++) {
             Exp* lhs = kk->first;
             std::map<Exp*, LocationSet, lessExpStar>::iterator it =
-              equates.find(lhs);
+                equates.find(lhs);
             if (it != equates.end()) {
                 // Possibly new constraints that
                 // typeof(elements in it->second) == val
@@ -202,11 +202,11 @@ void Constraints::substIntoEquates(ConstraintMap& in) {
                         if (!unify(val, ff->second, extra)) {
                             if (VERBOSE || DEBUG_TA)
                                 LOG << "Constraint failure: " <<
-                                  *ll << " constrained to be " <<
-                                  ((TypeVal*)val)->getType()->getCtype() <<
-                                  " and " <<
-                                  ((TypeVal*)ff->second)->getType()->getCtype()
-                                  << "\n";
+                                    *ll << " constrained to be " <<
+                                    ((TypeVal*)val)->getType()->getCtype() <<
+                                    " and " <<
+                                    ((TypeVal*)ff->second)->getType()->getCtype()
+                                    << "\n";
                             return;
                         }
                     } else
@@ -218,9 +218,9 @@ void Constraints::substIntoEquates(ConstraintMap& in) {
                     // e.g. Ta = Tb,Tc and Ta = K => Tb=K, Tc=K
                     for (ll = ls.begin(); ll != ls.end(); ll++) {
                         Exp* newFixed = new Binary(opEquals,
-                            *ll,        // e.g. Tb
-                            val);       // e.g. K
-                            extra.insert(newFixed);
+                                                   *ll,        // e.g. Tb
+                                                   val);       // e.g. K
+                        extra.insert(newFixed);
                     }
                     equates.erase(it);
                 }
@@ -273,8 +273,10 @@ Exp* nextConjunct(Exp*& remainder) {
 }
 
 bool Constraints::solve(std::list<ConstraintMap>& solns) {
-LOG << conSet.size() << " constraints:";
-std::ostringstream os; conSet.print(os); LOG << os.str().c_str();
+    LOG << conSet.size() << " constraints:";
+    std::ostringstream os;
+    conSet.print(os);
+    LOG << os.str().c_str();
     // Replace Ta[loc] = ptr(alpha) with
     //         Tloc = alpha
     LocationSet::iterator cc;
@@ -333,7 +335,7 @@ std::ostringstream os; conSet.print(os); LOG << os.str().c_str();
             Exp* rhs = ((Binary*)term)->getSubExp2();
             if (rhs->isTypeOf()) {
                 // Of the form typeof(x) = typeof(z)
-                // Insert into equates 
+                // Insert into equates
                 equates.addEquate(lhs, rhs);
             } else {
                 // Of the form typeof(x) = <typeval>
@@ -344,9 +346,14 @@ std::ostringstream os; conSet.print(os); LOG << os.str().c_str();
         }
     }
 
-{LOG << "\n" << disjunctions.size() << " disjunctions: "; std::list<Exp*>::iterator dd; for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++) LOG << *dd << ",\n"; LOG << "\n";}
-LOG << fixed.size() << " fixed: " << fixed.prints();
-LOG << equates.size() << " equates: " << equates.prints();
+    {
+        LOG << "\n" << disjunctions.size() << " disjunctions: ";
+        std::list<Exp*>::iterator dd;
+        for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++) LOG << *dd << ",\n";
+        LOG << "\n";
+    }
+    LOG << fixed.size() << " fixed: " << fixed.prints();
+    LOG << equates.size() << " equates: " << equates.prints();
 
     // Substitute the fixed types into the disjunctions
     substIntoDisjuncts(fixed);
@@ -355,18 +362,28 @@ LOG << equates.size() << " equates: " << equates.prints();
     // fixed types
     substIntoEquates(fixed);
 
-LOG << "\nAfter substitute fixed into equates:\n";
-{LOG << "\n" << disjunctions.size() << " disjunctions: "; std::list<Exp*>::iterator dd; for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++) LOG << *dd << ",\n"; LOG << "\n";}
-LOG << fixed.size() << " fixed: " << fixed.prints();
-LOG << equates.size() << " equates: " << equates.prints();
+    LOG << "\nAfter substitute fixed into equates:\n";
+    {
+        LOG << "\n" << disjunctions.size() << " disjunctions: ";
+        std::list<Exp*>::iterator dd;
+        for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++) LOG << *dd << ",\n";
+        LOG << "\n";
+    }
+    LOG << fixed.size() << " fixed: " << fixed.prints();
+    LOG << equates.size() << " equates: " << equates.prints();
     // Substitute again the fixed types into the disjunctions
     // (since there may be more fixed types from the above)
     substIntoDisjuncts(fixed);
 
-LOG << "\nAfter second substitute fixed into disjunctions:\n";
-{LOG << "\n" << disjunctions.size() << " disjunctions: "; std::list<Exp*>::iterator dd; for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++) LOG << *dd << ",\n"; LOG << "\n";}
-LOG << fixed.size() << " fixed: " << fixed.prints();
-LOG << equates.size() << " equates: " << equates.prints();
+    LOG << "\nAfter second substitute fixed into disjunctions:\n";
+    {
+        LOG << "\n" << disjunctions.size() << " disjunctions: ";
+        std::list<Exp*>::iterator dd;
+        for (dd = disjunctions.begin(); dd != disjunctions.end(); dd++) LOG << *dd << ",\n";
+        LOG << "\n";
+    }
+    LOG << fixed.size() << " fixed: " << fixed.prints();
+    LOG << equates.size() << " equates: " << equates.prints();
 
     ConstraintMap soln;
     bool ret = doSolve(disjunctions.begin(), soln, solns);
@@ -387,20 +404,20 @@ static int level = 0;
 // The current solution is soln
 // The set of all solutions is in solns
 bool Constraints::doSolve(std::list<Exp*>::iterator it, ConstraintMap& soln,
-  std::list<ConstraintMap>& solns) {
-LOG << "Begin doSolve at level " << ++level << "\n";
-LOG << "Soln now: " << soln.prints() << "\n";
+                          std::list<ConstraintMap>& solns) {
+    LOG << "Begin doSolve at level " << ++level << "\n";
+    LOG << "Soln now: " << soln.prints() << "\n";
     if (it == disjunctions.end()) {
         // We have gotten to the end with no unification failures
         // Copy the current set of constraints as a solution
         //if (soln.size() == 0)
-            // Awkward. There is a trivial solution, but we have no constraints
-            // So make a constraint of always-true
-            //soln.insert(new Terminal(opTrue));
+        // Awkward. There is a trivial solution, but we have no constraints
+        // So make a constraint of always-true
+        //soln.insert(new Terminal(opTrue));
         // Copy the fixed constraints
         soln.makeUnion(fixed);
         solns.push_back(soln);
-LOG << "Exiting doSolve at level " << level-- << " returning true\n";
+        LOG << "Exiting doSolve at level " << level-- << " returning true\n";
         return true;
     }
 
@@ -410,7 +427,7 @@ LOG << "Exiting doSolve at level " << level-- << " returning true\n";
     bool anyUnified = false;
     Exp* d;
     while ((d = nextDisjunct(rem1)) != NULL) {
-LOG << " $$ d is " << d << ", rem1 is " << ((rem1==0)?"NULL":rem1->prints()) << " $$\n";
+        LOG << " $$ d is " << d << ", rem1 is " << ((rem1==0)?"NULL":rem1->prints()) << " $$\n";
         // Match disjunct d against the fixed types; it could be compatible,
         // compatible and generate an additional constraint, or be
         // incompatible
@@ -419,7 +436,7 @@ LOG << " $$ d is " << d << ", rem1 is " << ((rem1==0)?"NULL":rem1->prints()) << 
         Exp* rem2 = d;
         bool unified = true;
         while ((c = nextConjunct(rem2)) != NULL) {
-LOG << "   $$ c is " << c << ", rem2 is " << ((rem2==0)?"NULL":rem2->prints()) << " $$\n";
+            LOG << "   $$ c is " << c << ", rem2 is " << ((rem2==0)?"NULL":rem2->prints()) << " $$\n";
             if (c->isFalse()) {
                 unified = false;
                 break;
@@ -432,7 +449,7 @@ LOG << "   $$ c is " << c << ", rem2 is " << ((rem2==0)?"NULL":rem2->prints()) <
             kk = fixed.find(lhs);
             if (kk != fixed.end()) {
                 unified &= unify(rhs, kk->second, extra);
-LOG << "Unified now " << unified << "; extra now " << extra.prints() << "\n";
+                LOG << "Unified now " << unified << "; extra now " << extra.prints() << "\n";
                 if (!unified) break;
             }
         }
@@ -451,19 +468,19 @@ LOG << "Unified now " << unified << "; extra now " << extra.prints() << "\n";
         // If this recursion did any good, it will have gotten to the end and
         // added the resultant soln to solns
         soln = oldSoln;
-LOG << "After doSolve returned: soln back to: " << soln.prints() << "\n";
+        LOG << "After doSolve returned: soln back to: " << soln.prints() << "\n";
         // Back to the current disjunction
         it--;
         // Continue for more disjuncts this disjunction
     }
     // We have run out of disjuncts. Return true if any disjuncts had no
     // unification failures
-LOG << "Exiting doSolve at level " << level-- << " returning " << anyUnified << "\n";
+    LOG << "Exiting doSolve at level " << level-- << " returning " << anyUnified << "\n";
     return anyUnified;
 }
 
 bool Constraints::unify(Exp* x, Exp* y, ConstraintMap& extra) {
-LOG << "Unifying " << x << " with " << y << " result ";
+    LOG << "Unifying " << x << " with " << y << " result ";
     assert(x->isTypeVal());
     assert(y->isTypeVal());
     Type* xtype = ((TypeVal*)x)->getType();
@@ -472,37 +489,37 @@ LOG << "Unifying " << x << " with " << y << " result ";
         Type* xPointsTo = ((PointerType*)xtype)->getPointsTo();
         Type* yPointsTo = ((PointerType*)ytype)->getPointsTo();
         if (((PointerType*)xtype)->pointsToAlpha() ||
-            ((PointerType*)ytype)->pointsToAlpha()) {
+                ((PointerType*)ytype)->pointsToAlpha()) {
             // A new constraint: xtype must be equal to ytype; at least
             // one of these is a variable type
             if (((PointerType*)xtype)->pointsToAlpha())
                 extra.constrain(xPointsTo, yPointsTo);
             else
                 extra.constrain(yPointsTo, xPointsTo);
-LOG << "true\n";
+            LOG << "true\n";
             return true;
         }
-LOG << (*xPointsTo == *yPointsTo) << "\n";
+        LOG << (*xPointsTo == *yPointsTo) << "\n";
         return *xPointsTo == *yPointsTo;
     } else if (xtype->isSize()) {
         if (ytype->getSize() == 0) {   // Assume size=0 means unknown
-LOG << "true\n";
+            LOG << "true\n";
             return true;
         } else {
-LOG << (xtype->getSize() == ytype->getSize()) << "\n";
+            LOG << (xtype->getSize() == ytype->getSize()) << "\n";
             return xtype->getSize() == ytype->getSize();
         }
     } else if (ytype->isSize()) {
         if (xtype->getSize() == 0) {   // Assume size=0 means unknown
-LOG << "true\n";
+            LOG << "true\n";
             return true;
         } else {
-LOG << (xtype->getSize() == ytype->getSize()) << "\n";
+            LOG << (xtype->getSize() == ytype->getSize()) << "\n";
             return xtype->getSize() == ytype->getSize();
         }
     }
     // Otherwise, just compare the sizes
-LOG << (*xtype == *ytype) << "\n";
+    LOG << (*xtype == *ytype) << "\n";
     return *xtype == *ytype;
 }
 

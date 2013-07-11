@@ -5,9 +5,9 @@
 
 
 class FrontendTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     FrontendTest(std::string name) : CppUnit::TestCase (name)
     {}
 

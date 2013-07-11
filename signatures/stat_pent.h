@@ -10,7 +10,7 @@ typedef int blksize_t;
 typedef int blkcnt_t;
 
 struct stat {
-    dev_t st_dev; 
+    dev_t st_dev;
     unsigned int pad1;
     ino_t st_ino;
     mode_t st_mode;

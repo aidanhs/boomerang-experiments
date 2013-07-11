@@ -74,17 +74,17 @@ enum OPER
     opRotateLC,             // Rotate left through carry
     opRotateRC,             // Rotate right through carry
     opTargetInst,           // Target specific instruction (Unary)
-                            // See frontend.cc for details
+    // See frontend.cc for details
 
     opTypedExp,             // Typed expression
-	opNamedExp,				// Named expression (binary, subExp1 = Const("name"), subExp2 = exp)
+    opNamedExp,				// Named expression (binary, subExp1 = Const("name"), subExp2 = exp)
     opGuard,                // Guarded expression (should be assignment)
     // The below is (and should) probably no longer used. Use opList instead
     opComma,                // Separate expressions in a list (e.g. params)
     opFlagCall,             // A flag call (Binary with string and params)
     opFlagDef,              // A flag function definition (class FlagDef)
     opList,                 // A binary, with expression (1) and next element
-                            //  in chain (2). Last element in chain is opNil
+    //  in chain (2). Last element in chain is opNil
     // Next three are for parser use only. Binary with name of table and name
     // of string as Const string subexpressions. Actual table info held in the
     // TableDict object
@@ -95,7 +95,7 @@ enum OPER
     // index, and a list of expressions to operate on. This actually allows
     // more generality, e.g. unary or ternary operators int the table
     opOpTable,              // A table of operators
-	opSuccessor,			// Get the successor register of this parameter
+    opSuccessor,			// Get the successor register of this parameter
 
     opTern,                 // Ternary (i.e. ? : )
     opAt,                   // Bit extraction (expr@first:last in that order)
@@ -107,10 +107,10 @@ enum OPER
     opWildRegOf,            // r[wild],
     opWildAddrOf,           // a[wild],
     opVar,                  // Represents l[] (recovered locations)
-	opPhi,					// Represents phi(a1, a2, a3) .. ie SSA form merging
-	opSubscript,			// Represents subscript(e, n) .. ie SSA renaming
+    opPhi,					// Represents phi(a1, a2, a3) .. ie SSA form merging
+    opSubscript,			// Represents subscript(e, n) .. ie SSA renaming
     opParam,                // SSL parameter param`'
-	opArg,					// Used a temporary for arguments to calls
+    opArg,					// Used a temporary for arguments to calls
     opLocal,                // used to represent a local, takes a string
     opGlobal,               // used to represent a global, takes a string
     opExpand,               // Expandable expression
@@ -120,11 +120,11 @@ enum OPER
     opSize,                 // Size specifier
     opCastIntStar,          // Cast to int*
     opPostVar,              // Post-instruction variable marker (unary with
-                              // any subexpression). Can arise in some SSL files
-                              // when ticked variables are used
+    // any subexpression). Can arise in some SSL files
+    // when ticked variables are used
     opMachFtr,              // A Unary with Const(string) representing a
-                              // machine specific feature (register, instruction                              // or whatever; the analysis better understand it
-                              // and transform it away)
+    // machine specific feature (register, instruction                              // or whatever; the analysis better understand it
+    // and transform it away)
 
     opTruncu,               // Integer truncate (unsigned)
     opTruncs,               // Integer truncate (signed)
@@ -165,7 +165,7 @@ enum OPER
     // Terminals (zero parameter special locations)
     // All machines are assumed to have these following registers:
     opPC,                   // program counter
-    // This is the abstract frame pointer register (CSR/PAL analysis). 
+    // This is the abstract frame pointer register (CSR/PAL analysis).
     opAFP,                  // abstract frame pointer
     // This is the abstract global pointer register (CSR/PAL analysis)
     opAGP,                  // abstract global pointer
@@ -204,7 +204,7 @@ enum OPER
     opFGF,                  // floating point greater flag
     opCTI,                  // Control transfer instruction (boolean)
     opNEXT,                 // Next PC pseudo-register
-    
+
     // ALWAYS LAST!
     opNumOf                 // Special index: MUST BE LAST!
 };

@@ -5,10 +5,10 @@
 #include "prog.h"
 
 class ProgTest : public CppUnit::TestCase {
-  protected:
+protected:
     Prog*  m_prog;
 
-  public:
+public:
     ProgTest(std::string name) : CppUnit::TestCase (name)
     {}
 

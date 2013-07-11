@@ -33,7 +33,9 @@ void ProgTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int ProgTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        ProgTest::setUp
@@ -43,7 +45,7 @@ int ProgTest::countTestCases () const
  * RETURNS:         <nothing>
  *============================================================================*/
 void ProgTest::setUp () {
-	//prog.setName("default name");
+    //prog.setName("default name");
 }
 
 /*==============================================================================

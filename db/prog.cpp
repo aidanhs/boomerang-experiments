@@ -28,9 +28,9 @@
  *============================================================================*/
 
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER <= 1200 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <assert.h>
 #include <fstream>
@@ -63,21 +63,21 @@
 #include <sys/types.h>
 
 Prog::Prog() :
-      pBF(NULL),
-      pFE(NULL),
-      m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
-      globalMap(NULL),
-      m_iNumberedProc(1),
-      m_rootCluster(new Cluster("prog")) {
+    pBF(NULL),
+    pFE(NULL),
+    m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
+    globalMap(NULL),
+    m_iNumberedProc(1),
+    m_rootCluster(new Cluster("prog")) {
     // Default constructor
 }
 
 Prog::Prog(BinaryFile *pBF, FrontEnd *pFE) :
-      pBF(pBF),
-      pFE(pFE),
-      m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
-      globalMap(NULL),
-      m_iNumberedProc(1) {
+    pBF(pBF),
+    pFE(pFE),
+    m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
+    globalMap(NULL),
+    m_iNumberedProc(1) {
     if (pBF && pBF->getFilename()) {
         m_name = pBF->getFilename();
         m_rootCluster = new Cluster(getNameNoPath().c_str());
@@ -85,13 +85,13 @@ Prog::Prog(BinaryFile *pBF, FrontEnd *pFE) :
 }
 
 Prog::Prog(const char* name) :
-      pBF(NULL),
-      pFE(NULL),
-      m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
-      m_name(name),
-      globalMap(NULL),
-      m_iNumberedProc(1),
-      m_rootCluster(new Cluster(getNameNoPath().c_str())) {
+    pBF(NULL),
+    pFE(NULL),
+    m_watcher(NULL),  // First numbered proc will be 1, no initial watcher
+    m_name(name),
+    globalMap(NULL),
+    m_iNumberedProc(1),
+    m_rootCluster(new Cluster(getNameNoPath().c_str())) {
     // Constructor taking a name. Technically, the allocation of the
     // space for the name could fail, but this is unlikely
 }
@@ -100,7 +100,7 @@ Prog::~Prog() {
     if (pBF) delete pBF;
     if (pFE) delete pFE;
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         if (*it)
             delete *it;
     }
@@ -120,7 +120,7 @@ bool Prog::wellForm() {
     bool wellformed = true;
 
     for (std::list<Proc *>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (!(*it)->isLib()) {
             UserProc *u = (UserProc*)*it;
             wellformed &= u->getCFG()->wellFormCfg();
@@ -132,7 +132,7 @@ bool Prog::wellForm() {
 void Prog::analyse() {
     Analysis *analysis = new Analysis();
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         pProc->printDetailsXML();
         if (pProc->isLib()) continue;
@@ -156,14 +156,14 @@ void Prog::generateDotFile() {
     of << "digraph Cfg {" << std::endl;
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
         if (!p->isDecoded()) continue;
         // Subgraph for the proc name
         of << "\nsubgraph cluster_" << p->getName() << " {\n" <<
-          "    color=gray;\n    label=" << p->getName() << ";\n";
+           "    color=gray;\n    label=" << p->getName() << ";\n";
         // Generate dotty CFG for this proc
         p->getCFG()->generateDotFile(of);
     }
@@ -176,7 +176,7 @@ void Prog::generateCode(Cluster *cluster) {
     std::string basedir = m_rootCluster->makeDirs();
     std::ofstream os;
     if (cluster == NULL || cluster == m_rootCluster) {
-            os.open(m_rootCluster->getOutPath("c"));
+        os.open(m_rootCluster->getOutPath("c"));
         HLLCode *code = Boomerang::get()->getHLLCode();
         for (std::vector<Global*>::iterator it1 = globals.begin(); it1 != globals.end(); it1++) {
             // Check for an initial value
@@ -217,7 +217,7 @@ const char *Cluster::makeDirs()
     if (parent)
         path = parent->makeDirs();
     else
-        path = Boomerang::get()->getOutputPath();        
+        path = Boomerang::get()->getOutputPath();
     if (getNumChildren() > 0 || parent == NULL) {
         path = path + "/" + name;
 #ifdef WIN32
@@ -240,11 +240,11 @@ void Cluster::removeChild(Cluster *n)
 }
 
 void Cluster::addChild(Cluster *n)
-{ 
+{
     if (n->parent)
         n->parent->removeChild(n);
-    children.push_back(n); 
-    n->parent = this; 
+    children.push_back(n);
+    n->parent = this;
 }
 
 Cluster *Cluster::find(const char *nam)
@@ -269,8 +269,8 @@ bool Prog::clusterUsed(Cluster *c)
 
 void Prog::generateCode(std::ostream &os) {
     HLLCode *code = Boomerang::get()->getHLLCode();
-    for (std::vector<Global*>::iterator it1 = globals.begin(); 
-         it1 != globals.end(); it1++) {
+    for (std::vector<Global*>::iterator it1 = globals.begin();
+            it1 != globals.end(); it1++) {
         // Check for an initial value
         Exp *e = NULL;
         e = (*it1)->getInitialValue(this);
@@ -295,7 +295,7 @@ void Prog::generateCode(std::ostream &os) {
 // Print this program, mainly for debugging
 void Prog::print(std::ostream &out) {
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++) {
+            it++) {
         Proc *pProc = *it;
         if (pProc->isLib()) continue;
         UserProc *p = (UserProc*)pProc;
@@ -307,10 +307,10 @@ void Prog::print(std::ostream &out) {
 }
 
 // clear the current project
-void Prog::clear() {   
+void Prog::clear() {
     m_name = std::string("");
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (*it)
             delete *it;
     m_procs.clear();
@@ -398,7 +398,7 @@ void Prog::remProc(UserProc* uProc) {
     m_procLabels[uProc->getNativeAddress()] = (Proc*)-1;
 
     for (std::list<Proc*>::iterator it = m_procs.begin(); it != m_procs.end();
-      it++)
+            it++)
         if (*it == uProc) {
             m_procs.erase(it);
             break;
@@ -461,7 +461,7 @@ Proc* Prog::findProc(ADDRESS uAddr) const {
         return (*it).second;
 }
 
-Proc* Prog::findProc(const char *name) const {   
+Proc* Prog::findProc(const char *name) const {
     std::list<Proc *>::const_iterator it;
     for (it = m_procs.begin(); it != m_procs.end(); it++)
         if (!strcmp((*it)->getName(), name))
@@ -510,8 +510,8 @@ const char *Prog::getGlobalName(ADDRESS uaddr)
         if (globals[i]->getAddress() == uaddr)
             return globals[i]->getName();
         else if (globals[i]->getAddress() < uaddr &&
-                 globals[i]->getAddress() + 
-                    globals[i]->getType()->getSize() / 8 > uaddr)
+                 globals[i]->getAddress() +
+                 globals[i]->getType()->getSize() / 8 > uaddr)
             return globals[i]->getName();
     return pBF->SymbolByAddress(uaddr);
 }
@@ -537,21 +537,21 @@ void Prog::globalUsed(ADDRESS uaddr)
         if (globals[i]->getAddress() == uaddr)
             return;
         else if (globals[i]->getAddress() < uaddr &&
-                 globals[i]->getAddress() + 
-                    globals[i]->getType()->getSize() / 8 > uaddr)
+                 globals[i]->getAddress() +
+                 globals[i]->getType()->getSize() / 8 > uaddr)
             return;
     if (uaddr < 0x10000) {
-        // This happens in windows code because you can pass a low value integer instead 
+        // This happens in windows code because you can pass a low value integer instead
         // of a string to some functions.
         LOG << "warning: ignoring stupid request for global at address " << uaddr << "\n";
         return;
     }
-    const char *nam = newGlobal(uaddr); 
+    const char *nam = newGlobal(uaddr);
     Type *ty = guessGlobalType(nam, uaddr);
     globals.push_back(new Global(ty, uaddr, nam));
     if (VERBOSE)
-        LOG << "globalUsed: name " << nam << ", address " << 
-          uaddr << ", guessed type " << ty->getCtype() << "\n";
+        LOG << "globalUsed: name " << nam << ", address " <<
+            uaddr << ", guessed type " << ty->getCtype() << "\n";
 }
 
 Type *Prog::guessGlobalType(const char *nam, ADDRESS u)
@@ -566,14 +566,14 @@ Type *Prog::guessGlobalType(const char *nam, ADDRESS u)
     }
     Type *ty;
     switch(sz) {
-        case 1:
-        case 2:
-        case 4:
-        case 8:
-            ty = new IntegerType(sz*8);
-            break;
-        default:
-            ty = new ArrayType(new CharType(), sz);
+    case 1:
+    case 2:
+    case 4:
+    case 8:
+        ty = new IntegerType(sz*8);
+        break;
+    default:
+        ty = new ArrayType(new CharType(), sz);
     }
     return ty;
 }
@@ -586,9 +586,9 @@ const char *Prog::newGlobal(ADDRESS uaddr)
         os << "global" << globals.size();
         nam = strdup(os.str().c_str());
         if (VERBOSE)
-            LOG << "adding new global: " << nam << " at address " << uaddr 
+            LOG << "adding new global: " << nam << " at address " << uaddr
                 << "\n";
-    } 
+    }
     return nam;
 }
 
@@ -660,7 +660,7 @@ double Prog::getFloatConstant(ADDRESS uaddr, bool &ok, int bits) {
  *============================================================================*/
 Proc* Prog::findContainingProc(ADDRESS uAddr) const {
     for (std::list<Proc*>::const_iterator it = m_procs.begin();
-      it != m_procs.end(); it++) {
+            it != m_procs.end(); it++) {
         Proc *p = (*it);
         if (p->getNativeAddress() == uAddr)
             return p;
@@ -792,7 +792,7 @@ const void* Prog::getCodeInfo(ADDRESS uAddr, const char*& last, int& delta) {
         if ((!pSect->bCode) && (!pSect->bReadOnly))
             continue;
         if ((uAddr < pSect->uNativeAddr) ||
-          (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
+                (uAddr >= pSect->uNativeAddr + pSect->uSectionSize))
             continue;           // Try the next section
         delta = pSect->uHostAddr - pSect->uNativeAddr;
         last = (const char*) (pSect->uHostAddr + pSect->uSectionSize);
@@ -812,7 +812,7 @@ void Prog::insertArguments(StatementSet& rs) {
     }
 }
 
-void Prog::decodeExtraEntrypoint(ADDRESS a) { 
+void Prog::decodeExtraEntrypoint(ADDRESS a) {
     Proc* p = findProc(a);
     if (p == NULL || (!p->isLib() && !((UserProc*)p)->isDecoded())) {
         pFE->decodeOnly(this, a);
@@ -823,7 +823,7 @@ void Prog::decodeExtraEntrypoint(ADDRESS a) {
 void Prog::decompile() {
     assert(m_procs.size());
 
-    if (VERBOSE) 
+    if (VERBOSE)
         LOG << (int)m_procs.size() << " procedures\n";
 
     std::list<Proc*>::iterator pp;
@@ -854,7 +854,7 @@ void Prog::decompile() {
             LOG << "removing unused returns\n";
 
         // A final pass to remove return locations not used by any caller
-        if (!Boomerang::get()->noRemoveReturns) 
+        if (!Boomerang::get()->noRemoveReturns)
             removeUnusedReturns();
 
         // print XML after removing returns
@@ -934,7 +934,7 @@ void Prog::removeUnusedReturns() {
             UserProc* proc = *it;
             if (proc->isLib()) continue;
             if (Boomerang::get()->debugUnusedRets)
-                LOG << " @@ removeUnusedReturns: considering callee " 
+                LOG << " @@ removeUnusedReturns: considering callee "
                     << proc->getName() << "\n";
             bool thisChange = proc->removeUnusedReturns(rc);
             if (thisChange && !Boomerang::get()->noRemoveNull) {
@@ -958,10 +958,10 @@ void Prog::removeUnusedReturns() {
                 std::set<UserProc*> thisProcCallees;
                 proc->addCallees(thisProcCallees);
                 newCalleeSet.insert(thisProcCallees.begin(),
-                  thisProcCallees.end());
+                                    thisProcCallees.end());
                 std::set<UserProc*>::iterator cc;
                 for (cc = thisProcCallees.begin(); cc != thisProcCallees.end();
-                      cc++)
+                        cc++)
                     (*cc)->addCallers(callerSet);
             }
         }
@@ -988,11 +988,11 @@ void Prog::fromSSAform() {
         if (proc->isLib()) continue;
         proc->fromSSAform();
         if (Boomerang::get()->vFlag) {
-            LOG << "===== After transformation from SSA form for " 
+            LOG << "===== After transformation from SSA form for "
                 << proc->getName() << " =====\n";
             proc->printToLog();
             LOG << "===== End after transformation from SSA for " <<
-              proc->getName() << " =====\n\n";
+                proc->getName() << " =====\n\n";
         }
     }
 }
@@ -1013,7 +1013,7 @@ void Prog::typeAnalysis() {
 }
 
 void Prog::printCallGraph() {
-    std::string fname = Boomerang::get()->getOutputPath() 
+    std::string fname = Boomerang::get()->getOutputPath()
                         + "callgraph.out";
     int fd = lockFileWrite(fname.c_str());
     std::ofstream f(fname.c_str());
@@ -1035,14 +1035,14 @@ void Prog::printCallGraph() {
                 f << "   ";
             f << p->getName();
             if (parent.find(p) != parent.end())
-                f << " [parent=" << parent[p]->getName() << "]"; 
+                f << " [parent=" << parent[p]->getName() << "]";
             f << std::endl;
             if (!p->isLib()) {
                 n++;
                 UserProc *u = (UserProc*)p;
                 std::set<Proc*> &calleeSet = u->getCallees();
                 for (std::set<Proc*>::reverse_iterator it1 = calleeSet.rbegin();
-                     it1 != calleeSet.rend(); it1++) {
+                        it1 != calleeSet.rend(); it1++) {
                     queue.push_front(*it1);
                     spaces[*it1] = n;
                     parent[*it1] = p;
@@ -1059,7 +1059,7 @@ void Prog::printCallGraphXML() {
         return;
     std::list<Proc*>::iterator it;
     for (it = m_procs.begin(); it != m_procs.end();
-         it++)
+            it++)
         (*it)->clearVisited();
     std::string fname = Boomerang::get()->getOutputPath()
                         + "callgraph.xml";
@@ -1071,7 +1071,7 @@ void Prog::printCallGraphXML() {
     if (!entry->isLib())
         entry->printCallGraphXML(f, 2);
     for (it = m_procs.begin(); it != m_procs.end();
-         it++)
+            it++)
         if (!(*it)->isVisited() && !(*it)->isLib()) {
             (*it)->printCallGraphXML(f, 2);
         }
@@ -1099,15 +1099,15 @@ void Prog::readSymbolFile(const char *fname)
     par->yyparse(plat, cc);
 
     for (std::list<Symbol*>::iterator it = par->symbols.begin();
-         it != par->symbols.end(); it++) {
+            it != par->symbols.end(); it++) {
         if ((*it)->sig) {
             // probably wanna do something with this
             Proc *p = newProc((*it)->sig->getName(), (*it)->addr,
-              pBF->IsDynamicLinkedProcPointer((*it)->addr) ||
-              // NODECODE isn't really the right modifier; perhaps we should
-              // have a LIB modifier, to specifically specify that this
-              // function obeys library calling conventions
-              (*it)->mods->noDecode);
+                              pBF->IsDynamicLinkedProcPointer((*it)->addr) ||
+                              // NODECODE isn't really the right modifier; perhaps we should
+                              // have a LIB modifier, to specifically specify that this
+                              // function obeys library calling conventions
+                              (*it)->mods->noDecode);
             if (!(*it)->mods->incomplete)
                 p->setSignature((*it)->sig->clone());
         } else {
@@ -1124,7 +1124,7 @@ void Prog::readSymbolFile(const char *fname)
     }
 
     for (std::list<SymbolRef*>::iterator it2 = par->refs.begin();
-         it2 != par->refs.end(); it2++) {
+            it2 != par->refs.end(); it2++) {
         pFE->addRefHint((*it2)->addr, (*it2)->nam.c_str());
     }
 
@@ -1140,15 +1140,15 @@ Exp* Global::getInitialValue(Prog* prog) {
         // This global is in the BSS, so it can't be initialised
         return NULL;
     if (type->isPointer() &&
-      ((PointerType*)type)->getPointsTo()->resolvesToChar()) {
+            ((PointerType*)type)->getPointsTo()->resolvesToChar()) {
         char* str = prog->getStringConstant(uaddr, true);
         if (str) {
             // Make a global string
             return new Const(escapeStr(str));
         }
     } else if (type->isPointer() &&
-      ((PointerType*)type)->getPointsTo()->resolvesToFunc()) {
-        ADDRESS init = prog->readNative4(uaddr);    
+               ((PointerType*)type)->getPointsTo()->resolvesToFunc()) {
+        ADDRESS init = prog->readNative4(uaddr);
         Proc* dest = prog->findProc(init);
         if (dest)
             // Make a function constant. Back end should know how to emit
@@ -1163,7 +1163,7 @@ Exp* Global::getInitialValue(Prog* prog) {
         if (e->getOper() == opNil)
             e = NULL;
     }
-    if (e == NULL) 
+    if (e == NULL)
         e = prog->readNativeAs(uaddr, type);
     return e;
 }

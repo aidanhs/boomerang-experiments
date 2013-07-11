@@ -39,7 +39,9 @@ void TypeTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int TypeTest::countTestCases () const
-{ return 1; }   // ? What's this for?
+{
+    return 1;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        TypeTest::setUp

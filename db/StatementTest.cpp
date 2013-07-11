@@ -27,7 +27,7 @@
 class NullLogger : public Log {
 public:
     virtual Log &operator<<(const char *str) {
-     //std::cerr << str;
+        //std::cerr << str;
         return *this;
     }
     virtual ~NullLogger() {};
@@ -66,7 +66,9 @@ void StatementTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int StatementTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        StatementTest::setUp
@@ -95,7 +97,7 @@ void StatementTest::tearDown () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testEmpty
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testEmpty () {
     // Force "verbose" flag (-v)
@@ -133,7 +135,7 @@ void StatementTest::testEmpty () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testFlow
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testFlow () {
     // create Prog
@@ -149,7 +151,7 @@ void StatementTest::testFlow () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     Assign *a = new Assign(Location::regOf(24),
-        new Const(5));
+                           new Const(5));
     a->setProc(proc);
     a->setNumber(1);
     rtl->appendStmt(a);
@@ -177,10 +179,10 @@ void StatementTest::testFlow () {
     // The assignment to 5 gets propagated into the return, and the assignment
     // to r24 is removed
     expected =
-      "Fall BB:\n"
-      "00000000\n"
-      "Ret BB:\n"
-      "00000123    2 RET 5\n\n";
+        "Fall BB:\n"
+        "00000000\n"
+        "Ret BB:\n"
+        "00000123    2 RET 5\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -188,7 +190,7 @@ void StatementTest::testFlow () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testKill
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testKill () {
     // create Prog
@@ -204,12 +206,12 @@ void StatementTest::testKill () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     Assign *e = new Assign(Location::regOf(24),
-                     new Const(5));
+                           new Const(5));
     e->setNumber(1);
     e->setProc(proc);
     rtl->appendStmt(e);
     e = new Assign(Location::regOf(24),
-                  new Const(6));
+                   new Const(6));
     e->setNumber(2);
     e->setProc(proc);
     rtl->appendStmt(e);
@@ -235,10 +237,10 @@ void StatementTest::testKill () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB:\n"
-      "00000000\n"
-      "Ret BB:\n"
-      "00000123    3 RET 6\n\n";
+        "Fall BB:\n"
+        "00000000\n"
+        "Ret BB:\n"
+        "00000123    3 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -246,7 +248,7 @@ void StatementTest::testKill () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testUse
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testUse () {
     // create Prog
@@ -262,12 +264,12 @@ void StatementTest::testUse () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     Assign *a = new Assign(Location::regOf(24),
-                     new Const(5));
+                           new Const(5));
     a->setNumber(1);
     a->setProc(proc);
     rtl->appendStmt(a);
     a = new Assign(Location::regOf(28),
-                  Location::regOf(24));
+                   Location::regOf(24));
     a->setNumber(2);
     a->setProc(proc);
     rtl->appendStmt(a);
@@ -293,10 +295,10 @@ void StatementTest::testUse () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB:\n"
-      "00000000\n"
-      "Ret BB:\n"
-      "00000123    3 RET 5\n\n";
+        "Fall BB:\n"
+        "00000000\n"
+        "Ret BB:\n"
+        "00000123    3 RET 5\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -304,7 +306,7 @@ void StatementTest::testUse () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testUseOverKill
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testUseOverKill () {
     // create Prog
@@ -320,17 +322,17 @@ void StatementTest::testUseOverKill () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     Assign *e = new Assign(Location::regOf(24),
-                     new Const(5));
+                           new Const(5));
     e->setNumber(1);
     e->setProc(proc);
     rtl->appendStmt(e);
     e = new Assign(Location::regOf(24),
-                     new Const(6));
+                   new Const(6));
     e->setNumber(2);
     e->setProc(proc);
     rtl->appendStmt(e);
     e = new Assign(Location::regOf(28),
-                  Location::regOf(24));
+                   Location::regOf(24));
     e->setNumber(3);
     e->setProc(proc);
     rtl->appendStmt(e);
@@ -355,11 +357,11 @@ void StatementTest::testUseOverKill () {
     std::string s = st.str();
     // compare it to expected
     std::string expected;
-    expected = 
-      "Fall BB:\n"
-      "00000000\n"
-      "Ret BB:\n"
-      "00000123    4 RET 6\n\n";
+    expected =
+        "Fall BB:\n"
+        "00000000\n"
+        "Ret BB:\n"
+        "00000123    4 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -367,7 +369,7 @@ void StatementTest::testUseOverKill () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testUseOverBB
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testUseOverBB () {
     // create Prog
@@ -383,12 +385,12 @@ void StatementTest::testUseOverBB () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     Assign *a = new Assign(Location::regOf(24),
-                     new Const(5));
+                           new Const(5));
     a->setNumber(1);
     a->setProc(proc);
     rtl->appendStmt(a);
     a = new Assign(Location::regOf(24),
-                     new Const(6));
+                   new Const(6));
     a->setNumber(2);
     a->setProc(proc);
     rtl->appendStmt(a);
@@ -397,7 +399,7 @@ void StatementTest::testUseOverBB () {
     pRtls = new std::list<RTL*>();
     rtl = new RTL();
     a = new Assign(Location::regOf(28),
-                  Location::regOf(24));
+                   Location::regOf(24));
     a->setNumber(3);
     a->setProc(proc);
     rtl->appendStmt(a);
@@ -421,11 +423,11 @@ void StatementTest::testUseOverBB () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB:\n"
-      "00000000\n"
-      "Ret BB:\n"
-      "00000000\n"
-      "00000123    4 RET 6\n\n";
+        "Fall BB:\n"
+        "00000000\n"
+        "Ret BB:\n"
+        "00000000\n"
+        "00000123    4 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -433,7 +435,7 @@ void StatementTest::testUseOverBB () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testUseKill
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testUseKill () {
     // create Prog
@@ -449,13 +451,13 @@ void StatementTest::testUseKill () {
     std::list<RTL*>* pRtls = new std::list<RTL*>();
     RTL *rtl = new RTL();
     Assign *a = new Assign(Location::regOf(24),
-                     new Const(5));
+                           new Const(5));
     a->setNumber(1);
     a->setProc(proc);
     rtl->appendStmt(a);
     a = new Assign(Location::regOf(24),
-              new Binary(opPlus, Location::regOf(24),
-                             new Const(1)));
+                   new Binary(opPlus, Location::regOf(24),
+                              new Const(1)));
     a->setNumber(2);
     a->setProc(proc);
     rtl->appendStmt(a);
@@ -480,11 +482,11 @@ void StatementTest::testUseKill () {
     std::string s = st.str();
     // compare it to expected
     std::string expected;
-    expected  = 
-      "Fall BB:\n"
-      "00000000\n"
-      "Ret BB:\n"
-      "00000123    3 RET 6\n\n";
+    expected  =
+        "Fall BB:\n"
+        "00000000\n"
+        "Ret BB:\n"
+        "00000123    3 RET 6\n\n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -492,7 +494,7 @@ void StatementTest::testUseKill () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testEndlessLoop
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testEndlessLoop () {
     // create Prog
@@ -509,7 +511,7 @@ void StatementTest::testEndlessLoop () {
     RTL *rtl = new RTL();
     // r[24] := 5
     Assign *e = new Assign(Location::regOf(24),
-                     new Const(5));
+                           new Const(5));
     e->setProc(proc);
     rtl->appendStmt(e);
     pRtls->push_back(rtl);
@@ -518,8 +520,8 @@ void StatementTest::testEndlessLoop () {
     rtl = new RTL();
     // r[24] := r[24] + 1
     e = new Assign(Location::regOf(24),
-              new Binary(opPlus, Location::regOf(24),
-                             new Const(1)));
+                   new Binary(opPlus, Location::regOf(24),
+                              new Const(1)));
     e->setProc(proc);
     rtl->appendStmt(e);
     pRtls->push_back(rtl);
@@ -538,12 +540,12 @@ void StatementTest::testEndlessLoop () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 ** r[24] := 5   uses:    used by: ** r[24] := r[24] + 1, \n"
-      "Oneway BB: reach in: ** r[24] := 5, ** r[24] := r[24] + 1, \n"
-      "00000000 ** r[24] := r[24] + 1   uses: ** r[24] := 5, "
-      "** r[24] := r[24] + 1,    used by: ** r[24] := r[24] + 1, \n"
-      "cfg reachExit: \n";
+        "Fall BB: reach in: \n"
+        "00000000 ** r[24] := 5   uses:    used by: ** r[24] := r[24] + 1, \n"
+        "Oneway BB: reach in: ** r[24] := 5, ** r[24] := r[24] + 1, \n"
+        "00000000 ** r[24] := r[24] + 1   uses: ** r[24] := 5, "
+        "** r[24] := r[24] + 1,    used by: ** r[24] := r[24] + 1, \n"
+        "cfg reachExit: \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -551,7 +553,7 @@ void StatementTest::testEndlessLoop () {
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testLocationSet
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testLocationSet () {
     Location rof(opRegOf, new Const(12), NULL);
@@ -573,15 +575,18 @@ void StatementTest::testLocationSet () {
     CPPUNIT_ASSERT(rof == **ii);
     theReg.setInt(12);
     Exp* e;
-    e = *(++ii); CPPUNIT_ASSERT(rof == *e);
+    e = *(++ii);
+    CPPUNIT_ASSERT(rof == *e);
     theReg.setInt(24);
-    e = *(++ii); CPPUNIT_ASSERT(rof == *e);
+    e = *(++ii);
+    CPPUNIT_ASSERT(rof == *e);
     theReg.setInt(31);
-    e = *(++ii); CPPUNIT_ASSERT(rof == *e);
+    e = *(++ii);
+    CPPUNIT_ASSERT(rof == *e);
     Location mof(opMemOf,
-        new Binary(opPlus,
-            Location::regOf(14),
-            new Const(4)), NULL);
+                 new Binary(opPlus,
+                            Location::regOf(14),
+                            new Const(4)), NULL);
     ls.insert(mof.clone());
     ls.insert(mof.clone());
     CPPUNIT_ASSERT_EQUAL(5, ls.size());
@@ -593,12 +598,13 @@ void StatementTest::testLocationSet () {
     CPPUNIT_ASSERT_EQUAL(5, ls2.size());
     CPPUNIT_ASSERT(mof == **ls2.begin());
     theReg.setInt(8);
-    e = *(++ls2.begin()); CPPUNIT_ASSERT(rof == *e);
+    e = *(++ls2.begin());
+    CPPUNIT_ASSERT(rof == *e);
 }
 
 /*==============================================================================
  * FUNCTION:        StatementTest::testWildLocationSet
- * OVERVIEW:        
+ * OVERVIEW:
  *============================================================================*/
 void StatementTest::testWildLocationSet () {
     Location rof12(opRegOf, new Const(12), NULL);
@@ -664,9 +670,9 @@ void StatementTest::testRecursion () {
     // push bp
     // r28 := r28 + -4
     Assign *a = new Assign(Location::regOf(28),
-        new Binary(opPlus,
-            Location::regOf(28),
-            new Const(-4)));
+                           new Binary(opPlus,
+                                      Location::regOf(28),
+                                      new Const(-4)));
     rtl->appendStmt(a);
     // m[r28] := r29
     a = new Assign(
@@ -679,20 +685,20 @@ void StatementTest::testRecursion () {
     // push arg+1
     // r28 := r28 + -4
     a = new Assign(Location::regOf(28),
-            new Binary(opPlus,
-                Location::regOf(28),
-                new Const(-4)));
+                   new Binary(opPlus,
+                              Location::regOf(28),
+                              new Const(-4)));
     rtl->appendStmt(a);
     // Reference our parameter. At esp+0 is this arg; at esp+4 is old bp;
     // esp+8 is return address; esp+12 is our arg
     // m[r28] := m[r28+12] + 1
     a = new Assign(Location::memOf(Location::regOf(28)),
-                     new Binary(opPlus,
-                        Location::memOf(
-                            new Binary(opPlus,
-                                Location::regOf(28),
-                                new Const(12))),
-                        new Const(1)));
+                   new Binary(opPlus,
+                              Location::memOf(
+                                  new Binary(opPlus,
+                                          Location::regOf(28),
+                                          new Const(12))),
+                              new Const(1)));
     a->setProc(proc);
     rtl->appendStmt(a);
     pRtls->push_back(rtl);
@@ -703,19 +709,19 @@ void StatementTest::testRecursion () {
     rtl = new RTL(1);
     // r28 := r28 + -4
     a = new Assign(Location::regOf(28),
-        new Binary(opPlus, Location::regOf(28), new Const(-4)));
+                   new Binary(opPlus, Location::regOf(28), new Const(-4)));
     rtl->appendStmt(a);
     // m[r28] := pc
     a = new Assign(Location::memOf(Location::regOf(28)),
-        new Terminal(opPC));
+                   new Terminal(opPC));
     rtl->appendStmt(a);
     // %pc := (%pc + 5) + 135893848
     a = new Assign(new Terminal(opPC),
-        new Binary(opPlus,
-            new Binary(opPlus,
-                new Terminal(opPC),
-                new Const(5)),
-            new Const(135893848)));
+                   new Binary(opPlus,
+                              new Binary(opPlus,
+                                         new Terminal(opPC),
+                                         new Const(5)),
+                              new Const(135893848)));
     a->setProc(proc);
     rtl->appendStmt(a);
     pRtls->push_back(rtl);
@@ -726,7 +732,7 @@ void StatementTest::testRecursion () {
     std::vector<Exp*> args;
     // m[r[28]+8]
     Exp* a = Location::memOf( new Binary(opPlus,
-      Location::regOf(28), new Const(8)));
+                                         Location::regOf(28), new Const(8)));
     args.push_back(a);
     crtl->setArguments(args);
 #endif
@@ -744,14 +750,14 @@ void StatementTest::testRecursion () {
     // tests for standard Pentium calling convention
     // pc = m[r28]
     a = new Assign(new Terminal(opPC),
-        Location::memOf(
-            Location::regOf(28)));
+                   Location::memOf(
+                       Location::regOf(28)));
     rtl->appendStmt(a);
     // r28 = r28 + 4
     a = new Assign(Location::regOf(28),
-        new Binary(opPlus,
-            Location::regOf(28),
-            new Const(4)));
+                   new Binary(opPlus,
+                              Location::regOf(28),
+                              new Const(4)));
     rtl->appendStmt(a);
     pRtls->push_back(rtl);
     PBB ret = cfg->newBB(pRtls, RET, 0);
@@ -768,13 +774,13 @@ void StatementTest::testRecursion () {
     // compare it to expected
     std::string expected;
     expected =
-      "Fall BB: reach in: \n"
-      "00000000 ** r[24] := 5   uses:    used by: ** r[24] := r[24] + 1, \n"
-      "00000000 ** r[24] := 5   uses:    used by: ** r[24] := r[24] + 1, \n"
-      "Call BB: reach in: ** r[24] := 5, ** r[24] := r[24] + 1, \n"
-      "00000001 ** r[24] := r[24] + 1   uses: ** r[24] := 5, "
-      "** r[24] := r[24] + 1,    used by: ** r[24] := r[24] + 1, \n"
-      "cfg reachExit: \n";
+        "Fall BB: reach in: \n"
+        "00000000 ** r[24] := 5   uses:    used by: ** r[24] := r[24] + 1, \n"
+        "00000000 ** r[24] := 5   uses:    used by: ** r[24] := r[24] + 1, \n"
+        "Call BB: reach in: ** r[24] := 5, ** r[24] := r[24] + 1, \n"
+        "00000001 ** r[24] := r[24] + 1   uses: ** r[24] := 5, "
+        "** r[24] := r[24] + 1,    used by: ** r[24] := r[24] + 1, \n"
+        "cfg reachExit: \n";
     CPPUNIT_ASSERT_EQUAL(expected, s);
     // clean up
     delete prog;
@@ -786,16 +792,16 @@ void StatementTest::testRecursion () {
  *============================================================================*/
 void StatementTest::testClone () {
     Assign* a1 = new Assign(
-            Location::regOf(8),
-            new Binary(opPlus,
-                Location::regOf(9),
-                new Const(99)));
+        Location::regOf(8),
+        new Binary(opPlus,
+                   Location::regOf(9),
+                   new Const(99)));
     Assign* a2 = new Assign(new IntegerType(16, 1),
-            new Location(opParam, new Const("x"), NULL),
-            new Location(opParam, new Const("y"), NULL));
+                            new Location(opParam, new Const("x"), NULL),
+                            new Location(opParam, new Const("y"), NULL));
     Assign* a3 = new Assign(new IntegerType(16, -1),
-            new Location(opParam, new Const("z"), NULL),
-            new Location(opParam, new Const("q"), NULL));
+                            new Location(opParam, new Const("z"), NULL),
+                            new Location(opParam, new Const("q"), NULL));
     Statement* c1 = a1->clone();
     Statement* c2 = a2->clone();
     Statement* c3 = a3->clone();
@@ -808,13 +814,13 @@ void StatementTest::testClone () {
     a3->print(o1);
     c3->print(o2);
     std::string expected("   0 ** r8 := r9 + 99   0 *i16* x := y"
-        "   0 *u16* z := q");
+                         "   0 *u16* z := q");
     std::string act1(o1.str());
     std::string act2(o2.str());
     CPPUNIT_ASSERT_EQUAL(expected, act1); // Originals
     CPPUNIT_ASSERT_EQUAL(expected, act2); // Clones
 }
- 
+
 /*==============================================================================
  * FUNCTION:        StatementTest::testIsAssign
  * OVERVIEW:        Test assignment test
@@ -846,17 +852,17 @@ void StatementTest::testIsFlagAssgn () {
     Assign fc(
         new Terminal(opFlags),
         new Binary (opFlagCall,
-            new Const("addFlags"),
-            new Binary(opList,
-                Location::regOf(2),
-                new Const(99))));
+                    new Const("addFlags"),
+                    new Binary(opList,
+                               Location::regOf(2),
+                               new Const(99))));
     CallStatement* call = new CallStatement;
     BranchStatement* br = new BranchStatement;
     Assign* as = new Assign(
         Location::regOf(9),
         new Binary(opPlus,
-            Location::regOf(10),
-            new Const(4)));
+                   Location::regOf(10),
+                   new Const(4)));
     fc.print(ost);
     std::string expected("   0 ** %flags := addFlags( r2, 99 )");
     std::string actual(ost.str());
@@ -865,7 +871,8 @@ void StatementTest::testIsFlagAssgn () {
     CPPUNIT_ASSERT (!call->isFlagAssgn());
     CPPUNIT_ASSERT (!  br->isFlagAssgn());
     CPPUNIT_ASSERT (!  as->isFlagAssgn());
-    delete call; delete br;
+    delete call;
+    delete br;
 }
 
 /*==============================================================================
@@ -877,14 +884,14 @@ void StatementTest::testAddUsedLocs () {
     Assign* a = new Assign(
         Location::memOf(
             new Binary(opMinus,
-                Location::regOf(28),
-                new Const(4))),
+                       Location::regOf(28),
+                       new Const(4))),
         new Binary(opMult,
-            Location::memOf(
-                new Binary(opMinus,
-                    Location::regOf(28),
-                    new Const(8))),
-                Location::regOf(26)));
+                   Location::memOf(
+                       new Binary(opMinus,
+                                  Location::regOf(28),
+                                  new Const(8))),
+                   Location::regOf(26)));
     a->setNumber(1);
     LocationSet l;
     a->addUsedLocs(l);
@@ -930,9 +937,9 @@ void StatementTest::testAddUsedLocs () {
     c->setDest(Location::memOf(Location::regOf(26)));
     SWITCH_INFO si;
     si.pSwitchVar = Location::memOf(
-        new Binary(opMinus,
-            Location::regOf(28),
-            new Const(12)));
+                        new Binary(opMinus,
+                                   Location::regOf(28),
+                                   new Const(12)));
     c->setSwitchInfo(&si);
     c->addUsedLocs(l);
     std::ostringstream ost4;
@@ -940,7 +947,7 @@ void StatementTest::testAddUsedLocs () {
     expected = "m[r28 - 12],\tm[r26],\tr26,\tr28\n";
     actual = ost4.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-    
+
     // CallStatement with pDest = m[r26], params = m[r27], r28{55},
     //   implicit params m[r29], r30, returns r31, m[r24]
     l.clear();
@@ -960,7 +967,7 @@ void StatementTest::testAddUsedLocs () {
     std::ostringstream ost5;
     l.print(ost5);
     expected =
-      "m[r26],\tm[r27],\tm[r29],\tr24,\tr26,\tr27,\tr29,\tr30,\tr28{55}\n";
+        "m[r26],\tm[r27],\tm[r29],\tr24,\tr26,\tr27,\tr29,\tr30,\tr28{55}\n";
     actual = ost5.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
@@ -972,7 +979,7 @@ void StatementTest::testAddUsedLocs () {
     expected = "m[r26],\tm[r27],\tr26,\tr27,\tr28{55}\n";
     actual = ost5f.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-    
+
     // ReturnStatement with returns r31, m[r24], m[r25]{55} + r[26]{99}]
     l.clear();
     ReturnStatement* r = new ReturnStatement;
@@ -980,9 +987,9 @@ void StatementTest::testAddUsedLocs () {
     r->addReturn(Location::regOf(31));
     r->addReturn(Location::memOf(Location::regOf(24)));
     r->addReturn(Location::memOf(
-        new Binary(opPlus,
-            new RefExp(Location::regOf(25), g),
-            new RefExp(Location::regOf(26), b))));
+                     new Binary(opPlus,
+                                new RefExp(Location::regOf(25), g),
+                                new RefExp(Location::regOf(26), b))));
     r->addUsedLocs(l);
     std::ostringstream ost6;
     l.print(ost6);
@@ -994,8 +1001,8 @@ void StatementTest::testAddUsedLocs () {
     l.clear();
     BoolAssign* bs = new BoolAssign(8);
     bs->setCondExpr(new Binary(opEquals,
-        Location::memOf(Location::regOf(24)),
-        Location::regOf(25)));
+                               Location::memOf(Location::regOf(24)),
+                               Location::regOf(25)));
     std::list<Statement*> stmts;
     a = new Assign(Location::memOf(Location::regOf(26)), new Terminal(opNil));
     stmts.push_back(a);
@@ -1021,14 +1028,14 @@ void StatementTest::testSubscriptVars () {
     Assign* a = new Assign(
         Location::memOf(
             new Binary(opMinus,
-                Location::regOf(28),
-                new Const(4))),
+                       Location::regOf(28),
+                       new Const(4))),
         new Binary(opMult,
-            Location::memOf(
-                new Binary(opMinus,
-                    Location::regOf(28),
-                    new Const(8))),
-                Location::regOf(26)));
+                   Location::memOf(
+                       new Binary(opMinus,
+                                  Location::regOf(28),
+                                  new Const(8))),
+                   Location::regOf(26)));
     a->setNumber(1);
     std::ostringstream ost1;
     a->subscriptVar(srch, &s9);
@@ -1052,9 +1059,9 @@ void StatementTest::testSubscriptVars () {
     BranchStatement* b = new BranchStatement;
     b->setNumber(99);
     Exp* srchb = Location::memOf(
-                new RefExp(
-                    Location::regOf(26),
-                    b));
+                     new RefExp(
+                         Location::regOf(26),
+                         b));
     b->setDest(new RefExp(srchb, g));
     b->setCondExpr(new Terminal(opFlags));
     std::ostringstream ost3;
@@ -1062,7 +1069,7 @@ void StatementTest::testSubscriptVars () {
     b->subscriptVar(new Terminal(opFlags), g);
     ost3 << b;
     expected = "  99 BRANCH m[r26{99}]{9}, condition equals\n"
-        "High level: %flags{55}";
+               "High level: %flags{55}";
     actual = ost3.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
@@ -1071,9 +1078,9 @@ void StatementTest::testSubscriptVars () {
     c->setDest(Location::memOf(Location::regOf(26)));
     SWITCH_INFO si;
     si.pSwitchVar = Location::memOf(
-        new Binary(opMinus,
-            Location::regOf(28),
-            new Const(12)));
+                        new Binary(opMinus,
+                                   Location::regOf(28),
+                                   new Const(12)));
     c->setSwitchInfo(&si);
     std::ostringstream ost4;
     c->subscriptVar(srch, &s9);
@@ -1091,7 +1098,7 @@ void StatementTest::testSubscriptVars () {
     expected = "   0 CASE [r28{9}]";
     actual = ost4a.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-    
+
     // CallStatement with pDest = m[r26], params = m[r27], r28,
     //   implicit params m[r29], r30, returns r28, m[r28]
     CallStatement* ca = new CallStatement;
@@ -1110,7 +1117,7 @@ void StatementTest::testSubscriptVars () {
     ca->subscriptVar(srch, &s9);
     ost5 << ca;
     expected =
-    "   0 CALL m[r26](m[r27], r28{9} implicit: m[r29], r30) { r28, m[r28{9}] }";
+        "   0 CALL m[r26](m[r27], r28{9} implicit: m[r29], r30) { r28, m[r28{9}] }";
     actual = ost5.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
@@ -1132,7 +1139,7 @@ void StatementTest::testSubscriptVars () {
     ca->subscriptVar(srch, &s9);
     ost5a << ca;
     expected =
-    "   0 CALL r28{9}(m[r27], r29 implicit: m[r29], r28{9}) { r31, m[r31] }";
+        "   0 CALL r28{9}(m[r27], r29 implicit: m[r29], r28{9}) { r31, m[r31] }";
     actual = ost5a.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 
@@ -1145,9 +1152,9 @@ void StatementTest::testSubscriptVars () {
     r->addReturn(Location::regOf(28));
     r->addReturn(Location::memOf(Location::regOf(28)));
     r->addReturn(Location::memOf(
-        new Binary(opPlus,
-            new RefExp(Location::regOf(28), g),
-            new RefExp(Location::regOf(26), b))));
+                     new Binary(opPlus,
+                                new RefExp(Location::regOf(28), g),
+                                new RefExp(Location::regOf(26), b))));
     std::ostringstream ost6;
     r->subscriptVar(srch, &s9);
     ost6 << r;
@@ -1158,14 +1165,14 @@ void StatementTest::testSubscriptVars () {
     // Boolstatement with condition m[r28] = r28, dest m[r28]
     BoolAssign* bs = new BoolAssign(8);
     bs->setCondExpr(new Binary(opEquals,
-        Location::memOf(Location::regOf(28)),
-        Location::regOf(28)));
+                               Location::memOf(Location::regOf(28)),
+                               Location::regOf(28)));
     bs->setLeft(Location::memOf(Location::regOf(28)));
     std::ostringstream ost7;
     bs->subscriptVar(srch, &s9);
     ost7 << bs;
     expected="   0 BOOL m[r28{9}] := CC(equals)\n"
-        "High level: m[r28{9}] = r28{9}\n";
+             "High level: m[r28{9}] = r28{9}\n";
     actual = ost7.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
 }
@@ -1236,22 +1243,22 @@ void StatementTest::testStripSizes () {
     // The double size casting happens as a result of substitution
     Exp* lhs = Location::regOf(24);
     Exp* rhs = new Binary(opDiv,
-        new Binary(opSize,
-            new Const(8),
-            new Binary(opSize,
-                new Const(8),
-                Location::memOf(
-                    new Binary(opPlus,
-                        new Ternary(opZfill,
-                            new Const(8),
-                            new Const(32),
-                            Location::local("local5", NULL)),
-                        Location::local("param6", NULL))))),
-        new Const(16));
+                          new Binary(opSize,
+                                     new Const(8),
+                                     new Binary(opSize,
+                                             new Const(8),
+                                             Location::memOf(
+                                                     new Binary(opPlus,
+                                                             new Ternary(opZfill,
+                                                                     new Const(8),
+                                                                     new Const(32),
+                                                                     Location::local("local5", NULL)),
+                                                             Location::local("param6", NULL))))),
+                          new Const(16));
     Statement* s = new Assign(lhs, rhs);
     s->stripSizes();
     std::string expected(
-      "   0 ** r24 := m[zfill(8,32,local5) + param6] / 16");
+        "   0 ** r24 := m[zfill(8,32,local5) + param6] / 16");
     std::string actual;
     std::ostringstream ost;
     ost << s;

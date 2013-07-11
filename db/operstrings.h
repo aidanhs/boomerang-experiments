@@ -63,7 +63,7 @@ char* operStrings[] = {
     "opTargetInst",           // Target specific instruction (Unary)
 
     "opTypedExp",             // Typed expression
-	"opNamedExp",			  // Named  expression (binary, subExp1 = Const("name"), subExp2 = exp)
+    "opNamedExp",			  // Named  expression (binary, subExp1 = Const("name"), subExp2 = exp)
     "opGuard",                // Guarded expression (should be assignment)
     "opComma",                // Separate expressions in a list (e.g. params)
     "opFlagCall",             // A flag call (Binary with string and params)
@@ -72,7 +72,7 @@ char* operStrings[] = {
     "opNameTable",            // A table of strings
     "opExpTable",             // A table of expressions
     "opOpTable",              // A table of operators
-	"opSuccessor",			  // Get the successor of this register parameter
+    "opSuccessor",			  // Get the successor of this register parameter
 
     "opTern",                 // Ternary (i.e. ? : )
     "opAt",                   // Bit extraction (expr@first:last)
@@ -85,10 +85,10 @@ char* operStrings[] = {
     "opWildAddrOf",           // a[wild],
     "opVar",                  // Represents l[] (recovered locations)
     "opPhi",				  // Represents phi(a1, a2, a3) .. ie SSA form merging
-	"opSubscript",			  // Represents subscript(e, n) .. ie SSA renaming
+    "opSubscript",			  // Represents subscript(e, n) .. ie SSA renaming
     "opParam",                // Parameter param`'
-	"opArg",				  // Used a temporary for arguments to calls
-	"opLocal",				  // Represents a local, takes a string
+    "opArg",				  // Used a temporary for arguments to calls
+    "opLocal",				  // Represents a local, takes a string
     "opGlobal",               // Represents a global; takes a string
     "opExpand",               // Expandable expression
     "opMemberAccess",         // . and -> in C
@@ -98,8 +98,8 @@ char* operStrings[] = {
     "opCastIntStar",          // Cast to int*
     "opPostVar",              // Post-instruction variable marker (unary with
     "opMachFtr",              // A Unary with Const(string) representing a
-                              // machine specific feature (register, instruction                              // or whatever; the analysis better understand it
-                              // and transform it away)
+    // machine specific feature (register, instruction                              // or whatever; the analysis better understand it
+    // and transform it away)
 
 
     "opTruncu",               // Integer truncate (unsigned)
@@ -142,7 +142,7 @@ char* operStrings[] = {
     "opAFP",                  // abstract frame pointer
     "opAGP",                  // abstract global pointer
     "opNil",                  // Nil list
-	"opFlags",				  // Integer flags
+    "opFlags",				  // Integer flags
     "opFflags",               // Floating point flags
 
     "opAnull",                // Anull "variable"

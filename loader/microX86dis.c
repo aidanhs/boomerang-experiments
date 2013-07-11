@@ -71,7 +71,7 @@ static unsigned char opmap[256] = {
 };
 
 /* Secondary map for when first opcode is 0F */
-    static unsigned char op0Fmap[256] = {
+static unsigned char op0Fmap[256] = {
     /* 00-07 */
     MODRM+1, MODRM+1, MODRM+1, MODRM+1, NH, NH, 2, NH,
     /* 08-0F */
@@ -110,7 +110,7 @@ static unsigned char opmap[256] = {
     2,2,2, MODRM+2, MODRM+3, MODRM+2, NH, MODRM+2,
     /* B0-B7 */
     MODRM+2, MODRM+2, MODRM+OPSIZE+2, MODRM+2, MODRM+OPSIZE+2, MODRM+OPSIZE+2,
-      MODRM+2, MODRM+2,
+    MODRM+2, MODRM+2,
     /* B8-BF */
     NH, NH, MODRM+3, MODRM+2, MODRM+2, MODRM+2, MODRM+2, MODRM+2,
     /* C0-C7 */
@@ -126,37 +126,46 @@ static unsigned char opmap[256] = {
 int microX86Dis(void* pCode) {
     int opsize = 4;             /* Operand size override will change to 2 */
     int size = 0;
-    unsigned char modrm, mod, op2, sib;    
-    unsigned char op = *(unsigned char*)pCode; pCode++;
+    unsigned char modrm, mod, op2, sib;
+    unsigned char op = *(unsigned char*)pCode;
+    pCode++;
     int prefix = 1;
 
     while (prefix) {
         switch (op) {
-            case 0x66:
-                /* Operand size override */
-                opsize = 2;
-                op = *(unsigned char*)pCode; pCode++;
-                size += 1;              /* Count the 0x66 */
-                break;
-            case 0xF0: case 0xF2: case 0xF3:
-            case 0x26: case 0x2E:
-            case 0x36: case 0x3E:
-            case 0x64: case 0x65:
-                /* Prefixes (Lock/repne/rep, segment overrides);
-                  count these as part of the instruction rather than
-                  returning 1 byte.
-                  Easier to compare output with disassembly */
-                op = *(unsigned char*)pCode; pCode++;
-                size += 1;              /* Count the prefix */
-                break;
-            default:
-                prefix = 0;
+        case 0x66:
+            /* Operand size override */
+            opsize = 2;
+            op = *(unsigned char*)pCode;
+            pCode++;
+            size += 1;              /* Count the 0x66 */
+            break;
+        case 0xF0:
+        case 0xF2:
+        case 0xF3:
+        case 0x26:
+        case 0x2E:
+        case 0x36:
+        case 0x3E:
+        case 0x64:
+        case 0x65:
+            /* Prefixes (Lock/repne/rep, segment overrides);
+              count these as part of the instruction rather than
+              returning 1 byte.
+              Easier to compare output with disassembly */
+            op = *(unsigned char*)pCode;
+            pCode++;
+            size += 1;              /* Count the prefix */
+            break;
+        default:
+            prefix = 0;
         }
     }
 
     if (op == 0x0F) {
         /* Two byte escape */
-        op2 = *(unsigned char*)pCode; pCode++;
+        op2 = *(unsigned char*)pCode;
+        pCode++;
         size += op0Fmap[op2];
     }
     else
@@ -165,12 +174,14 @@ int microX86Dis(void* pCode) {
     if (size & MODRM) {
         size &= ~MODRM;     /* Remove flag from size */
         size++;             /* Count the mod/rm itself */
-        modrm = *(unsigned char*)pCode; pCode++;
+        modrm = *(unsigned char*)pCode;
+        pCode++;
         mod = modrm >> 6;
         if ((mod != 3) && ((modrm & 0x7) == 4)) {
             /* SIB also present */
             size++;     /* Count the SIB itself */
-            sib = *(unsigned char*)pCode; pCode++;
+            sib = *(unsigned char*)pCode;
+            pCode++;
             if ((mod == 0) && ((sib & 0x7) == 0x5)) {
                 /* ds:d32 with scale */
                 size += 4;
@@ -202,6 +213,6 @@ int microX86Dis(void* pCode) {
             size += opsize;
         }
     }
-            
+
     return size;
 }

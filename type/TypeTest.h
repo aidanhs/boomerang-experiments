@@ -6,9 +6,9 @@
 
 
 class TypeTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     TypeTest(std::string name) : CppUnit::TestCase (name)
     {}
 

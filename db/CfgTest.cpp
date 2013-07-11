@@ -41,7 +41,9 @@ void CfgTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int CfgTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        CfgTest::setUp
@@ -51,7 +53,7 @@ int CfgTest::countTestCases () const
  * RETURNS:         <nothing>
  *============================================================================*/
 void CfgTest::setUp () {
-	//prog.setName("default name");
+    //prog.setName("default name");
 }
 
 /*==============================================================================
@@ -98,10 +100,10 @@ void CfgTest::testDominators () {
     CPPUNIT_ASSERT(bb);
 
     std::ostringstream expected, actual;
-  //expected << std::hex << FRONTIER_FIVE << " " << FRONTIER_THIRTEEN << " " <<
-  //      FRONTIER_TWELVE << " " << FRONTIER_FOUR << " ";
+    //expected << std::hex << FRONTIER_FIVE << " " << FRONTIER_THIRTEEN << " " <<
+    //      FRONTIER_TWELVE << " " << FRONTIER_FOUR << " ";
     expected << std::hex << FRONTIER_THIRTEEN << " " << FRONTIER_FOUR << " " <<
-        FRONTIER_TWELVE << " " << FRONTIER_FIVE << " ";
+             FRONTIER_TWELVE << " " << FRONTIER_FIVE << " ";
     int n5 = cfg->pbbToNode(bb);
     std::set<int>::iterator ii;
     std::set<int>& DFset = cfg->getDF(n5);
@@ -157,7 +159,7 @@ void CfgTest::testSemiDominators () {
     CPPUNIT_ASSERT_EQUAL((unsigned)SEMI_D, actual_semi);
     // Check the final dominator frontier as well; should be M and B
     std::ostringstream expected, actual;
-  //expected << std::hex << SEMI_M << " " << SEMI_B << " ";
+    //expected << std::hex << SEMI_M << " " << SEMI_B << " ";
     expected << std::hex << SEMI_B << " " << SEMI_M << " ";
     std::set<int>::iterator ii;
     std::set<int>& DFset = cfg->getDF(nL);
@@ -188,14 +190,18 @@ void CfgTest::testPlacePhi () {
 
     // m[r29 - 8] (x for this program)
     Exp* e = new Unary(opMemOf,
-        new Binary(opMinus,
-            Location::regOf(29),
-            new Const(4)));
+                       new Binary(opMinus,
+                                  Location::regOf(29),
+                                  new Const(4)));
 
     // A_phi[x] should be the set {7 8 10 15 20 21} (all the join points)
     std::set<int> expected;
-    expected.insert(7);  expected.insert(8); expected.insert(10);
-    expected.insert(15); expected.insert(20); expected.insert(21);
+    expected.insert(7);
+    expected.insert(8);
+    expected.insert(10);
+    expected.insert(15);
+    expected.insert(20);
+    expected.insert(21);
     bool result = expected == cfg->getA_phi(e);
     CPPUNIT_ASSERT_EQUAL(true, result);
     delete e;
@@ -231,9 +237,9 @@ void CfgTest::testPlacePhi2 () {
     std::ostringstream actual;
     // m[r29 - 8]
     Exp* e = new Unary(opMemOf,
-        new Binary(opMinus,
-            Location::regOf(29),
-            new Const(8)));
+                       new Binary(opMinus,
+                                  Location::regOf(29),
+                                  new Const(8)));
     std::set<int>& s = cfg->getA_phi(e);
     std::set<int>::iterator pp;
     for (pp = s.begin(); pp != s.end(); pp++)
@@ -245,10 +251,10 @@ void CfgTest::testPlacePhi2 () {
     std::ostringstream actual2;
     // m[r29 - 12]
     e = new Unary(opMemOf,
-        new Binary(opMinus,
-            Location::regOf(29),
-            new Const(12)));
- 
+                  new Binary(opMinus,
+                             Location::regOf(29),
+                             new Const(12)));
+
     std::set<int>& s2 = cfg->getA_phi(e);
     for (pp = s2.begin(); pp != s2.end(); pp++)
         actual2 << *pp << " ";

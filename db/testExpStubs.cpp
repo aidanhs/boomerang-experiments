@@ -21,19 +21,33 @@ void BasicBlock::getAvailInAt(Statement *stmt, StatementSet &reachin, int phase)
 #include "typeStubs.cpp"
 
 // Proc
-Signature *Proc::getSignature() {return NULL;}
-Cfg* UserProc::getCFG() {return NULL;}
-const char* Proc::getName() {return "";}
-Prog *Proc::getProg() {return NULL;}
+Signature *Proc::getSignature() {
+    return NULL;
+}
+Cfg* UserProc::getCFG() {
+    return NULL;
+}
+const char* Proc::getName() {
+    return "";
+}
+Prog *Proc::getProg() {
+    return NULL;
+}
 void UserProc::getReturnSet(LocationSet &ret) {}
 
 // Prog
-char *Prog::getStringConstant(ADDRESS uaddr) {return NULL;}
-Proc* Prog::findProc(ADDRESS uAddr) const {return NULL;}
+char *Prog::getStringConstant(ADDRESS uaddr) {
+    return NULL;
+}
+Proc* Prog::findProc(ADDRESS uAddr) const {
+    return NULL;
+}
 void Prog::analyse() {}
 
 // signature
-std::list<Exp*> *Signature::getCallerSave(Prog* prog) {return NULL;}
+std::list<Exp*> *Signature::getCallerSave(Prog* prog) {
+    return NULL;
+}
 
 // frontend
 void FrontEnd::decode(Prog *prog, ADDRESS a) {}

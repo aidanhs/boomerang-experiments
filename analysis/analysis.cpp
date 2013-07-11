@@ -86,7 +86,7 @@ void Analysis::analyse(UserProc* proc) {
     while (pBB)
     {
         // Perform final simplifications
-       finalSimplify(pBB);
+        finalSimplify(pBB);
 
         // analyse calls
         analyseCalls(pBB, proc);
@@ -116,7 +116,10 @@ int Analysis::copySwap4(int* w)
     char* p = (char*)w;
     int ret;
     char* q = (char*)(&ret+1);
-    *--q = *p++; *--q = *p++; *--q = *p++; *--q = *p;
+    *--q = *p++;
+    *--q = *p++;
+    *--q = *p++;
+    *--q = *p;
     return ret;
 }
 
@@ -134,24 +137,25 @@ int Analysis::copySwap2(short* h)
     char* p = (char*)h;
     short ret;
     char* q = (char*)(&ret);
-    *++q = *p++; *--q = *p;
+    *++q = *p++;
+    *--q = *p;
     return (int)ret;
 }
 
 
-    // analyse calls
+// analyse calls
 void Analysis::analyseCalls(PBB pBB, UserProc *proc)
 {
     std::list<RTL*>* rtls = pBB->getRTLs();
-    for (std::list<RTL*>::iterator it = rtls->begin(); it != rtls->end(); 
-      it++) {
+    for (std::list<RTL*>::iterator it = rtls->begin(); it != rtls->end();
+            it++) {
         if (!(*it)->isCall()) continue;
         CallStatement* call = (CallStatement*)(*it)->getList().back();
         if (call->getDestProc() == NULL && !call->isComputed()) {
             Proc *p = proc->getProg()->findProc(call->getFixedDest());
             if (p == NULL) {
-                LOG << "cannot find proc for dest " 
-                    << call->getFixedDest() << " in call at " 
+                LOG << "cannot find proc for dest "
+                    << call->getFixedDest() << " in call at "
                     << (*it)->getAddress() << "\n";
                 assert(p);
             }

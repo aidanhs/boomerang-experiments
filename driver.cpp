@@ -51,9 +51,9 @@ void segv_handler(int a, siginfo_t *b, void *c)
 
     fprintf(stderr, "stack: ");
     for (int i = 0; i < 100; i++) {
-       unsigned int *sp = (unsigned int*)uc->uc_mcontext.gregs[REG_O6];
-       fprintf(stderr, "(%08X) %08X %08X %08X %08X", sp+i*4, sp[i*4], sp[i*4+1], sp[i*4+2], sp[i*4+3]);
-       fprintf(stderr, "\n       ");
+        unsigned int *sp = (unsigned int*)uc->uc_mcontext.gregs[REG_O6];
+        fprintf(stderr, "(%08X) %08X %08X %08X %08X", sp+i*4, sp[i*4], sp[i*4+1], sp[i*4+2], sp[i*4+3]);
+        fprintf(stderr, "\n       ");
     }
 #endif
 
@@ -63,7 +63,7 @@ void segv_handler(int a, siginfo_t *b, void *c)
         if (sp[i] - (unsigned int)(sp+i) < 100)
             fprintf(stderr, "%08X\n", sp[++i]);
     }
-   exit(0);
+    exit(0);
 }
 
 int main(int argc, const char* argv[]) {

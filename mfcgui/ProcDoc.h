@@ -14,46 +14,48 @@ class Proc;
 class CProcDoc : public CDocument
 {
 protected: // create from serialization only
-	CProcDoc();
-	DECLARE_DYNCREATE(CProcDoc)
+    CProcDoc();
+    DECLARE_DYNCREATE(CProcDoc)
 
 // Attributes
 public:
-	void setProc(Proc *p);
-	Proc *getProc() { return m_proc; }
+    void setProc(Proc *p);
+    Proc *getProc() {
+        return m_proc;
+    }
 
 private:
-	Proc *m_proc;
+    Proc *m_proc;
 
 // Operations
 public:
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CProcDoc)
-	public:
-	virtual BOOL OnNewDocument();
-	virtual void Serialize(CArchive& ar);
-	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CProcDoc)
+public:
+    virtual BOOL OnNewDocument();
+    virtual void Serialize(CArchive& ar);
+    virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+    //}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CProcDoc();
+    virtual ~CProcDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+    virtual void AssertValid() const;
+    virtual void Dump(CDumpContext& dc) const;
 #endif
 
 protected:
 
 // Generated message map functions
 protected:
-	//{{AFX_MSG(CProcDoc)
-		// NOTE - the ClassWizard will add and remove member functions here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    //{{AFX_MSG(CProcDoc)
+    // NOTE - the ClassWizard will add and remove member functions here.
+    //    DO NOT EDIT what you see in these blocks of generated code !
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

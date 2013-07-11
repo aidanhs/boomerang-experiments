@@ -3,7 +3,7 @@
  */
 /*==============================================================================
  * FILE:       removedoubleindirection.h
- * OVERVIEW:   Provides the definition for the remove double indirection exp 
+ * OVERVIEW:   Provides the definition for the remove double indirection exp
                tranformer.
  *============================================================================*/
 /*

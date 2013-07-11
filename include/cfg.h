@@ -19,7 +19,7 @@
  * 18 Apr 02 - Mike: Mods for boomerang
  * 04 Dec 02 - Mike: Added isJmpZ
  */
- 
+
 #ifndef _CFG_H_
 #define _CFG_H_
 
@@ -37,8 +37,8 @@
 #include "exp.h"        // For LocationSet
 #include "exphelp.h"    // For lessExpStar
 
-//#include "bitset.h"     // Saves time. Otherwise, any implementation file that 
-                        // defines say a BB, will need to #include this file
+//#include "bitset.h"     // Saves time. Otherwise, any implementation file that
+// defines say a BB, will need to #include this file
 
 #define DEBUG_LIVENESS  (Boomerang::get()->debugLiveness)
 
@@ -60,45 +60,45 @@ class XMLProgParser;
 #define BELSE 1
 
 // an enumerated type for the class of stucture determined for a node
-enum structType { 
-	Loop,      // Header of a loop only
-	Cond,      // Header of a conditional only (if-then-else or switch)
-	LoopCond,  // Header of a loop and a conditional
-	Seq 	   // sequential statement (default)
+enum structType {
+    Loop,      // Header of a loop only
+    Cond,      // Header of a conditional only (if-then-else or switch)
+    LoopCond,  // Header of a loop and a conditional
+    Seq 	   // sequential statement (default)
 };
 
 // an type for the class of unstructured conditional jumps
 enum unstructType {
-	Structured,
-	JumpInOutLoop,
-	JumpIntoCase
+    Structured,
+    JumpInOutLoop,
+    JumpIntoCase
 };
 
 
 // an enumerated type for the type of conditional headers
 enum condType {
-	IfThen,	    // conditional with only a then clause
-	IfThenElse, // conditional with a then and an else clause
-	IfElse,	    // conditional with only an else clause
-	Case	    // nway conditional header (case statement)
+    IfThen,	    // conditional with only a then clause
+    IfThenElse, // conditional with a then and an else clause
+    IfElse,	    // conditional with only an else clause
+    Case	    // nway conditional header (case statement)
 };
 
 // an enumerated type for the type of loop headers
 enum loopType {
-	PreTested,     // Header of a while loop
-	PostTested,    // Header of a repeat loop
-	Endless	       // Header of an endless loop
+    PreTested,     // Header of a while loop
+    PostTested,    // Header of a repeat loop
+    Endless	       // Header of an endless loop
 };
 
 // Depth-first traversal constants.
 enum travType {
-	UNTRAVERSED,   // Initial value
-	DFS_TAG,       // Remove redundant nodes pass
-	DFS_LNUM,      // DFS loop stamping pass
-	DFS_RNUM,      // DFS reverse loop stamping pass
-	DFS_CASE,      // DFS case head tagging traversal
-	DFS_PDOM,      // DFS post dominator ordering
-	DFS_CODEGEN    // Code generating pass
+    UNTRAVERSED,   // Initial value
+    DFS_TAG,       // Remove redundant nodes pass
+    DFS_LNUM,      // DFS loop stamping pass
+    DFS_RNUM,      // DFS reverse loop stamping pass
+    DFS_CASE,      // DFS case head tagging traversal
+    DFS_PDOM,      // DFS post dominator ordering
+    DFS_CODEGEN    // Code generating pass
 };
 
 // Kinds of basic block nodes
@@ -116,17 +116,17 @@ enum BBTYPE {
 };
 
 enum SBBTYPE {
-	NONE,					 // not structured
-	PRETESTLOOP,			 // header of a loop
-	POSTTESTLOOP,
-	ENDLESSLOOP,
-	JUMPINOUTLOOP,			 // an unstructured jump in or out of a loop
-	JUMPINTOCASE,			 // an unstructured jump into a case statement
-	IFGOTO,					 // unstructured conditional
-	IFTHEN,				 	 // conditional with then clause
-	IFTHENELSE,				 // conditional with then and else clauses
-	IFELSE,					 // conditional with else clause only
-	CASE					 // case statement (switch)
+    NONE,					 // not structured
+    PRETESTLOOP,			 // header of a loop
+    POSTTESTLOOP,
+    ENDLESSLOOP,
+    JUMPINOUTLOOP,			 // an unstructured jump in or out of a loop
+    JUMPINTOCASE,			 // an unstructured jump into a case statement
+    IFGOTO,					 // unstructured conditional
+    IFTHEN,				 	 // conditional with then clause
+    IFTHENELSE,				 // conditional with then and else clauses
+    IFELSE,					 // conditional with else clause only
+    CASE					 // case statement (switch)
 };
 
 typedef std::list<PBB>::iterator BB_IT;
@@ -168,10 +168,18 @@ public:
      */
     int getLabel();
 
-	std::string &getLabelStr() { return m_labelStr; }
-	void setLabelStr(std::string &s) { m_labelStr = s; }
-	bool isLabelNeeded() { return m_labelneeded; }
-	void setLabelNeeded(bool b) { m_labelneeded = b; }
+    std::string &getLabelStr() {
+        return m_labelStr;
+    }
+    void setLabelStr(std::string &s) {
+        m_labelStr = s;
+    }
+    bool isLabelNeeded() {
+        return m_labelneeded;
+    }
+    void setLabelNeeded(bool b) {
+        m_labelneeded = b;
+    }
 
     /*
      * Return whether this BB has been traversed or not
@@ -185,7 +193,7 @@ public:
 
     /*
      * Print the BB. For -R and for debugging
-	 * Don't use = std::cout, because gdb doesn't know about std::
+     * Don't use = std::cout, because gdb doesn't know about std::
      */
     void print(std::ostream& os);
     void printToLog();
@@ -228,7 +236,9 @@ public:
      */
     std::vector<PBB>& getInEdges();
 
-    int getNumInEdges() { return m_iNumInEdges; }
+    int getNumInEdges() {
+        return m_iNumInEdges;
+    }
 
     /*
      * Get the set of out edges.
@@ -250,7 +260,9 @@ public:
      */
     PBB getOutEdge(unsigned int i);
 
-    int getNumOutEdges() { return m_iNumOutEdges; }
+    int getNumOutEdges() {
+        return m_iNumOutEdges;
+    }
 
     /*
      * Get the index of my in-edges is BB pred
@@ -313,21 +325,21 @@ public:
      */
     void resetDFASets();
 
-	/* get the condition */
-	Exp *getCond();
+    /* get the condition */
+    Exp *getCond();
 
-	/* set the condition */
-	void setCond(Exp *e);
+    /* set the condition */
+    void setCond(Exp *e);
 
-	/* Check if there is a jump if equals relation */
-	bool isJmpZ(PBB dest);
+    /* Check if there is a jump if equals relation */
+    bool isJmpZ(PBB dest);
 
-	/* get the loop body */
-	BasicBlock *getLoopBody();
+    /* get the loop body */
+    BasicBlock *getLoopBody();
 
-	/* Simplify all the expressions in this BB
-	 */
-	void simplify();
+    /* Simplify all the expressions in this BB
+     */
+    void simplify();
 
 
     /*
@@ -336,12 +348,12 @@ public:
      */
 
     PBB getCorrectOutEdge(ADDRESS a);
-    
-	/*
-	 * Depth first traversal of all bbs, numbering as we go and as we come back,
-	 * forward and reverse passes.  Use Cfg::establishDFTOrder() and 
-	 * CFG::establishRevDFTOrder to create these values.
-	 */
+
+    /*
+     * Depth first traversal of all bbs, numbering as we go and as we come back,
+     * forward and reverse passes.  Use Cfg::establishDFTOrder() and
+     * CFG::establishRevDFTOrder to create these values.
+     */
     int         m_DFTfirst;        // depth-first traversal first visit
     int         m_DFTlast;         // depth-first traversal last visit
     int         m_DFTrevfirst;     // reverse depth-first traversal first visit
@@ -362,39 +374,39 @@ private:
 
 public:
 
-	// code generation
-	void generateBodyCode(HLLCode &hll, bool dup = false);
+    // code generation
+    void generateBodyCode(HLLCode &hll, bool dup = false);
 
-/* high level structuring */
-	SBBTYPE		m_structType;   // structured type of this node
-	SBBTYPE		m_loopCondType;	// type of conditional to treat this loop
-                                // header as (if any)
-	PBB			m_loopHead;     // head of the most nested enclosing loop
-	PBB			m_caseHead;		// head of the most nested enclosing case
-	PBB			m_condFollow;	// follow of a conditional header
-	PBB			m_loopFollow;	// follow of a loop header
-	PBB			m_latchNode;	// latch node of a loop header  
+    /* high level structuring */
+    SBBTYPE		m_structType;   // structured type of this node
+    SBBTYPE		m_loopCondType;	// type of conditional to treat this loop
+    // header as (if any)
+    PBB			m_loopHead;     // head of the most nested enclosing loop
+    PBB			m_caseHead;		// head of the most nested enclosing case
+    PBB			m_condFollow;	// follow of a conditional header
+    PBB			m_loopFollow;	// follow of a loop header
+    PBB			m_latchNode;	// latch node of a loop header
 
 protected:
-/* general basic block information */
+    /* general basic block information */
     BBTYPE          m_nodeType;     // type of basic block
     std::list<RTL*>* m_pRtls;       // Ptr to list of RTLs
     int             m_iLabelNum;    // Nonzero if start of BB needs label
-	std::string		m_labelStr;		// string label of this bb.
-	bool			m_labelneeded;
+    std::string		m_labelStr;		// string label of this bb.
+    bool			m_labelneeded;
     bool            m_bIncomplete;  // True if not yet complete
     bool            m_bJumpReqd;    // True if jump required for "fall through"
 
-/* in-edges and out-edges */
+    /* in-edges and out-edges */
     std::vector<PBB>     m_InEdges;      // Vector of in-edges
     std::vector<PBB>     m_OutEdges;     // Vector of out-edges
     int             m_iNumInEdges;  // We need these two because GCC doesn't
     int             m_iNumOutEdges; // support resize() of vectors!
 
-/* for traversal */
+    /* for traversal */
     bool            m_iTraversed;   // traversal marker
 
-/* Liveness */
+    /* Liveness */
     LocationSet     liveIn;         // Set of locations live at BB start
 
 public:
@@ -422,7 +434,9 @@ public:
 
     /* set the return value */
     void setReturnVal(Exp *e);
-    Exp *getReturnVal() { return m_returnVal; }
+    Exp *getReturnVal() {
+        return m_returnVal;
+    }
 
 protected:
     // ?? What is this? Needed?
@@ -458,15 +472,29 @@ protected:
     void setRevLoopStamps(int &time);
     void setRevOrder(std::vector<PBB> &order);
 
-    void setLoopHead(PBB head) { loopHead = head; }
-    PBB getLoopHead() { return loopHead; }
-    void setLatchNode(PBB latch) { latchNode = latch; }
-    bool isLatchNode() { return loopHead && loopHead->latchNode == this; }
-    PBB getLatchNode() { return latchNode; }
-    PBB getCaseHead() { return caseHead; }
+    void setLoopHead(PBB head) {
+        loopHead = head;
+    }
+    PBB getLoopHead() {
+        return loopHead;
+    }
+    void setLatchNode(PBB latch) {
+        latchNode = latch;
+    }
+    bool isLatchNode() {
+        return loopHead && loopHead->latchNode == this;
+    }
+    PBB getLatchNode() {
+        return latchNode;
+    }
+    PBB getCaseHead() {
+        return caseHead;
+    }
     void setCaseHead(PBB head, PBB follow);
 
-    structType getStructType() { return sType; }
+    structType getStructType() {
+        return sType;
+    }
     void setStructType(structType s);
 
     unstructType getUnstructType();
@@ -478,11 +506,19 @@ protected:
     condType getCondType();
     void setCondType(condType l);
 
-    void setLoopFollow(PBB other) { loopFollow = other; }
-    PBB getLoopFollow() { return loopFollow; }
+    void setLoopFollow(PBB other) {
+        loopFollow = other;
+    }
+    PBB getLoopFollow() {
+        return loopFollow;
+    }
 
-    void setCondFollow(PBB other) { condFollow = other; }
-    PBB getCondFollow() { return condFollow; }
+    void setCondFollow(PBB other) {
+        condFollow = other;
+    }
+    PBB getCondFollow() {
+        return condFollow;
+    }
 
     // establish if this bb has a back edge to the given destination
     bool hasBackEdgeTo(BasicBlock *dest);
@@ -490,7 +526,7 @@ protected:
     // establish if this bb has any back edges leading FROM it
     bool hasBackEdge() {
         for (unsigned int i = 0; i < m_OutEdges.size(); i++)
-            if (hasBackEdgeTo(m_OutEdges[i])) 
+            if (hasBackEdgeTo(m_OutEdges[i]))
                 return true;
         return false;
     }
@@ -503,7 +539,7 @@ protected:
     bool isIn(std::list<PBB> &set, PBB bb)
     {
         for (std::list<PBB>::iterator it = set.begin();
-             it != set.end(); it++)
+                it != set.end(); it++)
             if (*it == bb) return true;
         return false;
     }
@@ -514,7 +550,7 @@ protected:
     void WriteBB(HLLCode *hll, int indLevel);
 
 public:
-    void generateCode(HLLCode *hll, int indLevel, PBB latch, 
+    void generateCode(HLLCode *hll, int indLevel, PBB latch,
                       std::list<PBB> &followSet, std::list<PBB> &gotoSet);
     // For prepending phi functions
     void prependStmt(Statement* s, UserProc* proc);
@@ -535,17 +571,22 @@ public:
 
 protected:
     friend class XMLProgParser;
-    void addOutEdge(PBB bb) { m_OutEdges.push_back(bb); }
-    void addRTL(RTL *rtl) { if (m_pRtls == NULL) 
-				m_pRtls = new std::list<RTL*>;
-			    m_pRtls->push_back(rtl);
-			  }
-    void addLiveIn(Location *e) { liveIn.insert(e); }
+    void addOutEdge(PBB bb) {
+        m_OutEdges.push_back(bb);
+    }
+    void addRTL(RTL *rtl) {
+        if (m_pRtls == NULL)
+            m_pRtls = new std::list<RTL*>;
+        m_pRtls->push_back(rtl);
+    }
+    void addLiveIn(Location *e) {
+        liveIn.insert(e);
+    }
 
 };  // class BasicBlock
 
 
-    // A type for the ADDRESS to BB map
+// A type for the ADDRESS to BB map
 typedef std::map<ADDRESS, PBB, std::less<ADDRESS> >   MAPBB;
 
 /*==============================================================================
@@ -609,7 +650,7 @@ class Cfg {
     std::vector<int> dfnum;             // Number set in depth first search
     std::vector<int> semi;              // Semi dominators
     std::vector<int> ancestor;          // Defines the forest that becomes the
-                                        // spanning tree
+    // spanning tree
     std::vector<int> idom;              // Immediate dominator
     std::vector<int> samedom;           // ? To do with deferring
     std::vector<int> vertex;            // ?
@@ -741,22 +782,26 @@ public:
      * An alternative to the above is to use begin() and end():
      */
     typedef BB_IT iterator;
-    iterator begin() {return m_listBB.begin();}
-    iterator end()   {return m_listBB.end();}
+    iterator begin() {
+        return m_listBB.begin();
+    }
+    iterator end()   {
+        return m_listBB.end();
+    }
 
 
     /*
      * Checks whether the given native address is a label (explicit or non
-     * explicit) or not.  Explicit labels are addresses that have already 
-     * been tagged as being labels due to transfers of control to that 
-     * address.  Non explicit labels are those that belong to basic blocks 
-     * that have already been constructed (i.e. have previously been parsed) 
-     * and now need to be made explicit labels.  In the case of non explicit 
-     * labels, the basic block is split into two and types and edges are 
+     * explicit) or not.  Explicit labels are addresses that have already
+     * been tagged as being labels due to transfers of control to that
+     * address.  Non explicit labels are those that belong to basic blocks
+     * that have already been constructed (i.e. have previously been parsed)
+     * and now need to be made explicit labels.  In the case of non explicit
+     * labels, the basic block is split into two and types and edges are
      * adjusted accordingly. pNewBB is set to the lower part of the split BB.
-     * Returns true if the native address is that of an explicit or non 
+     * Returns true if the native address is that of an explicit or non
      * explicit label, false otherwise.
-     */ 
+     */
     bool label ( ADDRESS uNativeAddr, PBB& pNewBB );
 
     /*
@@ -803,24 +848,24 @@ public:
     bool wellFormCfg ( );
 
     /*
-     * Given two basic blocks that belong to a well-formed graph, merges the 
-     * second block onto the first one and returns the new block.  The in and 
-     * out edges links are updated accordingly. 
-     * Note that two basic blocks can only be merged if each has a unique 
+     * Given two basic blocks that belong to a well-formed graph, merges the
+     * second block onto the first one and returns the new block.  The in and
+     * out edges links are updated accordingly.
+     * Note that two basic blocks can only be merged if each has a unique
      * out-edge and in-edge respectively, and these edges correspond to each
-     * other.  
+     * other.
      * Returns true if the blocks are merged.
      */
     bool mergeBBs ( PBB pb1, PBB pb2 );
- 
+
 
     /*
      * Given a well-formed cfg graph, optimizations are performed on
-     * the graph to reduce the number of basic blocks and edges.  
+     * the graph to reduce the number of basic blocks and edges.
      * Optimizations performed are: removal of branch chains (i.e. jumps
-     * to jumps), removal of redundant jumps (i.e. jump to the next 
+     * to jumps), removal of redundant jumps (i.e. jump to the next
      * instruction), merge basic blocks where possible, and remove
-     * redundant basic blocks created by the previous optimizations.  
+     * redundant basic blocks created by the previous optimizations.
      * Returns false if not successful.
      */
     bool compressCfg ( );
@@ -898,7 +943,7 @@ public:
     void searchAndReplace(Exp* search, Exp* replace);
 
     /*
-     * Set the return value for this CFG 
+     * Set the return value for this CFG
      * (assumes there is only one exit bb)
      */
     void setReturnVal(Exp *e);
@@ -924,7 +969,9 @@ public:
     std::vector<PBB> m_vectorBB; // faster access
 
     /* return a bb given an address */
-    PBB bbForAddr(ADDRESS addr) { return m_mapBB[addr]; }
+    PBB bbForAddr(ADDRESS addr) {
+        return m_mapBB[addr];
+    }
 
     /* Simplify all the expressions in the CFG
      */
@@ -956,7 +1003,7 @@ private:
      * Returns a pointer to the "bottom" (new) part of the BB.
      */
     PBB splitBB (PBB pBB, ADDRESS uNativeAddr, PBB pNewBB = 0,
-        bool bDelRtls = false);
+                 bool bDelRtls = false);
 
     /*
      * Completes the merge of pb1 and pb2 by adjusting out edges. No checks
@@ -976,7 +1023,7 @@ public:
      * given. Sort out all the in and out edges.
      */
     PBB splitForBranch(PBB pBB, RTL* rtl, BranchStatement* br1,
-      BranchStatement* br2, BB_IT& it);
+                       BranchStatement* br2, BB_IT& it);
 
     /* Control flow analysis stuff, lifted from Doug Simon's honours thesis.
      */
@@ -997,8 +1044,12 @@ public:
     /*
      * Get the entry-point or exit BB
      */
-    PBB getEntryBB() { return entryBB;}
-    PBB getExitBB()  { return exitBB;}
+    PBB getEntryBB() {
+        return entryBB;
+    }
+    PBB getExitBB()  {
+        return exitBB;
+    }
 
     /*
      * Set the entry-point BB (and exit BB as well)
@@ -1040,19 +1091,33 @@ public:
 
 
     // For testing:
-    int pbbToNode(PBB bb) {return indices[bb];}
-    std::set<int>& getDF(int node) {return DF[node];}
-    PBB nodeToBB(int node) {return BBs[node];} 
-    int getIdom(int node) {return idom[node];}
-    int getSemi(int node) {return semi[node];}
-    std::set<int>& getA_phi(Exp* e) {return A_phi[e];}
+    int pbbToNode(PBB bb) {
+        return indices[bb];
+    }
+    std::set<int>& getDF(int node) {
+        return DF[node];
+    }
+    PBB nodeToBB(int node) {
+        return BBs[node];
+    }
+    int getIdom(int node) {
+        return idom[node];
+    }
+    int getSemi(int node) {
+        return semi[node];
+    }
+    std::set<int>& getA_phi(Exp* e) {
+        return A_phi[e];
+    }
 
     void findInterferences(igraph& ig, int& tempNum);
     void appendBBs(std::list<PBB>& worklist, std::set<PBB>& workset);
 
 protected:
     friend class XMLProgParser;
-    void addBB(PBB bb) { m_listBB.push_back(bb); }
+    void addBB(PBB bb) {
+        m_listBB.push_back(bb);
+    }
 };              /* Cfg */
 
 #endif

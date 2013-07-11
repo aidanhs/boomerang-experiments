@@ -17,9 +17,9 @@
 #include "prog.h"
 
 class StatementTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     StatementTest(std::string name) : CppUnit::TestCase (name)
     {}
 

@@ -22,24 +22,39 @@ class Statement;
 class BinaryFile;
 class XMLProgParser;
 
-class Parameter { 
+class Parameter {
 private:
     Type *type;
     std::string name;
     Exp *exp;
 
-public: 
-            Parameter(Type *type, const char *name, Exp *exp = NULL) :
-              type(type), name(name), exp(exp)  { }
-            ~Parameter() { delete type; delete exp; }
+public:
+    Parameter(Type *type, const char *name, Exp *exp = NULL) :
+        type(type), name(name), exp(exp)  { }
+    ~Parameter() {
+        delete type;
+        delete exp;
+    }
     bool    operator==(Parameter& other);
 
-    Type *getType() { return type; }
-    void setType(Type *ty) { type = ty; }
-    const char *getName() { return name.c_str(); }
-    void setName(const char *nam) { name = nam; }
-    Exp *getExp()       { return exp; }
-    void setExp(Exp *e) { exp = e; }
+    Type *getType() {
+        return type;
+    }
+    void setType(Type *ty) {
+        type = ty;
+    }
+    const char *getName() {
+        return name.c_str();
+    }
+    void setName(const char *nam) {
+        name = nam;
+    }
+    Exp *getExp()       {
+        return exp;
+    }
+    void setExp(Exp *e) {
+        exp = e;
+    }
 protected:
     friend class XMLProgParser;
     Parameter() : type(NULL), name(""), exp(NULL) { }
@@ -50,12 +65,16 @@ private:
     Parameter *parent;
 
 public:
-    ImplicitParameter(Type *type, const char *name, Exp *exp, Parameter *parent) : 
-                            Parameter(type, name, exp), parent(parent) { }
+    ImplicitParameter(Type *type, const char *name, Exp *exp, Parameter *parent) :
+        Parameter(type, name, exp), parent(parent) { }
     ~ImplicitParameter() { }
 
-    void setParent(Parameter *p) { parent = p; }
-    Parameter *getParent() { return parent; }
+    void setParent(Parameter *p) {
+        parent = p;
+    }
+    Parameter *getParent() {
+        return parent;
+    }
 protected:
     friend class XMLProgParser;
     ImplicitParameter() : Parameter(), parent(NULL) { }
@@ -68,14 +87,27 @@ private:
 
 public:
     Return(Type *type, Exp *exp) : type(type), exp(exp) { }
-    ~Return() { delete type; delete exp; }
+    ~Return() {
+        delete type;
+        delete exp;
+    }
     bool    operator==(Return& other);
 
-    Type *getType() { return type; }
-    void setType(Type *ty) { type = ty; }
-    Exp *getExp() { return exp; }
-    Exp*& getRefExp() {return exp;}
-    void setExp(Exp* e) { exp = e; }
+    Type *getType() {
+        return type;
+    }
+    void setType(Type *ty) {
+        type = ty;
+    }
+    Exp *getExp() {
+        return exp;
+    }
+    Exp*& getRefExp() {
+        return exp;
+    }
+    void setExp(Exp* e) {
+        exp = e;
+    }
 protected:
     friend class XMLProgParser;
     Return() : type(NULL), exp(NULL) { }
@@ -114,7 +146,9 @@ public:
     // get the return location
     virtual void addReturn(Type *type, Exp *e = NULL);
     virtual void addReturn(Exp *e);
-    virtual void addReturn(Return *ret) { returns.push_back(ret); }
+    virtual void addReturn(Return *ret) {
+        returns.push_back(ret);
+    }
     virtual void removeReturn(Exp *e);
     virtual int getNumReturns();
     virtual Exp *getReturnExp(int n);
@@ -123,7 +157,9 @@ public:
     virtual void setReturnType(int n, Type *ty);
     virtual int findReturn(Exp *e);
     void fixReturnsWithParameters();
-    void setRetType(Type *t) { rettype = t; }
+    void setRetType(Type *t) {
+        rettype = t;
+    }
 
     // get/set the name
     virtual const char *getName();
@@ -131,11 +167,13 @@ public:
 
     // add a new parameter to this signature
     virtual void addParameter(const char *nam = NULL);
-    virtual void addParameter(Type *type, const char *nam = NULL, 
+    virtual void addParameter(Type *type, const char *nam = NULL,
                               Exp *e = NULL);
     virtual void addParameter(Exp *e);
     virtual void addParameter(Parameter *param);
-    virtual void addEllipsis() { ellipsis = true; }
+    virtual void addEllipsis() {
+        ellipsis = true;
+    }
     virtual void removeParameter(Exp *e);
     virtual void removeParameter(int i);
     // set the number of parameters using defaults
@@ -151,7 +189,9 @@ public:
     virtual int findParam(const char *nam);
     // accessor for argument expressions
     virtual Exp *getArgumentExp(int n);
-    virtual bool hasEllipsis() { return ellipsis; }
+    virtual bool hasEllipsis() {
+        return ellipsis;
+    }
     std::list<Exp*> *getCallerSave(Prog* prog);
 
     // add a new implicit parameter
@@ -187,9 +227,13 @@ public:
     Exp* getEarlyParamExp(int n, Prog* prog);
 
     // Get a wildcard to find stack locations
-    virtual Exp *getStackWildcard() { return NULL; }
-    virtual int  getStackRegister(          ) {return 0; };
-            int  getStackRegister(Prog* prog);
+    virtual Exp *getStackWildcard() {
+        return NULL;
+    }
+    virtual int  getStackRegister(          ) {
+        return 0;
+    };
+    int  getStackRegister(Prog* prog);
     // Does expression e represent a local stack-based variable?
     // Result can be ABI specific, e.g. sparc has locals in the parent's stack frame,
     // at POSITIVE offsets from the stack pointer register
@@ -199,39 +243,71 @@ public:
     // sp{0} -/+ K)
     bool isAddrOfStackLocal(Prog* prog, Exp* e);
     // For most machines, local variables are always NEGATIVE offsets from sp
-    virtual bool isLocalOffsetNegative() {return true;}
+    virtual bool isLocalOffsetNegative() {
+        return true;
+    }
     // For most machines, local variables are not POSITIVE offsets from sp
-    virtual bool isLocalOffsetPositive() {return false;}
+    virtual bool isLocalOffsetPositive() {
+        return false;
+    }
 
     // Quick and dirty hack
-static Exp* getReturnExp2(BinaryFile* pBF);
-static StatementList& getStdRetStmt(Prog* prog);
+    static Exp* getReturnExp2(BinaryFile* pBF);
+    static StatementList& getStdRetStmt(Prog* prog);
 
     // get anything that can be proven as a result of the signature
-    virtual Exp *getProven(Exp *left) { return NULL; }
+    virtual Exp *getProven(Exp *left) {
+        return NULL;
+    }
 
-    virtual bool isPromoted() { return false; }
+    virtual bool isPromoted() {
+        return false;
+    }
 
     // ascii versions of platform, calling convention name
-static char*   platformName(platform plat);
-static char*   conventionName(callconv cc);
-virtual platform getPlatform() { return PLAT_GENERIC; }
-virtual callconv getConvention() { return CONV_NONE; }
+    static char*   platformName(platform plat);
+    static char*   conventionName(callconv cc);
+    virtual platform getPlatform() {
+        return PLAT_GENERIC;
+    }
+    virtual callconv getConvention() {
+        return CONV_NONE;
+    }
 
     // prefered format
-    void setPreferedReturn(Type *ty) { preferedReturn = ty; }
-    void setPreferedName(const char *nam) { preferedName = nam; }
-    void addPreferedParameter(int n) { preferedParams.push_back(n); }
-    Type *getPreferedReturn() { return preferedReturn; }
-    const char *getPreferedName() { return preferedName.c_str(); }
-    unsigned int getNumPreferedParams() { return preferedParams.size(); }
-    int getPreferedParam(int n) { return preferedParams[n]; }
+    void setPreferedReturn(Type *ty) {
+        preferedReturn = ty;
+    }
+    void setPreferedName(const char *nam) {
+        preferedName = nam;
+    }
+    void addPreferedParameter(int n) {
+        preferedParams.push_back(n);
+    }
+    Type *getPreferedReturn() {
+        return preferedReturn;
+    }
+    const char *getPreferedName() {
+        return preferedName.c_str();
+    }
+    unsigned int getNumPreferedParams() {
+        return preferedParams.size();
+    }
+    int getPreferedParam(int n) {
+        return preferedParams[n];
+    }
 protected:
     friend class XMLProgParser;
     Signature() : name(""), rettype(NULL), ellipsis(false), preferedReturn(NULL), preferedName("") { }
-    void appendParameter(Parameter *p) { params.push_back(p); }
-    void appendImplicitParameter(ImplicitParameter *p) { implicitParams.push_back(p); }
-    void appendReturn(Return *r) { returns.push_back(r); }
+    void appendParameter(Parameter *p) {
+        params.push_back(p);
+    }
+    void appendImplicitParameter(ImplicitParameter *p) {
+        implicitParams.push_back(p);
+    }
+    void appendReturn(Return *r) {
+        returns.push_back(r);
+    }
 };
 
 class CustomSignature : public Signature {
@@ -240,10 +316,14 @@ protected:
 public:
     CustomSignature(const char *nam);
     virtual ~CustomSignature() { }
-    virtual bool isPromoted() { return true; }
+    virtual bool isPromoted() {
+        return true;
+    }
     virtual Signature *clone();
     void setSP(int nsp);
-    virtual int  getStackRegister(          ) {return sp; };
+    virtual int  getStackRegister(          ) {
+        return sp;
+    };
 };
 
 #endif

@@ -18,9 +18,11 @@ public:
      */
     PentiumFrontEnd(BinaryFile *pBF);
 
-virtual ~PentiumFrontEnd();
+    virtual ~PentiumFrontEnd();
 
-virtual platform getFrontEndId() { return PLAT_PENTIUM; }
+    virtual platform getFrontEndId() {
+        return PLAT_PENTIUM;
+    }
 
     /*
      * processProc. This is the main function for decoding a procedure.
@@ -31,34 +33,34 @@ virtual platform getFrontEndId() { return PLAT_PENTIUM; }
      * instruction)
      * Returns true on a good decode
      */
-virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
-                bool frag = false, bool spec = false);
+    virtual bool    processProc(ADDRESS uAddr, UserProc* pProc, std::ofstream &os,
+                                bool frag = false, bool spec = false);
 
-virtual std::vector<Exp*> &getDefaultParams();
-virtual std::vector<Exp*> &getDefaultReturns();
+    virtual std::vector<Exp*> &getDefaultParams();
+    virtual std::vector<Exp*> &getDefaultReturns();
 
-virtual ADDRESS getMainEntryPoint( bool &gotMain );
+    virtual ADDRESS getMainEntryPoint( bool &gotMain );
 
 private:
 
     /*
      * Process an F(n)STSW instruction.
      */
-	bool 	processStsw(std::list<RTL*>::iterator& rit, std::list<RTL*>* pRtls, PBB pBB, Cfg* pCfg);
+    bool 	processStsw(std::list<RTL*>::iterator& rit, std::list<RTL*>* pRtls, PBB pBB, Cfg* pCfg);
 
     /*
      * Emit a set instruction.
      */
-        void 	emitSet(std::list<RTL*>* pRtls, std::list<RTL*>::iterator& itRtl, ADDRESS uAddr,
-  			Exp* pLHS, Exp* cond);
+    void 	emitSet(std::list<RTL*>* pRtls, std::list<RTL*>::iterator& itRtl, ADDRESS uAddr,
+                    Exp* pLHS, Exp* cond);
 
     /*
      * Handle the case of being in state 23 and encountering a set instruction.
      */
-    	void 	State25(Exp* pLHS, Exp* pRHS, std::list<RTL*>* pRtls, std::list<RTL*>::iterator& rit,
-    			ADDRESS uAddr);
+    void 	State25(Exp* pLHS, Exp* pRHS, std::list<RTL*>* pRtls, std::list<RTL*>::iterator& rit,
+                    ADDRESS uAddr);
 
-	int idPF;              // Parity flag
+    int idPF;              // Parity flag
 
     /*
      * Little simpler, just replaces FPUSH and FPOP with more complex
@@ -85,14 +87,14 @@ private:
      * Check a HLCall for a helper function, and replace with appropriate
      *  semantics if possible
      */
-	bool 	helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
+    bool 	helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lrtl);
 
-	bool 	isStoreFsw(Statement* s);
-	bool 	isDecAh(RTL* r);
-	bool 	isSetX(Statement* e);
-	bool 	isAssignFromTern(Statement* s);
-	void 	bumpRegisterAll(Exp* e, int min, int max, int delta, int mask);
-	unsigned fetch4(unsigned char* ptr);
+    bool 	isStoreFsw(Statement* s);
+    bool 	isDecAh(RTL* r);
+    bool 	isSetX(Statement* e);
+    bool 	isAssignFromTern(Statement* s);
+    void 	bumpRegisterAll(Exp* e, int min, int max, int delta, int mask);
+    unsigned fetch4(unsigned char* ptr);
 
 
 };

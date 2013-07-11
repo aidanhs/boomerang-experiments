@@ -23,7 +23,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include "types.h"
 #include "table.h"
@@ -40,7 +40,9 @@ Table::Table(std::deque<std::string>& recs, TABLE_TYPE t /* = NAMETABLE */) :
 {
 }
 
-TABLE_TYPE Table::getType() const { return type; }
+TABLE_TYPE Table::getType() const {
+    return type;
+}
 
 OpTable::OpTable(std::deque<std::string>& ops) :
     Table(ops, OPTABLE)
@@ -54,7 +56,7 @@ ExprTable::ExprTable(std::deque<Exp*>& exprs) :
 
 ExprTable::~ExprTable(void)
 {
-	std::deque<Exp*>::iterator loc;
-	for (loc = expressions.begin(); loc != expressions.end(); loc++)
-		delete (*loc);
+    std::deque<Exp*>::iterator loc;
+    for (loc = expressions.begin(); loc != expressions.end(); loc++)
+        delete (*loc);
 }

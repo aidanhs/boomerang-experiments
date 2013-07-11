@@ -33,7 +33,9 @@ void FrontendTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int FrontendTest::countTestCases () const
-{ return 3; }   // ? What's this for?
+{
+    return 3;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        FrontendTest::setUp

@@ -17,7 +17,7 @@
 
 /*
  * $Revision: 1.26.2.5 $
- * 
+ *
  * 08 Apr 02 - Mike: Changes for boomerang
  * 13 May 02 - Mike: expList is no longer a pointer
  * 15 May 02 - Mike: Fixed a nasty bug in updateExp (when update with same
@@ -28,7 +28,7 @@
 #include <assert.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <iomanip>          // For setfill
 #include <sstream>
@@ -52,7 +52,7 @@
 
 /******************************************************************************
  * RTL methods.
- * Class RTL represents low-level register transfer lists. 
+ * Class RTL represents low-level register transfer lists.
  *****************************************************************************/
 
 /*==============================================================================
@@ -62,7 +62,7 @@
  * RETURNS:         N/a
  *============================================================================*/
 RTL::RTL()
-  : nativeAddr(0)
+    : nativeAddr(0)
 { }
 
 /*==============================================================================
@@ -86,7 +86,7 @@ RTL::RTL(ADDRESS instNativeAddr, std::list<Statement*>* listStmt /*= NULL*/)
  * RETURNS:         N/a
  *============================================================================*/
 RTL::RTL(const RTL& other)
-  : nativeAddr(other.nativeAddr) {
+    : nativeAddr(other.nativeAddr) {
     std::list<Statement*>::const_iterator it;
     for (it = other.stmtList.begin(); it != other.stmtList.end(); it++) {
         stmtList.push_back((*it)->clone());
@@ -120,7 +120,7 @@ RTL& RTL::operator=(RTL& other) {
         std::list<Statement*>::iterator it;
         for (it = other.stmtList.begin(); it != other.stmtList.end(); it++)
             stmtList.push_back((*it)->clone());
-        
+
         nativeAddr = other.nativeAddr;
     }
     return *this;
@@ -140,7 +140,7 @@ RTL* RTL::clone() {
     for (it = stmtList.begin(); it != stmtList.end(); it++) {
         le.push_back((*it)->clone());
     }
-    
+
     RTL* ret = new RTL(nativeAddr, &le);
     return ret;
 }
@@ -260,7 +260,7 @@ void RTL::updateStmt(Statement *s, unsigned i) {
 
     // Find the position
     std::list<Statement*>::iterator pp = stmtList.begin();
-    for (; i > 0; i--, pp++);    
+    for (; i > 0; i--, pp++);
 
     // Note that sometimes we might update even when we don't know if it's
     // needed, e.g. after a searchReplace.
@@ -279,12 +279,12 @@ void RTL::deleteStmt(unsigned i) {
 
     // find the position
     std::list<Statement*>::iterator pp = stmtList.begin();
-    for (; i > 0; i--, pp++);    
+    for (; i > 0; i--, pp++);
 
     // do the delete
     stmtList.erase(pp);
 }
-    
+
 /*==============================================================================
  * FUNCTION:        RTL::getNumStmt
  * OVERVIEW:        Get the number of Statements in this RTL
@@ -343,11 +343,11 @@ void RTL::print(std::ostream& os /*= cout*/) {
 
 extern char debug_buffer[];
 char* RTL::prints() {
-      std::ostringstream ost;
-      print(ost);
-      strncpy(debug_buffer, ost.str().c_str(), 199);
-      debug_buffer[199] = '\0';
-      return debug_buffer;
+    std::ostringstream ost;
+    print(ost);
+    strncpy(debug_buffer, ost.str().c_str(), 199);
+    debug_buffer[199] = '\0';
+    return debug_buffer;
 }
 
 /*==============================================================================
@@ -381,7 +381,7 @@ void RTL::updateAddress(ADDRESS addr) {
 bool RTL::searchAndReplace(Exp* search, Exp* replace) {
     bool ch = false;
     for (std::list<Statement*>::iterator it = stmtList.begin();
-      it != stmtList.end(); it++)
+            it != stmtList.end(); it++)
         ch |= (*it)->searchAndReplace(search, replace);
     return ch;
 }
@@ -397,7 +397,7 @@ bool RTL::searchAndReplace(Exp* search, Exp* replace) {
 bool RTL::searchAll(Exp* search, std::list<Exp *> &result) {
     bool found = false;
     for (std::list<Statement*>::iterator it = stmtList.begin();
-      it != stmtList.end(); it++) {
+            it != stmtList.end(); it++) {
         Statement *e = *it;
         Exp* res;
         if (e->search(search, res)) {
@@ -435,7 +435,7 @@ void RTL::clear() {
  * RETURNS:         <nothing>
  *============================================================================*/
 void RTL::insertAssign(Exp* pLhs, Exp* pRhs, bool prep,
-                        Type* type /*= NULL */) {
+                       Type* type /*= NULL */) {
     // Generate the assignment expression
     Assign* asgn = new Assign(type, pLhs, pRhs);
     if (prep)
@@ -466,7 +466,7 @@ void RTL::insertAfterTemps(Exp* pLhs, Exp* pRhs, Type* type  /* NULL */) {
     std::list<Statement*>::iterator it;
     // First skip all assignments with temps on LHS
     for (it = stmtList.begin(); it != stmtList.end(); it++) {
-    Statement *e = *it;
+        Statement *e = *it;
         if (!e->isAssign())
             break;
         Exp* LHS = e->getLeft();
@@ -532,16 +532,16 @@ bool RTL::areFlagsAffected() {
 
 void RTL::generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {
     for (std::list<Statement*>::iterator it = stmtList.begin();
-      it != stmtList.end(); it++) {
+            it != stmtList.end(); it++) {
         (*it)->generateCode(hll, pbb, indLevel);
     }
 }
 
 void RTL::simplify() {
     for (std::list<Statement*>::iterator it = stmtList.begin();
-         it != stmtList.end(); /*it++*/) {
+            it != stmtList.end(); /*it++*/) {
         Statement *s = *it;
-        s->simplify();        
+        s->simplify();
         if (s->isBranch()) {
             Exp *cond =  ((BranchStatement*)s)->getCondExpr();
             if (cond->getOper() == opIntConst) {
@@ -590,8 +590,8 @@ bool RTL::isCompare(int& iReg, Exp*& expOperand) {
     } while (rhs->getOper() != opMinus && i < getNumStmt());
     if (rhs->getOper() != opMinus) return false;
     // We should be rid of all r[tmp] now...
-      // Exp* lhs = cur->getLeft();
-      // if (!lhs->isRegOf()) return false;
+    // Exp* lhs = cur->getLeft();
+    // if (!lhs->isRegOf()) return false;
     // We have a subtract assigning to a register.
     // Check if there is a subflags last
     Statement* last = elementAt(getNumStmt()-1);

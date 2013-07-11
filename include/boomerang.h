@@ -42,22 +42,32 @@ private:
 
     Boomerang();
 public:
-    static Boomerang *get() { 
-        if (!boomerang) boomerang = new Boomerang(); 
-	return boomerang;
+    static Boomerang *get() {
+        if (!boomerang) boomerang = new Boomerang();
+        return boomerang;
     }
 
     Log &log();
-    void setLogger(Log *l) { logger = l; }
+    void setLogger(Log *l) {
+        logger = l;
+    }
 
     HLLCode *getHLLCode(UserProc *p = NULL);
 
     // performs command line operation
     int commandLine(int argc, const char **argv);
-    void setProgPath(const char* p) { progPath = p; }
-    const std::string& getProgPath() { return progPath; }
-    void setOutputPath(const char* p) { outputPath = p; }
-    const std::string& getOutputPath() { return outputPath; }
+    void setProgPath(const char* p) {
+        progPath = p;
+    }
+    const std::string& getProgPath() {
+        return progPath;
+    }
+    void setOutputPath(const char* p) {
+        outputPath = p;
+    }
+    const std::string& getOutputPath() {
+        return outputPath;
+    }
     Prog *loadAndDecode(const char *fname);
     int decompile(const char *fname);
 

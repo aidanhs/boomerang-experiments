@@ -80,94 +80,96 @@ enum PREC {
 
 class CHLLCode : public HLLCode {
 private:
-	std::list<char *> lines;
+    std::list<char *> lines;
 
-        void indent(std::ostringstream& str, int indLevel);
-        void appendExp(std::ostringstream& str, Exp *exp, PREC curPrec,
-            bool uns = false);
-        void appendType(std::ostringstream& str, Type *typ);
-        void openParen(std::ostringstream& str, PREC outer, PREC inner) {
-            if (inner < outer) str << "("; }
-        void closeParen(std::ostringstream& str, PREC outer, PREC inner) {
-            if (inner < outer) str << ")"; }
+    void indent(std::ostringstream& str, int indLevel);
+    void appendExp(std::ostringstream& str, Exp *exp, PREC curPrec,
+                   bool uns = false);
+    void appendType(std::ostringstream& str, Type *typ);
+    void openParen(std::ostringstream& str, PREC outer, PREC inner) {
+        if (inner < outer) str << "(";
+    }
+    void closeParen(std::ostringstream& str, PREC outer, PREC inner) {
+        if (inner < outer) str << ")";
+    }
 
-        std::map<std::string, Type*> locals;
+    std::map<std::string, Type*> locals;
 
 public:
-	// constructor
-	CHLLCode();
-	CHLLCode(UserProc *p);
+    // constructor
+    CHLLCode();
+    CHLLCode(UserProc *p);
 
-	// destructor
-	virtual ~CHLLCode();
+    // destructor
+    virtual ~CHLLCode();
 
-	// clear this class, calls the base
-	virtual void reset();
+    // clear this class, calls the base
+    virtual void reset();
 
-	/*
-	 * Functions to add new code
-	 */
+    /*
+     * Functions to add new code
+     */
 
-	// pretested loops (cond is optional because it is in the bb 
-        // [somewhere])
-	virtual void AddPretestedLoopHeader(int indLevel, Exp *cond);
-	virtual void AddPretestedLoopEnd(int indLevel);
+    // pretested loops (cond is optional because it is in the bb
+    // [somewhere])
+    virtual void AddPretestedLoopHeader(int indLevel, Exp *cond);
+    virtual void AddPretestedLoopEnd(int indLevel);
 
-	// endless loops
-	virtual void AddEndlessLoopHeader(int indLevel);
-	virtual void AddEndlessLoopEnd(int indLevel);
+    // endless loops
+    virtual void AddEndlessLoopHeader(int indLevel);
+    virtual void AddEndlessLoopEnd(int indLevel);
 
-	// posttested loops
-	virtual void AddPosttestedLoopHeader(int indLevel);
-	virtual void AddPosttestedLoopEnd(int indLevel, Exp *cond);
+    // posttested loops
+    virtual void AddPosttestedLoopHeader(int indLevel);
+    virtual void AddPosttestedLoopEnd(int indLevel, Exp *cond);
 
-	// case conditionals "nways"
-	virtual void AddCaseCondHeader(int indLevel, Exp *cond);
-	virtual void AddCaseCondOption(int indLevel, Exp *opt);
-	virtual void AddCaseCondOptionEnd(int indLevel);
-	virtual void AddCaseCondElse(int indLevel);
-	virtual void AddCaseCondEnd(int indLevel);
+    // case conditionals "nways"
+    virtual void AddCaseCondHeader(int indLevel, Exp *cond);
+    virtual void AddCaseCondOption(int indLevel, Exp *opt);
+    virtual void AddCaseCondOptionEnd(int indLevel);
+    virtual void AddCaseCondElse(int indLevel);
+    virtual void AddCaseCondEnd(int indLevel);
 
-	// if conditions
-	virtual void AddIfCondHeader(int indLevel, Exp *cond);
-	virtual void AddIfCondEnd(int indLevel);
+    // if conditions
+    virtual void AddIfCondHeader(int indLevel, Exp *cond);
+    virtual void AddIfCondEnd(int indLevel);
 
-	// if else conditions
-	virtual void AddIfElseCondHeader(int indLevel, Exp *cond);
-	virtual void AddIfElseCondOption(int indLevel);
-	virtual void AddIfElseCondEnd(int indLevel);
+    // if else conditions
+    virtual void AddIfElseCondHeader(int indLevel, Exp *cond);
+    virtual void AddIfElseCondOption(int indLevel);
+    virtual void AddIfElseCondEnd(int indLevel);
 
-	// goto, break, continue, etc
-	virtual void AddGoto(int indLevel, int ord);
-	virtual void AddContinue(int indLevel);
-	virtual void AddBreak(int indLevel);
+    // goto, break, continue, etc
+    virtual void AddGoto(int indLevel, int ord);
+    virtual void AddContinue(int indLevel);
+    virtual void AddBreak(int indLevel);
 
-	// labels
-	virtual void AddLabel(int indLevel, int ord);
-	virtual void RemoveLabel(int ord);
+    // labels
+    virtual void AddLabel(int indLevel, int ord);
+    virtual void RemoveLabel(int ord);
 
-	// sequential statements
-	virtual void AddAssignmentStatement(int indLevel, Assign *asgn);
-	virtual void AddCallStatement(int indLevel, Proc *proc, 
-            const char *name, std::vector<Exp*> &args, std::vector<Exp*>& rets);
-	virtual void AddIndCallStatement(int indLevel, Exp *exp,
-            std::vector<Exp*> &args);
-	virtual void AddReturnStatement(int indLevel, 
-                                        std::vector<Exp*> &returns);
-	virtual void AddProcStart(Signature *signature);
-	virtual void AddProcEnd();
-	virtual void AddLocal(const char *name, Type *type);
+    // sequential statements
+    virtual void AddAssignmentStatement(int indLevel, Assign *asgn);
+    virtual void AddCallStatement(int indLevel, Proc *proc,
+                                  const char *name, std::vector<Exp*> &args, std::vector<Exp*>& rets);
+    virtual void AddIndCallStatement(int indLevel, Exp *exp,
+                                     std::vector<Exp*> &args);
+    virtual void AddReturnStatement(int indLevel,
+                                    std::vector<Exp*> &returns);
+    virtual void AddProcStart(Signature *signature);
+    virtual void AddProcEnd();
+    virtual void AddLocal(const char *name, Type *type);
 
-	virtual void AddGlobal(const char *name, Type *type,
-                                Exp *init = NULL);
+    virtual void AddGlobal(const char *name, Type *type,
+                           Exp *init = NULL);
 
     // comments
     virtual void AddLineComment(char* cmt);
 
-	/*
-	 * output functions
-	 */
-	virtual void print(std::ostream &os);
+    /*
+     * output functions
+     */
+    virtual void print(std::ostream &os);
 };
 
 #endif

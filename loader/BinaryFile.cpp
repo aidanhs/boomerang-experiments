@@ -11,7 +11,7 @@
 
 /* File: BinaryFile.cpp
  * Desc: This file contains the implementation of the class BinaryFile
- * 
+ *
  * This file implements the abstract BinaryFile class.
  * All classes derived from this class must implement the Load()
  *function.
@@ -112,18 +112,18 @@ BinaryFile* BinaryFile::getInstanceFor( const char *sName )
         if( libName.size() == 0 )
             libName = "libExeBinaryFile.so";
 #ifdef WIN32
-                res = new ExeBinaryFile;
-                fclose(f);
-                return res;
+        res = new ExeBinaryFile;
+        fclose(f);
+        return res;
 #endif
     } else if( TESTMAGIC4( buf,0x3C, 'a','p','p','l' ) ||
                TESTMAGIC4( buf,0x3C, 'p','a','n','l' ) ) {
         /* PRC Palm-pilot binary */
         libName = "libPalmBinaryFile.so";
 #ifdef WIN32
-                res = new PalmBinaryFile;
-                fclose(f);
-                return res;
+        res = new PalmBinaryFile;
+        fclose(f);
+        return res;
 #endif
     } else if( buf[0] == 0x02 && buf[2] == 0x01 &&
                (buf[1] == 0x10 || buf[1] == 0x0B) &&
@@ -131,23 +131,23 @@ BinaryFile* BinaryFile::getInstanceFor( const char *sName )
         /* HP Som binary (last as it's not really particularly good magic) */
         libName = "libHpSomBinaryFile.so";
 #ifdef WIN32
-                res = new HpSomBinaryFile;
-                fclose(f);
-                return res;
+        res = new HpSomBinaryFile;
+        fclose(f);
+        return res;
 #endif
     } else {
         fprintf( stderr, "Unrecognised binary file\n" );
         fclose(f);
         return NULL;
     }
-    
+
 #ifndef WIN32           // Note: For now, Win32 statically links to all loaders
 // Load the specific loader library
     libName = std::string("lib/") + libName;
     void* dlHandle = dlopen(libName.c_str(), RTLD_LAZY);
     if (dlHandle == NULL) {
         fprintf( stderr, "Could not open dynamic loader library %s\n",
-            libName.c_str());
+                 libName.c_str());
         fprintf( stderr, "%s\n", dlerror());
         fclose(f);
         return NULL;
@@ -156,7 +156,7 @@ BinaryFile* BinaryFile::getInstanceFor( const char *sName )
     constructFcn pFcn = (constructFcn) dlsym(dlHandle, "construct");
     if (pFcn == NULL) {
         fprintf( stderr, "Loader library %s does not have a construct "
-            "function\n", libName.c_str());
+                 "function\n", libName.c_str());
         fclose(f);
         return NULL;
     }
@@ -199,7 +199,7 @@ PSectionInfo BinaryFile::GetSectionInfoByAddr(ADDRESS uEntry) const
     {
         pSect = &m_pSections[i];
         if ((uEntry >= pSect->uNativeAddr) &&
-            (uEntry < pSect->uNativeAddr + pSect->uSectionSize))
+                (uEntry < pSect->uNativeAddr + pSect->uSectionSize))
         {
             // We have the right section
             return pSect;
@@ -217,10 +217,10 @@ PSectionInfo BinaryFile::GetSectionInfoByName(const char* sName)
 }
 
 
-    ///////////////////////
-    // Trivial functions //
-    // Overridden if reqd//
-    ///////////////////////
+///////////////////////
+// Trivial functions //
+// Overridden if reqd//
+///////////////////////
 
 char* BinaryFile::SymbolByAddress(ADDRESS uNative)
 {
@@ -254,7 +254,7 @@ WORD  BinaryFile::ApplyRelocation(ADDRESS uNative, WORD wWord)
     return 0;
 }
 #endif
-                // Get symbol associated with relocation at address, if any
+// Get symbol associated with relocation at address, if any
 const char* BinaryFile::GetRelocSym(ADDRESS uNative)
 {
     return 0;
@@ -267,20 +267,20 @@ bool BinaryFile::IsDynamicLinkedProc(ADDRESS uNative)
 
 bool BinaryFile::IsDynamicLinkedProcPointer(ADDRESS uNative)
 {
-	return false;
+    return false;
 }
 
 const char *BinaryFile::GetDynamicProcName(ADDRESS uNative)
 {
-	return "dynamic";
+    return "dynamic";
 }
 
 bool BinaryFile::DisplayDetails(const char* fileName, FILE* f /* = stdout */)
 {
     return false;           // Should always be overridden
-                            // Should display file header, program 
-                            // headers and section headers, as well 
-                            // as contents of each of the sections. 
+    // Should display file header, program
+    // headers and section headers, as well
+    // as contents of each of the sections.
 }
 
 // Specific to BinaryFile objects that implement a "global pointer"
@@ -331,7 +331,7 @@ void BinaryFile::getTextLimits()
                 textDelta = pSect->uHostAddr - pSect->uNativeAddr;
             else
                 assert(textDelta ==
-                    (int) (pSect->uHostAddr - pSect->uNativeAddr));
+                       (int) (pSect->uHostAddr - pSect->uNativeAddr));
         }
     }
 }

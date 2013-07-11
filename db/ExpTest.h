@@ -5,11 +5,11 @@
 #include "exp.h"
 
 class ExpTest : public CppUnit::TestCase {
-  protected:
+protected:
     Const*      m_99;
     Location*   m_rof2;
 
-  public:
+public:
     ExpTest(std::string name) : CppUnit::TestCase (name)
     {}
 
@@ -61,7 +61,7 @@ class ExpTest : public CppUnit::TestCase {
     void testList();
     void testParen();
     void testFixSuccessor();
-	void testKillFill();
+    void testKillFill();
     void testAssociativity();
 
     void testSubscriptVar();

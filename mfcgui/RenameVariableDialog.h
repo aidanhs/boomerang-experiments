@@ -17,36 +17,36 @@ class CRenameVariableDialog : public CDialog
 // Construction
 public:
 
-	CRenameVariableDialog(RenameDir pDir = RENAME_BOTH, CWnd* pParent = NULL);   // standard constructor
-	
-	RenameDir m_dir;
+    CRenameVariableDialog(RenameDir pDir = RENAME_BOTH, CWnd* pParent = NULL);   // standard constructor
+
+    RenameDir m_dir;
 
 // Dialog Data
-	//{{AFX_DATA(CRenameVariableDialog)
-	enum { IDD = IDD_RENAME_VARIABLE };
-	CString	m_name;
-	CString	m_newname;
-	//}}AFX_DATA
+    //{{AFX_DATA(CRenameVariableDialog)
+    enum { IDD = IDD_RENAME_VARIABLE };
+    CString	m_name;
+    CString	m_newname;
+    //}}AFX_DATA
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CRenameVariableDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CRenameVariableDialog)
+protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CRenameVariableDialog)
-	afx_msg void OnUp();
-	afx_msg void OnDown();
-	afx_msg void OnBoth();
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CRenameVariableDialog)
+    afx_msg void OnUp();
+    afx_msg void OnDown();
+    afx_msg void OnBoth();
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

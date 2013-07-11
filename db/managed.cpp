@@ -173,7 +173,7 @@ bool StatementSet::operator<(const StatementSet& o) const {
     if (sset.size() > o.sset.size()) return false;
     std::set<Statement*>::const_iterator it1, it2;
     for (it1 = sset.begin(), it2 = o.sset.begin(); it1 != sset.end();
-      it1++, it2++) {
+            it1++, it2++) {
         if (*it1 < *it2) return true;
         if (*it1 > *it2) return false;
     }
@@ -292,7 +292,7 @@ bool LocationSet::operator==(const LocationSet& o) const {
     if (size() != o.size()) return false;
     std::set<Exp*, lessExpStar>::const_iterator it1, it2;
     for (it1 = sset.begin(), it2 = o.sset.begin(); it1 != sset.end();
-      it1++, it2++) {
+            it1++, it2++) {
         if (!(**it1 == **it2)) return false;
     }
     return true;
@@ -313,8 +313,8 @@ bool LocationSet::findDifferentRef(RefExp* e, Exp *&dr) {
         // Bases are the same; return true if only different ref
         if (!(**pos == *e)) {
             dr = *pos;
-            return true; 
-        } 
+            return true;
+        }
         ++pos;
     }
     return false;
@@ -384,7 +384,7 @@ void LocationSet::substitute(Statement& s) {
     // Now delete the expressions that are no longer needed
     std::set<Exp*, lessExpStar>::iterator dd;
     for (dd = removeAndDelete.sset.begin(); dd != removeAndDelete.sset.end();
-      dd++)
+            dd++)
         delete *dd;             // Plug that memory leak
 }
 
@@ -468,14 +468,14 @@ void StatementVec::putAt(int idx, Statement* s) {
 }
 
 StatementVec::iterator StatementVec::remove(iterator it) {
-/*
-    iterator oldoldit = it;
-    iterator oldit = it;
-    for (it++; it != svec.end(); it++, oldit++) 
-        *oldit = *it;
-    svec.resize(svec.size()-1);
-    return oldoldit;
-*/
+    /*
+        iterator oldoldit = it;
+        iterator oldit = it;
+        for (it++; it != svec.end(); it++, oldit++)
+            *oldit = *it;
+        svec.resize(svec.size()-1);
+        return oldoldit;
+    */
     return svec.erase(it);
 }
 

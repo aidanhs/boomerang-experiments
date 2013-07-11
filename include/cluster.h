@@ -11,7 +11,7 @@
  * FILE:       cluster.h
  * OVERVIEW:   Definition of the classes that describe a Cluster, a grouping
  * 	       of functions irrespective of relationship.  For example, the
- * 	       Object Oriented Programming concept of a Class is a Cluster. 
+ * 	       Object Oriented Programming concept of a Class is a Cluster.
  * 	       Clusters can contain other Clusters to form a tree.
  *============================================================================*/
 
@@ -41,11 +41,22 @@ protected:
 public:
     Cluster() : name(""), parent(NULL) { }
     Cluster(const char *name) : name(name), parent(NULL) { }
-    const char *getName() { return name.c_str(); }
-    void setName(const char *nam) { name = nam; }
-    unsigned int getNumChildren() { return children.size(); }
-    Cluster *getChild(int n) { return children[n]; }
-    void addChild(Cluster *n) { children.push_back(n); n->parent = this; }
+    const char *getName() {
+        return name.c_str();
+    }
+    void setName(const char *nam) {
+        name = nam;
+    }
+    unsigned int getNumChildren() {
+        return children.size();
+    }
+    Cluster *getChild(int n) {
+        return children[n];
+    }
+    void addChild(Cluster *n) {
+        children.push_back(n);
+        n->parent = this;
+    }
     const char *makeDirs();
     Cluster *find(const char *nam);
 protected:

@@ -8,7 +8,7 @@ class Statement;
 class Exp;
 class LocationSet;
 
-class Log 
+class Log
 {
 public:
     Log() { }

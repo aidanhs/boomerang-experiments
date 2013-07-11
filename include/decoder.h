@@ -14,7 +14,7 @@
  * OVERVIEW:   The interface to the instruction decoder.
  *============================================================================*/
 
-/* 
+/*
  * $Revision: 1.12.2.2 $
  * 08 Apr 02 - Mike: Mods for boomerang
  */
@@ -110,21 +110,23 @@ public:
      * Constructor and destructor
      */
     NJMCDecoder();
-virtual ~NJMCDecoder() {};
+    virtual ~NJMCDecoder() {};
 
     /*
      * Decodes the machine instruction at pc and returns an RTL instance for
      * the instruction.
      */
-virtual DecodeResult& decodeInstruction (ADDRESS pc, int delta) = 0;
+    virtual DecodeResult& decodeInstruction (ADDRESS pc, int delta) = 0;
 
     /*
      * Disassembles the machine instruction at pc and returns the number of
      * bytes disassembled. Assembler output goes to global _assembly
      */
-virtual int decodeAssemblyInstruction (ADDRESS pc, int delta) = 0;
+    virtual int decodeAssemblyInstruction (ADDRESS pc, int delta) = 0;
 
-    RTLInstDict& getRTLDict() { return RTLDict; }
+    RTLInstDict& getRTLDict() {
+        return RTLDict;
+    }
 
 protected:
 
@@ -159,18 +161,18 @@ protected:
      * other procedures
      */
     void unconditionalJump(const char* name, int size, ADDRESS relocd,
-        int delta, ADDRESS pc, std::list<Statement*>* stmts,
-        DecodeResult& result);
+                           int delta, ADDRESS pc, std::list<Statement*>* stmts,
+                           DecodeResult& result);
 
     /*
      * String for the constructor names (displayed with use "-c")
      */
     char    constrName[84];
 
-	/* decodes a number */
-	Exp* dis_Num(unsigned num);
-	/* decodes a register */
-	Exp* dis_Reg(int regNum);
+    /* decodes a number */
+    Exp* dis_Num(unsigned num);
+    /* decodes a register */
+    Exp* dis_Reg(int regNum);
 
     // Public dictionary of instruction patterns, and other information
     // summarised from the SSL file (e.g. source machine's endianness)

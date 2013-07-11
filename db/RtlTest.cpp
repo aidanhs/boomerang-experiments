@@ -44,7 +44,9 @@ void RtlTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int RtlTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        RtlTest::setUp
@@ -72,10 +74,10 @@ void RtlTest::tearDown () {
  *============================================================================*/
 void RtlTest::testAppend () {
     Assign* a = new Assign(
-            Location::regOf(8),
-            new Binary(opPlus,
-                Location::regOf(9),
-                new Const(99)));
+        Location::regOf(8),
+        new Binary(opPlus,
+                   Location::regOf(9),
+                   new Const(99)));
     RTL r;
     r.appendStmt(a);
     std::ostringstream ost;
@@ -95,13 +97,13 @@ void RtlTest::testAppend () {
  *============================================================================*/
 void RtlTest::testClone () {
     Assign* a1 = new Assign(
-            Location::regOf(8),
-            new Binary(opPlus,
-                Location::regOf(9),
-                new Const(99)));
+        Location::regOf(8),
+        new Binary(opPlus,
+                   Location::regOf(9),
+                   new Const(99)));
     Assign* a2 = new Assign(new IntegerType(16),
-            new Location(opParam, new Const("x"), NULL),
-            new Location(opParam, new Const("y"), NULL));
+                            new Location(opParam, new Const("x"), NULL),
+                            new Location(opParam, new Const("y"), NULL));
     std::list<Statement*> ls;
     ls.push_back(a1);
     ls.push_back(a2);
@@ -129,19 +131,47 @@ void RtlTest::testClone () {
 
 class StmtVisitorStub : public StmtVisitor {
 public:
-    bool a, b, c, d, e, f, g, h; 
+    bool a, b, c, d, e, f, g, h;
 
-    void clear() { a = b = c = d = e = f = g = h = false; }
-    StmtVisitorStub() { clear(); }
+    void clear() {
+        a = b = c = d = e = f = g = h = false;
+    }
+    StmtVisitorStub() {
+        clear();
+    }
     virtual ~StmtVisitorStub() { }
-    virtual bool visit(            RTL *s) { a = true; return false; }
-    virtual bool visit(  GotoStatement *s) { b = true; return false; }
-    virtual bool visit(BranchStatement *s) { c = true; return false; }
-    virtual bool visit(  CaseStatement *s) { d = true; return false; }
-    virtual bool visit(  CallStatement *s) { e = true; return false; }
-    virtual bool visit(ReturnStatement *s) { f = true; return false; }
-    virtual bool visit(   BoolAssign *s) { g = true; return false; }
-    virtual bool visit(         Assign *s) { h = true; return false; }
+    virtual bool visit(            RTL *s) {
+        a = true;
+        return false;
+    }
+    virtual bool visit(  GotoStatement *s) {
+        b = true;
+        return false;
+    }
+    virtual bool visit(BranchStatement *s) {
+        c = true;
+        return false;
+    }
+    virtual bool visit(  CaseStatement *s) {
+        d = true;
+        return false;
+    }
+    virtual bool visit(  CallStatement *s) {
+        e = true;
+        return false;
+    }
+    virtual bool visit(ReturnStatement *s) {
+        f = true;
+        return false;
+    }
+    virtual bool visit(   BoolAssign *s) {
+        g = true;
+        return false;
+    }
+    virtual bool visit(         Assign *s) {
+        h = true;
+        return false;
+    }
 };
 
 void RtlTest::testVisitor()
@@ -222,7 +252,7 @@ void RtlTest::testIsCompare () {
     DecodeResult inst = pFE->decodeInstruction(0x10910);
     CPPUNIT_ASSERT(inst.rtl != NULL);
     CPPUNIT_ASSERT(inst.rtl->isCompare(iReg, eOperand) == false);
-    
+
     // Decode fifth instruction: "cmp          %o1, 5"
     inst = pFE->decodeInstruction(0x1091c);
     CPPUNIT_ASSERT(inst.rtl != NULL);
@@ -251,12 +281,12 @@ void RtlTest::testIsCompare () {
     eOperand->print(ost2);
     actual = ost2.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-    
+
     // Decode instruction: "add    $0x4,%esp"
     inst = pFE->decodeInstruction(0x804890c);
     CPPUNIT_ASSERT(inst.rtl != NULL);
     CPPUNIT_ASSERT(inst.rtl->isCompare(iReg, eOperand) == false);
-    
+
 }
 
 void RtlTest::testSetConscripts() {
@@ -265,10 +295,10 @@ void RtlTest::testSetConscripts() {
         Location::memOf(
             new Const(1000), 0),
         new Binary(opPlus,
-        Location::memOf(
-            new Const(1000), NULL),
-        new Const(1000)));
-    
+                   Location::memOf(
+                       new Const(1000), NULL),
+                   new Const(1000)));
+
     // "printf("max is %d", (local0 > 0) ? local0 : global1)
     CallStatement* s2 = new CallStatement();
     std::string name("printf");
@@ -276,11 +306,11 @@ void RtlTest::testSetConscripts() {
     s2->setDestProc(proc);
     Exp* e1 = new Const("max is %d");
     Exp* e2 = new Ternary(opTern,
-        new Binary(opGtr,
-            Location::local("local0", NULL),
-            new Const(0)),
-        Location::local("local0", NULL),
-        Location::global("global1", NULL));
+                          new Binary(opGtr,
+                                     Location::local("local0", NULL),
+                                     new Const(0)),
+                          Location::local("local0", NULL),
+                          Location::global("global1", NULL));
     std::vector<Exp*> args;
     args.push_back(e1);
     args.push_back(e2);
@@ -293,7 +323,7 @@ void RtlTest::testSetConscripts() {
     rtl->setConscripts(0, false);
     std::string expected(
         "00001000    0 ** m[1000\\1\\] := m[1000\\2\\] + 1000\\3\\\n"
-"            0 CALL printf(\"max is %d\"\\4\\, (local0 > 0\\5\\) ? local0 : global1 implicit: )\n");
+        "            0 CALL printf(\"max is %d\"\\4\\, (local0 > 0\\5\\) ? local0 : global1 implicit: )\n");
     std::ostringstream ost;
     rtl->print(ost);
     std::string actual = ost.str();

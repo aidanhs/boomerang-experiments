@@ -15,7 +15,7 @@
  *             decoding functionality.
  *
  * $Revision: 1.12.2.1 $
- *============================================================================*/ 
+ *============================================================================*/
 /*
  * 27 Apr 02 - Mike: Mods for boomerang
  */
@@ -42,11 +42,11 @@
 
 /**********************************
  * NJMCDecoder methods.
- **********************************/   
+ **********************************/
 
 /*==============================================================================
  * FUNCTION:       NJMCDecoder::NJMCDecoder
- * OVERVIEW:       
+ * OVERVIEW:
  * PARAMETERS:     None
  * RETURNS:        N/A
  *============================================================================*/
@@ -65,7 +65,7 @@ NJMCDecoder::NJMCDecoder()
  * RETURNS:        an instantiated list of Exps
  *============================================================================*/
 std::list<Statement*>* NJMCDecoder::instantiate(ADDRESS pc, const char* name,
-  ...) {
+        ...) {
     // Get the signature of the instruction and extract its parts
     std::pair<std::string,unsigned> sig = RTLDict.getSignature(name);
     std::string opcode = sig.first;
@@ -83,7 +83,7 @@ std::list<Statement*>* NJMCDecoder::instantiate(ADDRESS pc, const char* name,
         // Display a disassembly of this instruction if requested
         std::cout << std::hex << pc << std::dec << ": " << name << " ";
         for (std::vector<Exp*>::iterator itd = actuals.begin();
-          itd != actuals.end(); itd++) {
+                itd != actuals.end(); itd++) {
             (*itd)->print(std::cout);
             if (itd != actuals.end()-1)
                 std::cout << ", ";
@@ -92,7 +92,7 @@ std::list<Statement*>* NJMCDecoder::instantiate(ADDRESS pc, const char* name,
     }
 
     std::list<Statement*>* instance = RTLDict.instantiateRTL(opcode, pc,
-      actuals);
+                                      actuals);
 
     return instance;
 }
@@ -116,7 +116,7 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...) {
     ParamEntry &ent = RTLDict.DetParamMap[name];
     if (ent.kind != PARAM_ASGN && ent.kind != PARAM_LAMBDA ) {
         std::cerr << "Attempt to instantiate expressionless parameter '" << name
-          << "'\n";
+                  << "'\n";
         return 0;
     }
     // Start with the RHS
@@ -126,9 +126,9 @@ Exp* NJMCDecoder::instantiateNamedParam(char* name, ...) {
     va_list args;
     va_start(args,name);
     for( std::list<std::string>::iterator it = ent.params.begin();
-      it != ent.params.end(); it++ ) {
+            it != ent.params.end(); it++ ) {
         Exp* formal = new Location(opParam, new Const((char*)it->c_str()),
-          NULL);
+                                   NULL);
         Exp* actual = va_arg(args, Exp*);
         bool change;
         result = result->searchReplaceAll(formal, actual, change);
@@ -161,13 +161,13 @@ void NJMCDecoder::substituteCallArgs(char *name, Exp*& exp, ...)
         std::cerr << "Attempt to instantiate expressionless parameter '" << name << "'\n";
         return;
     }*/
-    
+
     va_list args;
     va_start(args, exp);
     for (std::list<std::string>::iterator it = ent.funcParams.begin();
-         it != ent.funcParams.end(); it++) {
+            it != ent.funcParams.end(); it++) {
         Exp* formal = new Location(opParam, new Const((char*)it->c_str()),
-          NULL);
+                                   NULL);
         Exp* actual = va_arg(args, Exp*);
         bool change;
         exp = exp->searchReplaceAll(formal, actual, change);
@@ -188,7 +188,7 @@ void DecodeResult::reset()
     valid = true;
     rtl = NULL;
     reDecode = false;
-    forceOutEdge = 0;   
+    forceOutEdge = 0;
 }
 
 /*==============================================================================
@@ -204,8 +204,8 @@ void DecodeResult::reset()
  *============================================================================*/
 Exp* NJMCDecoder::dis_Reg(int regNum)
 {
-      Exp* expr = Location::regOf(regNum);
-      return expr;
+    Exp* expr = Location::regOf(regNum);
+    return expr;
 }
 
 /*==============================================================================
@@ -228,8 +228,8 @@ Exp* NJMCDecoder::dis_Num(unsigned num)
  * RETURNS:         the reference to the RTLInstDict object
  *============================================================================*/
 void NJMCDecoder::unconditionalJump(const char* name, int size,
-  ADDRESS relocd, /*UserProc* proc,*/ int delta, ADDRESS pc, std::list<Statement*>* stmts,
-  DecodeResult& result) {
+                                    ADDRESS relocd, /*UserProc* proc,*/ int delta, ADDRESS pc, std::list<Statement*>* stmts,
+                                    DecodeResult& result) {
     result.rtl = new RTL(pc, stmts);
     result.numBytes = size;
     GotoStatement* jump = new GotoStatement();

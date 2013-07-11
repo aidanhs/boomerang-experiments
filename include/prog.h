@@ -40,14 +40,14 @@ typedef std::map<ADDRESS, Proc*, std::less<ADDRESS> > PROGMAP;
 
 class ProgWatcher {
 public:
-        ProgWatcher() { }
+    ProgWatcher() { }
 
-        virtual void alert_complete() = 0;
-        virtual void alert_new(Proc *p) = 0;
-        virtual void alert_decode(ADDRESS pc, int nBytes) = 0;
-        virtual void alert_baddecode(ADDRESS pc) = 0;
-        virtual void alert_done(Proc *p, ADDRESS pc, ADDRESS last, int nBytes) = 0;
-        virtual void alert_progress(unsigned long off, unsigned long size) = 0;
+    virtual void alert_complete() = 0;
+    virtual void alert_new(Proc *p) = 0;
+    virtual void alert_decode(ADDRESS pc, int nBytes) = 0;
+    virtual void alert_baddecode(ADDRESS pc) = 0;
+    virtual void alert_done(Proc *p, ADDRESS pc, ADDRESS last, int nBytes) = 0;
+    virtual void alert_progress(unsigned long off, unsigned long size) = 0;
 };
 
 class Global {
@@ -57,20 +57,28 @@ private:
     std::string nam;
 
 public:
-    Global(Type *type, ADDRESS uaddr, const char *nam) : type(type), 
-                                                         uaddr(uaddr),
-                                                         nam(nam) { }
-    ~Global() { 
-        if (type) 
-            delete type; 
+    Global(Type *type, ADDRESS uaddr, const char *nam) : type(type),
+        uaddr(uaddr),
+        nam(nam) { }
+    ~Global() {
+        if (type)
+            delete type;
     }
 
-    Type *getType() { return type; }
-    void  setType(Type* ty) { type = ty; }
-    ADDRESS getAddress() { return uaddr; }
-    const char *getName() { return nam.c_str(); }
+    Type *getType() {
+        return type;
+    }
+    void  setType(Type* ty) {
+        type = ty;
+    }
+    ADDRESS getAddress() {
+        return uaddr;
+    }
+    const char *getName() {
+        return nam.c_str();
+    }
     Exp* getInitialValue(Prog* prog); // Get the initial value as an expression
-                                      // (or NULL if not initialised)
+    // (or NULL if not initialised)
 protected:
     Global() : type(NULL), uaddr(0), nam("") { }
     friend class XMLProgParser;
@@ -78,10 +86,10 @@ protected:
 
 class Prog {
 public:
-            Prog();                     // Default constructor
-            Prog(BinaryFile *pBF, FrontEnd *pFE);
-            ~Prog();
-            Prog(const char* name);     // Constructor with name
+    Prog();                     // Default constructor
+    Prog(BinaryFile *pBF, FrontEnd *pFE);
+    ~Prog();
+    Prog(const char* name);     // Constructor with name
     void    setName(const char *name);      // Set the name of this program
     Proc*   setNewProc(ADDRESS uNative);    // Set up new proc
     // Return a pointer to a new proc
@@ -106,7 +114,9 @@ public:
     // The procs will appear in order of native address
     Proc*   getFirstProc(PROGMAP::const_iterator& it);
     Proc*   getNextProc(PROGMAP::const_iterator& it);
-    Proc*   getEntryProc() { return m_procs.front(); }
+    Proc*   getEntryProc() {
+        return m_procs.front();
+    }
 
     // This pair of functions allows the user to iterate through all the
     // UserProcs
@@ -122,19 +132,26 @@ public:
     const void* getCodeInfo(ADDRESS uAddr, const char*& last, int& delta);
 
     // Get the watcher.. other classes (such as the decoder) can alert
-    // the watcher when there are changes.        
-    ProgWatcher *getWatcher() { return m_watcher; }
+    // the watcher when there are changes.
+    ProgWatcher *getWatcher() {
+        return m_watcher;
+    }
 
     // Indicate that a watcher would like to be updated of status (only 1
     // watcher allowed at the moment, old watchers will be disconnected).
-    void setWatcher(ProgWatcher *p) { m_watcher = p; }
+    void setWatcher(ProgWatcher *p) {
+        m_watcher = p;
+    }
 
-    const char *getRegName(int idx) { return pFE->getRegName(idx); }
+    const char *getRegName(int idx) {
+        return pFE->getRegName(idx);
+    }
 
-    void decodeExtraEntrypoint(ADDRESS a); 
+    void decodeExtraEntrypoint(ADDRESS a);
 
     void decodeFragment(UserProc* proc, ADDRESS a) {
-        pFE->decodeFragment(proc, a); }
+        pFE->decodeFragment(proc, a);
+    }
 
     // Well form all the procedures/cfgs in this program
     bool wellForm();
@@ -226,7 +243,7 @@ public:
 
     // Get the type of a global variable
     Type *getGlobalType(char* nam);
-    
+
     // Set the type of a global variable
     void setGlobalType(const char* name, Type* ty);
 
@@ -236,22 +253,41 @@ public:
 
     // Hacks for Mike
     MACHINE getMachine()                // Get a code for the machine
-        { return pBF->GetMachine();}    // e.g. MACHINE_SPARC
+    {
+        return pBF->GetMachine();   // e.g. MACHINE_SPARC
+    }
     char* symbolByAddress(ADDRESS dest) // Get a symbol from an address
-        { return pBF->SymbolByAddress(dest);}
+    {
+        return pBF->SymbolByAddress(dest);
+    }
     PSectionInfo getSectionInfoByAddr(ADDRESS a)
-        { return pBF->GetSectionInfoByAddr(a);}
-    ADDRESS getLimitTextHigh() {return pBF->getLimitTextHigh();}
+    {
+        return pBF->GetSectionInfoByAddr(a);
+    }
+    ADDRESS getLimitTextHigh() {
+        return pBF->getLimitTextHigh();
+    }
     // Read 2, 4, or 8 bytes given a native address
-    int     readNative2(ADDRESS a) {return pBF->readNative2(a);}
-    int     readNative4(ADDRESS a) {return pBF->readNative4(a);}
-    float   readNativeFloat4(ADDRESS a) {return pBF->readNativeFloat4(a);}
-    double  readNativeFloat8(ADDRESS a) {return pBF->readNativeFloat8(a);}
-    QWord		readNative8(ADDRESS a) {return pBF->readNative8(a);}
+    int     readNative2(ADDRESS a) {
+        return pBF->readNative2(a);
+    }
+    int     readNative4(ADDRESS a) {
+        return pBF->readNative4(a);
+    }
+    float   readNativeFloat4(ADDRESS a) {
+        return pBF->readNativeFloat4(a);
+    }
+    double  readNativeFloat8(ADDRESS a) {
+        return pBF->readNativeFloat8(a);
+    }
+    QWord		readNative8(ADDRESS a) {
+        return pBF->readNative8(a);
+    }
     Exp    *readNativeAs(ADDRESS uaddr, Type *type);
     bool processProc(int addr, UserProc* proc)  // Decode a proc
-        { std::ofstream os;
-          return pFE->processProc((unsigned)addr, proc, os);}
+    {   std::ofstream os;
+        return pFE->processProc((unsigned)addr, proc, os);
+    }
 
     void readSymbolFile(const char *fname);
 
@@ -263,8 +299,12 @@ public:
     void printCallGraph();
     void printCallGraphXML();
 
-    Cluster *getRootCluster() { return m_rootCluster; }
-    Cluster *findCluster(const char *name) { return m_rootCluster->find(name); }
+    Cluster *getRootCluster() {
+        return m_rootCluster;
+    }
+    Cluster *findCluster(const char *name) {
+        return m_rootCluster->find(name);
+    }
     bool clusterUsed(Cluster *c);
 
 protected:
@@ -282,9 +322,13 @@ protected:
     Cluster *m_rootCluster;		// Root of the cluster tree
 
     friend class XMLProgParser;
-    void setFrontEnd(FrontEnd *p) { pFE = p; }
-    void setBinaryFile(BinaryFile *p) { pBF = p; }
- 
+    void setFrontEnd(FrontEnd *p) {
+        pFE = p;
+    }
+    void setBinaryFile(BinaryFile *p) {
+        pBF = p;
+    }
+
 };  // class Prog
 
 #endif

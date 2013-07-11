@@ -5,10 +5,10 @@
 #include "cfg.h"
 
 class CfgTest : public CppUnit::TestCase {
-  protected:
+protected:
     Cfg*  m_prog;
 
-  public:
+public:
     CfgTest(std::string name) : CppUnit::TestCase (name)
     {}
 

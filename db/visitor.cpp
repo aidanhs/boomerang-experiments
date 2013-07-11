@@ -68,7 +68,7 @@ bool SetConscripts::visit(Binary* b, bool& override) {
 bool StmtVisitor::visit(RTL* rtl) {
     // Mostly, don't do anything at the RTL level
     return true;
-} 
+}
 
 bool StmtConscriptSetter::visit(Assign* stmt) {
     SetConscripts sc(curConscript, bClear);
@@ -230,7 +230,7 @@ Exp* CallRefsFixer::postVisit(PhiExp* p) {
             if (e) {
                 e = call->substituteParams(e->clone());
                 if (e && e->getOper() == opSubscript &&
-                    *e->getSubExp1() == *subExp1) {
+                        *e->getSubExp1() == *subExp1) {
                     if (VERBOSE)
                         LOG << "fixcall refs replacing param " << i << " in "
                             << p << " with " << e << "\n";
@@ -239,7 +239,7 @@ Exp* CallRefsFixer::postVisit(PhiExp* p) {
                 } else {
                     if (VERBOSE)
                         LOG << "cant update phi ref to " << e
-                                  << "\n";
+                            << "\n";
                 }
             } else {
                 if (call->findReturn(subExp1) == -1) {
@@ -322,15 +322,19 @@ bool UsedLocsFinder::visit(Location* e, bool& override) {
 
 bool UsedLocsFinder::visit(Terminal* e) {
     switch (e->getOper()) {
-        case opPC:
-        case opFlags:
-        case opFflags:
+    case opPC:
+    case opFlags:
+    case opFflags:
         // Fall through
         // The carry flag can be used in some SPARC idioms, etc
-        case opDF: case opCF: case opZF: case opNF: case opOF:  // also these
-            used->insert(e);
-        default:
-            break;
+    case opDF:
+    case opCF:
+    case opZF:
+    case opNF:
+    case opOF:  // also these
+        used->insert(e);
+    default:
+        break;
     }
     return true;        // Always continue recursion
 }
@@ -440,7 +444,7 @@ bool UsedLocsVisitor::visit(CallStatement* s, bool& override) {
                 Exp* x = ((Location*)r)->getSubExp1();
                 x->accept(ev);
             }
-        } 
+        }
     }
     override = true;            // Don't do the normal accept logic
     return true;                // Continue the recursion
@@ -496,7 +500,7 @@ void StmtSubscripter::visit(Assign* s, bool& recur) {
     Exp* lhs = s->getLeft();
     if (lhs->isMemOf()) {
         Exp*& child = ((Location*)lhs)->refSubExp1();
-        child = child->accept(mod);   
+        child = child->accept(mod);
     }
     recur = false;
 }
@@ -504,7 +508,7 @@ void StmtSubscripter::visit(PhiAssign* s, bool& recur) {
     Exp* lhs = s->getLeft();
     if (lhs->isMemOf()) {
         Exp*& child = ((Location*)lhs)->refSubExp1();
-        child = child->accept(mod);   
+        child = child->accept(mod);
     }
     recur = false;
 }
@@ -512,7 +516,7 @@ void StmtSubscripter::visit(ImplicitAssign* s, bool& recur) {
     Exp* lhs = s->getLeft();
     if (lhs->isMemOf()) {
         Exp*& child = ((Location*)lhs)->refSubExp1();
-        child = child->accept(mod);   
+        child = child->accept(mod);
     }
     recur = false;
 }

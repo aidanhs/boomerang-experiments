@@ -26,9 +26,9 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWnd)
 
 BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWnd)
-	//{{AFX_MSG_MAP(CChildFrame)
-	ON_WM_PAINT()
-	//}}AFX_MSG_MAP
+    //{{AFX_MSG_MAP(CChildFrame)
+    ON_WM_PAINT()
+    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -36,7 +36,7 @@ END_MESSAGE_MAP()
 
 CChildFrame::CChildFrame()
 {
-	
+
 }
 
 CChildFrame::~CChildFrame()
@@ -45,13 +45,13 @@ CChildFrame::~CChildFrame()
 
 BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
+    // TODO: Modify the Window class or styles here by modifying
+    //  the CREATESTRUCT cs
 
-	if( !CMDIChildWnd::PreCreateWindow(cs) )
-		return FALSE;
+    if( !CMDIChildWnd::PreCreateWindow(cs) )
+        return FALSE;
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -62,12 +62,12 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 #ifdef _DEBUG
 void CChildFrame::AssertValid() const
 {
-	CMDIChildWnd::AssertValid();
+    CMDIChildWnd::AssertValid();
 }
 
 void CChildFrame::Dump(CDumpContext& dc) const
 {
-	CMDIChildWnd::Dump(dc);
+    CMDIChildWnd::Dump(dc);
 }
 
 #endif //_DEBUG
@@ -75,10 +75,10 @@ void CChildFrame::Dump(CDumpContext& dc) const
 /////////////////////////////////////////////////////////////////////////////
 // CChildFrame message handlers
 
-void CChildFrame::OnPaint() 
+void CChildFrame::OnPaint()
 {
-	CPaintDC dc(this); // device context for painting
-	
-	// Do not call CMDIChildWnd::OnPaint() for painting messages
+    CPaintDC dc(this); // device context for painting
+
+    // Do not call CMDIChildWnd::OnPaint() for painting messages
 }
-	
+

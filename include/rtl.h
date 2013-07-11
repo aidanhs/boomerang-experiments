@@ -17,7 +17,7 @@
  *             a control transfer instruction (CTI) in the source program.
  *             analysis code adds information to existing higher-level
  *             RTLs and sometimes creates new higher-level RTLs (e.g., for
- *             switch statements). 
+ *             switch statements).
  *============================================================================*/
 
 /*
@@ -62,7 +62,7 @@ class RTL {
 public:
     RTL();
     RTL(ADDRESS instNativeAddr,
-      std::list<Statement*>* listStmt = NULL);
+        std::list<Statement*>* listStmt = NULL);
     RTL(const RTL& other);                  // Makes deep copy of "other"
     virtual ~RTL();
 
@@ -83,7 +83,7 @@ public:
     // Expression list enquiry methods
     int getNumStmt();                   // Return the number of Stmts in RTL.
     Statement* elementAt(unsigned i);   // Return the i'th element in RTL.
-    
+
     // Statement list editing methods
     void appendStmt(Statement *s);      // Add s to end of RTL.
     void prependStmt(Statement *s);     // Add s to start of RTL.
@@ -92,14 +92,16 @@ public:
     void deleteStmt(unsigned int);       // Delete expression at position i.
     void clear();                       // Remove all statements from this RTL.
     // Append list of exps to end.
-    void appendListStmt(std::list<Statement*>& le); 
+    void appendListStmt(std::list<Statement*>& le);
     void appendRTL(RTL& rtl);           // Append Statements from other RTL to end
     // Make a deep copy of the list of Exp*
     void deepCopyList(std::list<Statement*>& dest);
     // direct access to the list of expressions
-    std::list<Statement*> &getList() { return stmtList; }
+    std::list<Statement*> &getList() {
+        return stmtList;
+    }
 
-     // Print RTL to a stream.
+    // Print RTL to a stream.
     virtual void print(std::ostream& os = std::cout);
 
     // Set the RTL's source address
@@ -139,7 +141,7 @@ public:
 
     // Replace all instances of "search" with "replace".
     virtual bool searchAndReplace(Exp* search, Exp* replace);
-    
+
     // Searches for all instances of "search" and adds them to "result" in
     // reverse nesting order. The search is optionally type sensitive.
     virtual bool searchAll(Exp* search, std::list<Exp*> &result);
@@ -189,16 +191,16 @@ public:
 
     void setParam(std::list<std::string>& p);
     void setRTL(RTL& rtl);
-    
+
     // non-zero return indicates failure
     int appendRTL(std::list<std::string>& p, RTL& rtl);
-    
+
 public:
     std::list<std::string> params;
     RTL rtl;
 
-#define TEF_NEXTPC 1        
-    int flags;                  // aka required capabilities. Init. to 0 
+#define TEF_NEXTPC 1
+    int flags;                  // aka required capabilities. Init. to 0
 };
 
 
@@ -208,7 +210,7 @@ public:
 typedef enum {PARAM_SIMPLE, PARAM_ASGN, PARAM_LAMBDA, PARAM_VARIANT} ParamKind;
 
 class ParamEntry {
- public:
+public:
     ParamEntry() {
         asgn = NULL;
         kind = PARAM_SIMPLE;
@@ -221,7 +223,7 @@ class ParamEntry {
         if (type) delete type;
         if (regType) delete regType;
     }
-    
+
     std::list<std::string> params;        /* PARAM_VARIANT & PARAM_ASGN only */
     std::list<std::string> funcParams;    /* PARAM_LAMBDA - late bound params */
     Statement* asgn;                      /* PARAM_ASGN only */
@@ -241,7 +243,7 @@ class ParamEntry {
  * parameters they take and a template for the Exp list describing their
  * semantics. It handles both the parsing of the SSL file that fills in
  * the dictionary entries as well as instantiation of an Exp list for a given
- * instruction name and list of actual parameters. 
+ * instruction name and list of actual parameters.
  *============================================================================*/
 
 class RTLInstDict {
@@ -262,15 +264,15 @@ public:
     // Appends an RTL to an idict entry, or Adds it to idict if an
     // entry does not already exist. A non-zero return indicates failure.
     int appendToDict(std::string &n, std::list<std::string>& p, RTL& rtl);
-    
+
     // Given an instruction name and list of actual parameters, return an
     // instantiated RTL for the corresponding instruction entry.
     std::list<Statement*>* instantiateRTL(std::string& name, ADDRESS natPC,
-      std::vector<Exp*>& actuals);
+                                          std::vector<Exp*>& actuals);
     // As above, but takes an RTL & param list directly rather than doing
     // a table lookup by name.
     std::list<Statement*>* instantiateRTL(RTL& rtls, ADDRESS natPC,
-      std::list<std::string> &params, std::vector<Exp*>& actuals);
+                                          std::list<std::string> &params, std::vector<Exp*>& actuals);
 
     // Transform the given list into another list which doesn't have
     // post-variables, by either adding temporaries or just removing them
@@ -280,10 +282,10 @@ public:
     // temporaries. This is recommended for fully expanded expressions (ie
     // within uqbt), but unsafe otherwise.
     std::list<Statement*>* transformPostVars(std::list <Statement*> *rts,
-      bool optimise);
+            bool optimise);
 
     void print(std::ostream& os = std::cout);
-    
+
     // Add a new register to the machine
     void addRegister(const char *name, int id, int size, bool flt);
 
@@ -300,7 +302,7 @@ public:
     std::vector<Type> computeLHSTypes(Exp &ss) const;
     std::vector<Type> computeRTAssgnTypes(RTAssgn &rta) const;
 #endif
-    
+
     // Go through the params and fixup any lambda functions
     void fixupParams();
 
@@ -343,7 +345,7 @@ public:
     RTL *fetchExecCycle;
 
     void fixupParamsSub(std::string s, std::list<std::string>& funcParams,
-      bool& haveCount, int mark);
+                        bool& haveCount, int mark);
 };
 
 #endif /*__RTL_H__*/

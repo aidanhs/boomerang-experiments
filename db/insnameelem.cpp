@@ -60,7 +60,7 @@ std::string InsNameElem::getinspattern(void)
 
 void InsNameElem::getrefmap(std::map<std::string, InsNameElem*> &m)
 {
-	if (nextelem != NULL)
+    if (nextelem != NULL)
         nextelem->getrefmap(m);
     else
         m.erase(m.begin(), m.end());
@@ -114,20 +114,20 @@ int InsOptionElem::ntokens(void)
 std::string InsOptionElem::getinstruction(void)
 {
     std::string s = (nextelem != NULL)
-        ? ((getvalue() == 0)
-            ? (elemname + nextelem->getinstruction())
-            : nextelem->getinstruction())
-        : ((getvalue() == 0)
-            ? elemname
-            : "");
+                    ? ((getvalue() == 0)
+                       ? (elemname + nextelem->getinstruction())
+                       : nextelem->getinstruction())
+                        : ((getvalue() == 0)
+                           ? elemname
+                           : "");
     return s;
 }
 
 std::string InsOptionElem::getinspattern(void)
 {
     return (nextelem != NULL)
-        ? ('\'' + elemname + '\'' + nextelem->getinspattern())
-        : ('\'' + elemname + '\'');
+           ? ('\'' + elemname + '\'' + nextelem->getinspattern())
+           : ('\'' + elemname + '\'');
 }
 
 InsListElem::InsListElem(const char *name, Table* t, const char *idx):
@@ -145,24 +145,24 @@ int InsListElem::ntokens(void)
 std::string InsListElem::getinstruction(void)
 {
     return (nextelem != NULL)
-        ? (thetable->records[getvalue()] + nextelem->getinstruction())
-        : thetable->records[getvalue()];
+           ? (thetable->records[getvalue()] + nextelem->getinstruction())
+           : thetable->records[getvalue()];
 }
 
 std::string InsListElem::getinspattern(void)
 {
     return (nextelem != NULL)
-        ? (elemname + '[' + indexname + ']' + nextelem->getinspattern())
-        : (elemname + '[' + indexname + ']');
+           ? (elemname + '[' + indexname + ']' + nextelem->getinspattern())
+           : (elemname + '[' + indexname + ']');
 }
 
 void InsListElem::getrefmap(std::map<std::string, InsNameElem*> &m)
 {
-	if (nextelem != NULL)
-		nextelem->getrefmap(m);
+    if (nextelem != NULL)
+        nextelem->getrefmap(m);
     else
-		m.erase(m.begin(), m.end());
-	m[indexname] = this;
+        m.erase(m.begin(), m.end());
+    m[indexname] = this;
     // of course, we're assuming that we've already checked (try in the parser)
     // that indexname hasn't been used more than once on this line ..
 }

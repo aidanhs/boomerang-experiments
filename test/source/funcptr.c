@@ -1,11 +1,11 @@
 #include <stdio.h>
 
 void hello() {
-  printf("Hello, ");
+    printf("Hello, ");
 }
 
 void world() {
-  printf("world!\n");
+    printf("world!\n");
 }
 
 typedef void (*FPTR)(void);

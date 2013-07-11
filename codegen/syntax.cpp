@@ -21,8 +21,8 @@ static int nodecount = 1000;
                 of1.close(); \
                 exit(0);
 
-SyntaxNode::SyntaxNode() : pbb(NULL), score(-1), correspond(NULL), 
-                           notGoto(false)
+SyntaxNode::SyntaxNode() : pbb(NULL), score(-1), correspond(NULL),
+    notGoto(false)
 {
     nodenum = nodecount++;
 }
@@ -95,16 +95,34 @@ void BlockSyntaxNode::printAST(SyntaxNode *root, std::ostream &os)
     os << "[label=\"";
     if (pbb) {
         switch(pbb->getType()) {
-            case ONEWAY:    os << "Oneway"; 
-                            if (notGoto) os << " (ignored)"; break;
-            case TWOWAY:    os << "Twoway"; break;
-            case NWAY:      os << "Nway"; break;
-            case CALL:      os << "Call"; break;
-            case RET:       os << "Ret"; break;
-            case FALL:      os << "Fall"; break;
-            case COMPJUMP:  os << "Computed jump"; break;
-            case COMPCALL:  os << "Computed call"; break;
-            case INVALID:   os << "Invalid"; break;
+        case ONEWAY:
+            os << "Oneway";
+            if (notGoto) os << " (ignored)";
+            break;
+        case TWOWAY:
+            os << "Twoway";
+            break;
+        case NWAY:
+            os << "Nway";
+            break;
+        case CALL:
+            os << "Call";
+            break;
+        case RET:
+            os << "Ret";
+            break;
+        case FALL:
+            os << "Fall";
+            break;
+        case COMPJUMP:
+            os << "Computed jump";
+            break;
+        case COMPCALL:
+            os << "Computed call";
+            break;
+        case INVALID:
+            os << "Invalid";
+            break;
         }
         os << " " << std::hex << pbb->getLowAddr();
     } else
@@ -126,8 +144,8 @@ void BlockSyntaxNode::printAST(SyntaxNode *root, std::ostream &os)
             statements[i]->printAST(root, os);
         for (unsigned i = 0; i < statements.size(); i++) {
             os << std::setw(4) << std::dec << nodenum << " ";
-            os << " -> " << statements[i]->getNumber() 
-                         << " [label=\"" << i << "\"];" << std::endl;
+            os << " -> " << statements[i]->getNumber()
+               << " [label=\"" << i << "\"];" << std::endl;
         }
     }
 }
@@ -137,7 +155,7 @@ void BlockSyntaxNode::printAST(SyntaxNode *root, std::ostream &os)
 int BlockSyntaxNode::evaluate(SyntaxNode *root)
 {
 #if DEBUG_EVAL
-    if (this == root) 
+    if (this == root)
         std::cerr << "begin eval =============" << std::endl;
 #endif
     if (pbb)
@@ -158,7 +176,7 @@ int BlockSyntaxNode::evaluate(SyntaxNode *root)
         }
     }
     for (unsigned i = 0; i < statements.size(); i++) {
-        n += statements[i]->evaluate(root); 
+        n += statements[i]->evaluate(root);
         if (statements[i]->isGoto()) {
             if (i != statements.size()-1) {
 #if DEBUG_EVAL
@@ -173,10 +191,10 @@ int BlockSyntaxNode::evaluate(SyntaxNode *root)
             }
         } else if (statements[i]->isBranch()) {
             SyntaxNode *loop = root->getEnclosingLoop(this);
-            std::cerr << "branch " << statements[i]->getNumber() 
+            std::cerr << "branch " << statements[i]->getNumber()
                       << " not in loop" << std::endl;
             if (loop) {
-                std::cerr << "branch " << statements[i]->getNumber() 
+                std::cerr << "branch " << statements[i]->getNumber()
                           << " in loop " << loop->getNumber() << std::endl;
                 // this is a bit C specific
                 SyntaxNode *out = loop->getOutEdge(root, 0);
@@ -194,19 +212,19 @@ int BlockSyntaxNode::evaluate(SyntaxNode *root)
 #endif
                 n += 50;
             }
-        } else if (i < statements.size()-1 && 
-                 statements[i]->getOutEdge(root, 0) != statements[i+1]) {
+        } else if (i < statements.size()-1 &&
+                   statements[i]->getOutEdge(root, 0) != statements[i+1]) {
 #if DEBUG_EVAL
             std::cerr << "add 25" << std::endl;
             std::cerr << statements[i]->getNumber() << " -> "
-                      << statements[i]->getOutEdge(root, 0)->getNumber() 
+                      << statements[i]->getOutEdge(root, 0)->getNumber()
                       << " not " << statements[i+1]->getNumber() << std::endl;
 #endif
             n += 25;
         }
     }
 #if DEBUG_EVAL
-    if (this == root) 
+    if (this == root)
         std::cerr << "end eval = " << n << " =============" << std::endl;
 #endif
     return n;
@@ -221,7 +239,7 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
 #if 0
             // can replace blocks with only one statement with that statement
             if (b->getNumStatements() == 1) {
-                std::cerr << "successor: replace block with single statement" 
+                std::cerr << "successor: replace block with single statement"
                           << std::endl;
                 SyntaxNode *n = root->clone();
                 n->setDepth(root->getDepth() + 1);
@@ -232,7 +250,7 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
 #endif
             // can move previous statements into this block
             if (i > 0) {
-                std::cerr << "successor: move previous statement into block" 
+                std::cerr << "successor: move previous statement into block"
                           << std::endl;
                 SyntaxNode *n = root->clone();
                 n->setDepth(root->getDepth() + 1);
@@ -262,26 +280,26 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
         if (i < statements.size() - 2 && statements[i]->isBranch()) {
             SyntaxNode *b = statements[i];
             if (b->getOutEdge(root, 0) == statements[i+2] &&
-                (statements[i+1]->getOutEdge(root, 0) == statements[i+2] ||
-                 statements[i+1]->endsWithGoto())) {
-                    std::cerr << "successor: jump over style if then" 
-                              << std::endl;
-                    BlockSyntaxNode *b1 = 
-                        (BlockSyntaxNode*)this->clone();
-                    b1 = (BlockSyntaxNode*)b1->replace(statements[i+1], NULL);
-                    IfThenSyntaxNode *nif = new IfThenSyntaxNode();
-                    Exp *cond = b->getBB()->getCond();
-                    cond = new Unary(opLNot, cond->clone());
-                    cond = cond->simplify();
-                    nif->setCond(cond);
-                    nif->setThen(statements[i+1]->clone());
-                    nif->setBB(b->getBB());
-                    b1->setStatement(i, nif);
-                    SyntaxNode *n = root->clone();
-                    n->setDepth(root->getDepth() + 1);
-                    n = n->replace(this, b1);
-                    successors.push_back(n);
-                    //PRINT_BEFORE_AFTER
+                    (statements[i+1]->getOutEdge(root, 0) == statements[i+2] ||
+                     statements[i+1]->endsWithGoto())) {
+                std::cerr << "successor: jump over style if then"
+                          << std::endl;
+                BlockSyntaxNode *b1 =
+                    (BlockSyntaxNode*)this->clone();
+                b1 = (BlockSyntaxNode*)b1->replace(statements[i+1], NULL);
+                IfThenSyntaxNode *nif = new IfThenSyntaxNode();
+                Exp *cond = b->getBB()->getCond();
+                cond = new Unary(opLNot, cond->clone());
+                cond = cond->simplify();
+                nif->setCond(cond);
+                nif->setThen(statements[i+1]->clone());
+                nif->setBB(b->getBB());
+                b1->setStatement(i, nif);
+                SyntaxNode *n = root->clone();
+                n->setDepth(root->getDepth() + 1);
+                n = n->replace(this, b1);
+                successors.push_back(n);
+                //PRINT_BEFORE_AFTER
             }
         }
         // if then else
@@ -291,8 +309,8 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
 
             assert(tThen && tElse);
             if (((tThen == statements[i+2] && tElse == statements[i+1]) ||
-                 (tThen == statements[i+1] && tElse == statements[i+2])) &&
-                tThen->getNumOutEdges() == 1 && tElse->getNumOutEdges() == 1) {
+                    (tThen == statements[i+1] && tElse == statements[i+2])) &&
+                    tThen->getNumOutEdges() == 1 && tElse->getNumOutEdges() == 1) {
                 SyntaxNode *else_out = tElse->getOutEdge(root, 0);
                 SyntaxNode *then_out = tThen->getOutEdge(root, 0);
 
@@ -321,8 +339,8 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
 
             assert(tBody && tFollow);
             if (tBody == statements[i+1] && tFollow == statements[i+2] &&
-                tBody->getNumOutEdges() == 1 &&
-                tBody->getOutEdge(root, 0) == statements[i]) {
+                    tBody->getNumOutEdges() == 1 &&
+                    tBody->getOutEdge(root, 0) == statements[i]) {
                 std::cerr << "successor: pretested loop" << std::endl;
                 SyntaxNode *n = root->clone();
                 n->setDepth(root->getDepth() + 1);
@@ -344,14 +362,14 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
 
             assert(tBody && tFollow);
             if (tBody == statements[i-1] && tFollow == statements[i+1] &&
-                tBody->getNumOutEdges() == 1 &&
-                tBody->getOutEdge(root, 0) == statements[i]) {
+                    tBody->getNumOutEdges() == 1 &&
+                    tBody->getOutEdge(root, 0) == statements[i]) {
                 std::cerr << "successor: posttested loop" << std::endl;
                 SyntaxNode *n = root->clone();
                 n->setDepth(root->getDepth() + 1);
                 n = n->replace(tBody, NULL);
-                PostTestedLoopSyntaxNode *nloop = 
-                                                new PostTestedLoopSyntaxNode();
+                PostTestedLoopSyntaxNode *nloop =
+                    new PostTestedLoopSyntaxNode();
                 nloop->setCond(statements[i]->getBB()->getCond()->clone());
                 nloop->setBB(statements[i]->getBB());
                 nloop->setBody(tBody->clone());
@@ -363,7 +381,7 @@ void BlockSyntaxNode::addSuccessors(SyntaxNode *root,
 
         // infinite loop
         if (statements[i]->getNumOutEdges() == 1 &&
-            statements[i]->getOutEdge(root, 0) == statements[i]) {
+                statements[i]->getOutEdge(root, 0) == statements[i]) {
             std::cerr << "successor: infinite loop" << std::endl;
             SyntaxNode *n = root->clone();
             n->setDepth(root->getDepth() + 1);
@@ -459,7 +477,7 @@ SyntaxNode *IfThenSyntaxNode::replace(SyntaxNode *from, SyntaxNode *to)
     if (pThen->getCorrespond() == from) {
         assert(to);
         pThen = to;
-    } else 
+    } else
         pThen = pThen->replace(from, to);
     return this;
 }
@@ -483,7 +501,7 @@ void IfThenSyntaxNode::printAST(SyntaxNode *root, std::ostream &os)
     os << " -> " << follows->getNumber() << " [style=dotted];" << std::endl;
 }
 
-IfThenElseSyntaxNode::IfThenElseSyntaxNode() : pThen(NULL), pElse(NULL), 
+IfThenElseSyntaxNode::IfThenElseSyntaxNode() : pThen(NULL), pElse(NULL),
     cond(NULL)
 {
 }
@@ -505,13 +523,13 @@ int IfThenElseSyntaxNode::evaluate(SyntaxNode *root)
 }
 
 void IfThenElseSyntaxNode::addSuccessors(SyntaxNode *root,
-                                         std::vector<SyntaxNode*> &successors)
+        std::vector<SyntaxNode*> &successors)
 {
-    // at the moment we can always ignore gotos at the end of 
+    // at the moment we can always ignore gotos at the end of
     // then and else, because we assume they have the same
     // follow
     if (pThen->getNumOutEdges() == 1 && pThen->endsWithGoto()) {
-        std::cerr << "successor: ignoring goto at end of then of if then else" 
+        std::cerr << "successor: ignoring goto at end of then of if then else"
                   << std::endl;
         SyntaxNode *n = root->clone();
         n->setDepth(root->getDepth() + 1);
@@ -522,7 +540,7 @@ void IfThenElseSyntaxNode::addSuccessors(SyntaxNode *root,
     }
 
     if (pElse->getNumOutEdges() == 1 && pElse->endsWithGoto()) {
-        std::cerr << "successor: ignoring goto at end of else of if then else" 
+        std::cerr << "successor: ignoring goto at end of else of if then else"
                   << std::endl;
         SyntaxNode *n = root->clone();
         n->setDepth(root->getDepth() + 1);
@@ -531,7 +549,7 @@ void IfThenElseSyntaxNode::addSuccessors(SyntaxNode *root,
         n = n->replace(pElse, nElse);
         successors.push_back(n);
     }
-    
+
     pThen->addSuccessors(root, successors);
     pElse->addSuccessors(root, successors);
 }
@@ -553,12 +571,12 @@ SyntaxNode *IfThenElseSyntaxNode::replace(SyntaxNode *from, SyntaxNode *to)
     if (pThen->getCorrespond() == from) {
         assert(to);
         pThen = to;
-    } else 
+    } else
         pThen = pThen->replace(from, to);
     if (pElse->getCorrespond() == from) {
         assert(to);
         pElse = to;
-    } else 
+    } else
         pElse = pElse->replace(from, to);
     return this;
 }
@@ -610,7 +628,7 @@ int PretestedLoopSyntaxNode::evaluate(SyntaxNode *root)
 }
 
 void PretestedLoopSyntaxNode::addSuccessors(SyntaxNode *root,
-                                        std::vector<SyntaxNode*> &successors)
+        std::vector<SyntaxNode*> &successors)
 {
     // we can always ignore gotos at the end of the body.
     if (pBody->getNumOutEdges() == 1 && pBody->endsWithGoto()) {
@@ -645,7 +663,7 @@ SyntaxNode *PretestedLoopSyntaxNode::replace(SyntaxNode *from, SyntaxNode *to)
     if (pBody->getCorrespond() == from) {
         assert(to);
         pBody = to;
-    } else 
+    } else
         pBody = pBody->replace(from, to);
     return this;
 }
@@ -666,8 +684,8 @@ void PretestedLoopSyntaxNode::printAST(SyntaxNode *root, std::ostream &os)
     os << std::setw(4) << std::dec << nodenum << " ";
     os << " -> " << pBody->getNumber() << ";" << std::endl;
     os << std::setw(4) << std::dec << nodenum << " ";
-    os << " -> " << getOutEdge(root, 0)->getNumber() 
-                 << " [style=dotted];" << std::endl;
+    os << " -> " << getOutEdge(root, 0)->getNumber()
+       << " [style=dotted];" << std::endl;
 }
 
 PostTestedLoopSyntaxNode::PostTestedLoopSyntaxNode() : pBody(NULL), cond(NULL)
@@ -694,7 +712,7 @@ int PostTestedLoopSyntaxNode::evaluate(SyntaxNode *root)
 }
 
 void PostTestedLoopSyntaxNode::addSuccessors(SyntaxNode *root,
-                                        std::vector<SyntaxNode*> &successors)
+        std::vector<SyntaxNode*> &successors)
 {
     // we can always ignore gotos at the end of the body.
     if (pBody->getNumOutEdges() == 1 && pBody->endsWithGoto()) {
@@ -728,7 +746,7 @@ SyntaxNode *PostTestedLoopSyntaxNode::replace(SyntaxNode *from, SyntaxNode *to)
     if (pBody->getCorrespond() == from) {
         assert(to);
         pBody = to;
-    } else 
+    } else
         pBody = pBody->replace(from, to);
     return this;
 }
@@ -752,8 +770,8 @@ void PostTestedLoopSyntaxNode::printAST(SyntaxNode *root, std::ostream &os)
     os << std::setw(4) << std::dec << nodenum << " ";
     os << " -> " << pBody->getNumber() << ";" << std::endl;
     os << std::setw(4) << std::dec << nodenum << " ";
-    os << " -> " << getOutEdge(root, 0)->getNumber() 
-                 << " [style=dotted];" << std::endl;
+    os << " -> " << getOutEdge(root, 0)->getNumber()
+       << " [style=dotted];" << std::endl;
 }
 
 InfiniteLoopSyntaxNode::InfiniteLoopSyntaxNode() : pBody(NULL)
@@ -774,7 +792,7 @@ int InfiniteLoopSyntaxNode::evaluate(SyntaxNode *root)
 }
 
 void InfiniteLoopSyntaxNode::addSuccessors(SyntaxNode *root,
-                                        std::vector<SyntaxNode*> &successors)
+        std::vector<SyntaxNode*> &successors)
 {
     // we can always ignore gotos at the end of the body.
     if (pBody->getNumOutEdges() == 1 && pBody->endsWithGoto()) {
@@ -807,7 +825,7 @@ SyntaxNode *InfiniteLoopSyntaxNode::replace(SyntaxNode *from, SyntaxNode *to)
     if (pBody->getCorrespond() == from) {
         assert(to);
         pBody = to;
-    } else 
+    } else
         pBody = pBody->replace(from, to);
     return this;
 }

@@ -29,7 +29,7 @@ suite->addTest(new CppUnit::TestCaller<ExpTest> ("testExp", \
     &ExpTest::name, *this))
 
 void ExpTest::registerTests(CppUnit::TestSuite* suite) {
-MYTEST(testFixSuccessor);
+    MYTEST(testFixSuccessor);
     MYTEST(test99);
     MYTEST(testFlt);
     MYTEST(testRegOf2);
@@ -63,9 +63,9 @@ MYTEST(testFixSuccessor);
     MYTEST(testMapOfExp);
     MYTEST(testList);
     MYTEST(testParen);
-	MYTEST(testFixSuccessor);
-	MYTEST(testKillFill);
-	MYTEST(testAssociativity);
+    MYTEST(testFixSuccessor);
+    MYTEST(testKillFill);
+    MYTEST(testAssociativity);
     MYTEST(testSubscriptVar);
     MYTEST(testTypeOf);
     MYTEST(testSetConscripts);
@@ -74,7 +74,9 @@ MYTEST(testFixSuccessor);
 }
 
 int ExpTest::countTestCases () const
-{ return 2; }   // ? What's this for?
+{
+    return 2;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        ExpTest::setUp
@@ -269,7 +271,8 @@ void ExpTest::testCompare6 () {
  *============================================================================*/
 void ExpTest::testSearchReplace1() {
     // Null test: should not replace. Also tests Ternary class
-    Exp* p; bool change;
+    Exp* p;
+    bool change;
     p = new Ternary(opAt, m_rof2->clone(), new Const(15), new Const(8));
     p = p->searchReplace(m_99, m_rof2, change);
     std::string expected("r2@15:8");
@@ -367,9 +370,9 @@ void ExpTest::testSearch3() {
     // (r2 * 99) + (m[1000] * 4)
     Exp* result;
     Binary e(opPlus, new Binary(opMult, m_rof2->clone(), m_99->clone()),
-        new Binary(opMult,
-            Location::memOf(new Const(1000)),
-            new Const(4)));
+             new Binary(opMult,
+                        Location::memOf(new Const(1000)),
+                        new Const(4)));
     Const four(4);
     Location mem1000(opMemOf, new Const(1000), NULL);
     Binary prod(opMult, m_rof2->clone(), m_99->clone());
@@ -387,9 +390,9 @@ void ExpTest::testSearchAll() {
     Location search(opRegOf, new Terminal(opWild), NULL);    // r[?]
     std::list<Exp*> result;
     Binary e(opPlus, new Binary(opMult, m_rof2->clone(), m_99->clone()),
-        new Binary(opMult,
-            Location::regOf(8),
-            new Const(4)));
+             new Binary(opMult,
+                        Location::regOf(8),
+                        new Const(4)));
     CPPUNIT_ASSERT(e.searchAll(&search, result));
     CPPUNIT_ASSERT(result.size() == 2);
     CPPUNIT_ASSERT(*result.front() == *m_rof2);
@@ -428,7 +431,7 @@ void ExpTest::testAccumulate () {
     le.push_back(&nineNine);
     res = Exp::Accumulate(le);
     Binary expected3(opPlus, rof2.clone(),
-        new Binary(opPlus, nineNine.clone(), nineNine.clone()));
+                     new Binary(opPlus, nineNine.clone(), nineNine.clone()));
     CPPUNIT_ASSERT(*res == expected3);
     delete res;
 
@@ -437,12 +440,12 @@ void ExpTest::testAccumulate () {
     le.push_back(&afp);
     res = Exp::Accumulate(le);
     Binary expected4(opPlus, rof2.clone(),
-        new Binary(opPlus, nineNine.clone(), 
-            new Binary(opPlus, nineNine.clone(), new Terminal(opAFP))));
+                     new Binary(opPlus, nineNine.clone(),
+                                new Binary(opPlus, nineNine.clone(), new Terminal(opAFP))));
     CPPUNIT_ASSERT(*res == expected4);
     delete res;
     delete nn;
-}  
+}
 
 /*==============================================================================
  * FUNCTION:        ExpTest::testPartitionTerms
@@ -452,17 +455,17 @@ void ExpTest::testPartitionTerms() {
     std::ostringstream ost;
     // afp + 108 + n - (afp + 92)
     Binary e(opMinus,
-        new Binary(opPlus,
-            new Binary(opPlus, new Terminal(opAFP), new Const(108)),
-            new Unary(opVar, new Const("n"))),
-        new Binary(opPlus, new Terminal(opAFP), new Const(92))
-    );
+             new Binary(opPlus,
+                        new Binary(opPlus, new Terminal(opAFP), new Const(108)),
+                        new Unary(opVar, new Const("n"))),
+             new Binary(opPlus, new Terminal(opAFP), new Const(92))
+            );
     std::list<Exp*> positives, negatives;
     std::vector<int> integers;
     e.partitionTerms(positives, negatives, integers, false);
     Exp* res = Exp::Accumulate(positives);
     Binary expected1(opPlus, new Terminal(opAFP),
-        new Unary(opVar, new Const("n")));
+                     new Unary(opVar, new Const("n")));
     CPPUNIT_ASSERT(*res == expected1);
     delete res;
 
@@ -484,11 +487,11 @@ void ExpTest::testSimplifyArith() {
     std::ostringstream ost;
     // afp + 108 + n - (afp + 92)
     Exp* e = new Binary(opMinus,
-        new Binary(opPlus,
-            new Binary(opPlus, new Terminal(opAFP), new Const(108)),
-            new Unary(opVar, new Const("n"))),
-        new Binary(opPlus, new Terminal(opAFP), new Const(92))
-    );
+                        new Binary(opPlus,
+                                   new Binary(opPlus, new Terminal(opAFP), new Const(108)),
+                                   new Unary(opVar, new Const("n"))),
+                        new Binary(opPlus, new Terminal(opAFP), new Const(92))
+                       );
     e = e->simplifyArith();
     e->print(ost);
     std::string expected ("v[n] + 16");
@@ -497,27 +500,27 @@ void ExpTest::testSimplifyArith() {
 
     // m[(r28 + -4) + 8]
     Exp* mm = Location::memOf(
-        new Binary(opPlus,
-            new Binary(opPlus,
-                Location::regOf(28),
-                new Const(-4)),
-            new Const(8)));
+                  new Binary(opPlus,
+                             new Binary(opPlus,
+                                        Location::regOf(28),
+                                        new Const(-4)),
+                             new Const(8)));
     mm = mm->simplifyArith();
     std::ostringstream ost2;
     mm->print(ost2);
     expected = "m[r28 + 4]";
     CPPUNIT_ASSERT_EQUAL(expected, std::string(ost2.str()));
     delete mm;
-   
-    // r24 + m[(r28 - 4) - 4] 
+
+    // r24 + m[(r28 - 4) - 4]
     mm = new Binary(opPlus,
-        Location::regOf(24),
-        Location::memOf(
-            new Binary(opMinus,
-                new Binary(opMinus,
-                    Location::regOf(28),
-                    new Const(4)),
-                new Const(4))));
+                    Location::regOf(24),
+                    Location::memOf(
+                        new Binary(opMinus,
+                                   new Binary(opMinus,
+                                           Location::regOf(28),
+                                           new Const(4)),
+                                   new Const(4))));
     mm = mm->simplifyArith();
     std::ostringstream ost3;
     mm->print(ost3);
@@ -657,23 +660,24 @@ void ExpTest::testSimplifyBinary() {
     expb2 = expb2->simplify();
 #endif
     CPPUNIT_ASSERT(*b == *expb2);
-    delete b; delete expb2;
+    delete b;
+    delete expb2;
 
     std::string expected("((0 + v[a]) - 0) | 0");
     std::ostringstream ost;
     Exp* e =
         new Binary(opBitOr,
-            new Binary(opMinus,
-                new Binary(opPlus,
-                    new Const(0),
-                    new Unary(opVar,
-                        new Const("a")
-                    )
-                ),
-                new Const(0)
-            ),
-            new Const(0)
-        );
+                   new Binary(opMinus,
+                              new Binary(opPlus,
+                                         new Const(0),
+                                         new Unary(opVar,
+                                                 new Const("a")
+                                                  )
+                                        ),
+                              new Const(0)
+                             ),
+                   new Const(0)
+                  );
     e->print(ost);
     CPPUNIT_ASSERT_EQUAL(expected, std::string(ost.str()));
     // The above should simplify to just "v[a]"
@@ -690,8 +694,8 @@ void ExpTest::testSimplifyBinary() {
         Location::regOf(27),
         Location::memOf(
             new Binary(opPlus,
-                Location::regOf(29),
-                new Const(-4))));
+                       Location::regOf(29),
+                       new Const(-4))));
     as->simplify();
     expected = "   0 ** r27 := m[r29 - 4]";
     std::ostringstream ost3;
@@ -701,12 +705,12 @@ void ExpTest::testSimplifyBinary() {
 
     // (false and true) or (Tr24 = <int>)
     e = new Binary(opOr,
-        new Binary(opAnd,
-            new Terminal(opFalse),
-            new Terminal(opTrue)),
-        new Binary(opEquals,
-            new Unary(opTypeOf, Location::regOf(24)),
-            new TypeVal(new IntegerType(32, 1))));
+                   new Binary(opAnd,
+                              new Terminal(opFalse),
+                              new Terminal(opTrue)),
+                   new Binary(opEquals,
+                              new Unary(opTypeOf, Location::regOf(24)),
+                              new TypeVal(new IntegerType(32, 1))));
     e = e->simplify();
     expected = "T[r24] = <int>";
     std::ostringstream ost4;
@@ -722,18 +726,18 @@ void ExpTest::testSimplifyBinary() {
 void ExpTest::testSimplifyAddr() {
     // a[m[1000]] - a[m[r2]{64}]@0:15
     Exp* e = new Binary(opMinus,
-        new Unary(opAddrOf,
-            Location::memOf(
-                new Const(1000))),
-        new Ternary(opAt,
-            new Unary(opAddrOf,
-                new Binary(opSize,
-                    new Const(64),
-                    Location::memOf(
-                        Location::regOf(2)
-                            ))),
-            new Const(0),
-            new Const(15)));
+                        new Unary(opAddrOf,
+                                  Location::memOf(
+                                      new Const(1000))),
+                        new Ternary(opAt,
+                                    new Unary(opAddrOf,
+                                            new Binary(opSize,
+                                                    new Const(64),
+                                                    Location::memOf(
+                                                            Location::regOf(2)
+                                                    ))),
+                                    new Const(0),
+                                    new Const(15)));
     e = e->simplifyAddr();
     std::ostringstream ost;
     e->print(ost);
@@ -744,8 +748,8 @@ void ExpTest::testSimplifyAddr() {
     // Now test at top level
     delete e;
     e = new Unary(opAddrOf,
-        Location::memOf(
-            new Const(1000)));
+                  Location::memOf(
+                      new Const(1000)));
     expected = "1000";
     e = e->simplifyAddr();
     std::ostringstream ost2;
@@ -768,12 +772,12 @@ void ExpTest::testSimpConstr() {
     // it should simplify to
     //  <char*> = <alpha2*>
     Exp* e = new Binary(opOr,
-        new Binary(opEquals,
-            new TypeVal(new PointerType(new CharType())),
-            new TypeVal(new IntegerType())),
-        new Binary(opEquals,
-            new TypeVal(new PointerType(new CharType())),
-            new TypeVal(PointerType::newPtrAlpha())));
+                        new Binary(opEquals,
+                                   new TypeVal(new PointerType(new CharType())),
+                                   new TypeVal(new IntegerType())),
+                        new Binary(opEquals,
+                                   new TypeVal(new PointerType(new CharType())),
+                                   new TypeVal(PointerType::newPtrAlpha())));
     e = e->simplifyConstraint();
     std::string expected("<char*> = <alpha0*>");
     std::ostringstream ost;
@@ -789,12 +793,12 @@ void ExpTest::testSimpConstr() {
     // which should simplify to
     //   T[134517848\1\] = <char*>
     e = new Binary(opAnd,
-        new Binary(opEquals,
-            new TypeVal(new PointerType(new CharType())),
-            new TypeVal(new PointerType(new CharType()))),
-        new Binary(opEquals,
-            new Unary(opTypeOf, new Const(123456)),
-            new TypeVal(new PointerType(new CharType()))));
+                   new Binary(opEquals,
+                              new TypeVal(new PointerType(new CharType())),
+                              new TypeVal(new PointerType(new CharType()))),
+                   new Binary(opEquals,
+                              new Unary(opTypeOf, new Const(123456)),
+                              new TypeVal(new PointerType(new CharType()))));
     e = e->simplifyConstraint();
     expected = "T[123456] = <char*>";
     std::ostringstream ost2;
@@ -813,21 +817,21 @@ void ExpTest::testBecome() {
     std::string expected("(2 * 3) - (4 * 5)");
     std::ostringstream ost1;
     e = new Binary(opPlus, new Const(0),
-        new Binary(opMinus,
-            new Binary(opMult, new Const(2), new Const(3)),
-            new Binary(opMult, new Const(4), new Const(5))));
+                   new Binary(opMinus,
+                              new Binary(opMult, new Const(2), new Const(3)),
+                              new Binary(opMult, new Const(4), new Const(5))));
     e = (Binary*)e->becomeSubExp2();
     e->print(ost1);
     CPPUNIT_ASSERT_EQUAL(expected, std::string(ost1.str()));
     // e still used (and effectively deleted) below
- 
+
     std::ostringstream ost2;
     f = new Binary(opPlus, e, new Const(0));
     f = ((Unary*)f)->becomeSubExp1();
     f->print(ost2);
     CPPUNIT_ASSERT_EQUAL(expected, std::string(ost2.str()));
     // f still used (and effectively deleted) below
- 
+
     std::ostringstream ost3;
     Binary* b = new Binary(opPlus, f, new Const(0));
     b = (Binary*) b->becomeSubExp1();
@@ -879,15 +883,15 @@ void ExpTest::testMapOfExp() {
     m[m_rof2] = 200;
     m[m_99] = 99;
     Exp* e = new Binary(opPlus, new Const(0),
-        new Binary(opMinus,
-            new Binary(opMult, new Const(2), new Const(3)),
-            new Binary(opMult, new Const(4), new Const(5))));
+                        new Binary(opMinus,
+                                   new Binary(opMult, new Const(2), new Const(3)),
+                                   new Binary(opMult, new Const(4), new Const(5))));
     m[e] = -100;
     Location rof2(opRegOf, new Const(2), NULL);
     m[&rof2] = 2;            // Should overwrite
 
     int i = m.size();
-    CPPUNIT_ASSERT_EQUAL(3, i); 
+    CPPUNIT_ASSERT_EQUAL(3, i);
     i = m[m_rof2];
     CPPUNIT_ASSERT_EQUAL(2, i);
     i = m[&rof2];
@@ -895,7 +899,7 @@ void ExpTest::testMapOfExp() {
     i = m[m_99];
     CPPUNIT_ASSERT_EQUAL(99, i);
     i = m[e];
-    CPPUNIT_ASSERT_EQUAL(-100, i); 
+    CPPUNIT_ASSERT_EQUAL(-100, i);
     // When the map goes out of scope, the expressions pointed to still exist
     delete e;
 }
@@ -917,8 +921,8 @@ void ExpTest::testList () {
 
     // 1 element list
     l1 = new Binary(opList,
-        new Location(opParam, new Const("a"), NULL),
-        new Terminal(opNil));
+                    new Location(opParam, new Const("a"), NULL),
+                    new Terminal(opNil));
     o1 << l1;
     std::string expected1("a");
     std::string actual1(o1.str());
@@ -927,10 +931,10 @@ void ExpTest::testList () {
 
     // 2 element list
     l2 = new Binary(opList,
-        new Location(opParam, new Const("a"), NULL),
-        new Binary(opList,
-            new Location(opParam, new Const("b"), NULL),
-            new Terminal(opNil)));
+                    new Location(opParam, new Const("a"), NULL),
+                    new Binary(opList,
+                               new Location(opParam, new Const("b"), NULL),
+                               new Terminal(opNil)));
     o2 << l2;
     std::string expected2("a, b");
     std::string actual2(o2.str());
@@ -939,12 +943,12 @@ void ExpTest::testList () {
 
     // 3 element list
     l3 = new Binary(opList,
-        new Location(opParam, new Const("a"), NULL),
-        new Binary(opList,
-            new Location(opParam, new Const("b"), NULL),
-            new Binary(opList,
-                new Location(opParam, new Const("c"), NULL),
-                new Terminal(opNil))));
+                    new Location(opParam, new Const("a"), NULL),
+                    new Binary(opList,
+                               new Location(opParam, new Const("b"), NULL),
+                               new Binary(opList,
+                                          new Location(opParam, new Const("c"), NULL),
+                                          new Terminal(opNil))));
     o3 << l3;
     std::string expected3("a, b, c");
     std::string actual3(o3.str());
@@ -953,14 +957,14 @@ void ExpTest::testList () {
 
     // 4 element list
     l4 = new Binary(opList,
-        new Location(opParam, new Const("a"), NULL),
-        new Binary(opList,
-            new Location(opParam, new Const("b"), NULL),
-            new Binary(opList,
-                new Location(opParam, new Const("c"), NULL),
-                new Binary(opList,
-                    new Location(opParam, new Const("d"), NULL),
-                    new Terminal(opNil)))));
+                    new Location(opParam, new Const("a"), NULL),
+                    new Binary(opList,
+                               new Location(opParam, new Const("b"), NULL),
+                               new Binary(opList,
+                                          new Location(opParam, new Const("c"), NULL),
+                                          new Binary(opList,
+                                                  new Location(opParam, new Const("d"), NULL),
+                                                  new Terminal(opNil)))));
     o4 << l4;
     std::string expected4("a, b, c, d");
     std::string actual4(o4.str());
@@ -977,13 +981,13 @@ void ExpTest::testParen () {
         Location::regOf(
             new Location(opParam, new Const("rd"), NULL)),
         new Binary(opBitAnd,
-            Location::regOf(
-                new Location(opParam, new Const("rs1"), NULL)),
-            new Binary(opMinus,
-                new Binary(opMinus,
-                    new Const(0),
-                    new Location(opParam, new Const("reg_or_imm"), NULL)),
-                new Const(1))));
+                   Location::regOf(
+                       new Location(opParam, new Const("rs1"), NULL)),
+                   new Binary(opMinus,
+                              new Binary(opMinus,
+                                         new Const(0),
+                                         new Location(opParam, new Const("reg_or_imm"), NULL)),
+                              new Const(1))));
     std::string expected("   0 ** r[rd] := r[rs1] & ((0 - reg_or_imm) - 1)");
     std::ostringstream o;
     a.print(o);
@@ -997,27 +1001,27 @@ void ExpTest::testParen () {
  * OVERVIEW:        Test succ(r[k]) == r[k+1]
  *============================================================================*/
 void ExpTest::testFixSuccessor() {
-	// Trivial test (should not affect)
-	Binary* b = new Binary(opMinus,
-		m_99->clone(),
-		m_rof2->clone());
-	std::ostringstream o1;
-	Exp* e = b->fixSuccessor();
-	e->print(o1);
-	std::string expected("99 - r2");
-	std::string actual(o1.str());
+    // Trivial test (should not affect)
+    Binary* b = new Binary(opMinus,
+                           m_99->clone(),
+                           m_rof2->clone());
+    std::ostringstream o1;
+    Exp* e = b->fixSuccessor();
+    e->print(o1);
+    std::string expected("99 - r2");
+    std::string actual(o1.str());
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-	delete e;
-	
-	Unary* u = new Unary(opSuccessor,
-		Location::regOf(2));
-	std::ostringstream o2;
-	e = u->fixSuccessor();
-	e->print(o2);
-	expected = "r3";
-	actual = o2.str();
+    delete e;
+
+    Unary* u = new Unary(opSuccessor,
+                         Location::regOf(2));
+    std::ostringstream o2;
+    e = u->fixSuccessor();
+    e->print(o2);
+    expected = "r3";
+    actual = o2.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-	delete e;
+    delete e;
 }
 
 /*==============================================================================
@@ -1025,36 +1029,36 @@ void ExpTest::testFixSuccessor() {
  * OVERVIEW:        Test removal of zero fill, sign extend, truncates
  *============================================================================*/
 void ExpTest::testKillFill() {
-	// r18 + sgnex(16,32,m[r16 + 16])
-	Binary e(opPlus,
-		Location::regOf(18),
-		new Ternary(opSgnEx, new Const(16), new Const(32),
-			Location::memOf(
-				new Binary(opPlus,
-					Location::regOf(16),
-					new Const(16)))));
-	Exp* res = e.killFill();
-	std::string expected("r18 + m[r16 + 16]");
-	std::ostringstream ost1;
-	res->print(ost1);
-	std::string actual(ost1.str());
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
+    // r18 + sgnex(16,32,m[r16 + 16])
+    Binary e(opPlus,
+             Location::regOf(18),
+             new Ternary(opSgnEx, new Const(16), new Const(32),
+                         Location::memOf(
+                             new Binary(opPlus,
+                                        Location::regOf(16),
+                                        new Const(16)))));
+    Exp* res = e.killFill();
+    std::string expected("r18 + m[r16 + 16]");
+    std::ostringstream ost1;
+    res->print(ost1);
+    std::string actual(ost1.str());
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
 
-	// Note: e2 has to be a pointer, not a local Ternary, because it
-	// gets changed at the top level (and so would die in its destructor)
-	Ternary* e2 = new Ternary(opZfill, new Const(16), new Const(32),
-            Location::memOf(
-                new Binary(opPlus,
-                    Location::regOf(16),
-                    new Const(16))));
-	// Try again but at top level
-	res = e2->killFill();
-	expected = "m[r16 + 16]";
-	std::ostringstream ost2;
-	res->print(ost2);
-	actual = ost2.str();
-	CPPUNIT_ASSERT_EQUAL(expected, actual);
-	delete res;
+    // Note: e2 has to be a pointer, not a local Ternary, because it
+    // gets changed at the top level (and so would die in its destructor)
+    Ternary* e2 = new Ternary(opZfill, new Const(16), new Const(32),
+                              Location::memOf(
+                                  new Binary(opPlus,
+                                          Location::regOf(16),
+                                          new Const(16))));
+    // Try again but at top level
+    res = e2->killFill();
+    expected = "m[r16 + 16]";
+    std::ostringstream ost2;
+    res->print(ost2);
+    actual = ost2.str();
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+    delete res;
 
 }
 
@@ -1063,37 +1067,38 @@ void ExpTest::testKillFill() {
  * OVERVIEW:        Test that a+K+b is the same as a+b+K when each is simplified
  *============================================================================*/
 void ExpTest::testAssociativity() {
-    
+
     // (r8 + m[m[r8 + 12] + -12]) + 12
     Binary e1(opPlus,
-        new Binary(opPlus,
-            Location::regOf(8),
-            Location::memOf(
-                new Binary(opPlus,
-                    Location::memOf(
-                        new Binary(opPlus,
-                            Location::regOf(8),
-                            new Const(12))),
-                    new Const(-12)))),
-        new Const(12));
+              new Binary(opPlus,
+                         Location::regOf(8),
+                         Location::memOf(
+                             new Binary(opPlus,
+                                        Location::memOf(
+                                            new Binary(opPlus,
+                                                    Location::regOf(8),
+                                                    new Const(12))),
+                                        new Const(-12)))),
+              new Const(12));
     // (r8 + 12) + m[m[r8 + 12] + -12]
     Binary e2(opPlus,
-        new Binary(opPlus,
-            Location::regOf(8),
-            new Const(12)),
-        Location::memOf(
-            new Binary(opPlus,
-                Location::memOf(
-                    new Binary(opPlus,
-                        Location::regOf(8),
-                        new Const(12))),
-                new Const(-12))));
+              new Binary(opPlus,
+                         Location::regOf(8),
+                         new Const(12)),
+              Location::memOf(
+                  new Binary(opPlus,
+                             Location::memOf(
+                                 new Binary(opPlus,
+                                            Location::regOf(8),
+                                            new Const(12))),
+                             new Const(-12))));
     // Note: at one stage, simplifyArith was part of simplify().
     // Now call implifyArith() explicitly only where needed
     Exp* p1 = e1.simplify()->simplifyArith();
     Exp* p2 = e2.simplify()->simplifyArith();
     std::ostringstream os1, os2;
-    p1->print(os1); p2->print(os2);
+    p1->print(os1);
+    p2->print(os2);
     std::string expected(os1.str());
     std::string actual  (os2.str());
     CPPUNIT_ASSERT_EQUAL(expected, actual);
@@ -1107,20 +1112,20 @@ void ExpTest::testAssociativity() {
 void ExpTest::testSubscriptVar() {
     // m[r28 - 4] := r28 + r29
     Exp* left = Location::memOf(
-            new Binary(opMinus,
-                Location::regOf(28),
-                new Const(4)));
+                    new Binary(opMinus,
+                               Location::regOf(28),
+                               new Const(4)));
     Assign* ae = new Assign(
         left->clone(),
         new Binary(opPlus,
-            Location::regOf(28),
-            Location::regOf(29)));
+                   Location::regOf(28),
+                   Location::regOf(29)));
 
     Statement* s = dynamic_cast<Statement*>(ae);
     // Subtest 1: should do nothing
     Exp* r28 = Location::regOf(28);
     Statement* def1 = dynamic_cast<Statement*>(new Assign(r28->clone(),
-      r28->clone()));
+                      r28->clone()));
     def1->setNumber(12);
     def1->subscriptVar(left, def1);           // Should do nothing
     std::string expected1;
@@ -1146,7 +1151,11 @@ void ExpTest::testSubscriptVar() {
     actual3 << s;
     CPPUNIT_ASSERT_EQUAL(expected3, actual3.str());
 
-    delete ae; delete def1; delete def3; delete r28; delete left;
+    delete ae;
+    delete def1;
+    delete def3;
+    delete r28;
+    delete left;
 }
 
 /*==============================================================================
@@ -1161,10 +1170,10 @@ void ExpTest::testTypeOf() {
     s5->setNumber(5);
     s9->setNumber(9);
     Exp* e = new Binary(opEquals,
-        new Unary(opTypeOf,
-            new RefExp(Location::regOf(24), s5)),
-        new Unary(opTypeOf,
-            new RefExp(Location::regOf(25), s9)));
+                        new Unary(opTypeOf,
+                                  new RefExp(Location::regOf(24), s5)),
+                        new Unary(opTypeOf,
+                                  new RefExp(Location::regOf(25), s9)));
     std::ostringstream actual1;
     actual1 << e;
     CPPUNIT_ASSERT_EQUAL(expected1, actual1.str());
@@ -1174,9 +1183,9 @@ void ExpTest::testTypeOf() {
     delete e;
     Type* t = new FloatType(32);
     e = new Binary(opEquals,
-        new Unary(opTypeOf,
-            new RefExp(Location::regOf(24), s5)),
-        new TypeVal(t));
+                   new Unary(opTypeOf,
+                             new RefExp(Location::regOf(24), s5)),
+                   new TypeVal(t));
     std::ostringstream actual2;
     actual2 << e;
     CPPUNIT_ASSERT_EQUAL(expected2, actual2.str());
@@ -1188,9 +1197,9 @@ void ExpTest::testTypeOf() {
 void ExpTest::testSetConscripts() {
     // m[1000] + 1000
     Exp* e = new Binary(opPlus,
-        Location::memOf(
-            new Const(1000), NULL),
-        new Const(1000));
+                        Location::memOf(
+                            new Const(1000), NULL),
+                        new Const(1000));
     e->setConscripts(0, false);
     std::string expected("m[1000\\1\\] + 1000\\2\\");
     std::ostringstream actual;
@@ -1206,9 +1215,9 @@ void ExpTest::testSetConscripts() {
 
     // m[r28 + 1000]
     e = Location::memOf(
-        new Binary(opPlus,
-            Location::regOf(28),
-            new Const(1000)));
+            new Binary(opPlus,
+                       Location::regOf(28),
+                       new Const(1000)));
     e->setConscripts(0, false);
     expected = "m[r28 + 1000\\1\\]";
     std::ostringstream act2;
@@ -1261,9 +1270,9 @@ void ExpTest::testAddUsedLocs() {
     // Memory location: m[r28-4]
     l.clear();
     e = Location::memOf(
-        new Binary(opMinus,
-            Location::regOf(28),
-            new Const(4)));
+            new Binary(opMinus,
+                       Location::regOf(28),
+                       new Const(4)));
     e->addUsedLocs(l);
     expected = "m[r28 - 4],\tr28\n";
     std::ostringstream ost3;
@@ -1284,8 +1293,8 @@ void ExpTest::testAddUsedLocs() {
     // Binary: r24 + r25
     l.clear();
     e = new Binary(opPlus,
-        Location::regOf(24),
-        Location::regOf(25));
+                   Location::regOf(24),
+                   Location::regOf(25));
     e->addUsedLocs(l);
     expected = "r24,\tr25\n";
     std::ostringstream ost5;
@@ -1296,9 +1305,9 @@ void ExpTest::testAddUsedLocs() {
     // Ternary: r24@r25:r26
     l.clear();
     e = new Ternary(opAt,
-        Location::regOf(24),
-        Location::regOf(25),
-        Location::regOf(26));
+                    Location::regOf(24),
+                    Location::regOf(25),
+                    Location::regOf(26));
     e->addUsedLocs(l);
     expected = "r24,\tr25,\tr26\n";
     std::ostringstream ost6;
@@ -1324,9 +1333,9 @@ void ExpTest::testAddUsedLocs() {
     e = new RefExp(
         Location::memOf(
             new Binary(opMinus,
-                new RefExp(
-                    Location::regOf(28), &a),
-                new Const(4))), &t);
+                       new RefExp(
+                           Location::regOf(28), &a),
+                       new Const(4))), &t);
     e->addUsedLocs(l);
     expected = "m[r28{2} - 4]{3},\tr28{2}\n";
     std::ostringstream ost8;
@@ -1339,9 +1348,9 @@ void ExpTest::testAddUsedLocs() {
     Assign s372(new Const(0), new Const(0));
     s372.setNumber(372);
     Exp* base = Location::memOf(
-        new Binary(opPlus,
-            Location::local("local21", NULL),
-            new Const(16)));
+                    new Binary(opPlus,
+                               Location::local("local21", NULL),
+                               new Const(16)));
     PhiAssign* phi = new PhiAssign(base);
     phi->putAt(0, NULL);
     phi->putAt(1, &s372);
@@ -1353,7 +1362,7 @@ void ExpTest::testAddUsedLocs() {
     l.print(ost9);
     actual = ost9.str();
     CPPUNIT_ASSERT_EQUAL(expected, actual);
-    
+
 
 }
 
@@ -1394,8 +1403,8 @@ void ExpTest::testSubscriptVars() {
 
     // m[r28] + r28
     e = new Binary(opPlus,
-        Location::memOf(Location::regOf(28)),
-        Location::regOf(28));
+                   Location::memOf(Location::regOf(28)),
+                   Location::regOf(28));
     e = e->expSubscriptVar(search, &s9);
     expected = "m[r28{9}] + r28{9}";
     std::ostringstream ost4;
@@ -1420,9 +1429,9 @@ void ExpTest::testSubscriptVars() {
     e = new RefExp(
         Location::memOf(
             new Binary(opPlus,
-                new RefExp(
-                    Location::regOf(28), &s7),
-                new Const(4))), &s8);
+                       new RefExp(
+                           Location::regOf(28), &s7),
+                       new Const(4))), &s8);
     e = e->expSubscriptVar(search, &s9);
     expected = "m[r28{9} + 4]{8}";
     std::ostringstream ost6;
