@@ -85,10 +85,10 @@ bool PentiumFrontEnd::isDecAh(RTL* r) {
     Assign* asgn = (Assign*)mid;
     Exp* rhs = asgn->getRight();
     Binary ahm1(opMinus,
-        new Binary(opSize,
-            new Const(8),
-            Location::regOf(12)),
-        new Const(1));
+                new Binary(opSize,
+                           new Const(8),
+                           Location::regOf(12)),
+                new Const(1));
     return *rhs == ahm1;
 }
 /*==============================================================================
@@ -170,7 +170,7 @@ void PentiumFrontEnd::bumpRegisterAll(Exp* e, int min, int max, int delta, int m
  * RETURNS:       True if successful decode
  *============================================================================*/
 bool PentiumFrontEnd::processProc(ADDRESS uAddr, UserProc* pProc,
-    std::ofstream &os, bool frag /* = false */, bool spec /* = false */) {
+                                  std::ofstream &os, bool frag /* = false */, bool spec /* = false */) {
 
     // Call the base class to do most of the work
     if (!FrontEnd::processProc(uAddr, pProc, os, frag, spec))
@@ -189,7 +189,7 @@ bool PentiumFrontEnd::processProc(ADDRESS uAddr, UserProc* pProc,
     processFloatCode(pCfg);
 
     int tos = 0;
-    processFloatCode(pProc->getEntryBB(), tos, pCfg); 
+    processFloatCode(pProc->getEntryBB(), tos, pCfg);
 
     // Process away %rpt and %skip
     processStringInst(pProc);
@@ -262,32 +262,32 @@ void PentiumFrontEnd::processFloatCode(Cfg* pCfg)
                 st = (*rit)->elementAt(i);
                 if (st->isFpush()) {
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::tempOf(new Const("tmpD9")), 
-                        Location::regOf(39)), i++);
+                                                  Location::tempOf(new Const("tmpD9")),
+                                                  Location::regOf(39)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(39), 
-                        Location::regOf(38)), i++);
+                                                  Location::regOf(39),
+                                                  Location::regOf(38)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(38), 
-                        Location::regOf(37)), i++);
+                                                  Location::regOf(38),
+                                                  Location::regOf(37)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(37), 
-                        Location::regOf(36)), i++);
+                                                  Location::regOf(37),
+                                                  Location::regOf(36)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(36), 
-                        Location::regOf(35)), i++);
+                                                  Location::regOf(36),
+                                                  Location::regOf(35)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(35), 
-                        Location::regOf(34)), i++);
+                                                  Location::regOf(35),
+                                                  Location::regOf(34)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(34), 
-                        Location::regOf(33)), i++);
+                                                  Location::regOf(34),
+                                                  Location::regOf(33)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(33), 
-                        Location::regOf(32)), i++);
+                                                  Location::regOf(33),
+                                                  Location::regOf(32)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(32), 
-                            Location::tempOf(new Const("tmpD9"))), i++);
+                                                  Location::regOf(32),
+                                                  Location::tempOf(new Const("tmpD9"))), i++);
                     // Remove the FPUSH
                     (*rit)->deleteStmt(i);
                     i--;
@@ -295,33 +295,33 @@ void PentiumFrontEnd::processFloatCode(Cfg* pCfg)
                 }
                 else if (st->isFpop()) {
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(
-                            Location::tempOf(new Const("tmpD9"))), 
-                        Location::regOf(32)), i++);
+                                                  Location::regOf(
+                                                      Location::tempOf(new Const("tmpD9"))),
+                                                  Location::regOf(32)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(32), 
-                        Location::regOf(33)), i++);
+                                                  Location::regOf(32),
+                                                  Location::regOf(33)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(33), 
-                        Location::regOf(34)), i++);
+                                                  Location::regOf(33),
+                                                  Location::regOf(34)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(34), 
-                        Location::regOf(35)), i++);
+                                                  Location::regOf(34),
+                                                  Location::regOf(35)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(35), 
-                        Location::regOf(36)), i++);
+                                                  Location::regOf(35),
+                                                  Location::regOf(36)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(36), 
-                        Location::regOf(37)), i++);
+                                                  Location::regOf(36),
+                                                  Location::regOf(37)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(37), 
-                        Location::regOf(38)), i++);
+                                                  Location::regOf(37),
+                                                  Location::regOf(38)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(38), 
-                        Location::regOf(39)), i++);
+                                                  Location::regOf(38),
+                                                  Location::regOf(39)), i++);
                     (*rit)->insertStmt(new Assign(new FloatType(80),
-                        Location::regOf(39), 
-                           Location::tempOf(new Const("tmpD9"))), i++);
+                                                  Location::regOf(39),
+                                                  Location::tempOf(new Const("tmpD9"))), i++);
                     // Remove the FPOP
                     (*rit)->deleteStmt(i);
                     i--;
@@ -368,7 +368,10 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
             // appear to be returned in registers r[32], then r[33], etc.
             tos = 0;
         }
-        if ((*rit)->getNumStmt() == 0) { rit++; continue; }
+        if ((*rit)->getNumStmt() == 0) {
+            rit++;
+            continue;
+        }
 #if PROCESS_FNSTSW
         // Check for f(n)stsw
         if (isStoreFsw((*rit)->elementAt(0))) {
@@ -427,10 +430,10 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
                 // 32 - 39
                 Binary* cur;
                 for (cur = (Binary*)st->getRight(); !cur->isNil();
-                  cur = (Binary*)cur->getSubExp2()) {
+                        cur = (Binary*)cur->getSubExp2()) {
 // I dont understand why we want typed exps in the flag calls so much.
 // If we're going to replace opSize with TypedExps then we need to do it
-// for everything, not just the flag calls.. so that should be in the 
+// for everything, not just the flag calls.. so that should be in the
 // sslparser.  If that is the case then we cant assume that opLists of
 // flag calls will always contain TypedExps, so this code is wrong.
 // - trent 9/6/2002
@@ -440,11 +443,11 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
                         Const* c = (Const*)((Unary*)s)->getSubExp1();
                         int K = c->getInt();        // Old register number
                         // Change to new register number, if in range
-						if ((K >= 32) && (K <= 39))
-                        	s->setSubExp1(new Const(32 + (K - 32 + tos & 7)));
+                        if ((K >= 32) && (K <= 39))
+                            s->setSubExp1(new Const(32 + (K - 32 + tos & 7)));
                     }
                 }
-                        
+
             }
         }
         rit++;
@@ -467,7 +470,7 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
                     break;
             }
         }
-    } while (outs.size() != n);            
+    } while (outs.size() != n);
 }
 
 
@@ -477,14 +480,14 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
 //
 //            test_45 or          Start=0
 //         ____and_45____________/ |  \  \______sahf____________
-//        /                        |   \_____and_5__________    \     ___ 
+//        /                        |   \_____and_5__________    \     ___
 //       [1]__________cmp_1___    and 44                    \    \   /   |jp
 //cmp_40/||\\___dec_[10]      \    [2]__________         __[3]   [23]____|
-//  /    | \\__je_    \cmp 40 [20]  |   \xor 40 \jne    /  / |    | \ 
-// [4]  jne se    \    \       |\   je   [7]     \     /  /  |    |  \ 
+//  /    | \\__je_    \cmp 40 [20]  |   \xor 40 \jne    /  / |    | \
+// [4]  jne se    \    \       |\   je   [7]     \     /  /  |    |  \
 // | \   |   \    |    [11]  jne \    \   | \    [5]  je se  |   jx   sx
-// je se  \   \   | jae|  \sb  \  se   \ jne setne   /  /   jne   |    \ 
-// |   \   \   \   \   |   \    \  \    \ |    \    /  /     |    |     \ 
+// je se  \   \   | jae|  \sb  \  se   \ jne setne   /  /   jne   |    \
+// |   \   \   \   \   |   \    \  \    \ |    \    /  /     |    |     \
 //[5]  [6][14][13][26][12] [15][21][22]  [8]   [9] [21][18] [19] [24]   [25]
 //JE   SE  JLE  SG JG  JG  SLE JGE  SL   JNE   SNE JGE SGE   JL  Many   Many
 */
@@ -501,15 +504,15 @@ void PentiumFrontEnd::processFloatCode(PBB pBB, int& tos, Cfg* pCfg)
  *                  Also returns true on error, so abandon this BB
  *============================================================================*/
 bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
-  std::list<RTL*>* BB_rtls, PBB pBB, Cfg* pCfg) {
+                                  std::list<RTL*>* BB_rtls, PBB pBB, Cfg* pCfg) {
     int state = 0;              // Start in state 0
     Location *ah = Location::regOf(AH);
     Unary *notZf = new Unary(opNot, new Terminal(opZF));
     Ternary *ahAt7 = new Ternary(opTern,
-        Location::regOf(AH),
-        new Const(7),
-        new Const(7));
-    // Keep a list of iterators representing 
+                                 Location::regOf(AH),
+                                 new Const(7),
+                                 new Const(7));
+    // Keep a list of iterators representing
     // RTLs (this BB) that can be removed
     std::list<std::list<RTL*>::iterator> liIt;
     liIt.push_front(rit);   // f(n)stsw can be removed
@@ -531,7 +534,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
         Exp* result;
         // Check if uses register ah, and assigns to either ah or a temp
         if ((lhs->search(ah, result) || lhs->isTemp()) &&
-          rhs->search(ah, result)) {
+                rhs->search(ah, result)) {
             // Should be an AND or XOR instruction
             OPER op = rhs->getOper();
             if ((op == opBitAnd) || (op == opBitXor)) {
@@ -559,7 +562,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
                         }
                         else {
                             std::cerr << "Problem with AND: state is " << state
-                              << ", mask is 0x" << std::hex << mask << "\n";
+                                      << ", mask is 0x" << std::hex << mask << "\n";
                             return true;
                         }
                     }
@@ -673,8 +676,13 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
         }
         // Check for "set" terminating states
         switch (state) {
-            case 6: case 13: case 15:
-            case 22: case 9: case 18: case 25:
+        case 6:
+        case 13:
+        case 15:
+        case 22:
+        case 9:
+        case 18:
+        case 25:
             // Remove the set instruction and those leading up to it.
             // The left hand side of the set instruction (modrm) is still
             // in lhs. It will be needed to build the new set instr below
@@ -711,7 +719,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
         case 15:
             // Emit a floating poin2t "set if LE"
             emitSet(BB_rtls, rit, uAddr, lhs, new Binary(opOr,
-              new Terminal(opFLF), new Terminal(opFZF)));
+                    new Terminal(opFLF), new Terminal(opFZF)));
             return false;
         case 22:
             // Emit a floating point "set if L"
@@ -720,12 +728,12 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
         case 9:
             // Emit a floating point "set if NE"
             emitSet(BB_rtls, rit, uAddr, lhs, new Unary(opNot,
-              new Terminal(opFZF)));
+                    new Terminal(opFZF)));
             return false;
         case 18:
             // Emit a floating point "set if GE"
             emitSet(BB_rtls, rit, uAddr, lhs, new Binary(opOr,
-              new Terminal(opFGF), new Terminal(opFZF)));
+                    new Terminal(opFGF), new Terminal(opFZF)));
             return false;
         case 25:
             State25(lhs, rhs, BB_rtls, rit, uAddr);
@@ -733,7 +741,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
         }
 
     }           // End of for loop (for each remaining RTL this BB)
-                            
+
     // Check the branch
     RTL* pJumpRtl = *--rit2;
     BranchStatement* pJump = (BranchStatement*)(pJumpRtl->getList().back());
@@ -752,9 +760,9 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
             const std::vector<PBB>& v = pBB->getOutEdges();
             pBBnext = v[1];
             if ((pBBnext->getType() == TWOWAY) &&
-              (pBBnext->getRTLs()->size() == 1)) {
+                    (pBBnext->getRTLs()->size() == 1)) {
                 BranchStatement* pJ = (BranchStatement*)pBBnext->getRTLs()->
-                  front()->getList().back();
+                                      front()->getList().back();
                 // Make it a floating branch
                 pJ->setFloat(true);
                 // Make it a signed branch
@@ -764,9 +772,9 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
                 bJoin = true;       // Need to join since will delete JP
             }
             else if (
-              (pRtl = pBBnext->getRTLs()->front(),
-              st = (pRtl->elementAt(0)),
-              isAssignFromTern(st))) {
+                (pRtl = pBBnext->getRTLs()->front(),
+                 st = (pRtl->elementAt(0)),
+                 isAssignFromTern(st))) {
                 lhs = ((Assign*)st)->getLeft();
                 uAddr = pRtl->getAddress();
                 state = 25;
@@ -782,7 +790,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
                 std::cerr << pBBnext->getLowAddr() << std::endl;
                 return true;
             }
-        }                   
+        }
         else {              // Branch, but not a JP (Jump if parity)
             // Just need to change the branch to a float type
             pJump->setFloat(true);
@@ -794,14 +802,22 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
     else if (pJump->getCond() == BRANCH_JE)
     {
         switch (state) {
-            case 1: state = 26; break;
-            case 2: state = 8;  break;
-            case 3: state = 21; break;
-            case 4: state = 5;  break;
-            default:
-                std::cerr << "Problem with JE: state is " << std::dec << state
-                  << "\n";
-                return true;
+        case 1:
+            state = 26;
+            break;
+        case 2:
+            state = 8;
+            break;
+        case 3:
+            state = 21;
+            break;
+        case 4:
+            state = 5;
+            break;
+        default:
+            std::cerr << "Problem with JE: state is " << std::dec << state
+                      << "\n";
+            return true;
         }
     }
     else if (pJump->getCond() == BRANCH_JNE) {
@@ -813,7 +829,7 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
         else {
             std::cerr << "Problem with JNE: state is " << state << "\n";
             std::cerr << "pJump to " << std::hex << pJump->getFixedDest() <<
-              "\n";
+                      "\n";
             return true;
         }
     }
@@ -831,9 +847,15 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
 
     Exp* pDest;
     switch (state) {
-    case 5: case 14: case 12:
-    case 21: case 8: case 19:
-    case 24: case -24: case 25:
+    case 5:
+    case 14:
+    case 12:
+    case 21:
+    case 8:
+    case 19:
+    case 24:
+    case -24:
+    case 25:
     case 26:
         // We can remove the branch and the instructions leading up to it
         // (exception: state 24, don't remove the branch).
@@ -934,14 +956,14 @@ bool PentiumFrontEnd::processStsw(std::list<RTL*>::iterator& rit,
 // Emit Rtl of the form *8* lhs = [cond ? 1 : 0]
 // Insert before rit
 void PentiumFrontEnd::emitSet(std::list<RTL*>* BB_rtls, std::list<RTL*>::iterator& rit,
-  ADDRESS uAddr, Exp* lhs, Exp* cond) {
+                              ADDRESS uAddr, Exp* lhs, Exp* cond) {
 
     Statement* asgn = new Assign(
         lhs,
         new Ternary(opTern,
-            cond,
-            new Const(1),
-            new Const(0)));
+                    cond,
+                    new Const(1),
+                    new Const(0)));
     RTL* pRtl = new RTL(uAddr);
     pRtl->appendStmt(asgn);
 //std::cout << "Emit "; pRtl->print(); std::cout << std::endl;
@@ -950,13 +972,13 @@ void PentiumFrontEnd::emitSet(std::list<RTL*>* BB_rtls, std::list<RTL*>::iterato
 }
 
 void PentiumFrontEnd::State25(Exp* lhs, Exp* rhs, std::list<RTL*>* BB_rtls,
-  std::list<RTL*>::iterator& rit, ADDRESS uAddr) {
+                              std::list<RTL*>::iterator& rit, ADDRESS uAddr) {
     Binary cfOrZf(opOr, new Terminal(opCF), new Terminal(opZF));
     Unary notZf(opNot, new Terminal(opZF));
     Unary notCf(opNot, new Terminal(opCF));
     Binary notCfAndNotZf(opAnd,
-        new Unary(opNot, new Terminal(opCF)),
-        new Unary(opNot, new Terminal(opZF)));
+                         new Unary(opNot, new Terminal(opCF)),
+                         new Unary(opNot, new Terminal(opZF)));
     // Assume this is a set instruction
     Exp* exp;
     exp = rhs->getSubExp1();
@@ -971,17 +993,17 @@ void PentiumFrontEnd::State25(Exp* lhs, Exp* rhs, std::list<RTL*>* BB_rtls,
     else if (*exp == notCf) {
         // Emit a floating point "set if GE"
         emitSet(BB_rtls, rit, uAddr, lhs, new Binary(opOr,
-            new Terminal(opFGF), new Terminal(opFZF)));
+                new Terminal(opFGF), new Terminal(opFZF)));
     }
     else if (*exp == notZf) {
         // Emit a floating point "set if NZ"
         emitSet(BB_rtls, rit, uAddr, lhs, new Unary(opNot,
-          new Terminal(opFZF)));
+                new Terminal(opFZF)));
     }
     else if (*exp == cfOrZf) {
         // Emit a floating poin2t "set if LE"
         emitSet(BB_rtls, rit, uAddr, lhs, new Binary(opOr,
-          new Terminal(opFLF), new Terminal(opFZF)));
+                new Terminal(opFLF), new Terminal(opFZF)));
     }
     else if (*exp == notCfAndNotZf) {
         // Emit a floating point "set if G"
@@ -1018,21 +1040,21 @@ bool PentiumFrontEnd::helperFunc(ADDRESS dest, ADDRESS addr, std::list<RTL*>* lr
         // r[24] = trunc(64, 32, r[tmpl])
         // r[26] = r[tmpl] >> 32
         Statement* a = new Assign(new IntegerType(64),
-            Location::tempOf(new Const("tmpl")),
-            new Ternary(opFtoi, new Const(64), new Const(32),
-                Location::regOf(32)));
+                                  Location::tempOf(new Const("tmpl")),
+                                  new Ternary(opFtoi, new Const(64), new Const(32),
+                                              Location::regOf(32)));
         RTL* pRtl = new RTL(addr);
         pRtl->appendStmt(a);
         a = new Assign(
             Location::regOf(24),
             new Ternary(opTruncs, new Const(64), new Const(32),
-                Location::tempOf(new Const("tmpl"))));
+                        Location::tempOf(new Const("tmpl"))));
         pRtl->appendStmt(a);
         a = new Assign(
             Location::regOf(26),
             new Binary(opShiftR,
-                Location::tempOf(new Const("tmpl")),
-                new Const(32)));
+                       Location::tempOf(new Const("tmpl")),
+                       new Const(32)));
         pRtl->appendStmt(a);
         // Append this RTL to the list of RTLs for this BB
         lrtl->push_back(pRtl);
@@ -1070,18 +1092,18 @@ extern "C" {
  * RETURNS:       <N/A>
  *============================================================================*/
 PentiumFrontEnd::PentiumFrontEnd(BinaryFile *pBF)
-  : FrontEnd(pBF), idPF(-1)
+    : FrontEnd(pBF), idPF(-1)
 {
-	decoder = new PentiumDecoder();
-/*	for (std::map<int, Register, std::less<int> >::iterator it = prog->RTLDict.DetRegMap.begin(); 
-		 it != prog->RTLDict.DetRegMap.end(); it++) {
-		int i = (*it).first;
-		Register &r = (*it).second;
-		if (!strcmp(r.g_name(), "%esp"))
-			prog->symbols[std::string(r.g_name())] = new TypedExp(Type(DATA_ADDRESS), Location:;regOf(i));
-		else
-			prog->symbols[std::string(r.g_name())] = new TypedExp(r.g_type(), Location::regOf(i));
-	} */
+    decoder = new PentiumDecoder();
+    /*	for (std::map<int, Register, std::less<int> >::iterator it = prog->RTLDict.DetRegMap.begin();
+    		 it != prog->RTLDict.DetRegMap.end(); it++) {
+    		int i = (*it).first;
+    		Register &r = (*it).second;
+    		if (!strcmp(r.g_name(), "%esp"))
+    			prog->symbols[std::string(r.g_name())] = new TypedExp(Type(DATA_ADDRESS), Location:;regOf(i));
+    		else
+    			prog->symbols[std::string(r.g_name())] = new TypedExp(r.g_type(), Location::regOf(i));
+    	} */
 }
 
 // destructor
@@ -1095,20 +1117,20 @@ PentiumFrontEnd::~PentiumFrontEnd()
  * PARAMETERS:  None
  * RETURNS:     Native pointer if found; NO_ADDRESS if not
  *============================================================================*/
-ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain ) 
+ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain )
 {
-	gotMain = true;
+    gotMain = true;
     ADDRESS start = pBF->GetMainEntryPoint();
     if( start != NO_ADDRESS ) return start;
 
-	gotMain = false;
+    gotMain = false;
     start = pBF->GetEntryPoint();
     if( start == NO_ADDRESS ) return NO_ADDRESS;
-    
+
     int instCount = 100;
     int conseq = 0;
     ADDRESS addr = start;
-        
+
     // Look for 3 calls in a row in the first 100 instructions, with
     // no other instructions between them. This is the "windows" pattern
     // Another windows pattern: call to GetModuleHandleA followed by
@@ -1124,36 +1146,36 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain )
         if (inst.rtl->getList().size())
             cs = (CallStatement*)(inst.rtl->getList().back());
         if (cs && cs->getKind() == STMT_CALL &&
-            cs->getDest()->getOper() == opMemOf &&
-            cs->getDest()->getSubExp1()->getOper() == opIntConst &&
-            pBF->IsDynamicLinkedProcPointer(((Const*)cs->getDest()
-                      ->getSubExp1())->getAddr()) &&
-            !strcmp(pBF->GetDynamicProcName(((Const*)cs->getDest()
-                        ->getSubExp1())->getAddr()), "GetModuleHandleA")) {
+                cs->getDest()->getOper() == opMemOf &&
+                cs->getDest()->getSubExp1()->getOper() == opIntConst &&
+                pBF->IsDynamicLinkedProcPointer(((Const*)cs->getDest()
+                                                ->getSubExp1())->getAddr()) &&
+                !strcmp(pBF->GetDynamicProcName(((Const*)cs->getDest()
+                                                ->getSubExp1())->getAddr()), "GetModuleHandleA")) {
 #if 0
             std::cerr << "consider " << std::hex << addr << " " <<
-                pBF->GetDynamicProcName(((Const*)cs->getDest()->getSubExp1())
-                      ->getAddr()) << std::endl;
+                      pBF->GetDynamicProcName(((Const*)cs->getDest()->getSubExp1())
+                                              ->getAddr()) << std::endl;
 #endif
             int oNumBytes = inst.numBytes;
             inst = decodeInstruction(addr + oNumBytes);
             if (inst.valid && inst.rtl->getNumStmt() == 2) {
                 Assign* a = dynamic_cast<Assign*>
-                                (inst.rtl->elementAt(1));
+                            (inst.rtl->elementAt(1));
                 if (a && *a->getRight() == *Location::regOf(24)) {
 #if 0
                     std::cerr << "is followed by push eax.. "
                               << "good" << std::endl;
 #endif
-                    inst = decodeInstruction(addr + oNumBytes + 
-                                          inst.numBytes);
+                    inst = decodeInstruction(addr + oNumBytes +
+                                             inst.numBytes);
                     if (inst.rtl->getList().size()) {
-                        CallStatement *toMain = 
+                        CallStatement *toMain =
                             dynamic_cast<CallStatement*>(inst.rtl
-                                                    ->getList().back());
-                        if (toMain && toMain->getFixedDest() 
-                                                    != NO_ADDRESS) {
-                            pBF->AddSymbol(toMain->getFixedDest(), 
+                                                         ->getList().back());
+                        if (toMain && toMain->getFixedDest()
+                                != NO_ADDRESS) {
+                            pBF->AddSymbol(toMain->getFixedDest(),
                                            "WinMain");
                             gotMain = true;
                             return toMain->getFixedDest();
@@ -1163,14 +1185,14 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain )
             }
         }
         if ((cs && cs->getKind() == STMT_CALL) &&
-          ((dest = (cs->getFixedDest())) != NO_ADDRESS)) {
+                ((dest = (cs->getFixedDest())) != NO_ADDRESS)) {
             if (++conseq == 3 && 0) { // this isn't working
                 // Success. Return the target of the last call
-	        gotMain = true;
+                gotMain = true;
                 return cs->getFixedDest();
             }
             if (pBF->SymbolByAddress(dest) &&
-                strcmp(pBF->SymbolByAddress(dest), "__libc_start_main") == 0) {
+                    strcmp(pBF->SymbolByAddress(dest), "__libc_start_main") == 0) {
                 // This is a gcc 3 pattern. The first parameter will be
                 // a pointer to main. Assume it's the 5 byte push
                 // immediately preceeding this instruction
@@ -1184,7 +1206,7 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain )
                 return (ADDRESS)((Const*)rhs)->getInt();
             }
         }
-        else 
+        else
             conseq = 0;         // Must be consequitive
         GotoStatement* gs = (GotoStatement*)cs;
         if (gs && gs->getKind() == STMT_GOTO)
@@ -1195,23 +1217,25 @@ ADDRESS PentiumFrontEnd::getMainEntryPoint( bool &gotMain )
             addr += inst.numBytes;
     } while (--instCount);
 #if 0       // Was for finding main in DOS 286 programs
-        // Try another pattern; this one is for DOS programs. In the first
-        // 120 instructions, look for 3 or more pushes, then a call. These
-        // will be setting up envp, argv, and argc
-        instCount = 120; addr = start; conseq = 0;
-        do {
-            DecodeResult inst = decodeInstruction(addr);
-            if ((conseq >= 3) && (inst.rtl->getKind() == CALL_HRTL) &&
+    // Try another pattern; this one is for DOS programs. In the first
+    // 120 instructions, look for 3 or more pushes, then a call. These
+    // will be setting up envp, argv, and argc
+    instCount = 120;
+    addr = start;
+    conseq = 0;
+    do {
+        DecodeResult inst = decodeInstruction(addr);
+        if ((conseq >= 3) && (inst.rtl->getKind() == CALL_HRTL) &&
                 ((HLCall*)inst.rtl)->getFixedDest() != NO_ADDRESS) {
-                    // Success. Return the target of the call					
-                    return ((HLCall*)inst.rtl)->getFixedDest();
-            }
-            if (is286Push(inst.rtl))
-                conseq++;
-            else
-                conseq = 0;
-            addr += inst.numBytes;
-        } while (--instCount);
+            // Success. Return the target of the call
+            return ((HLCall*)inst.rtl)->getFixedDest();
+        }
+        if (is286Push(inst.rtl))
+            conseq++;
+        else
+            conseq = 0;
+        addr += inst.numBytes;
+    } while (--instCount);
 #endif
 
     // Last chance check: look for _main (e.g. Borland programs)
@@ -1249,7 +1273,7 @@ void PentiumFrontEnd::processStringInst(UserProc* proc) {
         bool lastRtl = true;
         // For each RTL this BB
         for (std::list<RTL*>::iterator rit = rtls->begin();
-              rit != rtls->end(); rit++) {
+                rit != rtls->end(); rit++) {
             RTL *rtl = *rit;
             prev = addr;
             addr = rtl->getAddress();
@@ -1301,16 +1325,19 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
         int off = r&3;        // Offset into the array of 4 registers
         Assign* a;
         switch (r) {
-            case 24: case 25: case 26: case 27:
+        case 24:
+        case 25:
+        case 26:
+        case 27:
             //  eax      ecx      edx      ebx
             // Emit *16* r<off> := trunc(32, 16, r<24+off>)
             a = new Assign(
                 new IntegerType(16),
                 Location::regOf(off),
                 new Ternary(opTruncu,
-                    new Const(32),
-                    new Const(16),
-                    Location::regOf(24+off)));
+                            new Const(32),
+                            new Const(16),
+                            Location::regOf(24+off)));
             proc->insertStatementAfter(as, a);
 
             // Emit *8* r<8+off> := trunc(32, 8, r<24+off>)
@@ -1318,9 +1345,9 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(8),
                 Location::regOf(8+off),
                 new Ternary(opTruncu,
-                    new Const(32),
-                    new Const(8),
-                    Location::regOf(24+off)));
+                            new Const(32),
+                            new Const(8),
+                            Location::regOf(24+off)));
             proc->insertStatementAfter(as, a);
 
             // Emit *8* r<12+off> := r<24+off>@[15:8]
@@ -1328,13 +1355,16 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(8),
                 Location::regOf(12+off),
                 new Ternary(opAt,
-                    Location::regOf(24+off),
-                    new Const(15),
-                    new Const(8)));
+                            Location::regOf(24+off),
+                            new Const(15),
+                            new Const(8)));
             proc->insertStatementAfter(as, a);
             break;
 
-            case 0: case 1: case 2: case 3:
+        case 0:
+        case 1:
+        case 2:
+        case 3:
             //  ax      cx      dx      bx
             // Emit *32* r<24+off> := r<24+off> & 0xFFFF0000
             //      *32* r<24+off> := r<24+off> | zfill(16, 32, r<off>)
@@ -1343,28 +1373,28 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(32),
                 Location::regOf(24+off),
                 new Binary(opBitOr,
-                    Location::regOf(24+off),
-                    new Ternary(opZfill,
-                        new Const(16),
-                        new Const(32),
-                        Location::regOf(off))));
+                           Location::regOf(24+off),
+                           new Ternary(opZfill,
+                                       new Const(16),
+                                       new Const(32),
+                                       Location::regOf(off))));
             proc->insertStatementAfter(as, a);
             a = new Assign(
                 new IntegerType(32),
                 Location::regOf(24+off),
                 new Binary(opBitAnd,
-                    Location::regOf(24+off),
-                    new Const(0xFFFF0000)));
+                           Location::regOf(24+off),
+                           new Const(0xFFFF0000)));
             proc->insertStatementAfter(as, a);
-            
+
             // Emit *8* r<8+off> := trunc(16, 8, r<off>)
             a = new Assign(
                 new IntegerType(8),
                 Location::regOf(off),
                 new Ternary(opTruncu,
-                    new Const(16),
-                    new Const(8),
-                    Location::regOf(24+off)));
+                            new Const(16),
+                            new Const(8),
+                            Location::regOf(24+off)));
             proc->insertStatementAfter(as, a);
 
             // Emit *8* r<12+off> := r<off>@[15:8]
@@ -1372,14 +1402,17 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(8),
                 Location::regOf(12+off),
                 new Ternary(opAt,
-                    Location::regOf(off),
-                    new Const(15),
-                    new Const(8)));
+                            Location::regOf(off),
+                            new Const(15),
+                            new Const(8)));
             proc->insertStatementAfter(as, a);
             break;
 
 
-            case 8: case 9: case 10: case 11:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
             //  al      cl       dl       bl
             // Emit *32* r<24+off> := r<24+off> & 0xFFFF0000
             //      *32* r<24+off> := r<24+off> | zfill(8, 32, r<8+off>)
@@ -1387,18 +1420,18 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(32),
                 Location::regOf(24+off),
                 new Binary(opBitOr,
-                    Location::regOf(24+off),
-                    new Ternary(opZfill,
-                        new Const(8),
-                        new Const(32),
-                        Location::regOf(8+off))));
+                           Location::regOf(24+off),
+                           new Ternary(opZfill,
+                                       new Const(8),
+                                       new Const(32),
+                                       Location::regOf(8+off))));
             proc->insertStatementAfter(as, a);
             a = new Assign(
                 new IntegerType(32),
                 Location::regOf(24+off),
                 new Binary(opBitAnd,
-                    Location::regOf(24+off),
-                    new Const(0xFFFF0000)));
+                           Location::regOf(24+off),
+                           new Const(0xFFFF0000)));
             proc->insertStatementAfter(as, a);
 
             // Emit *16* r<off> := r<off> & 0xFF00
@@ -1407,22 +1440,25 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(16),
                 Location::regOf(off),
                 new Binary(opBitOr,
-                    Location::regOf(off),
-                    new Ternary(opZfill,
-                        new Const(8),
-                        new Const(16),
-                        Location::regOf(8+off))));
+                           Location::regOf(off),
+                           new Ternary(opZfill,
+                                       new Const(8),
+                                       new Const(16),
+                                       Location::regOf(8+off))));
             proc->insertStatementAfter(as, a);
             a = new Assign(
                 new IntegerType(16),
                 Location::regOf(off),
                 new Binary(opBitAnd,
-                    Location::regOf(off),
-                    new Const(0xFF00)));
+                           Location::regOf(off),
+                           new Const(0xFF00)));
             proc->insertStatementAfter(as, a);
             break;
 
-            case 12: case 13: case 14: case 15:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
             //   ah       ch       dh       bh
             // Emit *32* r<24+off> := r<24+off> & 0xFFFF00FF
             //      *32* r<24+off> := r<24+off> | r<12+off> << 8
@@ -1430,17 +1466,17 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(32),
                 Location::regOf(24+off),
                 new Binary(opBitOr,
-                    Location::regOf(24+off),
-                    new Binary(opShiftL,
-                        Location::regOf(12+off),
-                        new Const(8))));
+                           Location::regOf(24+off),
+                           new Binary(opShiftL,
+                                      Location::regOf(12+off),
+                                      new Const(8))));
             proc->insertStatementAfter(as, a);
             a = new Assign(
                 new IntegerType(32),
                 Location::regOf(24+off),
                 new Binary(opBitAnd,
-                    Location::regOf(24+off),
-                    new Const(0xFFFF00FF)));
+                           Location::regOf(24+off),
+                           new Const(0xFFFF00FF)));
             proc->insertStatementAfter(as, a);
 
             // Emit *16* r<off> := r<off> & 0x00FF
@@ -1449,17 +1485,17 @@ void PentiumFrontEnd::processOverlapped(UserProc* proc) {
                 new IntegerType(16),
                 Location::regOf(off),
                 new Binary(opBitOr,
-                    Location::regOf(off),
-                    new Binary(opShiftL,
-                        Location::regOf(12+off),
-                        new Const(8))));
+                           Location::regOf(off),
+                           new Binary(opShiftL,
+                                      Location::regOf(12+off),
+                                      new Const(8))));
             proc->insertStatementAfter(as, a);
             a = new Assign(
                 new IntegerType(16),
                 Location::regOf(off),
                 new Binary(opBitAnd,
-                    Location::regOf(off),
-                    new Const(0x00FF)));
+                           Location::regOf(off),
+                           new Const(0x00FF)));
             proc->insertStatementAfter(as, a);
             break;
         }
