@@ -14,32 +14,32 @@ class CSymbolsDialog : public CDialog
 {
 // Construction
 public:
-	CSymbolsDialog(CWnd* pParent = NULL);   // standard constructor
+    CSymbolsDialog(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	//{{AFX_DATA(CSymbolsDialog)
-	enum { IDD = IDD_SYMBOLS };
-	CListCtrl	m_list;
-	CTabCtrl	m_tab;
-	//}}AFX_DATA
+    //{{AFX_DATA(CSymbolsDialog)
+    enum { IDD = IDD_SYMBOLS };
+    CListCtrl	m_list;
+    CTabCtrl	m_tab;
+    //}}AFX_DATA
 
 
 // Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CSymbolsDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CSymbolsDialog)
+protected:
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+    //}}AFX_VIRTUAL
 
 // Implementation
 protected:
 
-	// Generated message map functions
-	//{{AFX_MSG(CSymbolsDialog)
-	virtual BOOL OnInitDialog();
-	afx_msg void OnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+    // Generated message map functions
+    //{{AFX_MSG(CSymbolsDialog)
+    virtual BOOL OnInitDialog();
+    afx_msg void OnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
 };
 
 //{{AFX_INSERT_LOCATION}}

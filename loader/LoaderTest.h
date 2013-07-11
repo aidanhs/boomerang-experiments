@@ -5,9 +5,9 @@
 
 
 class LoaderTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     LoaderTest(std::string name) : CppUnit::TestCase (name)
     {}
 

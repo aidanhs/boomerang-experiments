@@ -29,11 +29,13 @@ suite->addTest(new CppUnit::TestCaller<FrontendTest> ("testExp", \
 	&FrontendTest::name, *this))
 
 void FrontendTest::registerTests(CppUnit::TestSuite* suite) {
-	MYTEST(test1);
+    MYTEST(test1);
 }
 
 int FrontendTest::countTestCases () const
-{ return 3; }	// ? What's this for?
+{
+    return 3;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:		FrontendTest::setUp

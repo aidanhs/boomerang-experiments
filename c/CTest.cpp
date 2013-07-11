@@ -29,7 +29,9 @@ void CTest::registerTests(CppUnit::TestSuite* suite) {
 }
 
 int CTest::countTestCases () const
-{ return 1; }   // ? What's this for?
+{
+    return 1;    // ? What's this for?
+}
 
 /*==============================================================================
  * FUNCTION:        CTest::setUp

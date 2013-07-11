@@ -51,7 +51,7 @@ protected:
     QAction* fileExitAction;
     QPushButton* showLog;
     QHBoxLayout* MainFormLayout;
-    FileMonitor *logMonitor, *cgMonitor, 
+    FileMonitor *logMonitor, *cgMonitor,
                 *detailsMonitor, *decodedMonitor, *analysedMonitor, *ssaMonitor;
     QString projectPath;
 

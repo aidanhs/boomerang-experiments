@@ -35,9 +35,9 @@
  */
 
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER <= 1200 
+#if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma warning(disable:4786)
-#endif 
+#endif
 
 #include <string>
 #include <sstream>
@@ -65,11 +65,11 @@
  *============================================================================*/
 std::string operator+(const std::string& s, int i)
 {
-	static char buf[50];
-	std::string ret(s);
+    static char buf[50];
+    std::string ret(s);
 
-	sprintf(buf,"%d",i);
-	return ret.append(buf);
+    sprintf(buf,"%d",i);
+    return ret.append(buf);
 }
 
 /*==============================================================================
@@ -81,9 +81,9 @@ std::string operator+(const std::string& s, int i)
  *============================================================================*/
 std::string initCapital(const std::string& s)
 {
-	std::string res(s);
+    std::string res(s);
     res[0] = toupper(res[0]);
-	return res;
+    return res;
 }
 
 /*==============================================================================
@@ -162,7 +162,7 @@ void upperStr(const char* s, char* d)
 {
     int len = strlen(s);
     for (int i=0; i < len; i++)
-       d[i] = toupper(s[i]);
+        d[i] = toupper(s[i]);
     d[len] = '\0';
 }
 
@@ -226,12 +226,23 @@ char* escapeStr(char* str) {
         char c = *p;
         if (c < ' ') {
             switch (c) {
-                case '\n': out << "\\n"; break;
-                case '\r': out << "\\r"; break;
-                case '\t': out << "\\t"; break;
-                case '\b': out << "\\b"; break;
-                case '\f': out << "\\f"; break;
-                default:   out << "\\x" << std::hex << std::setw(2) << (int)c;
+            case '\n':
+                out << "\\n";
+                break;
+            case '\r':
+                out << "\\r";
+                break;
+            case '\t':
+                out << "\\t";
+                break;
+            case '\b':
+                out << "\\b";
+                break;
+            case '\f':
+                out << "\\f";
+                break;
+            default:
+                out << "\\x" << std::hex << std::setw(2) << (int)c;
             }
         } else out << c;
     }

@@ -14,14 +14,14 @@ int main(int argc) {
             if (argc > 3) {
                 x = 4;              // F
                 if (argc > 4) {
-                    five:
+five:
                     x = 5;          // I
                     printf("5");
                 } else
                     x = 8;          // K
             }
             else {
-                nine:
+nine:
                 x = 9;              // G
                 printf("9");
                 x = 10;             // J
@@ -35,11 +35,11 @@ int main(int argc) {
             if (argc == 11) goto thirteen;
             x = 12;
         } while (argc < 12);
-        thirteen:
+thirteen:
         x = 13;                     // H
     }
     x = 7;                          // M
     return x;
 }
-        
-        
+
+

@@ -6,9 +6,9 @@
 
 
 class UtilTest : public CppUnit::TestCase {
-  protected:
+protected:
 
-  public:
+public:
     UtilTest(std::string name) : CppUnit::TestCase (name)
     {}
 

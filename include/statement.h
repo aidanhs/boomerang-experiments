@@ -73,16 +73,16 @@ typedef std::map<Exp*, int, lessExpStar> igraph;
  * changing the order of these will result in save files not working - trent
  *============================================================================*/
 enum STMT_KIND {
-	STMT_ASSIGN = 0,
-	STMT_PHIASSIGN,
-	STMT_IMPASSIGN,
-	STMT_BOOLASSIGN,				// For "setCC" instructions that set destination
-	STMT_CALL,
-	STMT_RET,
-	STMT_BRANCH,
-	STMT_GOTO,
-								// to 1 or 0 depending on the condition codes.
-	STMT_CASE,					// Used to represent switch statements.
+    STMT_ASSIGN = 0,
+    STMT_PHIASSIGN,
+    STMT_IMPASSIGN,
+    STMT_BOOLASSIGN,				// For "setCC" instructions that set destination
+    STMT_CALL,
+    STMT_RET,
+    STMT_BRANCH,
+    STMT_GOTO,
+    // to 1 or 0 depending on the condition codes.
+    STMT_CASE,					// Used to represent switch statements.
 };
 
 /*==============================================================================
@@ -91,21 +91,21 @@ enum STMT_KIND {
  * Changing the order of these will result in save files not working - trent
  *============================================================================*/
 enum BRANCH_TYPE {
-	BRANCH_JE = 0,			// Jump if equals
-	BRANCH_JNE,				// Jump if not equals
-	BRANCH_JSL,				// Jump if signed less
-	BRANCH_JSLE,			// Jump if signed less or equal
-	BRANCH_JSGE,			// Jump if signed greater or equal
-	BRANCH_JSG,				// Jump if signed greater
-	BRANCH_JUL,				// Jump if unsigned less
-	BRANCH_JULE,			// Jump if unsigned less or equal
-	BRANCH_JUGE,			// Jump if unsigned greater or equal
-	BRANCH_JUG,				// Jump if unsigned greater
-	BRANCH_JMI,				// Jump if result is minus
-	BRANCH_JPOS,			// Jump if result is positive
-	BRANCH_JOF,				// Jump if overflow
-	BRANCH_JNOF,			// Jump if no overflow
-	BRANCH_JPAR				// Jump if parity even (Intel only)
+    BRANCH_JE = 0,			// Jump if equals
+    BRANCH_JNE,				// Jump if not equals
+    BRANCH_JSL,				// Jump if signed less
+    BRANCH_JSLE,			// Jump if signed less or equal
+    BRANCH_JSGE,			// Jump if signed greater or equal
+    BRANCH_JSG,				// Jump if signed greater
+    BRANCH_JUL,				// Jump if unsigned less
+    BRANCH_JULE,			// Jump if unsigned less or equal
+    BRANCH_JUGE,			// Jump if unsigned greater or equal
+    BRANCH_JUG,				// Jump if unsigned greater
+    BRANCH_JMI,				// Jump if result is minus
+    BRANCH_JPOS,			// Jump if result is positive
+    BRANCH_JOF,				// Jump if overflow
+    BRANCH_JNOF,			// Jump if no overflow
+    BRANCH_JPAR				// Jump if parity even (Intel only)
 };
 
 //	//	//	//	//	//	//	//	//	//	//	//	//	//
@@ -119,144 +119,192 @@ enum BRANCH_TYPE {
  */
 class Statement {
 protected:
-	PBB			pbb;			// contains a pointer to the enclosing BB
-	UserProc	*proc;			// procedure containing this statement
-	int			number;			// Statement number for printing
-	STMT_KIND	kind;			// Statement kind (e.g. STMT_BRANCH)
-	Statement	*parent;		// The statement that contains this one
+    PBB			pbb;			// contains a pointer to the enclosing BB
+    UserProc	*proc;			// procedure containing this statement
+    int			number;			// Statement number for printing
+    STMT_KIND	kind;			// Statement kind (e.g. STMT_BRANCH)
+    Statement	*parent;		// The statement that contains this one
 
-	unsigned int lexBegin, lexEnd;
+    unsigned int lexBegin, lexEnd;
 
 public:
 
-				Statement() : pbb(NULL), proc(NULL), number(0), parent(NULL) { }
-	virtual		~Statement() { }
+    Statement() : pbb(NULL), proc(NULL), number(0), parent(NULL) { }
+    virtual		~Statement() { }
 
-	// get/set the enclosing BB, etc
-	PBB			getBB() { return pbb; }
-	void		setBB(PBB bb) { pbb = bb; }
+    // get/set the enclosing BB, etc
+    PBB			getBB() {
+        return pbb;
+    }
+    void		setBB(PBB bb) {
+        pbb = bb;
+    }
 
-	bool		operator==(Statement& o);
-	void		setProc(UserProc *p);
-	UserProc*	getProc() {return proc;}
+    bool		operator==(Statement& o);
+    void		setProc(UserProc *p);
+    UserProc*	getProc() {
+        return proc;
+    }
 
-	int			getNumber() {return number;}
-	void		setNumber(int num) {number = num;}
+    int			getNumber() {
+        return number;
+    }
+    void		setNumber(int num) {
+        number = num;
+    }
 
-	STMT_KIND	getKind() { return kind;}
-	void		setKind(STMT_KIND k) {kind = k;}
+    STMT_KIND	getKind() {
+        return kind;
+    }
+    void		setKind(STMT_KIND k) {
+        kind = k;
+    }
 
-	void		setParent(Statement* par) {parent = par;}
-	Statement*	getParent() {return parent;}
+    void		setParent(Statement* par) {
+        parent = par;
+    }
+    Statement*	getParent() {
+        return parent;
+    }
 
-virtual Statement* clone() = 0;			   // Make copy of self
+    virtual Statement* clone() = 0;			   // Make copy of self
 
-	// Accept a visitor (of various kinds) to this Statement
-virtual bool	accept(StmtVisitor* visitor) = 0;
-virtual bool	accept(StmtExpVisitor* visitor) = 0;
-virtual bool	accept(StmtModifier* visitor) = 0;
+    // Accept a visitor (of various kinds) to this Statement
+    virtual bool	accept(StmtVisitor* visitor) = 0;
+    virtual bool	accept(StmtExpVisitor* visitor) = 0;
+    virtual bool	accept(StmtModifier* visitor) = 0;
 
-	void		setLexBegin(unsigned int n) { lexBegin = n; }
-	void		setLexEnd(unsigned int n) { lexEnd = n; }
-	unsigned int getLexBegin() { return lexBegin; }
-	unsigned int getLexEnd() { return lexEnd; }
-	Exp			*getExpAtLex(unsigned int begin, unsigned int end);
+    void		setLexBegin(unsigned int n) {
+        lexBegin = n;
+    }
+    void		setLexEnd(unsigned int n) {
+        lexEnd = n;
+    }
+    unsigned int getLexBegin() {
+        return lexBegin;
+    }
+    unsigned int getLexEnd() {
+        return lexEnd;
+    }
+    Exp			*getExpAtLex(unsigned int begin, unsigned int end);
 
 
-	// returns true if this statement defines anything
-virtual bool	isDefinition() = 0;
+    // returns true if this statement defines anything
+    virtual bool	isDefinition() = 0;
 
-	// true if is a null statement
-	bool		isNullStatement();
+    // true if is a null statement
+    bool		isNullStatement();
 
-	// true if this statement is a standard assign
-	bool		isAssign() {return kind == STMT_ASSIGN;}
-	// true if this statement is a any kind of assignment
-	bool		isAssignment() {return kind == STMT_ASSIGN || kind == STMT_PHIASSIGN ||
-					kind == STMT_IMPASSIGN || kind == STMT_BOOLASSIGN;}
-	// true if this statement is a phi assignment
-	bool		isPhi() {return kind == STMT_PHIASSIGN; }
+    // true if this statement is a standard assign
+    bool		isAssign() {
+        return kind == STMT_ASSIGN;
+    }
+    // true if this statement is a any kind of assignment
+    bool		isAssignment() {
+        return kind == STMT_ASSIGN || kind == STMT_PHIASSIGN ||
+               kind == STMT_IMPASSIGN || kind == STMT_BOOLASSIGN;
+    }
+    // true if this statement is a phi assignment
+    bool		isPhi() {
+        return kind == STMT_PHIASSIGN;
+    }
 
-	// true if this statment is a flags assignment
-	bool		isFlagAssgn();
+    // true if this statment is a flags assignment
+    bool		isFlagAssgn();
 
-virtual bool	isGoto() { return kind == STMT_GOTO; }
-virtual bool	isBranch() { return kind == STMT_BRANCH; }
+    virtual bool	isGoto() {
+        return kind == STMT_GOTO;
+    }
+    virtual bool	isBranch() {
+        return kind == STMT_BRANCH;
+    }
 
-	// true if this statement is a call
-	bool		isCall() { return kind == STMT_CALL; }
+    // true if this statement is a call
+    bool		isCall() {
+        return kind == STMT_CALL;
+    }
 
-	// true if this statement is a BoolAssign
-	bool		isBool() { return kind == STMT_BOOLASSIGN; }
+    // true if this statement is a BoolAssign
+    bool		isBool() {
+        return kind == STMT_BOOLASSIGN;
+    }
 
-	// true if this statement is a ReturnStatement
-	bool		isReturn() { return kind == STMT_RET; }
+    // true if this statement is a ReturnStatement
+    bool		isReturn() {
+        return kind == STMT_RET;
+    }
 
-	// true if this is a fpush/fpop
-	bool		isFpush();
-	bool		isFpop();
+    // true if this is a fpush/fpop
+    bool		isFpush();
+    bool		isFpop();
 
-	// returns a set of locations defined by this statement
-	// Classes with no definitions (e.g. GotoStatement and children) don't
-	// override this
-virtual void	getDefinitions(LocationSet &def) {}
+    // returns a set of locations defined by this statement
+    // Classes with no definitions (e.g. GotoStatement and children) don't
+    // override this
+    virtual void	getDefinitions(LocationSet &def) {}
 
-	// returns an expression that would be used to reference the value
-	// defined by this statement (if this statement is propogatable)
-virtual Exp*	getLeft() = 0;
+    // returns an expression that would be used to reference the value
+    // defined by this statement (if this statement is propogatable)
+    virtual Exp*	getLeft() = 0;
 
-	// returns a type for the left
+    // returns a type for the left
 // virtual Type* getLeftType() = 0;
 
-	// returns an expression that would be used to replace this statement
-	// in a use
-virtual Exp*	getRight() = 0;
+    // returns an expression that would be used to replace this statement
+    // in a use
+    virtual Exp*	getRight() = 0;
 
-	// returns true if this statement uses the given expression
-virtual bool	usesExp(Exp *e) = 0;
+    // returns true if this statement uses the given expression
+    virtual bool	usesExp(Exp *e) = 0;
 
-	// statements should be printable (for debugging)
-virtual void	print(std::ostream &os) = 0;
-		void	printAsUse(std::ostream &os)   {os << std::dec << number;}
-		void	printAsUseBy(std::ostream &os) {os << std::dec << number;}
-		void	printNum(std::ostream &os)	   {os << std::dec << number;}
-		char*	prints();	   // For use in a debugger
+    // statements should be printable (for debugging)
+    virtual void	print(std::ostream &os) = 0;
+    void	printAsUse(std::ostream &os)   {
+        os << std::dec << number;
+    }
+    void	printAsUseBy(std::ostream &os) {
+        os << std::dec << number;
+    }
+    void	printNum(std::ostream &os)	   {
+        os << std::dec << number;
+    }
+    char*	prints();	   // For use in a debugger
 
-		// inline / decode any constants in the statement
-virtual void	processConstants(Prog *prog) = 0;
+    // inline / decode any constants in the statement
+    virtual void	processConstants(Prog *prog) = 0;
 
-		// general search
-virtual bool	search(Exp *search, Exp *&result) = 0;
-virtual bool	searchAll(Exp* search, std::list<Exp*>& result) = 0;
+    // general search
+    virtual bool	search(Exp *search, Exp *&result) = 0;
+    virtual bool	searchAll(Exp* search, std::list<Exp*>& result) = 0;
 
-		// general search and replace
-virtual bool	searchAndReplace(Exp *search, Exp *replace) = 0;
+    // general search and replace
+    virtual bool	searchAndReplace(Exp *search, Exp *replace) = 0;
 
-		// From SSA form
-virtual void	fromSSAform(igraph& igm) = 0;
+    // From SSA form
+    virtual void	fromSSAform(igraph& igm) = 0;
 
-		// Propagate to this statement
-		bool	propagateTo(int memDepth, StatementSet& exclude, int toDepth = -1);
+    // Propagate to this statement
+    bool	propagateTo(int memDepth, StatementSet& exclude, int toDepth = -1);
 
-		// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) = 0;
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) = 0;
 
-		// simpify internal expressions
-virtual void	simplify() = 0;
+    // simpify internal expressions
+    virtual void	simplify() = 0;
 
-		// simplify internal address expressions (a[m[x]] -> x)
-		// Only Assigns override at present
-virtual void	simplifyAddr() {}
+    // simplify internal address expressions (a[m[x]] -> x)
+    // Only Assigns override at present
+    virtual void	simplifyAddr() {}
 
-		// fixSuccessor
-		// Only Assign overrides at present
-virtual void	fixSuccessor() {}
+    // fixSuccessor
+    // Only Assign overrides at present
+    virtual void	fixSuccessor() {}
 
-		// Generate constraints (for constraint based type analysis)
-virtual void	genConstraints(LocationSet& cons) {}
+    // Generate constraints (for constraint based type analysis)
+    virtual void	genConstraints(LocationSet& cons) {}
 
-		// Data flow based type analysis
-virtual	void	dfaTypeAnalysis(bool& ch) {}
+    // Data flow based type analysis
+    virtual	void	dfaTypeAnalysis(bool& ch) {}
 
 //	//	//	//	//	//	//	//	//	//
 //									//
@@ -264,55 +312,59 @@ virtual	void	dfaTypeAnalysis(bool& ch) {}
 //									//
 //	//	//	//	//	//	//	//	//	//
 
-	// Adds (inserts) all locations (registers or memory etc) used by this
-	// statement
-		void	addUsedLocs(LocationSet& used, bool final = false);
-		void	fixCallRefs();
+    // Adds (inserts) all locations (registers or memory etc) used by this
+    // statement
+    void	addUsedLocs(LocationSet& used, bool final = false);
+    void	fixCallRefs();
 
 
-		// replaces a use of the given statement with an expression
-		bool	replaceRef(Statement *use);
-		// special version of the above for the "special hack"
-		// (see Proc::propagateStatements, where numUses == 2)
-		void		specialReplaceRef(Statement* def);
+    // replaces a use of the given statement with an expression
+    bool	replaceRef(Statement *use);
+    // special version of the above for the "special hack"
+    // (see Proc::propagateStatements, where numUses == 2)
+    void		specialReplaceRef(Statement* def);
 
-		// Find all constants in this statement
-		void	findConstants(std::list<Const*>& lc);
+    // Find all constants in this statement
+    void	findConstants(std::list<Const*>& lc);
 
-		// Set or clear the constant subscripts (using a visitor)
-		int		setConscripts(int n);
-		void	clearConscripts();
+    // Set or clear the constant subscripts (using a visitor)
+    int		setConscripts(int n);
+    void	clearConscripts();
 
-		// Strip all references and phis (using a visitor). Returns true if the
-		// statement was a phi (and to be deleted)
-		bool	stripRefs();
+    // Strip all references and phis (using a visitor). Returns true if the
+    // statement was a phi (and to be deleted)
+    bool	stripRefs();
 
-		// Strip all size casts
-		void	stripSizes();
+    // Strip all size casts
+    void	stripSizes();
 
-		// For all expressions in this Statement, replace all e with e{def}
-		void	subscriptVar(Exp* e, Statement* def);
+    // For all expressions in this Statement, replace all e with e{def}
+    void	subscriptVar(Exp* e, Statement* def);
 
-		// Cast the constant num to type ty. If a change was made, return true
-		bool	castConst(int num, Type* ty);
+    // Cast the constant num to type ty. If a change was made, return true
+    bool	castConst(int num, Type* ty);
 
-		// End Statement visitation functions
+    // End Statement visitation functions
 
 
-		// Get the type for the given expression in this statement
-		Type	*getTypeFor(Exp *e, Prog *prog);
+    // Get the type for the given expression in this statement
+    Type	*getTypeFor(Exp *e, Prog *prog);
 
-virtual	Type*	getType() {return NULL;}			// Assignment and 
-virtual	void	setType(Type* t) {assert(0);}		// CallStatement override
+    virtual	Type*	getType() {
+        return NULL;   // Assignment and
+    }
+    virtual	void	setType(Type* t) {
+        assert(0);   // CallStatement override
+    }
 
 protected:
-		// Returns true if an indirect call is converted to direct:
-virtual bool	doReplaceRef(Exp* from, Exp* to) = 0;
-		bool	doPropagateTo(int memDepth, Statement* def, bool& convert);
-		bool	calcMayAlias(Exp *e1, Exp *e2, int size);
-		bool	mayAlias(Exp *e1, Exp *e2, int size);
+    // Returns true if an indirect call is converted to direct:
+    virtual bool	doReplaceRef(Exp* from, Exp* to) = 0;
+    bool	doPropagateTo(int memDepth, Statement* def, bool& convert);
+    bool	calcMayAlias(Exp *e1, Exp *e2, int size);
+    bool	mayAlias(Exp *e1, Exp *e2, int size);
 
-	friend class XMLProgParser;
+    friend class XMLProgParser;
 };			// class Statement
 
 // Print the Statement (etc) poited to by p
@@ -328,153 +380,177 @@ std::ostream& operator<<(std::ostream& os, LocationSet* p);
  *============================================================================*/
 class Assignment : public Statement {
 protected:
-	Type*		type;		// The type for this assignment
-	Exp*		lhs;		// The left hand side
+    Type*		type;		// The type for this assignment
+    Exp*		lhs;		// The left hand side
 public:
-	// Constructor, subexpression
-				Assignment(Exp* lhs);
-	// Constructor, type, and subexpression
-				Assignment(Type* ty, Exp* lhs);
-	// Destructor
-virtual			~Assignment();
+    // Constructor, subexpression
+    Assignment(Exp* lhs);
+    // Constructor, type, and subexpression
+    Assignment(Type* ty, Exp* lhs);
+    // Destructor
+    virtual			~Assignment();
 
-	// Clone
-virtual Statement* clone() = 0;
+    // Clone
+    virtual Statement* clone() = 0;
 
-	// Accept a visitor to this Statement
-virtual bool	accept(StmtVisitor* visitor) = 0;
-virtual bool	accept(StmtExpVisitor* visitor) = 0;
-virtual bool	accept(StmtModifier* visitor) = 0;
+    // Accept a visitor to this Statement
+    virtual bool	accept(StmtVisitor* visitor) = 0;
+    virtual bool	accept(StmtExpVisitor* visitor) = 0;
+    virtual bool	accept(StmtModifier* visitor) = 0;
 
-virtual void	print(std::ostream& os) = 0;
+    virtual void	print(std::ostream& os) = 0;
 
-		// Get and set the type
-virtual	Type*	getType() {return type;}
-virtual	void	setType(Type* ty) {type = ty;}
+    // Get and set the type
+    virtual	Type*	getType() {
+        return type;
+    }
+    virtual	void	setType(Type* ty) {
+        type = ty;
+    }
 
-virtual bool	usesExp(Exp *e);	   // PhiExp and ImplicitExp don't override
+    virtual bool	usesExp(Exp *e);	   // PhiExp and ImplicitExp don't override
 
-virtual bool	isDefinition() { return true; }
-virtual void	getDefinitions(LocationSet &defs);
-		
-	// get how to access this value
-virtual Exp*	getLeft() { return lhs; }
+    virtual bool	isDefinition() {
+        return true;
+    }
+    virtual void	getDefinitions(LocationSet &defs);
+
+    // get how to access this value
+    virtual Exp*	getLeft() {
+        return lhs;
+    }
 // virtual Type* getLeftType() { return NULL; }
 
-		// set the lhs to something new
-		void	setLeft(Exp* e)	 { lhs = e; }
+    // set the lhs to something new
+    void	setLeft(Exp* e)	 {
+        lhs = e;
+    }
 
-		// memory depth
-		int		getMemDepth();
+    // memory depth
+    int		getMemDepth();
 
-		// from SSA form
-virtual void	fromSSAform(igraph& ig);
+    // from SSA form
+    virtual void	fromSSAform(igraph& ig);
 
-		// general search
-virtual bool	search(Exp *search, Exp *&result) = 0;
-virtual bool	searchAll(Exp* search, std::list<Exp*>& result) = 0;
+    // general search
+    virtual bool	search(Exp *search, Exp *&result) = 0;
+    virtual bool	searchAll(Exp* search, std::list<Exp*>& result) = 0;
 
-		// general search and replace
-virtual bool	searchAndReplace(Exp *search, Exp *replace) = 0;
+    // general search and replace
+    virtual bool	searchAndReplace(Exp *search, Exp *replace) = 0;
 
-	void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {}
+    void		generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel) {}
 
-		// simpify internal expressions
-virtual void	simplify() = 0;
+    // simpify internal expressions
+    virtual void	simplify() = 0;
 
-		// generate Constraints
-virtual void	genConstraints(LocationSet& cons);
+    // generate Constraints
+    virtual void	genConstraints(LocationSet& cons);
 
 protected:
-virtual bool	doReplaceRef(Exp* from, Exp* to);
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
 
-	friend class XMLProgParser;
+    friend class XMLProgParser;
 };		// class Assignment
 
 
 // Assign: an ordinary assignment with left and right sides
 class Assign : public Assignment {
-	Exp*	rhs;
-	Exp*	guard;
+    Exp*	rhs;
+    Exp*	guard;
 
 public:
-	// Constructor, subexpressions
-				Assign(Exp* lhs, Exp* rhs);
-	// Constructor, type and subexpressions
-				Assign(Type* ty, Exp* lhs, Exp* rhs);
-	// Default constructor, for XML parser
-				Assign() : Assignment(NULL), rhs(NULL), guard(NULL) {}
-	// Copy constructor
-				Assign(Assign& o);
-	// Destructor
-				~Assign() {}
+    // Constructor, subexpressions
+    Assign(Exp* lhs, Exp* rhs);
+    // Constructor, type and subexpressions
+    Assign(Type* ty, Exp* lhs, Exp* rhs);
+    // Default constructor, for XML parser
+    Assign() : Assignment(NULL), rhs(NULL), guard(NULL) {}
+    // Copy constructor
+    Assign(Assign& o);
+    // Destructor
+    ~Assign() {}
 
-	// Clone
-virtual Statement* clone();
+    // Clone
+    virtual Statement* clone();
 
-	// get how to replace this statement in a use
-virtual Exp*	getRight() { return rhs; }
+    // get how to replace this statement in a use
+    virtual Exp*	getRight() {
+        return rhs;
+    }
 
-	// set the rhs to something new
-	void		setRight(Exp* e) { rhs = e; }
+    // set the rhs to something new
+    void		setRight(Exp* e) {
+        rhs = e;
+    }
 
 
 
-	// Accept a visitor to this Statement
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this Statement
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-virtual void	print(std::ostream& os);
+    virtual void	print(std::ostream& os);
 
-	// Guard
-	void		setGuard(Exp* g) {guard = g;}
-	Exp*		getGuard() {return guard;}
-	bool		isGuarded() {return guard != NULL;}
+    // Guard
+    void		setGuard(Exp* g) {
+        guard = g;
+    }
+    Exp*		getGuard() {
+        return guard;
+    }
+    bool		isGuarded() {
+        return guard != NULL;
+    }
 
-virtual bool	usesExp(Exp *e);
-virtual bool	isDefinition() { return true; }
-		
-	// get how to access this value
-virtual Exp*	getLeft() { return lhs; }
+    virtual bool	usesExp(Exp *e);
+    virtual bool	isDefinition() {
+        return true;
+    }
 
-	// inline any constants in the statement
-virtual void	processConstants(Prog *prog);
+    // get how to access this value
+    virtual Exp*	getLeft() {
+        return lhs;
+    }
 
-	// general search
-virtual bool	search(Exp* search, Exp*& result);
-virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
+    // inline any constants in the statement
+    virtual void	processConstants(Prog *prog);
 
-	// general search and replace
-virtual bool	searchAndReplace(Exp *search, Exp *replace);
- 
-	// memory depth
-	int			getMemDepth();
+    // general search
+    virtual bool	search(Exp* search, Exp*& result);
+    virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
 
-	// from SSA form
-virtual void	fromSSAform(igraph& ig);
+    // general search and replace
+    virtual bool	searchAndReplace(Exp *search, Exp *replace);
 
-	// Generate code
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+    // memory depth
+    int			getMemDepth();
 
-	// simpify internal expressions
-virtual void	simplify();
+    // from SSA form
+    virtual void	fromSSAform(igraph& ig);
 
-	// simplify address expressions
-virtual void	simplifyAddr();
+    // Generate code
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-	// fixSuccessor (succ(r2) -> r3)
-virtual void	fixSuccessor();
+    // simpify internal expressions
+    virtual void	simplify();
 
-	// generate Constraints
-virtual void	genConstraints(LocationSet& cons);
+    // simplify address expressions
+    virtual void	simplifyAddr();
 
-		// Data flow based type analysis
-		void	dfaTypeAnalysis(bool& ch);
+    // fixSuccessor (succ(r2) -> r3)
+    virtual void	fixSuccessor();
+
+    // generate Constraints
+    virtual void	genConstraints(LocationSet& cons);
+
+    // Data flow based type analysis
+    void	dfaTypeAnalysis(bool& ch);
 
 protected:
-virtual bool	doReplaceRef(Exp* from, Exp* to);
-	friend class XMLProgParser;
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
+    friend class XMLProgParser;
 };	// class Assign
 
 /*==============================================================================
@@ -491,75 +567,93 @@ virtual bool	doReplaceRef(Exp* from, Exp* to);
  * Besides, the lhs gives it useful common functionality with other Assignments
  *============================================================================*/
 class PhiAssign : public Assignment {
-	StatementVec	stmtVec;		// A vector of pointers to statements
+    StatementVec	stmtVec;		// A vector of pointers to statements
 public:
-	// Constructor, subexpression
-				PhiAssign(Exp* lhs)
-				  : Assignment(lhs) {kind = STMT_PHIASSIGN;}
-	// Constructor, type and subexpression
-				PhiAssign(Type* ty, Exp* lhs)
-				  : Assignment(ty, lhs) {kind = STMT_PHIASSIGN;}
-	// Copy constructor (not currently used or implemented)
-				PhiAssign(Assign& o);
-	// Destructor
-virtual			~PhiAssign() {}
+    // Constructor, subexpression
+    PhiAssign(Exp* lhs)
+        : Assignment(lhs) {
+        kind = STMT_PHIASSIGN;
+    }
+    // Constructor, type and subexpression
+    PhiAssign(Type* ty, Exp* lhs)
+        : Assignment(ty, lhs) {
+        kind = STMT_PHIASSIGN;
+    }
+    // Copy constructor (not currently used or implemented)
+    PhiAssign(Assign& o);
+    // Destructor
+    virtual			~PhiAssign() {}
 
-	// Clone
-virtual Statement* clone();
+    // Clone
+    virtual Statement* clone();
 
-	// get how to replace this statement in a use
-virtual Exp*	getRight() { return NULL; }
+    // get how to replace this statement in a use
+    virtual Exp*	getRight() {
+        return NULL;
+    }
 
-	// Accept a visitor to this Statement
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this Statement
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-virtual void	print(std::ostream& os);
+    virtual void	print(std::ostream& os);
 
-	// inline any constants in the statement
-virtual void	processConstants(Prog *prog);
+    // inline any constants in the statement
+    virtual void	processConstants(Prog *prog);
 
-	// general search
-virtual bool	search(Exp* search, Exp*& result);
-virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
+    // general search
+    virtual bool	search(Exp* search, Exp*& result);
+    virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
 
-	// general search and replace
-virtual bool	searchAndReplace(Exp *search, Exp *replace);
- 
-	// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // general search and replace
+    virtual bool	searchAndReplace(Exp *search, Exp *replace);
 
-	// from SSA form
-virtual void	fromSSAform(igraph& ig);
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
 
-	// Generate constraints
-virtual void	genConstraints(LocationSet& cons);
+    // from SSA form
+    virtual void	fromSSAform(igraph& ig);
 
-		// Data flow based type analysis
-		void	dfaTypeAnalysis(bool& ch);
+    // Generate constraints
+    virtual void	genConstraints(LocationSet& cons);
+
+    // Data flow based type analysis
+    void	dfaTypeAnalysis(bool& ch);
 
 //
 //	Phi specific functions
 //
 
-	// Get or put the statement at index idx
-	Statement*	getAt(int idx) {return stmtVec[idx];}
-	void		putAt(int idx, Statement* d) {stmtVec.putAt(idx, d);}
-	void		simplifyRefs();
-virtual int		getNumRefs() {return stmtVec.size();}
-	StatementVec& getRefs() {return stmtVec;}
-	// A hack. Check MVE
-	bool		hasGlobalFuncParam();
+    // Get or put the statement at index idx
+    Statement*	getAt(int idx) {
+        return stmtVec[idx];
+    }
+    void		putAt(int idx, Statement* d) {
+        stmtVec.putAt(idx, d);
+    }
+    void		simplifyRefs();
+    virtual int		getNumRefs() {
+        return stmtVec.size();
+    }
+    StatementVec& getRefs() {
+        return stmtVec;
+    }
+    // A hack. Check MVE
+    bool		hasGlobalFuncParam();
 
-	StatementVec::iterator begin() {return stmtVec.begin();}
-	StatementVec::iterator end()   {return stmtVec.end();}
+    StatementVec::iterator begin() {
+        return stmtVec.begin();
+    }
+    StatementVec::iterator end()   {
+        return stmtVec.end();
+    }
 
-	// Convert this phi assignment to an ordinary assignment
-	void		convertToAssign(Exp* rhs);
+    // Convert this phi assignment to an ordinary assignment
+    void		convertToAssign(Exp* rhs);
 
 protected:
-	friend class XMLProgParser;
+    friend class XMLProgParser;
 };	// class PhiAssign
 
 // An implicit assignment has only a left hand side. It is a placeholder for
@@ -568,31 +662,35 @@ protected:
 // looking in its defining Assignment
 class ImplicitAssign : public Assignment {
 public:
-	// Constructor, subexpression
-				ImplicitAssign(Exp* lhs)
-				  : Assignment(lhs) {kind = STMT_IMPASSIGN;}
-	// Constructor, type, and subexpression
-				ImplicitAssign(Type* ty, Exp* lhs)
-				  : Assignment(ty, lhs) {kind = STMT_IMPASSIGN; }
-	// Copy constructor
-				ImplicitAssign(ImplicitAssign& o);
-	// Destructor
-virtual			~ImplicitAssign() {}
+    // Constructor, subexpression
+    ImplicitAssign(Exp* lhs)
+        : Assignment(lhs) {
+        kind = STMT_IMPASSIGN;
+    }
+    // Constructor, type, and subexpression
+    ImplicitAssign(Type* ty, Exp* lhs)
+        : Assignment(ty, lhs) {
+        kind = STMT_IMPASSIGN;
+    }
+    // Copy constructor
+    ImplicitAssign(ImplicitAssign& o);
+    // Destructor
+    virtual			~ImplicitAssign() {}
 
-	// Clone
-virtual Statement* clone();
+    // Clone
+    virtual Statement* clone();
 
-	// inline any constants in the statement
-virtual void	processConstants(Prog *prog);
+    // inline any constants in the statement
+    virtual void	processConstants(Prog *prog);
 
-	// general search
-virtual bool	search(Exp* search, Exp*& result);
-virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
+    // general search
+    virtual bool	search(Exp* search, Exp*& result);
+    virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
 
-	// general search and replace
-virtual bool	searchAndReplace(Exp *search, Exp *replace);
- 
-virtual void	print(std::ostream& os);
+    // general search and replace
+    virtual bool	searchAndReplace(Exp *search, Exp *replace);
+
+    virtual void	print(std::ostream& os);
 
 };	// class ImplicitAssign
 
@@ -602,72 +700,86 @@ virtual void	print(std::ostream& os);
  * Exp, similar to the BranchStatement class.
  * *==========================================================================*/
 class BoolAssign: public Assignment {
-	BRANCH_TYPE jtCond;			// the condition for setting true
-	Exp*		pCond;			// Exp representation of the high level
-								// condition: e.g. r[8] == 5
-	bool		bFloat;			// True if condition uses floating point CC
-	int			size;			// The size of the dest
+    BRANCH_TYPE jtCond;			// the condition for setting true
+    Exp*		pCond;			// Exp representation of the high level
+    // condition: e.g. r[8] == 5
+    bool		bFloat;			// True if condition uses floating point CC
+    int			size;			// The size of the dest
 public:
-				BoolAssign(int size);
-virtual			~BoolAssign();
+    BoolAssign(int size);
+    virtual			~BoolAssign();
 
-	// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
+    // Make a deep copy, and make the copy a derived object if needed.
+    virtual Statement* clone();
 
-	// Accept a visitor to this RTL
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this RTL
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-	// Set and return the BRANCH_TYPE of this scond as well as whether the
-	// floating point condition codes are used.
-	void		setCondType(BRANCH_TYPE cond, bool usesFloat = false);
-	BRANCH_TYPE getCond(){return jtCond;}
-	bool		isFloat(){return bFloat;}
-	void		setFloat(bool b) { bFloat = b; }
+    // Set and return the BRANCH_TYPE of this scond as well as whether the
+    // floating point condition codes are used.
+    void		setCondType(BRANCH_TYPE cond, bool usesFloat = false);
+    BRANCH_TYPE getCond() {
+        return jtCond;
+    }
+    bool		isFloat() {
+        return bFloat;
+    }
+    void		setFloat(bool b) {
+        bFloat = b;
+    }
 
-	// Set and return the Exp representing the HL condition
-	Exp*		getCondExpr();
-	void		setCondExpr(Exp* pss);
-	// As above, no delete (for subscripting)
-	void		setCondExprND(Exp* e) { pCond = e; }
+    // Set and return the Exp representing the HL condition
+    Exp*		getCondExpr();
+    void		setCondExpr(Exp* pss);
+    // As above, no delete (for subscripting)
+    void		setCondExprND(Exp* e) {
+        pCond = e;
+    }
 
-	int			getSize() {return size;}	// Return the size of the assignment
-	void		makeSigned();
+    int			getSize() {
+        return size;   // Return the size of the assignment
+    }
+    void		makeSigned();
 
-virtual void	print(std::ostream& os = std::cout);
+    virtual void	print(std::ostream& os = std::cout);
 
 #if 0
-	// Used for type analysis. Stores type information that
-	// can be gathered from the RTL instruction inside a
-	// data structure within BBBlock inBlock
-	void storeUseDefineStruct(BBBlock& inBlock);	   
+    // Used for type analysis. Stores type information that
+    // can be gathered from the RTL instruction inside a
+    // data structure within BBBlock inBlock
+    void storeUseDefineStruct(BBBlock& inBlock);
 #endif
 
-	// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-	// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
 
-	// Statement functions
-virtual bool	isDefinition() { return true; }
-virtual void	getDefinitions(LocationSet &def);
-virtual Exp*	getRight() { return getCondExpr(); }
-virtual bool	usesExp(Exp *e);
-virtual void	processConstants(Prog *prog);
-virtual bool	search(Exp *search, Exp *&result);
-virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
-virtual bool	searchAndReplace(Exp *search, Exp *replace);
-virtual bool	doReplaceRef(Exp* from, Exp* to);
-	// from SSA form
-virtual void	fromSSAform(igraph& ig);
-	// a hack for the SETS macro
-		void	setLeftFromList(std::list<Statement*>* stmts);
+    // Statement functions
+    virtual bool	isDefinition() {
+        return true;
+    }
+    virtual void	getDefinitions(LocationSet &def);
+    virtual Exp*	getRight() {
+        return getCondExpr();
+    }
+    virtual bool	usesExp(Exp *e);
+    virtual void	processConstants(Prog *prog);
+    virtual bool	search(Exp *search, Exp *&result);
+    virtual bool	searchAll(Exp* search, std::list<Exp*>& result);
+    virtual bool	searchAndReplace(Exp *search, Exp *replace);
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
+    // from SSA form
+    virtual void	fromSSAform(igraph& ig);
+    // a hack for the SETS macro
+    void	setLeftFromList(std::list<Statement*>* stmts);
 
-virtual void	dfaTypeAnalysis(bool& ch);
+    virtual void	dfaTypeAnalysis(bool& ch);
 
-	friend class XMLProgParser;
+    friend class XMLProgParser;
 };	// class BoolAssign
 
 /*=============================================================================
@@ -681,73 +793,85 @@ virtual void	dfaTypeAnalysis(bool& ch);
  *===========================================================================*/
 class GotoStatement: public Statement {
 protected:
-	Exp*		pDest;			// Destination of a jump or call. This is the
-								// absolute destination for both static and
-								// dynamic CTIs.
-	bool		m_isComputed;	// True if this is a CTI with a computed
-								// destination address. NOTE: This should be
-								// removed, once CaseStatement and HLNwayCall
-								// are implemented properly.
+    Exp*		pDest;			// Destination of a jump or call. This is the
+    // absolute destination for both static and
+    // dynamic CTIs.
+    bool		m_isComputed;	// True if this is a CTI with a computed
+    // destination address. NOTE: This should be
+    // removed, once CaseStatement and HLNwayCall
+    // are implemented properly.
 public:
-				GotoStatement();
-				GotoStatement(ADDRESS jumpDest);
-virtual			~GotoStatement();
+    GotoStatement();
+    GotoStatement(ADDRESS jumpDest);
+    virtual			~GotoStatement();
 
-	// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
+    // Make a deep copy, and make the copy a derived object if needed.
+    virtual Statement* clone();
 
-	// Accept a visitor to this Statement
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this Statement
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-	// Set and return the destination of the jump. The destination is either
-	// a Exp, or an ADDRESS that is converted to a Exp.
-	void		setDest(Exp* pd);
-	void		setDest(ADDRESS addr);
-virtual Exp*	getDest();
+    // Set and return the destination of the jump. The destination is either
+    // a Exp, or an ADDRESS that is converted to a Exp.
+    void		setDest(Exp* pd);
+    void		setDest(ADDRESS addr);
+    virtual Exp*	getDest();
 
-	// Return the fixed destination of this CTI. For dynamic CTIs, returns -1.
-	ADDRESS		getFixedDest();
+    // Return the fixed destination of this CTI. For dynamic CTIs, returns -1.
+    ADDRESS		getFixedDest();
 
-	// Adjust the fixed destination by a given amount. Invalid for dynamic CTIs.
-	void		adjustFixedDest(int delta);
-	
-	// Set and return whether the destination of this CTI is computed.
-	// NOTE: These should really be removed, once CaseStatement and HLNwayCall
-	// are implemented properly.
-	void		setIsComputed(bool b = true);
-	bool		isComputed();
+    // Adjust the fixed destination by a given amount. Invalid for dynamic CTIs.
+    void		adjustFixedDest(int delta);
 
-virtual void	print(std::ostream& os = std::cout);
+    // Set and return whether the destination of this CTI is computed.
+    // NOTE: These should really be removed, once CaseStatement and HLNwayCall
+    // are implemented properly.
+    void		setIsComputed(bool b = true);
+    bool		isComputed();
 
-	// general search
-virtual bool	search(Exp*, Exp*&);
+    virtual void	print(std::ostream& os = std::cout);
 
-	// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
-	
-	// Searches for all instances of a given subexpression within this
-	// expression and adds them to a given list in reverse nesting order.	 
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+    // general search
+    virtual bool	search(Exp*, Exp*&);
 
-	// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+    // Replace all instances of "search" with "replace".
+    virtual bool	searchAndReplace(Exp* search, Exp* replace);
 
-	// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // Searches for all instances of a given subexpression within this
+    // expression and adds them to a given list in reverse nesting order.
+    virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
 
-	// Statement virtual functions
-virtual bool	isDefinition() { return false;}
-virtual Exp*	getLeft() {return NULL;}
-virtual Type*	getLeftType() {return NULL;};
-virtual Exp*	getRight() {return NULL;}
-virtual bool	usesExp(Exp*) {return false;}
-virtual void	processConstants(Prog*) {}
-virtual void	fromSSAform(igraph&) {}
-virtual bool	doReplaceRef(Exp*, Exp*) {return false;}
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-	friend class XMLProgParser;
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
+
+    // Statement virtual functions
+    virtual bool	isDefinition() {
+        return false;
+    }
+    virtual Exp*	getLeft() {
+        return NULL;
+    }
+    virtual Type*	getLeftType() {
+        return NULL;
+    };
+    virtual Exp*	getRight() {
+        return NULL;
+    }
+    virtual bool	usesExp(Exp*) {
+        return false;
+    }
+    virtual void	processConstants(Prog*) {}
+    virtual void	fromSSAform(igraph&) {}
+    virtual bool	doReplaceRef(Exp*, Exp*) {
+        return false;
+    }
+
+    friend class XMLProgParser;
 };		// class GotoStatement
 
 
@@ -756,94 +880,114 @@ virtual bool	doReplaceRef(Exp*, Exp*) {return false;}
  *============================================================================*/
 class BranchStatement: public GotoStatement {
 public:
-				BranchStatement();
-virtual			~BranchStatement();
+    BranchStatement();
+    virtual			~BranchStatement();
 
-	// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
+    // Make a deep copy, and make the copy a derived object if needed.
+    virtual Statement* clone();
 
-	// Accept a visitor to this RTL
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this RTL
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-	// Set and return the BRANCH_TYPE of this jcond as well as whether the
-	// floating point condition codes are used.
-	void		setCondType(BRANCH_TYPE cond, bool usesFloat = false);
-	BRANCH_TYPE getCond(){ return jtCond; }
-	bool		isFloat(){ return bFloat; }
-	void		setFloat(bool b)	  { bFloat = b; }
+    // Set and return the BRANCH_TYPE of this jcond as well as whether the
+    // floating point condition codes are used.
+    void		setCondType(BRANCH_TYPE cond, bool usesFloat = false);
+    BRANCH_TYPE getCond() {
+        return jtCond;
+    }
+    bool		isFloat() {
+        return bFloat;
+    }
+    void		setFloat(bool b)	  {
+        bFloat = b;
+    }
 
-	// Set and return the Exp representing the HL condition
-	Exp*		getCondExpr();
-	void		setCondExpr(Exp* pe);
-	// As above, no delete (for subscripting)
-	void		setCondExprND(Exp* e) { pCond = e; }
-	
-	// Probably only used in front386.cc: convert this from an unsigned to a
-	// signed conditional branch
-	void		makeSigned();
+    // Set and return the Exp representing the HL condition
+    Exp*		getCondExpr();
+    void		setCondExpr(Exp* pe);
+    // As above, no delete (for subscripting)
+    void		setCondExprND(Exp* e) {
+        pCond = e;
+    }
 
-virtual void	print(std::ostream& os = std::cout);
+    // Probably only used in front386.cc: convert this from an unsigned to a
+    // signed conditional branch
+    void		makeSigned();
 
-	// general search
-virtual bool	search(Exp *search, Exp *&result);
+    virtual void	print(std::ostream& os = std::cout);
 
-	// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
-	
-	// Searches for all instances of a given subexpression within this
-	// expression and adds them to a given list in reverse nesting order.
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+    // general search
+    virtual bool	search(Exp *search, Exp *&result);
+
+    // Replace all instances of "search" with "replace".
+    virtual bool	searchAndReplace(Exp* search, Exp* replace);
+
+    // Searches for all instances of a given subexpression within this
+    // expression and adds them to a given list in reverse nesting order.
+    virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
 
 #if 0
-	// Used for type analysis. Stores type information that
-	// can be gathered from the RTL instruction inside a
-	// data structure within BBBlock inBlock
-	void		storeUseDefineStruct(BBBlock& inBlock);	  
+    // Used for type analysis. Stores type information that
+    // can be gathered from the RTL instruction inside a
+    // data structure within BBBlock inBlock
+    void		storeUseDefineStruct(BBBlock& inBlock);
 #endif
 
-		// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-		// dataflow analysis
-virtual bool	usesExp(Exp *e);
+    // dataflow analysis
+    virtual bool	usesExp(Exp *e);
 
-		// dataflow related functions
-virtual bool	canPropagateToAll() { return false; }
-virtual void	propagateToAll() { assert(false); }
+    // dataflow related functions
+    virtual bool	canPropagateToAll() {
+        return false;
+    }
+    virtual void	propagateToAll() {
+        assert(false);
+    }
 
-virtual bool	isDefinition() { return false; }
+    virtual bool	isDefinition() {
+        return false;
+    }
 
-		// get how to access this value
-virtual Exp*	getLeft() { return NULL; }
-virtual Type*	getLeftType() { return NULL; }
+    // get how to access this value
+    virtual Exp*	getLeft() {
+        return NULL;
+    }
+    virtual Type*	getLeftType() {
+        return NULL;
+    }
 
-		// get how to replace this statement in a use
-virtual Exp*	getRight() { return pCond; }
+    // get how to replace this statement in a use
+    virtual Exp*	getRight() {
+        return pCond;
+    }
 
-		// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
 
-		// From SSA form
-virtual void	fromSSAform(igraph& ig);
+    // From SSA form
+    virtual void	fromSSAform(igraph& ig);
 
-		// Generate constraints
-virtual void	genConstraints(LocationSet& cons);
+    // Generate constraints
+    virtual void	genConstraints(LocationSet& cons);
 
-		// Data flow based type analysis
-		void	dfaTypeAnalysis(bool& ch);
+    // Data flow based type analysis
+    void	dfaTypeAnalysis(bool& ch);
 
 protected:
-virtual bool	doReplaceRef(Exp* from, Exp* to);
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
 
 private:
-	BRANCH_TYPE jtCond;			// The condition for jumping
-	Exp*		pCond;			// The Exp representation of the high level
-								// condition: e.g., r[8] == 5
-	bool		bFloat;			// True if uses floating point CC
+    BRANCH_TYPE jtCond;			// The condition for jumping
+    Exp*		pCond;			// The Exp representation of the high level
+    // condition: e.g., r[8] == 5
+    bool		bFloat;			// True if uses floating point CC
 
-	friend class XMLProgParser;
+    friend class XMLProgParser;
 };		// class BranchStatement
 
 /*==============================================================================
@@ -851,65 +995,65 @@ private:
  * of the jump, it has a switch variable Exp.
  *============================================================================*/
 typedef struct {
-	Exp*		pSwitchVar;		// Ptr to Exp repres switch var, e.g. v[7]
-	char		chForm;			// Switch form: 'A', 'O', 'R', or 'H'
-	int			iLower;			// Lower bound of the switch variable
-	int			iUpper;			// Upper bound for the switch variable
-	ADDRESS		uTable;			// Native address of the table
-	int			iNumTable;		// Number of entries in the table (form H only)
-	int			iOffset;		// Distance from jump to table (form R only)
+    Exp*		pSwitchVar;		// Ptr to Exp repres switch var, e.g. v[7]
+    char		chForm;			// Switch form: 'A', 'O', 'R', or 'H'
+    int			iLower;			// Lower bound of the switch variable
+    int			iUpper;			// Upper bound for the switch variable
+    ADDRESS		uTable;			// Native address of the table
+    int			iNumTable;		// Number of entries in the table (form H only)
+    int			iOffset;		// Distance from jump to table (form R only)
 //	int			delta;			// Host address - Native address
 } SWITCH_INFO;
 
 class CaseStatement: public GotoStatement {
-	SWITCH_INFO* pSwitchInfo;	// Ptr to struct with info about the switch
+    SWITCH_INFO* pSwitchInfo;	// Ptr to struct with info about the switch
 public:
-				CaseStatement();
-virtual			~CaseStatement();
+    CaseStatement();
+    virtual			~CaseStatement();
 
-	// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
+    // Make a deep copy, and make the copy a derived object if needed.
+    virtual Statement* clone();
 
-	// Accept a visitor to this RTL
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this RTL
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-	// Set and return the Exp representing the switch variable
-	SWITCH_INFO* getSwitchInfo(); 
-	void		setSwitchInfo(SWITCH_INFO* pss);
-	
-virtual void	print(std::ostream& os = std::cout);
+    // Set and return the Exp representing the switch variable
+    SWITCH_INFO* getSwitchInfo();
+    void		setSwitchInfo(SWITCH_INFO* pss);
 
-	// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
-	
-	// Searches for all instances of a given subexpression within this
-	// expression and adds them to a given list in reverse nesting order.
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
-	
+    virtual void	print(std::ostream& os = std::cout);
+
+    // Replace all instances of "search" with "replace".
+    virtual bool	searchAndReplace(Exp* search, Exp* replace);
+
+    // Searches for all instances of a given subexpression within this
+    // expression and adds them to a given list in reverse nesting order.
+    virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+
 #if 0
-	// Used for type analysis. Stores type information that
-	// can be gathered from the RTL instruction inside a
-	// data structure within BBBlock inBlock
-	void storeUseDefineStruct(BBBlock& inBlock);   
-#endif	   
+    // Used for type analysis. Stores type information that
+    // can be gathered from the RTL instruction inside a
+    // data structure within BBBlock inBlock
+    void storeUseDefineStruct(BBBlock& inBlock);
+#endif
 
-	// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
-	
-	// dataflow analysis
-virtual bool	usesExp(Exp *e);
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+
+    // dataflow analysis
+    virtual bool	usesExp(Exp *e);
 protected:
-virtual bool	doReplaceRef(Exp* from, Exp* to);
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
 public:
 
-	// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
 
-virtual void	fromSSAform(igraph& ig);
+    virtual void	fromSSAform(igraph& ig);
 
-	friend class XMLProgParser;
+    friend class XMLProgParser;
 };			// class CaseStatement
 
 /*==============================================================================
@@ -917,146 +1061,167 @@ virtual void	fromSSAform(igraph& ig);
  * the like are stored here.
  *============================================================================*/
 class CallStatement: public GotoStatement {
-	// FIXME: Below will likely go away soon...
-	int			returnTypeSize; // Size in bytes of the struct, union or quad FP
-								// value returned by the called function.
-	Type*		returnType;		// TEMPORARY
-	bool		returnAfterCall;// True if call is effectively followed by
-								// a return.
-	
-	// The list of arguments passed by this call
-	std::vector<Exp*> arguments;
-	// The list of arguments implicitly passed as a result of the calling 
-	// convention of the called procedure or the actual arguments
-	std::vector<Exp*> implicitArguments;
+    // FIXME: Below will likely go away soon...
+    int			returnTypeSize; // Size in bytes of the struct, union or quad FP
+    // value returned by the called function.
+    Type*		returnType;		// TEMPORARY
+    bool		returnAfterCall;// True if call is effectively followed by
+    // a return.
 
-	// The set of locations that are defined by this call.
-	std::vector<Exp*> returns;
+    // The list of arguments passed by this call
+    std::vector<Exp*> arguments;
+    // The list of arguments implicitly passed as a result of the calling
+    // convention of the called procedure or the actual arguments
+    std::vector<Exp*> implicitArguments;
 
-	// Destination of call
-	Proc*		procDest;
+    // The set of locations that are defined by this call.
+    std::vector<Exp*> returns;
+
+    // Destination of call
+    Proc*		procDest;
 
 public:
-				CallStatement(int returnTypeSize = 0);
-virtual			~CallStatement();
+    CallStatement(int returnTypeSize = 0);
+    virtual			~CallStatement();
 
-	// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
+    // Make a deep copy, and make the copy a derived object if needed.
+    virtual Statement* clone();
 
-	// Accept a visitor to this RTL
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this RTL
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-	// Return true if the called function returns an aggregate: i.e., a
-	// struct, union or quad floating point value.
-	bool		returnsStruct();
+    // Return true if the called function returns an aggregate: i.e., a
+    // struct, union or quad floating point value.
+    bool		returnsStruct();
 
-	// Set call's arguments
-	void		setArguments(std::vector<Exp*>& arguments);
-	// Set implicit arguments: so far, for testing only:
-	void		setImpArguments(std::vector<Exp*>& arguments);
-	void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
-	void		setSigArguments();			// Set arguments based on signature
-	std::vector<Exp*>& getArguments();		// Return call's arguments
-	int			getNumReturns();
-	Exp			*getReturnExp(int i);
-	int			findReturn(Exp *e);
-	void		removeReturn(Exp *e);
-	void		addReturn(Exp *e);
-	std::vector<Exp*>& getReturns() {return returns;}
-	Exp			*getProven(Exp *e);
-	Exp			*substituteParams(Exp *e);
-	void		addArgument(Exp *e);
-	Exp*		findArgument(Exp* e);
-	Exp*		getArgumentExp(int i);
-	Exp*		getImplicitArgumentExp(int i);
-	std::vector<Exp*>& getImplicitArguments() {return implicitArguments;}
-	int			getNumImplicitArguments() {return implicitArguments.size();}
-	void		setArgumentExp(int i, Exp *e);
-	void		setNumArguments(int i);
-	int			getNumArguments();
-	void		removeArgument(int i);
-	void		removeImplicitArgument(int i);
-	Type		*getArgumentType(int i);
-	void		truncateArguments();
-	void		clearLiveEntry();
+    // Set call's arguments
+    void		setArguments(std::vector<Exp*>& arguments);
+    // Set implicit arguments: so far, for testing only:
+    void		setImpArguments(std::vector<Exp*>& arguments);
+    void		setReturns(std::vector<Exp*>& returns);// Set call's return locs
+    void		setSigArguments();			// Set arguments based on signature
+    std::vector<Exp*>& getArguments();		// Return call's arguments
+    int			getNumReturns();
+    Exp			*getReturnExp(int i);
+    int			findReturn(Exp *e);
+    void		removeReturn(Exp *e);
+    void		addReturn(Exp *e);
+    std::vector<Exp*>& getReturns() {
+        return returns;
+    }
+    Exp			*getProven(Exp *e);
+    Exp			*substituteParams(Exp *e);
+    void		addArgument(Exp *e);
+    Exp*		findArgument(Exp* e);
+    Exp*		getArgumentExp(int i);
+    Exp*		getImplicitArgumentExp(int i);
+    std::vector<Exp*>& getImplicitArguments() {
+        return implicitArguments;
+    }
+    int			getNumImplicitArguments() {
+        return implicitArguments.size();
+    }
+    void		setArgumentExp(int i, Exp *e);
+    void		setNumArguments(int i);
+    int			getNumArguments();
+    void		removeArgument(int i);
+    void		removeImplicitArgument(int i);
+    Type		*getArgumentType(int i);
+    void		truncateArguments();
+    void		clearLiveEntry();
 
 
-virtual void	print(std::ostream& os = std::cout);
+    virtual void	print(std::ostream& os = std::cout);
 
-		// general search
-virtual bool	search(Exp *search, Exp *&result);
+    // general search
+    virtual bool	search(Exp *search, Exp *&result);
 
-		// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
-	
-		// Searches for all instances of a given subexpression within this
-		// expression and adds them to a given list in reverse nesting order.
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+    // Replace all instances of "search" with "replace".
+    virtual bool	searchAndReplace(Exp* search, Exp* replace);
 
-		// Set and return whether the call is effectively followed by a return.
-		// E.g. on Sparc, whether there is a restore in the delay slot.
-		void	setReturnAfterCall(bool b);
-		bool	isReturnAfterCall();
+    // Searches for all instances of a given subexpression within this
+    // expression and adds them to a given list in reverse nesting order.
+    virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
 
-		// Set and return the list of Exps that occur *after* the call (the
-		// list of exps in the RTL occur before the call). Useful for odd patterns.
-		void	setPostCallExpList(std::list<Exp*>* le);
-		std::list<Exp*>* getPostCallExpList();
+    // Set and return whether the call is effectively followed by a return.
+    // E.g. on Sparc, whether there is a restore in the delay slot.
+    void	setReturnAfterCall(bool b);
+    bool	isReturnAfterCall();
 
-		// Set and return the destination proc.
-		void	setDestProc(Proc* dest);
-		Proc*	getDestProc();
+    // Set and return the list of Exps that occur *after* the call (the
+    // list of exps in the RTL occur before the call). Useful for odd patterns.
+    void	setPostCallExpList(std::list<Exp*>* le);
+    std::list<Exp*>* getPostCallExpList();
 
-		// Generate constraints
-virtual void	genConstraints(LocationSet& cons);
+    // Set and return the destination proc.
+    void	setDestProc(Proc* dest);
+    Proc*	getDestProc();
 
-		// Data flow based type analysis
-		void	dfaTypeAnalysis(bool& ch);
+    // Generate constraints
+    virtual void	genConstraints(LocationSet& cons);
 
-		// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+    // Data flow based type analysis
+    void	dfaTypeAnalysis(bool& ch);
 
-		// dataflow analysis
-virtual bool	usesExp(Exp *e);
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-		// dataflow related functions
-virtual bool	propagateToAll() { assert(false); return false;}
+    // dataflow analysis
+    virtual bool	usesExp(Exp *e);
 
-virtual bool	isDefinition();
-virtual void	getDefinitions(LocationSet &defs);
+    // dataflow related functions
+    virtual bool	propagateToAll() {
+        assert(false);
+        return false;
+    }
 
-virtual Exp*	getLeft() {return getReturnExp(0);}
-		// get how to replace this statement in a use
-virtual Exp*	getRight() { return NULL; }
+    virtual bool	isDefinition();
+    virtual void	getDefinitions(LocationSet &defs);
 
-		// inline any constants in the statement
-virtual void	processConstants(Prog *prog);
+    virtual Exp*	getLeft() {
+        return getReturnExp(0);
+    }
+    // get how to replace this statement in a use
+    virtual Exp*	getRight() {
+        return NULL;
+    }
 
-		// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // inline any constants in the statement
+    virtual void	processConstants(Prog *prog);
 
-		void	setIgnoreReturnLoc(bool b);
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
 
-		void	decompile();
+    void	setIgnoreReturnLoc(bool b);
 
-virtual void	fromSSAform(igraph& ig);
-		
-		// Insert actual arguments to match formal parameters
-		void	insertArguments(StatementSet& rs);
+    void	decompile();
 
-virtual	Type*	getType() {return returnType;}		// MVE: TEMPORARY
-virtual	void	setType(Type* t) { returnType = t;}	// MVE: TEMPORARY
-		void	ellipsisTruncation();		// E.g. remove excess arguments from printf etc
+    virtual void	fromSSAform(igraph& ig);
+
+    // Insert actual arguments to match formal parameters
+    void	insertArguments(StatementSet& rs);
+
+    virtual	Type*	getType() {
+        return returnType;   // MVE: TEMPORARY
+    }
+    virtual	void	setType(Type* t) {
+        returnType = t;   // MVE: TEMPORARY
+    }
+    void	ellipsisTruncation();		// E.g. remove excess arguments from printf etc
 
 protected:
-virtual bool	doReplaceRef(Exp* from, Exp* to);
-		bool	convertToDirect();
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
+    bool	convertToDirect();
 
-		void	appendArgument(Exp *e) { arguments.push_back(e); }
-		void	appendImplicitArgument(Exp *e) { implicitArguments.push_back(e); }
-	friend class XMLProgParser;
+    void	appendArgument(Exp *e) {
+        arguments.push_back(e);
+    }
+    void	appendImplicitArgument(Exp *e) {
+        implicitArguments.push_back(e);
+    }
+    friend class XMLProgParser;
 };		// class CallStatement
 
 
@@ -1065,72 +1230,88 @@ virtual bool	doReplaceRef(Exp* from, Exp* to);
  *============================================================================*/
 class ReturnStatement: public GotoStatement {
 protected:
-		// number of bytes that this return pops
-		int		nBytesPopped;
+    // number of bytes that this return pops
+    int		nBytesPopped;
 
-		// value returned
-		std::vector<Exp*> returns;
+    // value returned
+    std::vector<Exp*> returns;
 
-		// Native address of the (only) return instruction
-		// Needed for branching to this only return statement
-		ADDRESS	retAddr;
+    // Native address of the (only) return instruction
+    // Needed for branching to this only return statement
+    ADDRESS	retAddr;
 
 public:
-				ReturnStatement();
-virtual			~ReturnStatement();
+    ReturnStatement();
+    virtual			~ReturnStatement();
 
-		// Make a deep copy, and make the copy a derived object if needed.
-virtual Statement* clone();
+    // Make a deep copy, and make the copy a derived object if needed.
+    virtual Statement* clone();
 
-		// Accept a visitor to this RTL
-virtual bool	accept(StmtVisitor* visitor);
-virtual bool	accept(StmtExpVisitor* visitor);
-virtual bool	accept(StmtModifier* visitor);
+    // Accept a visitor to this RTL
+    virtual bool	accept(StmtVisitor* visitor);
+    virtual bool	accept(StmtExpVisitor* visitor);
+    virtual bool	accept(StmtModifier* visitor);
 
-		// print
-virtual void	print(std::ostream& os = std::cout);
+    // print
+    virtual void	print(std::ostream& os = std::cout);
 
-		// From SSA form
-virtual void	fromSSAform(igraph& igm);
+    // From SSA form
+    virtual void	fromSSAform(igraph& igm);
 
-		// code generation
-virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
+    // code generation
+    virtual void	generateCode(HLLCode *hll, BasicBlock *pbb, int indLevel);
 
-		// simplify all the uses/defs in this RTL
-virtual void	simplify();
+    // simplify all the uses/defs in this RTL
+    virtual void	simplify();
 
-		// general search
-virtual bool	search(Exp*, Exp*&);
+    // general search
+    virtual bool	search(Exp*, Exp*&);
 
-		// Replace all instances of "search" with "replace".
-virtual bool	searchAndReplace(Exp* search, Exp* replace);
-	
-		// Searches for all instances of a given subexpression within this
-		// expression and adds them to a given list in reverse nesting order.	 
-virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
+    // Replace all instances of "search" with "replace".
+    virtual bool	searchAndReplace(Exp* search, Exp* replace);
 
-		// returns true if this statement uses the given expression
-virtual bool	usesExp(Exp *e);
+    // Searches for all instances of a given subexpression within this
+    // expression and adds them to a given list in reverse nesting order.
+    virtual bool	searchAll(Exp* search, std::list<Exp*> &result);
 
-virtual bool	doReplaceRef(Exp* from, Exp* to);
-		int		getNumBytesPopped() { return nBytesPopped; }
-		void	setNumBytesPopped(int n) { nBytesPopped = n; }
+    // returns true if this statement uses the given expression
+    virtual bool	usesExp(Exp *e);
 
-		int		getNumReturns() { return returns.size(); }
-		Exp		*getReturnExp(int n) { return returns[n]; }
-		void	setReturnExp(int n, Exp *e) { returns[n] = e; }
-		std::vector<Exp*>& getReturns() {return returns;}
-		void	setSigArguments();	 // Set returns based on signature
-		void	removeReturn(int n);
-		void	addReturn(Exp *e);
+    virtual bool	doReplaceRef(Exp* from, Exp* to);
+    int		getNumBytesPopped() {
+        return nBytesPopped;
+    }
+    void	setNumBytesPopped(int n) {
+        nBytesPopped = n;
+    }
 
-		// Get and set the native address for the first and only return statement
-	ADDRESS		getRetAddr() {return retAddr;}
-	void		setRetAddr(ADDRESS r) {retAddr = r;}
+    int		getNumReturns() {
+        return returns.size();
+    }
+    Exp		*getReturnExp(int n) {
+        return returns[n];
+    }
+    void	setReturnExp(int n, Exp *e) {
+        returns[n] = e;
+    }
+    std::vector<Exp*>& getReturns() {
+        return returns;
+    }
+    void	setSigArguments();	 // Set returns based on signature
+    void	removeReturn(int n);
+    void	addReturn(Exp *e);
 
-virtual void	dfaTypeAnalysis(bool& ch);
+    // Get and set the native address for the first and only return statement
+    ADDRESS		getRetAddr() {
+        return retAddr;
+    }
+    void		setRetAddr(ADDRESS r) {
+        retAddr = r;
+    }
 
-	friend class XMLProgParser;
+    virtual void	dfaTypeAnalysis(bool& ch);
+
+    friend class XMLProgParser;
 };	// class ReturnStatement
 
 

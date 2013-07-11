@@ -33,31 +33,31 @@ typedef std::map<ADDRESS,std::string,std::less<ADDRESS> >  RelocMap;
 
 typedef struct
 {
-	ADDRESS		uSymAddr;			// Symbol native address
-	int			iSymSize;			// Size associated with symbol
+    ADDRESS		uSymAddr;			// Symbol native address
+    int			iSymSize;			// Size associated with symbol
 } SymValue;
 
 // Internal elf info
 typedef struct {
-		char  e_ident[4]; 
-		char  e_class;
-		char  endianness;
-		char  version;
-		char  osAbi;
-		char  pad[8];
-		short e_type;
-		short e_machine;
-		int	  e_version;
-		int	  e_entry;
-		int	  e_phoff;
-		int	  e_shoff;
-		int	  e_flags;
-		short e_ehsize;
-		short e_phentsize;
-		short e_phnum;
-		short e_shentsize;
-		short e_shnum;
-		short e_shstrndx;
+    char  e_ident[4];
+    char  e_class;
+    char  endianness;
+    char  version;
+    char  osAbi;
+    char  pad[8];
+    short e_type;
+    short e_machine;
+    int	  e_version;
+    int	  e_entry;
+    int	  e_phoff;
+    int	  e_shoff;
+    int	  e_flags;
+    short e_ehsize;
+    short e_phentsize;
+    short e_phnum;
+    short e_shentsize;
+    short e_shnum;
+    short e_shstrndx;
 } Elf32_Ehdr;
 
 #define EM_SPARC		2			// Sun SPARC
@@ -74,28 +74,28 @@ typedef struct {
 
 // Program header
 typedef struct {
-	int	 p_type;	 /* entry type */
-	int	 p_offset;	 /* file offset */
-	int	 p_vaddr;	 /* virtual address */
-	int	 p_paddr;	 /* physical address */
-	int	 p_filesz;	 /* file size */
-	int	 p_memsz;	 /* memory size */
-	int	 p_flags;	 /* entry flags */
-	int	 p_align;	 /* memory/file alignment */
+    int	 p_type;	 /* entry type */
+    int	 p_offset;	 /* file offset */
+    int	 p_vaddr;	 /* virtual address */
+    int	 p_paddr;	 /* physical address */
+    int	 p_filesz;	 /* file size */
+    int	 p_memsz;	 /* memory size */
+    int	 p_flags;	 /* entry flags */
+    int	 p_align;	 /* memory/file alignment */
 } Elf32_Phdr;
 
 // Section header
 typedef struct {
-  int	sh_name;
-  int	sh_type;
-  int	sh_flags;
-  int	sh_addr;
-  int	sh_offset;
-  int	sh_size;
-  int	sh_link;
-  int	sh_info;
-  int	sh_addralign;
-  int	sh_entsize;
+    int	sh_name;
+    int	sh_type;
+    int	sh_flags;
+    int	sh_addr;
+    int	sh_offset;
+    int	sh_size;
+    int	sh_link;
+    int	sh_info;
+    int	sh_addralign;
+    int	sh_entsize;
 } Elf32_Shdr;
 
 #define SHF_WRITE		1		// Writeable
@@ -105,17 +105,17 @@ typedef struct {
 #define SHT_NOBITS		8		// Bss
 
 typedef struct {
-   int		st_name;
-   unsigned st_value;
-   int		st_size;
-unsigned char st_info;
-unsigned char st_other;
-   short	st_shndx;
+    int		st_name;
+    unsigned st_value;
+    int		st_size;
+    unsigned char st_info;
+    unsigned char st_other;
+    short	st_shndx;
 } Elf32_Sym;
 
 typedef struct {
-	unsigned r_offset;
-	int r_info;
+    unsigned r_offset;
+    int r_info;
 } Elf32_Rel;
 
 #define ELF32_ST_BIND(i)             ((i) >> 4)
@@ -127,12 +127,12 @@ typedef struct {
 #define STB_GLOBAL 1
 
 typedef struct {
-	short d_tag;			  /* how to interpret value */
-	union {
-		int	 d_val;
-		int	 d_ptr;
-		int	 d_off;
-	} d_un;
+    short d_tag;			  /* how to interpret value */
+    union {
+        int	 d_val;
+        int	 d_ptr;
+        int	 d_off;
+    } d_un;
 } Elf32_Dyn;
 
 // Tag values
@@ -145,65 +145,67 @@ typedef struct {
 class ElfBinaryFile : public BinaryFile
 {
 public:
-				ElfBinaryFile(bool bArchive = false);	// Constructor
-  virtual void	UnLoad();						// Unload the image
-  virtual		~ElfBinaryFile();				// Destructor
-	bool		GetNextMember();				// Load next member of archive
-  virtual bool	Open(const char* sName);		// Open the file for r/w; pv
-  virtual void	Close();						// Close file opened with Open()
-  virtual LOAD_FMT GetFormat() const;			// Get format (e.g. LOADFMT_ELF)
-  virtual MACHINE GetMachine() const;			// Get machine (e.g. MACHINE_SPARC)
-  virtual const char *getFilename() const { return m_pFileName; }
-  virtual bool isLibrary() const;
-  virtual std::list<const char *> getDependencyList();
-  virtual ADDRESS getImageBase();
-  virtual size_t getImageSize();
+    ElfBinaryFile(bool bArchive = false);	// Constructor
+    virtual void	UnLoad();						// Unload the image
+    virtual		~ElfBinaryFile();				// Destructor
+    bool		GetNextMember();				// Load next member of archive
+    virtual bool	Open(const char* sName);		// Open the file for r/w; pv
+    virtual void	Close();						// Close file opened with Open()
+    virtual LOAD_FMT GetFormat() const;			// Get format (e.g. LOADFMT_ELF)
+    virtual MACHINE GetMachine() const;			// Get machine (e.g. MACHINE_SPARC)
+    virtual const char *getFilename() const {
+        return m_pFileName;
+    }
+    virtual bool isLibrary() const;
+    virtual std::list<const char *> getDependencyList();
+    virtual ADDRESS getImageBase();
+    virtual size_t getImageSize();
 
 
-                // Header functions
+    // Header functions
 //virtual ADDRESS GetFirstHeaderAddress();      // Get ADDRESS of main header
 //    ADDRESS     GetNextHeaderAddress();       // Get any other headers
 
-	int         readNative1(ADDRESS a);         // Read 1 bytes from native addr
+    int         readNative1(ADDRESS a);         // Read 1 bytes from native addr
     int         readNative2(ADDRESS a);         // Read 2 bytes from native addr
     int         readNative4(ADDRESS a);         // Read 4 bytes from native addr
     QWord       readNative8(ADDRESS a);         // Read 8 bytes from native addr
     float       readNativeFloat4(ADDRESS a);    // Read 4 bytes as float
     double      readNativeFloat8(ADDRESS a);    // Read 8 bytes as float
 
-	void		writeNative4(ADDRESS nat, unsigned int n);
+    void		writeNative4(ADDRESS nat, unsigned int n);
 
-                // Symbol functions
+    // Symbol functions
     char*       SymbolByAddress(ADDRESS uAddr); // Get name of symbol
-                // Get value of symbol, if any
+    // Get value of symbol, if any
     ADDRESS     GetAddressByName(const char* pName, bool bNoTypeOK = false);
-                // Get the size associated with the symbol
+    // Get the size associated with the symbol
     int         GetSizeByName(const char* pName, bool bNoTypeOK = false);
-                // Get the size associated with the symbol; guess if necessary
+    // Get the size associated with the symbol; guess if necessary
     int         GetDistanceByName(const char* pName);
     int         GetDistanceByName(const char* pName, const char* pSectName);
 
-virtual ADDRESS* GetImportStubs(int& numImports);
+    virtual ADDRESS* GetImportStubs(int& numImports);
 
-				// Relocation functions
-	bool		IsAddressRelocatable(ADDRESS uNative);
-	ADDRESS		GetRelocatedAddress(ADDRESS uNative);
+    // Relocation functions
+    bool		IsAddressRelocatable(ADDRESS uNative);
+    ADDRESS		GetRelocatedAddress(ADDRESS uNative);
 //	WORD		ApplyRelocation(ADDRESS uNative, WORD wWord);
-				// Get symbol associated with relocation at address, if any
-	const char* GetRelocSym(ADDRESS uNative);
-				// Write an ELF object file for a given procedure
-	void		writeObjectFile(std::string &path, const char* name,
-					void *ptxt, int txtsz, RelocMap& reloc);
+    // Get symbol associated with relocation at address, if any
+    const char* GetRelocSym(ADDRESS uNative);
+    // Write an ELF object file for a given procedure
+    void		writeObjectFile(std::string &path, const char* name,
+                                void *ptxt, int txtsz, RelocMap& reloc);
 
 //
 //	--	--	--	--	--	--	--	--	--	--	--
 //
-                // Internal information
+    // Internal information
     // Dump headers, etc
 //virtual bool    DisplayDetails(const char* fileName, FILE* f = stdout);
 
 
-                // Analysis functions
+    // Analysis functions
     virtual std::list<SectionInfo*>& GetEntryPoints(const char* pEntry = "main");
     virtual ADDRESS GetMainEntryPoint();
     virtual ADDRESS GetEntryPoint();
@@ -218,33 +220,35 @@ virtual ADDRESS* GetImportStubs(int& numImports);
     // The caller should delete the returned map.
     virtual std::map<ADDRESS, const char*>* GetDynamicGlobalMap();
 
-	virtual std::map<ADDRESS, std::string> &getSymbols() { return m_SymA; }
+    virtual std::map<ADDRESS, std::string> &getSymbols() {
+        return m_SymA;
+    }
 
-                // Not meant to be used externally, but sometimes you just
-                // have to have it.
+    // Not meant to be used externally, but sometimes you just
+    // have to have it.
     char*       GetStrPtr(int idx, int offset); // Calc string pointer
 
-                // Similarly here; sometimes you just need to change a section's
-                // link and info fields
-                // idx is the section index; link and info are indices to other
-                // sections that will be idx's sh_link and sh_info respectively
+    // Similarly here; sometimes you just need to change a section's
+    // link and info fields
+    // idx is the section index; link and info are indices to other
+    // sections that will be idx's sh_link and sh_info respectively
     void        SetLinkAndInfo(int idx, int link, int info);
 
-	const char* m_pFileName;			// Pointer to input file name
-  protected:
-	virtual bool  RealLoad(const char* sName); // Load the file; pure virtual
+    const char* m_pFileName;			// Pointer to input file name
+protected:
+    virtual bool  RealLoad(const char* sName); // Load the file; pure virtual
 
-  private:
+private:
     void        Init();                 // Initialise most member variables
     int         ProcessElfFile();       // Does most of the work
     void        AddSyms(const char* pSymScn, const char* sStrScn);
-	void        AddRelocsAsSyms(const char* pRelocScn);
+    void        AddRelocsAsSyms(const char* pRelocScn);
     void        SetRelocInfo(PSectionInfo pSect);
     bool        ValueByName(const char* pName, SymValue* pVal,
-                    bool bNoTypeOK = false);
+                            bool bNoTypeOK = false);
     bool        SearchValueByName(const char* pName, SymValue* pVal);
     bool        SearchValueByName(const char* pName, SymValue* pVal,
-                    const char* pSectName, const char* pStrName);
+                                  const char* pSectName, const char* pStrName);
     bool        PostLoad(void* handle); // Called after archive member loaded
 
     // Internal elf reading methods
@@ -253,8 +257,8 @@ virtual ADDRESS* GetImportStubs(int& numImports);
     // Read an int with endianness care
     int         elfRead4(int*   pi) const;
 
-	FILE*		m_fd;					// File stream
-	long		m_lImageSize;			// Size of image in bytes
+    FILE*		m_fd;					// File stream
+    long		m_lImageSize;			// Size of image in bytes
     char*       m_pImage;               // Pointer to the loaded image
     Elf32_Phdr* m_pPhdrs;               // Pointer to program headers
     Elf32_Shdr* m_pShdrs;               // Array of section header structs
@@ -274,8 +278,8 @@ virtual ADDRESS* GetImportStubs(int& numImports);
     ADDRESS*    m_pImportStubs;         // An array of import stubs
     ADDRESS     m_uBaseAddr;            // Base image virtual address
     size_t      m_uImageSize;           // total image size (bytes)
-	ADDRESS		first_extern;			// where the first extern will be placed
-	ADDRESS		next_extern;			// where the next extern will be placed
+    ADDRESS		first_extern;			// where the first extern will be placed
+    ADDRESS		next_extern;			// where the next extern will be placed
 };
 
 #endif		// #ifndef __ELFBINARYFILE_H__
