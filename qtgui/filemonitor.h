@@ -12,13 +12,19 @@ class FileMonitor : public QObject {
 
 public:
     FileMonitor(const char *fname);
-    const char *getFileName() { return filename.c_str(); }
-    void setFileName(const char *fname) { filename = fname; }
-    void stop() { t->stop(); }
-    
+    const char *getFileName() {
+        return filename.c_str();
+    }
+    void setFileName(const char *fname) {
+        filename = fname;
+    }
+    void stop() {
+        t->stop();
+    }
+
 signals:
     void changed();
-    
+
 protected slots:
     virtual void poll();
 

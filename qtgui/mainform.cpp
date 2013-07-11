@@ -50,9 +50,9 @@ MainForm::MainForm( QWidget* parent, const char* name, WFlags fl )
                       this,  SLOT(showLogToggled(bool)) );
 
     if ( !name )
-	setName( "MainForm" );
+        setName( "MainForm" );
     setCentralWidget( new QWidget( this, "qt_central_widget" ) );
-    MainFormLayout = new QHBoxLayout( centralWidget(), 2, 6, "MainFormLayout"); 
+    MainFormLayout = new QHBoxLayout( centralWidget(), 2, 6, "MainFormLayout");
 
     widgetStack = new QWidgetStack( centralWidget(), "widgetStack");
 
@@ -114,7 +114,7 @@ MainForm::MainForm( QWidget* parent, const char* name, WFlags fl )
     fileNewAction = new QAction( this, "fileNewAction" );
     fileOpenAction = new QAction( this, "fileOpenAction" );
     fileExitAction = new QAction( this, "fileExitAction" );
-    
+
     QObject::connect( fileOpenAction, SIGNAL(activated()),
                       this,  SLOT(fileOpen()) );
     QObject::connect( fileExitAction, SIGNAL(activated()),
@@ -160,13 +160,13 @@ void MainForm::languageChange()
     setCaption( tr( "Boomerang" ) );
     listView2->header()->setLabel( 0, "Procedures" );
     listView2->clear();
-/*    QListViewItem * item_2 = new QListViewItem( listView2, 0 );
-    item_2->setOpen( TRUE );
-    QListViewItem * item = new QListViewItem( item_2, 0 );
-    item->setText( 0, tr( "fib" ) );
-    item_2->setText( 0, tr( "main" ) );
-    listView2->setSelected(item_2, true);
-*/
+    /*    QListViewItem * item_2 = new QListViewItem( listView2, 0 );
+        item_2->setOpen( TRUE );
+        QListViewItem * item = new QListViewItem( item_2, 0 );
+        item->setText( 0, tr( "fib" ) );
+        item_2->setText( 0, tr( "main" ) );
+        listView2->setSelected(item_2, true);
+    */
 
     tabWidget2->changeTab( details, tr( "Details" ) );
     tabWidget2->changeTab( decoded, tr( "Decoded" ) );
@@ -239,7 +239,7 @@ void MainForm::updateLog()
     QScrollBar *v = logger->verticalScrollBar();
     int value = v->value();
     bool max = (value > v->maxValue() - 10);
-    /* at some point in time it may be necessary to use the 
+    /* at some point in time it may be necessary to use the
        QFile class and manually update the log (for efficiency).
        But at the moment we'll just reload it
      */
@@ -254,7 +254,7 @@ class CGHandler : public QXmlDefaultHandler
 {
 public:
     bool startDocument();
-    bool startElement( const QString&, const QString&, const QString& , 
+    bool startElement( const QString&, const QString&, const QString& ,
                        const QXmlAttributes& );
     bool endElement( const QString&, const QString&, const QString& );
 
@@ -263,7 +263,7 @@ public:
 
 protected:
     std::list<QListViewItem*> itemStack;
-};                   
+};
 
 void MainForm::updateCallGraph()
 {
@@ -291,9 +291,9 @@ bool CGHandler::startDocument()
     return TRUE;
 }
 
-bool CGHandler::startElement( const QString&, const QString&, 
-                                    const QString& qName, 
-                                    const QXmlAttributes &a )
+bool CGHandler::startElement( const QString&, const QString&,
+                              const QString& qName,
+                              const QXmlAttributes &a )
 {
     if (qName == "prog") {
         mainform->setCaption(a.value("name") + " - Boomerang");
@@ -330,19 +330,19 @@ class DetailsHandler : public QXmlDefaultHandler
 {
 public:
     bool startDocument();
-    bool startElement( const QString&, const QString&, const QString& , 
+    bool startElement( const QString&, const QString&, const QString& ,
                        const QXmlAttributes& );
     bool endElement( const QString&, const QString&, const QString& );
 
     DetailsWidget *details;
-    
+
 protected:
-};                   
+};
 
 void MainForm::updateDetails()
 {
-    QString fname = projectPath + 
-                    listView2->selectedItem()->text(0) + 
+    QString fname = projectPath +
+                    listView2->selectedItem()->text(0) +
                     "-details.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
@@ -370,9 +370,9 @@ bool DetailsHandler::startDocument()
     return TRUE;
 }
 
-bool DetailsHandler::startElement( const QString&, const QString&, 
-                                    const QString& qName, 
-                                    const QXmlAttributes &a )
+bool DetailsHandler::startElement( const QString&, const QString&,
+                                   const QString& qName,
+                                   const QXmlAttributes &a )
 {
     if (qName == "proc") {
         details->setName(a.value("name"));
@@ -399,21 +399,21 @@ class DecodedHandler : public QXmlDefaultHandler
 {
 public:
     bool startDocument();
-    bool startElement( const QString&, const QString&, const QString& , 
+    bool startElement( const QString&, const QString&, const QString& ,
                        const QXmlAttributes& );
     bool characters( const QString& ch );
     bool endElement( const QString&, const QString&, const QString& );
 
     QTextBrowser *decoded;
-    
+
 protected:
     bool startDecoded;
-};                   
+};
 
 void MainForm::updateDecoded()
 {
-    QString fname = projectPath + 
-                    listView2->selectedItem()->text(0) + 
+    QString fname = projectPath +
+                    listView2->selectedItem()->text(0) +
                     "-decoded.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
@@ -443,9 +443,9 @@ bool DecodedHandler::startDocument()
     return TRUE;
 }
 
-bool DecodedHandler::startElement( const QString&, const QString&, 
-                                    const QString& qName, 
-                                    const QXmlAttributes &a )
+bool DecodedHandler::startElement( const QString&, const QString&,
+                                   const QString& qName,
+                                   const QXmlAttributes &a )
 {
     if (qName == "proc") {
         return TRUE;
@@ -480,21 +480,21 @@ class AnalysedHandler : public QXmlDefaultHandler
 {
 public:
     bool startDocument();
-    bool startElement( const QString&, const QString&, const QString& , 
+    bool startElement( const QString&, const QString&, const QString& ,
                        const QXmlAttributes& );
     bool characters( const QString& ch );
     bool endElement( const QString&, const QString&, const QString& );
 
     QTextBrowser *analysed;
-    
+
 protected:
     bool startAnalysed;
-};                   
+};
 
 void MainForm::updateAnalysed()
 {
-    QString fname = projectPath + 
-                    listView2->selectedItem()->text(0) + 
+    QString fname = projectPath +
+                    listView2->selectedItem()->text(0) +
                     "-analysed.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
@@ -524,8 +524,8 @@ bool AnalysedHandler::startDocument()
     return TRUE;
 }
 
-bool AnalysedHandler::startElement( const QString&, const QString&, 
-                                    const QString& qName, 
+bool AnalysedHandler::startElement( const QString&, const QString&,
+                                    const QString& qName,
                                     const QXmlAttributes &a )
 {
     if (qName == "proc") {
@@ -561,21 +561,21 @@ class SSAHandler : public QXmlDefaultHandler
 {
 public:
     bool startDocument();
-    bool startElement( const QString&, const QString&, const QString& , 
+    bool startElement( const QString&, const QString&, const QString& ,
                        const QXmlAttributes& );
     bool characters( const QString& ch );
     bool endElement( const QString&, const QString&, const QString& );
 
     QTextBrowser *ssa;
-    
+
 protected:
     bool startSSA;
-};                   
+};
 
 void MainForm::updateSSA()
 {
-    QString fname = projectPath + 
-                    listView2->selectedItem()->text(0) + 
+    QString fname = projectPath +
+                    listView2->selectedItem()->text(0) +
                     "-ssa.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
@@ -605,9 +605,9 @@ bool SSAHandler::startDocument()
     return TRUE;
 }
 
-bool SSAHandler::startElement( const QString&, const QString&, 
-                                    const QString& qName, 
-                                    const QXmlAttributes &a )
+bool SSAHandler::startElement( const QString&, const QString&,
+                               const QString& qName,
+                               const QXmlAttributes &a )
 {
     if (qName == "proc") {
         return TRUE;

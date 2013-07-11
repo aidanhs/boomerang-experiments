@@ -6,16 +6,18 @@
  *
  */
 
-class Project 
+class Project
 {
-	bool m_unsaved;
-	string filename;
+    bool m_unsaved;
+    string filename;
 public:
 
-	bool hasUnsaved() { return m_unsaved; }
-	void saveChanges(wxWindow *parent);
-	void displaySettingsDialog(wxWindow *parent);
+    bool hasUnsaved() {
+        return m_unsaved;
+    }
+    void saveChanges(wxWindow *parent);
+    void displaySettingsDialog(wxWindow *parent);
 
-	static Project *createProjectUsingDialog(wxWindow *parent);
-	static Project *openProjectUsingDialog(wxWindow *parent);
+    static Project *createProjectUsingDialog(wxWindow *parent);
+    static Project *openProjectUsingDialog(wxWindow *parent);
 };
