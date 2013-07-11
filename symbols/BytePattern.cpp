@@ -23,7 +23,8 @@ void BytePattern::FlagWildBytes(unsigned offset, unsigned size)
 }
 
 // for the sort method, we have to define less-than
-bool operator<(const WILD_SEGMENT& a, const WILD_SEGMENT& b) {
+bool operator<(const WILD_SEGMENT& a, const WILD_SEGMENT& b)
+{
     return a.offset < b.offset;
 }
 
@@ -45,38 +46,41 @@ int BytePattern::Match(unsigned char *context, unsigned size)
     std::vector<WILD_SEGMENT>::iterator next_wild = m_wild_bytes.begin();
 
     for(unsigned pos=0; pos<size - m_size; pos ++)
-    {
-        unsigned cmp_from = 0, cmp_to;
-        bool matched = true;
-        while(next_wild != m_wild_bytes.end())
         {
-            cmp_to = next_wild->offset;
+            unsigned cmp_from = 0, cmp_to;
+            bool matched = true;
+            while(next_wild != m_wild_bytes.end())
+                {
+                    cmp_to = next_wild->offset;
 
-            // compare signature
-            if(memcmp(m_data + cmp_from,
-                      context + pos + cmp_from,
-                      cmp_to - cmp_from)) {
-                // pattern does not match
-                matched = false;
-                break;
-            }
+                    // compare signature
+                    if(memcmp(m_data + cmp_from,
+                              context + pos + cmp_from,
+                              cmp_to - cmp_from))
+                        {
+                            // pattern does not match
+                            matched = false;
+                            break;
+                        }
 
-            cmp_from = cmp_to + next_wild->size;
-            next_wild ++;
+                    cmp_from = cmp_to + next_wild->size;
+                    next_wild ++;
+                }
+
+            // now the last compare
+            if(matched)
+                {
+                    cmp_to = m_size;
+                    // compare signature
+                    if(!memcmp(m_data + cmp_from,
+                               context + pos + cmp_from,
+                               cmp_to - cmp_from))
+                        {
+                            // pattern match
+                            return pos;
+                        }
+                }
+
         }
-
-        // now the last compare
-        if(matched) {
-            cmp_to = m_size;
-            // compare signature
-            if(!memcmp(m_data + cmp_from,
-                       context + pos + cmp_from,
-                       cmp_to - cmp_from)) {
-                // pattern match
-                return pos;
-            }
-        }
-
-    }
     return -1;
 }

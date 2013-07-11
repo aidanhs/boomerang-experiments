@@ -60,7 +60,8 @@ LPWSTR CharNextW(
 LPSTR GetCommandLineA(void);
 LPWSTR GetCommandLineW(void);
 
-typedef struct {
+typedef struct
+{
     UINT cbSize;
     UINT style;
     WNDPROC lpfnWndProc;
@@ -74,7 +75,8 @@ typedef struct {
     LPCSTR lpszClassName;
     HICON hIconSm;
 } WNDCLASSEX;
-typedef struct {
+typedef struct
+{
     UINT cbSize;
     UINT style;
     WNDPROC lpfnWndProc;
@@ -117,18 +119,21 @@ HACCEL LoadAcceleratorsW(
     LPCWSTR lpTableName
 );
 
-typedef struct {
+typedef struct
+{
     int x;
     int y;
 } POINT;
 typedef POINT *LPPOINT;
 
-typedef struct {
+typedef struct
+{
     int cx;
     int cy;
 } SIZE;
 
-typedef struct {
+typedef struct
+{
     HWND hwnd;
     UINT message;
     WPARAM wParam;
@@ -317,7 +322,8 @@ void PostQuitMessage(
     int nExitCode
 );
 
-typedef struct {
+typedef struct
+{
     LONG left;
     LONG top;
     LONG right;
@@ -325,7 +331,8 @@ typedef struct {
 } RECT;
 typedef RECT *LPRECT;
 
-typedef struct {
+typedef struct
+{
     HDC  hdc;
     BOOL fErase;
     RECT rcPaint;
@@ -538,7 +545,8 @@ int FillRect(
     HBRUSH hbr		// handle to brush
 );
 
-struct SLIST_ENTRY {
+struct SLIST_ENTRY
+{
     SLIST_ENTRY *Next;
 };
 

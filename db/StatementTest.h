@@ -16,7 +16,8 @@
 #include "proc.h"
 #include "prog.h"
 
-class StatementTest : public CppUnit::TestCase {
+class StatementTest : public CppUnit::TestCase
+{
 protected:
 
 public:

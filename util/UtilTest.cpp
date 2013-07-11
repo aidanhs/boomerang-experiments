@@ -21,7 +21,8 @@
 suite->addTest(new CppUnit::TestCaller<UtilTest> ("testUtil", \
     &UtilTest::name, *this))
 
-void UtilTest::registerTests(CppUnit::TestSuite* suite) {
+void UtilTest::registerTests(CppUnit::TestSuite* suite)
+{
 
 //  Note: there is nothing left to test in Util (for now)
 //    MYTEST(testTypeLong);
@@ -40,7 +41,8 @@ int UtilTest::countTestCases () const
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void UtilTest::setUp () {
+void UtilTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -50,6 +52,7 @@ void UtilTest::setUp () {
  * PARAMETERS:      <none>
  * RETURNS:         <nothing>
  *============================================================================*/
-void UtilTest::tearDown () {
+void UtilTest::tearDown ()
+{
 }
 

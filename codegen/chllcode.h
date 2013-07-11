@@ -56,7 +56,8 @@ Assignment					right to left	=  +=  -=  *=	/=	<<=	 >>=  %=
 Comma						left to right	,
 */
 
-enum PREC {
+enum PREC
+{
     PREC_NONE=0,			// Outer level (no parens required)
     PREC_COMMA,				// Comma
     PREC_ASSIGN,			// Assignment
@@ -80,7 +81,8 @@ enum PREC {
 
 
 
-class CHLLCode : public HLLCode {
+class CHLLCode : public HLLCode
+{
 private:
     std::list<char *> lines;
 
@@ -88,10 +90,12 @@ private:
     void appendExp(std::ostringstream& str, Exp *exp, PREC curPrec, bool uns = false);
     void appendType(std::ostringstream& str, Type *typ);
     void appendTypeIdent(std::ostringstream& str, Type *typ, const char *ident);
-    void openParen(std::ostringstream& str, PREC outer, PREC inner) {
+    void openParen(std::ostringstream& str, PREC outer, PREC inner)
+    {
         if (inner < outer) str << "(";
     }
-    void closeParen(std::ostringstream& str, PREC outer, PREC inner) {
+    void closeParen(std::ostringstream& str, PREC outer, PREC inner)
+    {
         if (inner < outer) str << ")";
     }
 

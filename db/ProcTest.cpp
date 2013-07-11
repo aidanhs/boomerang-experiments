@@ -30,7 +30,8 @@
 suite->addTest(new CppUnit::TestCaller<ProcTest> ("testProc", \
 	&ProcTest::name, *this))
 
-void ProcTest::registerTests(CppUnit::TestSuite* suite) {
+void ProcTest::registerTests(CppUnit::TestSuite* suite)
+{
 
     MYTEST(testName);
 }
@@ -47,7 +48,8 @@ int ProcTest::countTestCases () const
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ProcTest::setUp () {
+void ProcTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -57,7 +59,8 @@ void ProcTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void ProcTest::tearDown () {
+void ProcTest::tearDown ()
+{
     delete m_proc;
 }
 
@@ -65,7 +68,8 @@ void ProcTest::tearDown () {
  * FUNCTION:		ProcTest::testName
  * OVERVIEW:		Test setting and reading name, constructor, native address
  *============================================================================*/
-void ProcTest::testName () {
+void ProcTest::testName ()
+{
     Prog* prog = new Prog();
     BinaryFile *pBF = new BinaryFileStub();
     CPPUNIT_ASSERT(pBF != 0);

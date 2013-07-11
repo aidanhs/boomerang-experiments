@@ -126,7 +126,8 @@ anObject;
 
 @end
 
-typedef struct {
+typedef struct
+{
     @defs(List)
 } NXListId;
 

@@ -26,7 +26,8 @@ public:
 
 
 
-struct SymbolInfo {
+struct SymbolInfo
+{
     std::string name;
     std::string type;
     int size;

@@ -358,7 +358,8 @@ private:/* data */
 private: /* functions */
     void yy_initialize();
     int input();
-    int yyinput() {
+    int yyinput()
+    {
         return input();
     };
     int yy_get_next_buffer();

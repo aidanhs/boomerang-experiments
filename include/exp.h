@@ -73,7 +73,8 @@ typedef BasicBlock* PBB;
 
 // Class Exp is abstract. However, the constructor can be called from the constructors of derived classes, and virtual
 // functions not overridden by derived classes can be called
-class Exp : public Memoisable {
+class Exp : public Memoisable
+{
 protected:
     OPER		op;			   // The operator (e.g. opPlus)
 
@@ -88,23 +89,29 @@ public:
 
     // Return the index. Note: I'd like to make this protected, but then subclasses don't seem to be able to use it
     // (at least, for subexpressions)
-    OPER		getOper() const {
+    OPER		getOper() const
+    {
         return op;
     }
-    void		setOper(OPER x) {
+    void		setOper(OPER x)
+    {
         op = x;   // A few simplifications use this
     }
 
-    void		setLexBegin(unsigned int n) {
+    void		setLexBegin(unsigned int n)
+    {
         lexBegin = n;
     }
-    void		setLexEnd(unsigned int n) {
+    void		setLexEnd(unsigned int n)
+    {
         lexEnd = n;
     }
-    unsigned	getLexBegin() {
+    unsigned	getLexBegin()
+    {
         return lexBegin;
     }
-    unsigned	getLexEnd() {
+    unsigned	getLexEnd()
+    {
         return lexEnd;
     }
 
@@ -116,7 +123,8 @@ public:
     char*		prints();		// Print to string (for debugging and logging)
     void		dump();			// Print to standard error (for debugging)
     // Recursive print: don't want parens at the top level
-    virtual void printr(std::ostream& os) {
+    virtual void printr(std::ostream& os)
+    {
         print(os);   // But most classes want standard
     }
     // For debugging: print in indented hex. In gdb: "p x->printx(0)"
@@ -144,7 +152,8 @@ public:
 
 // Return the number of subexpressions. This is only needed in rare cases.
 // Could use polymorphism for all those cases, but this is easier
-    virtual int getArity() {
+    virtual int getArity()
+    {
         return 0;   // Overridden for Unary, Binary, etc
     }
 
@@ -153,15 +162,18 @@ public:
     //	//	//	//	//	//	//
 
     // True if this is a call to a flag function
-    bool		isFlagCall() {
+    bool		isFlagCall()
+    {
         return op == opFlagCall;
     }
     // True if this represents one of the abstract flags locations, int or float
-    bool		isFlags() {
+    bool		isFlags()
+    {
         return op == opFlags || op == opFflags;
     }
     // True if this is a register location
-    bool		isRegOf() {
+    bool		isRegOf()
+    {
         return op == opRegOf;
     }
     // True if this is a register location with a constant index
@@ -169,115 +181,141 @@ public:
     // True if this is a specific numeric register
     bool		isRegN(int n);
     // True if this is a memory location (any memory nesting depth)
-    bool		isMemOf() {
+    bool		isMemOf()
+    {
         return op == opMemOf;
     }
     // True if this is an address of
-    bool		isAddrOf() {
+    bool		isAddrOf()
+    {
         return op == opAddrOf;
     }
     // True if this is an array expression
-    bool		isArrayIndex() {
+    bool		isArrayIndex()
+    {
         return op == opArrayIndex;
     }
     // True if this is a struct member access
-    bool		isMemberOf() {
+    bool		isMemberOf()
+    {
         return op == opMemberAccess;
     }
     // True if this is a temporary. Note some old code still has r[tmp]
     bool		isTemp();
     // True if this is the anull Terminal (anulls next instruction)
-    bool		isAnull() {
+    bool		isAnull()
+    {
         return op == opAnull;
     }
     // True if this is the Nil Terminal (terminates lists; "NOP" expression)
-    bool		isNil() {
+    bool		isNil()
+    {
         return op == opNil;
     }
     // Trye if this is %pc
-    bool		isPC() {
+    bool		isPC()
+    {
         return op == opPC;
     }
     // True if is %afp, %afp+k, %afp-k, or a[m[<any of these]]
     bool		isAfpTerm();
     // True if is int const
-    bool		isIntConst() {
+    bool		isIntConst()
+    {
         return op == opIntConst;
     }
     // True if is string const
-    bool		isStrConst() {
+    bool		isStrConst()
+    {
         return op == opStrConst;
     }
     // Get string constant even if mangled
     char*		getAnyStrConst();
     // True if is flt point const
-    bool		isFltConst() {
+    bool		isFltConst()
+    {
         return op == opFltConst;
     }
     // True if inteter or string constant
-    bool		isConst() {
+    bool		isConst()
+    {
         return op == opIntConst || op == opStrConst;
     }
     // True if is a post-var expression (var_op' in SSL file)
-    bool		isPostVar() {
+    bool		isPostVar()
+    {
         return op == opPostVar;
     }
     // True if this is an opSize (size case; deprecated)
-    bool		isSizeCast() {
+    bool		isSizeCast()
+    {
         return op == opSize;
     }
     // True if this is a subscripted expression (SSA)
-    bool		isSubscript() {
+    bool		isSubscript()
+    {
         return op == opSubscript;
     }
     // True if this is a phi assignmnet (SSA)
-    bool		isPhi() {
+    bool		isPhi()
+    {
         return op == opPhi;
     }
     // True if this is a local variable
-    bool		isLocal() {
+    bool		isLocal()
+    {
         return op == opLocal;
     }
     // True if this is a global variable
-    bool		isGlobal() {
+    bool		isGlobal()
+    {
         return op == opGlobal;
     }
     // True if this is a typeof
-    bool		isTypeOf() {
+    bool		isTypeOf()
+    {
         return op == opTypeOf;
     }
     // Get the index for this var
     int			getVarIndex();
     // True if this is a terminal
-    virtual bool		isTerminal() {
+    virtual bool		isTerminal()
+    {
         return false;
     }
     // True if this is the constant "true"
-    bool		isTrue() {
+    bool		isTrue()
+    {
         return op == opTrue;
     }
     // True if this is the constant "false"
-    bool		isFalse() {
+    bool		isFalse()
+    {
         return op == opFalse;
     }
     // True if this is a disjunction, i.e. x or y
-    bool		isDisjunction() {
+    bool		isDisjunction()
+    {
         return op == opOr;
     }
     // True if this is a conjunction, i.e. x and y
-    bool		isConjunction() {
+    bool		isConjunction()
+    {
         return op == opAnd;
     }
     // True if this is a boolean constant
-    bool		isBoolConst() {
+    bool		isBoolConst()
+    {
         return op == opTrue || op == opFalse;
     }
     // True if this is an equality (== or !=)
-    bool		isEquality() {
+    bool		isEquality()
+    {
         return op == opEquals /*|| op == opNotEqual*/;
     }
     // True if this is a comparison
-    bool		isComparison() {
+    bool		isComparison()
+    {
         return	 op == opEquals || op == opNotEqual ||
                  op == opGtr || op == opLess ||
                  op == opGtrUns || op == opLessUns ||
@@ -285,27 +323,32 @@ public:
                  op == opGtrEqUns || op == opLessEqUns;
     }
     // True if this is a TypeVal
-    bool		isTypeVal() {
+    bool		isTypeVal()
+    {
         return op == opTypeVal;
     }
     // True if this is a machine feature
-    bool		isMachFtr() {
+    bool		isMachFtr()
+    {
         return op == opMachFtr;
     }
     // True if this is a parameter. Note: opParam has two meanings: a SSL parameter, or a function parameter
-    bool		isParam() {
+    bool		isParam()
+    {
         return op == opParam;
     }
 
     // True if this is a location
-    bool		isLocation() {
+    bool		isLocation()
+    {
         return	op == opMemOf || op == opRegOf ||
                 op == opGlobal || op == opLocal ||
                 op == opParam;
     }
 
     // True if this is a typed expression
-    bool		isTypedExp() {
+    bool		isTypedExp()
+    {
         return op == opTypedExp;
     }
 
@@ -345,13 +388,16 @@ public:
     // These are here so we can (optionally) prevent code clutter.
     // Using a *Exp (that is known to be a Binary* say), you can just directly call getSubExp2.
     // However, you can still choose to cast from Exp* to Binary* etc. and avoid the virtual call
-    virtual Exp*		getSubExp1() {
+    virtual Exp*		getSubExp1()
+    {
         return 0;
     }
-    virtual Exp*		getSubExp2() {
+    virtual Exp*		getSubExp2()
+    {
         return 0;
     }
-    virtual Exp*		getSubExp3() {
+    virtual Exp*		getSubExp3()
+    {
         return 0;
     }
     virtual Exp*&		refSubExp1();
@@ -362,10 +408,12 @@ public:
     virtual void		setSubExp3(Exp* e) {};
 
     // Get the memory nesting depth. Non mem-ofs return 0; m[m[x]] returns 2
-    virtual int			getMemDepth() {
+    virtual int			getMemDepth()
+    {
         return 0;
     }
-    virtual bool		isMemDepth(int d) {
+    virtual bool		isMemDepth(int d)
+    {
         return d == 0;
     }
 
@@ -380,21 +428,25 @@ public:
 
     void		partitionTerms(std::list<Exp*>& positives, std::list<Exp*>& negatives, std::vector<int>& integers,
                                bool negate);
-    virtual Exp*		simplifyArith() {
+    virtual Exp*		simplifyArith()
+    {
         return this;
     }
     static	Exp*		Accumulate(std::list<Exp*> exprs);
     // Simplify the expression
     Exp*		simplify();
-    virtual Exp*		polySimplify(bool& bMod) {
+    virtual Exp*		polySimplify(bool& bMod)
+    {
         bMod = false;
         return this;
     }
     // Just the address simplification a[ m[ any ]]
-    virtual Exp*		simplifyAddr() {
+    virtual Exp*		simplifyAddr()
+    {
         return this;
     }
-    virtual Exp*		simplifyConstraint() {
+    virtual Exp*		simplifyConstraint()
+    {
         return this;
     }
     Exp*		fixSuccessor();		// succ(r2) -> r3
@@ -407,12 +459,14 @@ public:
     Exp 		*removeSubscripts(bool& allZero);
 
     // Get number of definitions (statements this expression depends on)
-    virtual int			getNumRefs() {
+    virtual int			getNumRefs()
+    {
         return 0;
     }
 
     // Convert from SSA form
-    virtual Exp*		fromSSA(igraph& ig) {
+    virtual Exp*		fromSSA(igraph& ig)
+    {
         return this;
     }
 
@@ -432,7 +486,8 @@ public:
     //	 sub1 = <ptr> and sub2 = <int> and Tr = <ptr>
     virtual Exp*		genConstraints(Exp* result);
 
-    virtual Type		*getType() {
+    virtual Type		*getType()
+    {
         return NULL;
     }
 
@@ -460,12 +515,14 @@ public:
 
     // Data flow based type analysis (implemented in type/dfa.cpp)
     // Pull type information up the expression tree
-    virtual	Type*		ascendType() {
+    virtual	Type*		ascendType()
+    {
         assert(0);
         return 0;
     }
     // Push type information down the expression tree
-    virtual	void		descendType(Type* parentType, bool& ch, Statement* s) {
+    virtual	void		descendType(Type* parentType, bool& ch, Statement* s)
+    {
         assert(0);
     }
 
@@ -479,8 +536,10 @@ std::ostream& operator<<(std::ostream& os, Exp* p);	 // Print the Exp poited to 
 /*==============================================================================
  * Const is a subclass of Exp, and holds either an integer, floating point, string, or address constant
  *============================================================================*/
-class Const : public Exp {
-    union {
+class Const : public Exp
+{
+    union
+    {
         int		i;			// Integer
         // Note: although we have i and a as unions, both often use the same operator (opIntConst).
         // There is no opCodeAddr any more.
@@ -515,45 +574,57 @@ public:
     virtual bool		operator*=(Exp& o);
 
     // Get the constant
-    int			getInt() {
+    int			getInt()
+    {
         return u.i;
     }
-    QWord		getLong() {
+    QWord		getLong()
+    {
         return u.ll;
     }
-    double		getFlt() {
+    double		getFlt()
+    {
         return u.d;
     }
-    char*		getStr() {
+    char*		getStr()
+    {
         return u.p;
     }
-    ADDRESS		getAddr() {
+    ADDRESS		getAddr()
+    {
         return u.a;
     }
     const char*	getFuncName();
 
     // Set the constant
-    void		setInt(int i)		{
+    void		setInt(int i)
+    {
         u.i = i;
     }
-    void		setLong(QWord ll)	{
+    void		setLong(QWord ll)
+    {
         u.ll = ll;
     }
-    void		setFlt(double d)	{
+    void		setFlt(double d)
+    {
         u.d = d;
     }
-    void		setStr(char* p)		{
+    void		setStr(char* p)
+    {
         u.p = p;
     }
-    void		setAddr(ADDRESS a)	{
+    void		setAddr(ADDRESS a)
+    {
         u.a = a;
     }
 
     // Get and set the type
-    Type*		getType() {
+    Type*		getType()
+    {
         return type;
     }
-    void		setType(Type* ty) {
+    void		setType(Type* ty)
+    {
         type = ty;
     }
 
@@ -570,10 +641,12 @@ public:
     virtual bool		accept(ExpVisitor* v);
     virtual Exp*		accept(ExpModifier* v);
 
-    int			getConscript() {
+    int			getConscript()
+    {
         return conscript;
     }
-    void		setConscript(int cs) {
+    void		setConscript(int cs)
+    {
         conscript = cs;
     }
 
@@ -590,7 +663,8 @@ protected:
 /*==============================================================================
  * Terminal is a subclass of Exp, and holds special zero arity items such as opFlags (abstract flags register)
  *============================================================================*/
-class Terminal : public Exp {
+class Terminal : public Exp
+{
 public:
     // Constructors
     Terminal(OPER op);
@@ -608,7 +682,8 @@ public:
     virtual void		appendDotFile(std::ofstream& of);
     virtual void		printx(int ind);
 
-    virtual bool		isTerminal() {
+    virtual bool		isTerminal()
+    {
         return true;
     }
 
@@ -631,7 +706,8 @@ protected:
 /*==============================================================================
  * Unary is a subclass of Exp, holding one subexpression
  *============================================================================*/
-class Unary : public Exp {
+class Unary : public Exp
+{
 protected:
     Exp*			subExp1;	// One subexpression pointer
 public:
@@ -654,7 +730,8 @@ public:
     virtual				~Unary();
 
     // Arity
-    virtual int			getArity() {
+    virtual int			getArity()
+    {
         return 1;
     }
 
@@ -665,7 +742,8 @@ public:
 
     // Set first subexpression
     void		setSubExp1(Exp* e);
-    void		setSubExp1ND(Exp* e) {
+    void		setSubExp1ND(Exp* e)
+    {
         subExp1 = e;
     }
     // Get first subexpression
@@ -712,7 +790,8 @@ protected:
 /*==============================================================================
  * Binary is a subclass of Unary, holding two subexpressions
  *============================================================================*/
-class Binary : public Unary {
+class Binary : public Unary
+{
 protected:
     Exp*			subExp2;	// Second subexpression pointer
 public:
@@ -735,7 +814,8 @@ public:
     virtual				~Binary();
 
     // Arity
-    int				getArity() {
+    int				getArity()
+    {
         return 2;
     }
 
@@ -796,7 +876,8 @@ protected:
 /*==============================================================================
  * Ternary is a subclass of Binary, holding three subexpressions
  *============================================================================*/
-class Ternary : public Binary {
+class Ternary : public Binary
+{
     Exp*		subExp3;	// Third subexpression pointer
 public:
     // Constructor, with operator
@@ -818,7 +899,8 @@ public:
     virtual				~Ternary();
 
     // Arity
-    int				getArity() {
+    int				getArity()
+    {
         return 3;
     }
 
@@ -870,7 +952,8 @@ protected:
 /*==============================================================================
  * TypedExp is a subclass of Unary, holding one subexpression and a Type
  *============================================================================*/
-class TypedExp : public Unary {
+class TypedExp : public Unary
+{
     Type			*type;
 public:
     // Constructor
@@ -922,16 +1005,19 @@ protected:
 /*==============================================================================
  * FlagDef is a subclass of Unary, and holds a list of parameters (in the subexpression), and a pointer to an RTL
  *============================================================================*/
-class FlagDef : public Unary {
+class FlagDef : public Unary
+{
     RTL*		rtl;
 public:
     FlagDef(Exp* params, RTL* rtl);		// Constructor
     virtual				~FlagDef();							// Destructor
     virtual void		appendDotFile(std::ofstream& of);
-    RTL*		getRtl() {
+    RTL*		getRtl()
+    {
         return rtl;
     }
-    void		setRtl(RTL* r) {
+    void		setRtl(RTL* r)
+    {
         rtl = r;
     }
 
@@ -952,7 +1038,8 @@ protected:
  *   m[1000] becomes m[1000]{3} if defined at statement 3
  * The integer is really a pointer to the definig statement, printed as the statement number for compactness.
  *============================================================================*/
-class RefExp : public Unary {
+class RefExp : public Unary
+{
     Statement*	def;				// The defining statement
 
 public:
@@ -968,19 +1055,23 @@ public:
     virtual void		print(std::ostream& os);
     virtual void		printx(int ind);
 //virtual int		getNumRefs() {return 1;}
-    Statement*	getDef() {
+    Statement*	getDef()
+    {
         return def;   // Ugh was called getRef()
     }
-    Exp*		addSubscript(Statement* def) {
+    Exp*		addSubscript(Statement* def)
+    {
         this->def = def;
         return this;
     }
-    void		setDef(Statement* def) {
+    void		setDef(Statement* def)
+    {
         this->def = def;
     }
     virtual Exp*		genConstraints(Exp* restrictTo);
     virtual Exp*		fromSSA(igraph& ig);
-    bool		references(Statement* s) {
+    bool		references(Statement* s)
+    {
         return def == s;
     }
     virtual Exp*		polySimplify(bool& bMod);
@@ -1009,17 +1100,20 @@ protected:
 /*==============================================================================
 class TypeVal. Just a Terminal with a Type. Used for type values in constraints
 ==============================================================================*/
-class TypeVal : public Terminal {
+class TypeVal : public Terminal
+{
     Type*		val;
 
 public:
     TypeVal(Type* ty);
     ~TypeVal();
 
-    virtual Type*		getType() {
+    virtual Type*		getType()
+    {
         return val;
     }
-    virtual void		setType(Type* t) {
+    virtual void		setType(Type* t)
+    {
         val = t;
     }
     virtual Exp*		clone();
@@ -1028,7 +1122,8 @@ public:
     virtual bool		operator*=(Exp& o);
     virtual void		print(std::ostream& os);
     virtual void		printx(int ind);
-    virtual Exp*		genConstraints(Exp* restrictTo) {
+    virtual Exp*		genConstraints(Exp* restrictTo)
+    {
         assert(0);
         return NULL;
     } // Should not be constraining constraints
@@ -1045,7 +1140,8 @@ protected:
     friend class XMLProgParser;
 };	// class TypeVal
 
-class Location : public Unary {
+class Location : public Unary
+{
 protected:
     UserProc	*proc;
     Type		*ty;		// The type for this location? Deprecated. Now in class Assignment
@@ -1056,32 +1152,40 @@ public:
     // Copy constructor
     Location(Location& o);
     // Custom constructor
-    static Location*	regOf(int r) {
+    static Location*	regOf(int r)
+    {
         return new Location(opRegOf, new Const(r), NULL);
     }
-    static Location*	regOf(Exp *e) {
+    static Location*	regOf(Exp *e)
+    {
         return new Location(opRegOf, e, NULL);
     }
-    static Location*	memOf(Exp *e, UserProc* p = NULL) {
+    static Location*	memOf(Exp *e, UserProc* p = NULL)
+    {
         return new Location(opMemOf, e, p);
     }
-    static Location*	tempOf(Exp* e) {
+    static Location*	tempOf(Exp* e)
+    {
         return new Location(opTemp, e, NULL);
     }
-    static Location*	global(const char *nam, UserProc *p) {
+    static Location*	global(const char *nam, UserProc *p)
+    {
         return new Location(opGlobal, new Const((char*)nam), p);
     }
     static Location*	local(const char *nam, UserProc *p);
-    static Location*	param(const char *nam, UserProc *p = NULL) {
+    static Location*	param(const char *nam, UserProc *p = NULL)
+    {
         return new Location(opParam, new Const((char*)nam), p);
     }
     // Clone
     virtual Exp*		clone();
 
-    void		setProc(UserProc *p) {
+    void		setProc(UserProc *p)
+    {
         proc = p;
     }
-    UserProc	*getProc() {
+    UserProc	*getProc()
+    {
         return proc;
     }
 

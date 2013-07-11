@@ -14,10 +14,11 @@ void FileMonitor::poll()
 {
     struct stat st;
     if (stat(getFileName(), &st) == 0 &&
-            (st.st_mtime != mod_time || st.st_size != size)) {
-        mod_time = st.st_mtime;
-        size = st.st_size;
-        emit changed();
-    }
+            (st.st_mtime != mod_time || st.st_size != size))
+        {
+            mod_time = st.st_mtime;
+            size = st.st_size;
+            emit changed();
+        }
 }
 

@@ -42,7 +42,8 @@ typedef BasicBlock* PBB;
 \*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*/
 
 // Depth-first traversal constants.
-enum travType {
+enum travType
+{
     UNTRAVERSED,   // Initial value
     DFS_TAG,	   // Remove redundant nodes pass
     DFS_LNUM,	   // DFS loop stamping pass
@@ -53,7 +54,8 @@ enum travType {
 };
 
 // an enumerated type for the class of stucture determined for a node
-enum structType {
+enum structType
+{
     Loop,	   // Header of a loop only
     Cond,	   // Header of a conditional only (if-then-else or switch)
     LoopCond,  // Header of a loop and a conditional
@@ -61,7 +63,8 @@ enum structType {
 };
 
 // an type for the class of unstructured conditional jumps
-enum unstructType {
+enum unstructType
+{
     Structured,
     JumpInOutLoop,
     JumpIntoCase
@@ -69,7 +72,8 @@ enum unstructType {
 
 
 // an enumerated type for the type of conditional headers
-enum condType {
+enum condType
+{
     IfThen,		// conditional with only a then clause
     IfThenElse, // conditional with a then and an else clause
     IfElse,		// conditional with only an else clause
@@ -77,7 +81,8 @@ enum condType {
 };
 
 // an enumerated type for the type of loop headers
-enum loopType {
+enum loopType
+{
     PreTested,	   // Header of a while loop
     PostTested,	   // Header of a repeat loop
     Endless		   // Header of an endless loop
@@ -91,7 +96,8 @@ enum loopType {
 
 // Kinds of basic block nodes
 // reordering these will break the save files - trent
-enum BBTYPE {
+enum BBTYPE
+{
     ONEWAY,					 // unconditional branch
     TWOWAY,					 // conditional branch
     NWAY,					 // case branch
@@ -103,7 +109,8 @@ enum BBTYPE {
     INVALID					 // invalid instruction
 };
 
-enum SBBTYPE {
+enum SBBTYPE
+{
     NONE,					 // not structured
     PRETESTLOOP,			 // header of a loop
     POSTTESTLOOP,
@@ -122,7 +129,8 @@ typedef std::list<PBB>::iterator BB_IT;
 /*==============================================================================
  * BasicBlock class. <more comments>
  *============================================================================*/
-class BasicBlock {
+class BasicBlock
+{
     /*
      * Objects of class Cfg can access the internals of a BasicBlock object.
      */
@@ -155,16 +163,20 @@ public:
      */
     int			getLabel();
 
-    std::string &getLabelStr() {
+    std::string &getLabelStr()
+    {
         return m_labelStr;
     }
-    void		setLabelStr(std::string &s) {
+    void		setLabelStr(std::string &s)
+    {
         m_labelStr = s;
     }
-    bool		isLabelNeeded() {
+    bool		isLabelNeeded()
+    {
         return m_labelneeded;
     }
-    void		setLabelNeeded(bool b) {
+    void		setLabelNeeded(bool b)
+    {
         m_labelneeded = b;
     }
 
@@ -222,7 +234,8 @@ public:
      */
     std::vector<PBB>& getInEdges();
 
-    int			getNumInEdges() {
+    int			getNumInEdges()
+    {
         return m_iNumInEdges;
     }
 
@@ -246,7 +259,8 @@ public:
      */
     PBB			getOutEdge(unsigned int i);
 
-    int			getNumOutEdges() {
+    int			getNumOutEdges()
+    {
         return m_iNumOutEdges;
     }
 
@@ -409,7 +423,8 @@ public:
     Statement*	getNextStmt(rtlit& rit, StatementList::iterator& sit);
     Statement*	getLastStmt(rtlrit& rit, StatementList::reverse_iterator& sit);
     Statement*	getPrevStmt(rtlrit& rit, StatementList::reverse_iterator& sit);
-    RTL*		getLastRtl() {
+    RTL*		getLastRtl()
+    {
         return m_pRtls->back();
     }
 
@@ -451,27 +466,34 @@ protected:
     void		setRevLoopStamps(int &time);
     void		setRevOrder(std::vector<PBB> &order);
 
-    void		setLoopHead(PBB head) {
+    void		setLoopHead(PBB head)
+    {
         loopHead = head;
     }
-    PBB			getLoopHead() {
+    PBB			getLoopHead()
+    {
         return loopHead;
     }
-    void		setLatchNode(PBB latch) {
+    void		setLatchNode(PBB latch)
+    {
         latchNode = latch;
     }
-    bool		isLatchNode() {
+    bool		isLatchNode()
+    {
         return loopHead && loopHead->latchNode == this;
     }
-    PBB			getLatchNode() {
+    PBB			getLatchNode()
+    {
         return latchNode;
     }
-    PBB			getCaseHead() {
+    PBB			getCaseHead()
+    {
         return caseHead;
     }
     void		setCaseHead(PBB head, PBB follow);
 
-    structType	getStructType() {
+    structType	getStructType()
+    {
         return sType;
     }
     void		setStructType(structType s);
@@ -485,17 +507,21 @@ protected:
     condType	getCondType();
     void		setCondType(condType l);
 
-    void		setLoopFollow(PBB other) {
+    void		setLoopFollow(PBB other)
+    {
         loopFollow = other;
     }
-    PBB			getLoopFollow() {
+    PBB			getLoopFollow()
+    {
         return loopFollow;
     }
 
-    void		setCondFollow(PBB other) {
+    void		setCondFollow(PBB other)
+    {
         condFollow = other;
     }
-    PBB			getCondFollow() {
+    PBB			getCondFollow()
+    {
         return condFollow;
     }
 
@@ -503,7 +529,8 @@ protected:
     bool		hasBackEdgeTo(BasicBlock *dest);
 
     // establish if this bb has any back edges leading FROM it
-    bool 		hasBackEdge() {
+    bool 		hasBackEdge()
+    {
         for (unsigned int i = 0; i < m_OutEdges.size(); i++)
             if (hasBackEdgeTo(m_OutEdges[i]))
                 return true;
@@ -515,7 +542,8 @@ protected:
 
     bool		inLoop(PBB header, PBB latch);
 
-    bool		isIn(std::list<PBB> &set, PBB bb) {
+    bool		isIn(std::list<PBB> &set, PBB bb)
+    {
         for (std::list<PBB>::iterator it = set.begin(); it != set.end(); it++)
             if (*it == bb) return true;
         return false;
@@ -548,15 +576,18 @@ public:
 
 protected:
     friend class XMLProgParser;
-    void		addOutEdge(PBB bb) {
+    void		addOutEdge(PBB bb)
+    {
         m_OutEdges.push_back(bb);
     }
-    void		addRTL(RTL *rtl) {
+    void		addRTL(RTL *rtl)
+    {
         if (m_pRtls == NULL)
             m_pRtls = new std::list<RTL*>;
         m_pRtls->push_back(rtl);
     }
-    void		addLiveIn(Exp *e) {
+    void		addLiveIn(Exp *e)
+    {
         liveIn.insert(e);
     }
 

@@ -190,9 +190,10 @@ void MainForm::fileOpen()
     QFileDialog* fd = new QFileDialog( this, "filedialog", TRUE );
     fd->setMode( QFileDialog::Directory );
     fd->setCaption("Open project..");
-    if ( fd->exec() == QDialog::Accepted ) {
-        projectPath = fd->selectedFile();
-    }
+    if ( fd->exec() == QDialog::Accepted )
+        {
+            projectPath = fd->selectedFile();
+        }
     delete fd;
 }
 
@@ -220,10 +221,12 @@ void MainForm::listSelectionChanged(QListViewItem *item)
 
 void MainForm::showLogToggled(bool on)
 {
-    if (on) {
-        widgetStack->raiseWidget(logger);
-        updateLog();
-    } else
+    if (on)
+        {
+            widgetStack->raiseWidget(logger);
+            updateLog();
+        }
+    else
         widgetStack->raiseWidget(splitter1);
 }
 
@@ -270,10 +273,11 @@ void MainForm::updateCallGraph()
     QString fname = projectPath + "callgraph.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
-    if (f.open(IO_ReadOnly) == FALSE) {
-        std::cerr << "cannot open " << fname << std::endl;
-        return;
-    }
+    if (f.open(IO_ReadOnly) == FALSE)
+        {
+            std::cerr << "cannot open " << fname << std::endl;
+            return;
+        }
     QXmlSimpleReader q;
     QXmlInputSource i(f);
     CGHandler h;
@@ -295,10 +299,11 @@ bool CGHandler::startElement( const QString&, const QString&,
                               const QString& qName,
                               const QXmlAttributes &a )
 {
-    if (qName == "prog") {
-        mainform->setCaption(a.value("name") + " - Boomerang");
-        return TRUE;
-    }
+    if (qName == "prog")
+        {
+            mainform->setCaption(a.value("name") + " - Boomerang");
+            return TRUE;
+        }
     if (qName != "proc")
         return TRUE;
     QListViewItem *item;
@@ -307,10 +312,11 @@ bool CGHandler::startElement( const QString&, const QString&,
     else
         item = new QListViewItem( itemStack.front(), 0 );
     item->setText( 0, a.value("name") );
-    if (itemStack.size() == 0) {
-        item->setOpen( TRUE );
-        listView2->setSelected(item, true);
-    }
+    if (itemStack.size() == 0)
+        {
+            item->setOpen( TRUE );
+            listView2->setSelected(item, true);
+        }
     itemStack.push_front(item);
     return TRUE;
 }
@@ -346,10 +352,11 @@ void MainForm::updateDetails()
                     "-details.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
-    if (f.open(IO_ReadOnly) == FALSE) {
-        std::cerr << "cannot open " << fname << std::endl;
-        return;
-    }
+    if (f.open(IO_ReadOnly) == FALSE)
+        {
+            std::cerr << "cannot open " << fname << std::endl;
+            return;
+        }
     QXmlSimpleReader q;
     QXmlInputSource i(f);
     DetailsHandler h;
@@ -374,19 +381,22 @@ bool DetailsHandler::startElement( const QString&, const QString&,
                                    const QString& qName,
                                    const QXmlAttributes &a )
 {
-    if (qName == "proc") {
-        details->setName(a.value("name"));
-        return TRUE;
-    }
-    if (qName == "param") {
-        bool implicit = a.value("implicit") == "true";
-        details->addParam(a.value("name"), a.value("type"), a.value("exp"), implicit);
-        return TRUE;
-    }
-    if (qName == "return") {
-        details->addReturn(a.value("type"), a.value("exp"));
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            details->setName(a.value("name"));
+            return TRUE;
+        }
+    if (qName == "param")
+        {
+            bool implicit = a.value("implicit") == "true";
+            details->addParam(a.value("name"), a.value("type"), a.value("exp"), implicit);
+            return TRUE;
+        }
+    if (qName == "return")
+        {
+            details->addReturn(a.value("type"), a.value("exp"));
+            return TRUE;
+        }
     return TRUE;
 }
 
@@ -417,11 +427,12 @@ void MainForm::updateDecoded()
                     "-decoded.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
-    if (f.open(IO_ReadOnly) == FALSE) {
-        std::cerr << "cannot open " << fname << std::endl;
-        decoded->clear();
-        return;
-    }
+    if (f.open(IO_ReadOnly) == FALSE)
+        {
+            std::cerr << "cannot open " << fname << std::endl;
+            decoded->clear();
+            return;
+        }
     QXmlSimpleReader q;
     QXmlInputSource i(f);
     DecodedHandler h;
@@ -447,25 +458,29 @@ bool DecodedHandler::startElement( const QString&, const QString&,
                                    const QString& qName,
                                    const QXmlAttributes &a )
 {
-    if (qName == "proc") {
-        return TRUE;
-    }
-    if (qName == "decoded") {
-        startDecoded = true;
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            return TRUE;
+        }
+    if (qName == "decoded")
+        {
+            startDecoded = true;
+            return TRUE;
+        }
     return TRUE;
 }
 
 bool DecodedHandler::endElement( const QString&, const QString&, const QString& qName )
 {
-    if (qName == "proc") {
-        return TRUE;
-    }
-    if (qName == "decoded") {
-        startDecoded = false;
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            return TRUE;
+        }
+    if (qName == "decoded")
+        {
+            startDecoded = false;
+            return TRUE;
+        }
     return TRUE;
 }
 
@@ -498,11 +513,12 @@ void MainForm::updateAnalysed()
                     "-analysed.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
-    if (f.open(IO_ReadOnly) == FALSE) {
-        std::cerr << "cannot open " << fname << std::endl;
-        analysed->clear();
-        return;
-    }
+    if (f.open(IO_ReadOnly) == FALSE)
+        {
+            std::cerr << "cannot open " << fname << std::endl;
+            analysed->clear();
+            return;
+        }
     QXmlSimpleReader q;
     QXmlInputSource i(f);
     AnalysedHandler h;
@@ -528,25 +544,29 @@ bool AnalysedHandler::startElement( const QString&, const QString&,
                                     const QString& qName,
                                     const QXmlAttributes &a )
 {
-    if (qName == "proc") {
-        return TRUE;
-    }
-    if (qName == "analysed") {
-        startAnalysed = true;
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            return TRUE;
+        }
+    if (qName == "analysed")
+        {
+            startAnalysed = true;
+            return TRUE;
+        }
     return TRUE;
 }
 
 bool AnalysedHandler::endElement( const QString&, const QString&, const QString& qName )
 {
-    if (qName == "proc") {
-        return TRUE;
-    }
-    if (qName == "analysed") {
-        startAnalysed = false;
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            return TRUE;
+        }
+    if (qName == "analysed")
+        {
+            startAnalysed = false;
+            return TRUE;
+        }
     return TRUE;
 }
 
@@ -579,11 +599,12 @@ void MainForm::updateSSA()
                     "-ssa.xml";
     int fd = lockFileRead(fname);
     QFile f(fname);
-    if (f.open(IO_ReadOnly) == FALSE) {
-        std::cerr << "cannot open " << fname << std::endl;
-        ssa->clear();
-        return;
-    }
+    if (f.open(IO_ReadOnly) == FALSE)
+        {
+            std::cerr << "cannot open " << fname << std::endl;
+            ssa->clear();
+            return;
+        }
     QXmlSimpleReader q;
     QXmlInputSource i(f);
     SSAHandler h;
@@ -609,25 +630,29 @@ bool SSAHandler::startElement( const QString&, const QString&,
                                const QString& qName,
                                const QXmlAttributes &a )
 {
-    if (qName == "proc") {
-        return TRUE;
-    }
-    if (qName == "ssa") {
-        startSSA = true;
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            return TRUE;
+        }
+    if (qName == "ssa")
+        {
+            startSSA = true;
+            return TRUE;
+        }
     return TRUE;
 }
 
 bool SSAHandler::endElement( const QString&, const QString&, const QString& qName )
 {
-    if (qName == "proc") {
-        return TRUE;
-    }
-    if (qName == "ssa") {
-        startSSA = false;
-        return TRUE;
-    }
+    if (qName == "proc")
+        {
+            return TRUE;
+        }
+    if (qName == "ssa")
+        {
+            startSSA = false;
+            return TRUE;
+        }
     return TRUE;
 }
 

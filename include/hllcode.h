@@ -41,7 +41,8 @@ class CallStatement;
 //class CallStatement::RetLocs;
 class ReturnStatement;
 
-class HLLCode {
+class HLLCode
+{
 protected:
     UserProc *m_proc;		// Pointer to the enclosing UserProc
 
@@ -54,14 +55,17 @@ public:
     virtual 		~HLLCode() { }
 
     // clear the hllcode object (derived classes should call the base)
-    virtual void	reset() {
+    virtual void	reset()
+    {
     }
 
     // access to proc
-    UserProc *getProc() {
+    UserProc *getProc()
+    {
         return m_proc;
     }
-    void	setProc(UserProc *p) {
+    void	setProc(UserProc *p)
+    {
         m_proc = p;
     }
 
@@ -130,7 +134,8 @@ public:
     virtual void	print(std::ostream &os) = 0;
 };		// class HLLCode
 
-class SyntaxNode {
+class SyntaxNode
+{
 protected:
     PBB		pbb;
     int		nodenum;
@@ -143,7 +148,8 @@ public:
     SyntaxNode();
     virtual 		~SyntaxNode();
 
-    virtual bool	isBlock() {
+    virtual bool	isBlock()
+    {
         return false;
     }
     virtual bool	isGoto();
@@ -151,21 +157,25 @@ public:
 
     virtual void	ignoreGoto() { };
 
-    virtual int		getNumber() {
+    virtual int		getNumber()
+    {
         return nodenum;
     }
 
-    PBB		getBB() {
+    PBB		getBB()
+    {
         return pbb;
     }
-    void	setBB(PBB bb) {
+    void	setBB(PBB bb)
+    {
         pbb = bb;
     }
 
     virtual int		getNumOutEdges() = 0;
     virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n) = 0;
     virtual bool	endsWithGoto() = 0;
-    virtual bool	startsWith(SyntaxNode *node) {
+    virtual bool	startsWith(SyntaxNode *node)
+    {
         return this == node;
     }
 
@@ -173,19 +183,23 @@ public:
                                          SyntaxNode *cur = NULL) = 0;
 
     int		getScore();
-    void	addToScore(int n) {
+    void	addToScore(int n)
+    {
         score = getScore() + n;
     }
-    void	setDepth(int n) {
+    void	setDepth(int n)
+    {
         depth = n;
     }
-    int		getDepth() {
+    int		getDepth()
+    {
         return depth;
     }
 
     virtual SyntaxNode *clone() = 0;
     virtual SyntaxNode *replace(SyntaxNode *from, SyntaxNode *to) = 0;
-    SyntaxNode *getCorrespond() {
+    SyntaxNode *getCorrespond()
+    {
         return correspond;
     }
 
@@ -195,7 +209,8 @@ public:
     virtual void	addSuccessors(SyntaxNode *root, std::vector<SyntaxNode*> &successors) { }
 };		// class SyntaxNode
 
-class BlockSyntaxNode : public SyntaxNode {
+class BlockSyntaxNode : public SyntaxNode
+{
 private:
     std::vector<SyntaxNode*> statements;
 
@@ -203,57 +218,68 @@ public:
     BlockSyntaxNode();
     virtual ~BlockSyntaxNode();
 
-    virtual bool isBlock() {
+    virtual bool isBlock()
+    {
         return pbb == NULL;
     }
 
-    virtual void ignoreGoto() {
+    virtual void ignoreGoto()
+    {
         if (pbb) notGoto = true;
         else if (statements.size() > 0)
             statements[statements.size()-1]->ignoreGoto();
     }
 
-    int getNumStatements() {
+    int getNumStatements()
+    {
         return pbb ? 0 : statements.size();
     }
-    SyntaxNode *getStatement(int n) {
+    SyntaxNode *getStatement(int n)
+    {
         assert(pbb == NULL);
         return statements[n];
     }
-    void prependStatement(SyntaxNode *n) {
+    void prependStatement(SyntaxNode *n)
+    {
         assert(pbb == NULL);
         statements.resize(statements.size()+1);
         for (int i = statements.size()-1; i > 0;  i--)
             statements[i] = statements[i-1];
         statements[0] = n;
     }
-    void addStatement(SyntaxNode *n) {
+    void addStatement(SyntaxNode *n)
+    {
         assert(pbb == NULL);
         statements.push_back(n);
     }
-    void setStatement(int i, SyntaxNode *n) {
+    void setStatement(int i, SyntaxNode *n)
+    {
         assert(pbb == NULL);
         statements[i] = n;
     }
 
     virtual int getNumOutEdges();
     virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n);
-    virtual bool endsWithGoto() {
+    virtual bool endsWithGoto()
+    {
         if (pbb) return isGoto();
         bool last = false;
         if (statements.size() > 0)
             last = statements[statements.size()-1]->endsWithGoto();
         return last;
     }
-    virtual bool	startsWith(SyntaxNode *node) {
+    virtual bool	startsWith(SyntaxNode *node)
+    {
         return this == node || (statements.size() > 0 && statements[0]->startsWith(node));
     }
-    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL) {
+    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL)
+    {
         if (this == pFor) return cur;
-        for (unsigned i = 0; i < statements.size(); i++) {
-            SyntaxNode *n = statements[i]->getEnclosingLoop(pFor, cur);
-            if (n) return n;
-        }
+        for (unsigned i = 0; i < statements.size(); i++)
+            {
+                SyntaxNode *n = statements[i]->getEnclosingLoop(pFor, cur);
+                if (n) return n;
+            }
         return NULL;
     }
 
@@ -266,7 +292,8 @@ public:
     virtual void	addSuccessors(SyntaxNode *root, std::vector<SyntaxNode*> &successors);
 };		// class BlockSyntaxNode
 
-class IfThenSyntaxNode : public SyntaxNode {
+class IfThenSyntaxNode : public SyntaxNode
+{
 protected:
     SyntaxNode *pThen;
     Exp		*cond;
@@ -275,36 +302,44 @@ public:
     IfThenSyntaxNode();
     virtual 		~IfThenSyntaxNode();
 
-    virtual bool	isGoto() {
+    virtual bool	isGoto()
+    {
         return false;
     }
-    virtual bool	isBranch() {
+    virtual bool	isBranch()
+    {
         return false;
     }
 
-    virtual int		getNumOutEdges() {
+    virtual int		getNumOutEdges()
+    {
         return 1;
     }
     virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n);
-    virtual bool	endsWithGoto() {
+    virtual bool	endsWithGoto()
+    {
         return false;
     }
 
     virtual SyntaxNode *clone();
     virtual SyntaxNode *replace(SyntaxNode *from, SyntaxNode *to);
 
-    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL) {
+    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL)
+    {
         if (this == pFor) return cur;
         return pThen->getEnclosingLoop(pFor, cur);
     }
 
-    void	setCond(Exp *e) {
+    void	setCond(Exp *e)
+    {
         cond = e;
     }
-    Exp		*getCond() {
+    Exp		*getCond()
+    {
         return cond;
     }
-    void	setThen(SyntaxNode *n) {
+    void	setThen(SyntaxNode *n)
+    {
         pThen = n;
     }
 
@@ -314,7 +349,8 @@ public:
     virtual void	addSuccessors(SyntaxNode *root, std::vector<SyntaxNode*> &successors);
 };		// class IfThenSyntaxNode
 
-class IfThenElseSyntaxNode : public SyntaxNode {
+class IfThenElseSyntaxNode : public SyntaxNode
+{
 protected:
     SyntaxNode *pThen;
     SyntaxNode *pElse;
@@ -323,26 +359,32 @@ protected:
 public:
     IfThenElseSyntaxNode();
     virtual 		~IfThenElseSyntaxNode();
-    virtual bool	isGoto() {
+    virtual bool	isGoto()
+    {
         return false;
     }
-    virtual bool	isBranch() {
+    virtual bool	isBranch()
+    {
         return false;
     }
 
-    virtual int		getNumOutEdges() {
+    virtual int		getNumOutEdges()
+    {
         return 1;
     }
-    virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n) {
+    virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n)
+    {
         SyntaxNode *o = pThen->getOutEdge(root, 0);
         assert(o == pElse->getOutEdge(root, 0));
         return o;
     }
-    virtual bool	endsWithGoto() {
+    virtual bool	endsWithGoto()
+    {
         return false;
     }
 
-    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL) {
+    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL)
+    {
         if (this == pFor) return cur;
         SyntaxNode *n = pThen->getEnclosingLoop(pFor, cur);
         if (n) return n;
@@ -353,13 +395,16 @@ public:
     virtual SyntaxNode *clone();
     virtual SyntaxNode *replace(SyntaxNode *from, SyntaxNode *to);
 
-    void	setCond(Exp *e) {
+    void	setCond(Exp *e)
+    {
         cond = e;
     }
-    void	setThen(SyntaxNode *n) {
+    void	setThen(SyntaxNode *n)
+    {
         pThen = n;
     }
-    void	setElse(SyntaxNode *n) {
+    void	setElse(SyntaxNode *n)
+    {
         pElse = n;
     }
 
@@ -370,7 +415,8 @@ public:
                                std::vector<SyntaxNode*> &successors);
 };		// class IfThenElseSyntaxNode
 
-class PretestedLoopSyntaxNode : public SyntaxNode {
+class PretestedLoopSyntaxNode : public SyntaxNode
+{
 protected:
     SyntaxNode *pBody;
     Exp		*cond;
@@ -378,21 +424,26 @@ protected:
 public:
     PretestedLoopSyntaxNode();
     virtual 		~PretestedLoopSyntaxNode();
-    virtual bool	isGoto() {
+    virtual bool	isGoto()
+    {
         return false;
     }
-    virtual bool	isBranch() {
+    virtual bool	isBranch()
+    {
         return false;
     }
 
-    virtual int		getNumOutEdges() {
+    virtual int		getNumOutEdges()
+    {
         return 1;
     }
     virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n);
-    virtual bool	endsWithGoto() {
+    virtual bool	endsWithGoto()
+    {
         return false;
     }
-    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL) {
+    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL)
+    {
         if (this == pFor) return cur;
         return pBody->getEnclosingLoop(pFor, this);
     }
@@ -400,10 +451,12 @@ public:
     virtual SyntaxNode *clone();
     virtual SyntaxNode *replace(SyntaxNode *from, SyntaxNode *to);
 
-    void	setCond(Exp *e) {
+    void	setCond(Exp *e)
+    {
         cond = e;
     }
-    void	setBody(SyntaxNode *n) {
+    void	setBody(SyntaxNode *n)
+    {
         pBody = n;
     }
 
@@ -413,7 +466,8 @@ public:
     virtual void	addSuccessors(SyntaxNode *root, std::vector<SyntaxNode*> &successors);
 };		// class PretestedLoopSyntaxNode
 
-class PostTestedLoopSyntaxNode : public SyntaxNode {
+class PostTestedLoopSyntaxNode : public SyntaxNode
+{
 protected:
     SyntaxNode *pBody;
     Exp		*cond;
@@ -421,21 +475,26 @@ protected:
 public:
     PostTestedLoopSyntaxNode();
     virtual ~PostTestedLoopSyntaxNode();
-    virtual bool	isGoto() {
+    virtual bool	isGoto()
+    {
         return false;
     }
-    virtual bool	isBranch() {
+    virtual bool	isBranch()
+    {
         return false;
     }
 
-    virtual int		getNumOutEdges() {
+    virtual int		getNumOutEdges()
+    {
         return 1;
     }
     virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n);
-    virtual bool	endsWithGoto() {
+    virtual bool	endsWithGoto()
+    {
         return false;
     }
-    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL) {
+    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL)
+    {
         if (this == pFor) return cur;
         return pBody->getEnclosingLoop(pFor, this);
     }
@@ -443,10 +502,12 @@ public:
     virtual SyntaxNode *clone();
     virtual SyntaxNode *replace(SyntaxNode *from, SyntaxNode *to);
 
-    void	setCond(Exp *e) {
+    void	setCond(Exp *e)
+    {
         cond = e;
     }
-    void	setBody(SyntaxNode *n) {
+    void	setBody(SyntaxNode *n)
+    {
         pBody = n;
     }
 
@@ -456,30 +517,37 @@ public:
     virtual void 	addSuccessors(SyntaxNode *root, std::vector<SyntaxNode*> &successors);
 };		// class PostTestedLoopSyntaxNode
 
-class InfiniteLoopSyntaxNode : public SyntaxNode {
+class InfiniteLoopSyntaxNode : public SyntaxNode
+{
 protected:
     SyntaxNode *pBody;
 
 public:
     InfiniteLoopSyntaxNode();
     virtual 		~InfiniteLoopSyntaxNode();
-    virtual bool	isGoto() {
+    virtual bool	isGoto()
+    {
         return false;
     }
-    virtual bool	isBranch() {
+    virtual bool	isBranch()
+    {
         return false;
     }
 
-    virtual int getNumOutEdges() {
+    virtual int getNumOutEdges()
+    {
         return 0;
     }
-    virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n) {
+    virtual SyntaxNode *getOutEdge(SyntaxNode *root, int n)
+    {
         return NULL;
     }
-    virtual bool endsWithGoto() {
+    virtual bool endsWithGoto()
+    {
         return false;
     }
-    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL) {
+    virtual SyntaxNode *getEnclosingLoop(SyntaxNode *pFor, SyntaxNode *cur = NULL)
+    {
         if (this == pFor) return cur;
         return pBody->getEnclosingLoop(pFor, this);
     }
@@ -487,7 +555,8 @@ public:
     virtual SyntaxNode *clone();
     virtual SyntaxNode *replace(SyntaxNode *from, SyntaxNode *to);
 
-    void	setBody(SyntaxNode *n) {
+    void	setBody(SyntaxNode *n)
+    {
         pBody = n;
     }
 

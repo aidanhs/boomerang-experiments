@@ -20,18 +20,22 @@
 
 #include "SymTab.h"
 
-SymTab::SymTab() {
+SymTab::SymTab()
+{
 }
 
-SymTab::~SymTab() {
+SymTab::~SymTab()
+{
 }
 
-void SymTab::Add(ADDRESS a, char* s) {
+void SymTab::Add(ADDRESS a, char* s)
+{
     amap[a] = s;
     smap[s] = a;
 }
 
-const char* SymTab::find(ADDRESS a) {
+const char* SymTab::find(ADDRESS a)
+{
     std::map<ADDRESS, std::string>::iterator ff;
     ff = amap.find(a);
     if (ff == amap.end())
@@ -39,7 +43,8 @@ const char* SymTab::find(ADDRESS a) {
     return ff->second.c_str();
 }
 
-ADDRESS SymTab::find(const char* s) {
+ADDRESS SymTab::find(const char* s)
+{
     std::map<std::string, ADDRESS>::iterator ff;
     ff = smap.find(s);
     if (ff == smap.end())
@@ -64,18 +69,21 @@ char* SymTab::FindAfter(ADDRESS& dwAddr)
     int bot = 0;
     int top = m_iCurEnt-1;
     int curr;
-    do {
-        curr = (bot + top) >> 1;
-        PSYMTABENT pEnt = m_pEnt + curr;    // Point to current entry
-        if (pEnt->dwValue > dwAddr)
-            top = curr-1;
-        else if (pEnt->dwValue < dwAddr)
-            bot = curr+1;
-        else {      // Found the address
-            m_iFindEnt = curr;
-            return pEnt->pName;
+    do
+        {
+            curr = (bot + top) >> 1;
+            PSYMTABENT pEnt = m_pEnt + curr;    // Point to current entry
+            if (pEnt->dwValue > dwAddr)
+                top = curr-1;
+            else if (pEnt->dwValue < dwAddr)
+                bot = curr+1;
+            else        // Found the address
+                {
+                    m_iFindEnt = curr;
+                    return pEnt->pName;
+                }
         }
-    } while (bot <= top);
+    while (bot <= top);
     // If we get here, we don't have an exact match. So just use the entry at bot, which is the next highest value
     m_iFindEnt = bot;
     dwAddr = m_pEnt[bot].dwValue;

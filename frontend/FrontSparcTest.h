@@ -9,7 +9,8 @@ class NJMCDecoder;
 class Prog;
 
 
-class FrontSparcTest : public CppUnit::TestCase {
+class FrontSparcTest : public CppUnit::TestCase
+{
 protected:
 
 public:

@@ -15,7 +15,8 @@ class BasicBlock;
 class CEditBBDialog;
 class CProcDoc;
 
-class Node {
+class Node
+{
 protected:
     BasicBlock *bb;
     CPoint p;
@@ -26,29 +27,35 @@ protected:
     Node(std::map<BasicBlock *, Node*> &n) : bb(NULL), nodes(n) { }
 
 public:
-    Node(BasicBlock *pbb, RECT &r, std::map<BasicBlock *, Node*> &n) : bb(pbb), nodes(n) {
+    Node(BasicBlock *pbb, RECT &r, std::map<BasicBlock *, Node*> &n) : bb(pbb), nodes(n)
+    {
         p.x = r.left;
         p.y = r.top;
         nodes[bb] = this;
     }
 
-    CPoint &getPoint() {
+    CPoint &getPoint()
+    {
         return p;
     }
-    virtual CSize getSize() {
+    virtual CSize getSize()
+    {
         return CSize(10, 10);
     }
 
     void jiggleAway(Node *other, RECT &bound);
     void jiggleStatic(RECT &bound);
-    void clearForce() {
+    void clearForce()
+    {
         fx = fy = 0;
     }
     bool applyForce(RECT &bound);
-    int getLevel() {
+    int getLevel()
+    {
         return level;
     }
-    void setLevel(int i) {
+    void setLevel(int i)
+    {
         level = i;
     }
 
@@ -61,28 +68,33 @@ public:
     virtual Node *getOutEdge(int j);
 
     virtual void mergeWith(Node *other);
-    virtual PBB getBB() {
+    virtual PBB getBB()
+    {
         return bb;    // dont use this, it's for derived classes only
     }
 };
 
 // represents a number of nodes
-class MultiNode : public Node {
+class MultiNode : public Node
+{
 protected:
     std::vector<PBB> bbs;
     bool traversed;
 
 public:
-    MultiNode(Node &n) : Node(n), traversed(false) {
+    MultiNode(Node &n) : Node(n), traversed(false)
+    {
         bbs.push_back(bb);
         nodes[bb] = this;
         bb = NULL;
     }
 
-    CPoint &getPoint() {
+    CPoint &getPoint()
+    {
         return p;
     }
-    virtual CSize getSize() {
+    virtual CSize getSize()
+    {
         return CSize(10, 20);
     }
 
@@ -94,7 +106,8 @@ public:
     virtual int getNumOutEdges();
     virtual Node *getOutEdge(int j);
     virtual void mergeWith(Node *other);
-    virtual PBB getBB() {
+    virtual PBB getBB()
+    {
         return bbs.front();
     }
 };

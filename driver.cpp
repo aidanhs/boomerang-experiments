@@ -34,7 +34,8 @@ void init_dfa();			// Prototypes for
 void init_sslparser();		// various initialisation functions
 void init_basicblock();		// for garbage collection safety
 
-int main(int argc, const char* argv[]) {
+int main(int argc, const char* argv[])
+{
 
     // Call the various initialisation functions for safe garbage collection
     init_dfa();
@@ -46,7 +47,8 @@ int main(int argc, const char* argv[]) {
 
 /* This makes sure that the garbage collector sees all allocations, even those
 	that we can't be bothered collecting, especially standard STL objects */
-void* operator new(size_t n) {
+void* operator new(size_t n)
+{
 #ifdef DONT_COLLECT_STL
     return GC_malloc_uncollectable(n);	// Don't collect, but mark
 #else
@@ -54,7 +56,8 @@ void* operator new(size_t n) {
 #endif
 }
 
-void operator delete(void* p) {
+void operator delete(void* p)
+{
 #ifdef DONT_COLLECT_STL
     GC_free(p); // Important to call this if you call GC_malloc_uncollectable
     // #else do nothing!

@@ -4,7 +4,8 @@
 
 #include "rtl.h"
 
-class RtlTest : public CppUnit::TestCase {
+class RtlTest : public CppUnit::TestCase
+{
 protected:
 
 public:

@@ -31,7 +31,8 @@ class Assignment;
  * A class for comparing Exp*s (comparing the actual expressions)
  * Type sensitive
  */
-class lessExpStar : public std::binary_function<Exp*, Exp*, bool> {
+class lessExpStar : public std::binary_function<Exp*, Exp*, bool>
+{
 public:
     bool operator()(const Exp* x, const Exp* y) const;
 };
@@ -41,20 +42,23 @@ public:
  * A class for comparing Exp*s (comparing the actual expressions)
  * Type insensitive
  */
-class lessTI : public std::binary_function<Exp*, Exp*, bool> {
+class lessTI : public std::binary_function<Exp*, Exp*, bool>
+{
 public:
     bool operator()(const Exp* x, const Exp* y) const;
 };
 
 // Compare assignments by their left hand sides (only). Implemented in statement.cpp
-class lessAssignment : public std::binary_function<Assignment*, Assignment*, bool> {
+class lessAssignment : public std::binary_function<Assignment*, Assignment*, bool>
+{
 public:
     bool operator()(const Assignment* x, const Assignment* y) const;
 };
 
 // Repeat the above for Assigns; sometimes the #include ordering is such that the compiler doesn't know that an Assign
 // is a subclass of Assignment
-class lessAssign : public std::binary_function<Assign*, Assign*, bool> {
+class lessAssign : public std::binary_function<Assign*, Assign*, bool>
+{
 public:
     bool operator()(const Assign* x, const Assign* y) const;
 };

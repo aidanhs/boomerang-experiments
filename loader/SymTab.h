@@ -30,7 +30,8 @@
 #include <map>
 #include <string>
 
-class SymTab {
+class SymTab
+{
     // The map indexed by address.
     std::map<ADDRESS, std::string> amap;
     // The map indexed by string. Note that the strings are stored twice.

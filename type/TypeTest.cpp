@@ -31,7 +31,8 @@
 suite->addTest(new CppUnit::TestCaller<TypeTest> ("Type", \
 	&TypeTest::name, *this))
 
-void TypeTest::registerTests(CppUnit::TestSuite* suite) {
+void TypeTest::registerTests(CppUnit::TestSuite* suite)
+{
 
 //	Note: there is nothing left to test in Util (for now)
     MYTEST(testTypeLong);
@@ -53,7 +54,8 @@ int TypeTest::countTestCases () const
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void TypeTest::setUp () {
+void TypeTest::setUp ()
+{
 }
 
 /*==============================================================================
@@ -63,14 +65,16 @@ void TypeTest::setUp () {
  * PARAMETERS:		<none>
  * RETURNS:			<nothing>
  *============================================================================*/
-void TypeTest::tearDown () {
+void TypeTest::tearDown ()
+{
 }
 
 /*==============================================================================
  * FUNCTION:		TypeTest::testTypeLong
  * OVERVIEW:		Test type unsigned long
  *============================================================================*/
-void TypeTest::testTypeLong () {
+void TypeTest::testTypeLong ()
+{
 
     std::string expected("unsigned long long");
     IntegerType t(64, -1);
@@ -82,7 +86,8 @@ void TypeTest::testTypeLong () {
  * FUNCTION:		TypeTest::testNotEqual
  * OVERVIEW:		Test type inequality
  *============================================================================*/
-void TypeTest::testNotEqual () {
+void TypeTest::testNotEqual ()
+{
 
     IntegerType t1(32, -1);
     IntegerType t2(32, -1);
@@ -95,7 +100,8 @@ void TypeTest::testNotEqual () {
  * FUNCTION:		TypeTest::testNotEqual
  * OVERVIEW:		Test type inequality
  *============================================================================*/
-void TypeTest::testCompound() {
+void TypeTest::testCompound()
+{
     BinaryFileFactory bff;
     BinaryFile *pBF = bff.Load(HELLO_WINDOWS);
     FrontEnd *pFE = new PentiumFrontEnd(pBF, new Prog, &bff);
@@ -159,7 +165,8 @@ void TypeTest::testCompound() {
  * FUNCTION:		TypeTest::testDataInterval
  * OVERVIEW:		Test the DataIntervalMap class
  *============================================================================*/
-void TypeTest::testDataInterval() {
+void TypeTest::testDataInterval()
+{
     DataIntervalMap dim;
     dim.addItem(0x1000, "first", new IntegerType(32, 1));
     dim.addItem(0x1004, "second", new FloatType(64));
@@ -237,7 +244,8 @@ void TypeTest::testDataInterval() {
  * FUNCTION:		TypeTest::testDataIntervalOverlaps
  * OVERVIEW:		Test the DataIntervalMap class with overlapping addItems
  *============================================================================*/
-void TypeTest::testDataIntervalOverlaps() {
+void TypeTest::testDataIntervalOverlaps()
+{
     DataIntervalMap dim;
     dim.addItem(0x1000, "firstInt", new IntegerType(32, 1));
     dim.addItem(0x1004, "firstFloat", new FloatType(32));

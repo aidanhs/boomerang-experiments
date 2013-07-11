@@ -2,7 +2,8 @@
 #include "prog.h"
 #include <vector>
 
-struct WILD_SEGMENT {
+struct WILD_SEGMENT
+{
     unsigned offset;
     unsigned size;
 };

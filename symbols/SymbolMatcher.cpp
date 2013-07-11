@@ -20,7 +20,8 @@ extern "C" EXPORT SymbolMatcher *getInstanceFor(Prog *prog, const char *sSymbolC
 
 
 
-SymbolMatcher * SymbolMatcherFactory::getInstanceFor(Prog *prog, const char *sSymbolContainer) {
+SymbolMatcher * SymbolMatcherFactory::getInstanceFor(Prog *prog, const char *sSymbolContainer)
+{
 
     SymbolMatcher *sm = NULL;
     if(BfdObjMatcher::CanHandle(sSymbolContainer))
@@ -30,15 +31,17 @@ SymbolMatcher * SymbolMatcherFactory::getInstanceFor(Prog *prog, const char *sSy
         sm = new BfdArchMatcher(prog, sSymbolContainer);
 
     // initialize the object
-    if(sm &&!sm->Init()) {
-        delete sm;
-        sm = NULL;
-    }
+    if(sm &&!sm->Init())
+        {
+            delete sm;
+            sm = NULL;
+        }
 
     return sm;
 }
 
-SymbolMatcher * SymbolMatcherFactory::getInstanceFor(Prog *prog, const char *sSymbolContainer, const char *hint) {
+SymbolMatcher * SymbolMatcherFactory::getInstanceFor(Prog *prog, const char *sSymbolContainer, const char *hint)
+{
 
     return new BfdObjMatcher(prog, sSymbolContainer);
 }
@@ -54,18 +57,22 @@ SymbolMatcher::~SymbolMatcher(void)
 {
 }
 
-void SymbolMatcher::MatchAll() {
-    while(!Finished()) {
-        Match();
-        Next();
-    }
+void SymbolMatcher::MatchAll()
+{
+    while(!Finished())
+        {
+            Match();
+            Next();
+        }
 }
 
-int SymbolMatcher::Total() {
+int SymbolMatcher::Total()
+{
     return -1; // not supported
 }
 
-bool SymbolMatcher::GetSymbolInfo(SymbolInfo *symInfo) {
+bool SymbolMatcher::GetSymbolInfo(SymbolInfo *symInfo)
+{
     return false; // not supported
 }
 

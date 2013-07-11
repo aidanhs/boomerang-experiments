@@ -56,7 +56,8 @@ class XMLProgParser;
 /*==============================================================================
  * Procedure class.
  *============================================================================*/
-class Proc : public Memoisable {
+class Proc : public Memoisable
+{
 public:
 
     /*
@@ -89,10 +90,12 @@ public:
     /*
      * Get the program this procedure belongs to.
      */
-    Prog		*getProg() {
+    Prog		*getProg()
+    {
         return prog;
     }
-    void		setProg(Prog *p) {
+    void		setProg(Prog *p)
+    {
         prog = p;
     }
 
@@ -100,17 +103,20 @@ public:
      * Get/Set the first procedure that calls this procedure (or null for main/start).
      */
     Proc		*getFirstCaller();
-    void		setFirstCaller(Proc *p) {
+    void		setFirstCaller(Proc *p)
+    {
         if (m_firstCaller == NULL) m_firstCaller = p;
     }
 
     /*
      * Returns a pointer to the Signature
      */
-    Signature	*getSignature() {
+    Signature	*getSignature()
+    {
         return signature;
     }
-    void		setSignature(Signature *sig) {
+    void		setSignature(Signature *sig)
+    {
         signature = sig;
     }
 
@@ -178,7 +184,8 @@ public:
     /*
      * Return true if this is a library proc
      */
-    virtual bool		isLib() {
+    virtual bool		isLib()
+    {
         return false;
     }
 
@@ -186,7 +193,8 @@ public:
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool		isAggregateUsed() {
+    virtual bool		isAggregateUsed()
+    {
         return false;
     }
 
@@ -199,7 +207,8 @@ public:
     virtual	bool		isPreserved(Exp* e) = 0;		// Return whether e is preserved by this proc
 
     // Set an equation as proven. Useful for some sorts of testing
-    void		setProven(Exp* fact) {
+    void		setProven(Exp* fact)
+    {
         proven.insert(fact);
     }
 
@@ -207,14 +216,16 @@ public:
      * Get the callers
      * Note: the callers will be in a random order (determined by memory allocation)
      */
-    std::set<CallStatement*>& getCallers() {
+    std::set<CallStatement*>& getCallers()
+    {
         return callerSet;
     }
 
     /*
      * Add to the set of callers
      */
-    void		addCaller(CallStatement* caller) {
+    void		addCaller(CallStatement* caller)
+    {
         callerSet.insert(caller);
     }
 
@@ -230,17 +241,21 @@ public:
 
     virtual void		printCallGraphXML(std::ostream &os, int depth, bool recurse = true);
     void		printDetailsXML();
-    void		clearVisited() {
+    void		clearVisited()
+    {
         visited = false;
     }
-    bool		isVisited() {
+    bool		isVisited()
+    {
         return visited;
     }
 
-    Cluster		*getCluster() {
+    Cluster		*getCluster()
+    {
         return cluster;
     }
-    void		setCluster(Cluster *c) {
+    void		setCluster(Cluster *c)
+    {
         cluster = c;
     }
 
@@ -281,7 +296,8 @@ protected:
 /*==============================================================================
  * LibProc class.
  *============================================================================*/
-class LibProc : public Proc {
+class LibProc : public Proc
+{
 public:
 
     LibProc(Prog *prog, std::string& name, ADDRESS address);
@@ -298,7 +314,8 @@ public:
     /*
      * Return true, since is a library proc
      */
-    bool		isLib() {
+    bool		isLib()
+    {
         return true;
     }
 
@@ -306,7 +323,8 @@ public:
      * Return true if the aggregate pointer is used.
      * It is assumed that this is false for library procs
      */
-    virtual bool		isAggregateUsed() {
+    virtual bool		isAggregateUsed()
+    {
         return false;
     }
 
@@ -329,7 +347,8 @@ protected:
 
 };		// class LibProc
 
-enum ProcStatus {
+enum ProcStatus
+{
     PROC_UNDECODED,		// Has not even been decoded
     PROC_DECODED,		// Decoded, no attempt at decompiling
     PROC_SORTED,		// Decoded, and CFG has been sorted by address
@@ -350,7 +369,8 @@ typedef std::list<UserProc*> CycleList;
  * UserProc class.
  *============================================================================*/
 
-class UserProc : public Proc {
+class UserProc : public Proc
+{
 
     /*
      * The control flow graph.
@@ -466,14 +486,16 @@ public:
     /*
      * Returns a pointer to the CFG object.
      */
-    Cfg*		getCFG() {
+    Cfg*		getCFG()
+    {
         return cfg;
     }
 
     /*
      * Returns a pointer to the DataFlow object.
      */
-    DataFlow*	getDataFlow() {
+    DataFlow*	getDataFlow()
+    {
         return &df;
     }
 
@@ -505,17 +527,21 @@ public:
     /*
      * Returns whether or not this procedure can be decoded (i.e. has it already been decoded).
      */
-    bool		isDecoded() {
+    bool		isDecoded()
+    {
         return status >= PROC_DECODED;
     }
-    bool		isDecompiled() {
+    bool		isDecompiled()
+    {
         return status >= PROC_FINAL;
     }
 
-    bool		isSorted() {
+    bool		isSorted()
+    {
         return status >= PROC_SORTED;
     }
-    void		setSorted() {
+    void		setSorted()
+    {
         status = PROC_SORTED;
     }
 
@@ -541,7 +567,8 @@ public:
     void		dumpIgraph(igraph& ig);
 
     // simplify the statements in this proc
-    void		simplify() {
+    void		simplify()
+    {
         cfg->simplify();
     }
 
@@ -688,10 +715,12 @@ public:
 
     void		getDefinitions(LocationSet &defs);
     void		addImplicitAssigns();
-    StatementList& getParameters() {
+    StatementList& getParameters()
+    {
         return parameters;
     }
-    StatementList& getModifieds() {
+    StatementList& getModifieds()
+    {
         return theReturnStatement->getModifieds();
     }
 
@@ -747,7 +776,8 @@ public:
     Exp			*expFromSymbol(const char *nam);
     void		setExpSymbol(const char *nam, Exp *e, Type* ty);
 
-    int			getNumLocals() {
+    int			getNumLocals()
+    {
         return (int)locals.size();
     }
     const char	*getLocalName(int n);
@@ -780,7 +810,8 @@ public:
     /*
      * Get the callees
      */
-    std::list<Proc*>& getCallees() {
+    std::list<Proc*>& getCallees()
+    {
         return calleeList;
     }
 
@@ -802,7 +833,8 @@ public:
     /*
      * Change BB containing this statement from a COMPCALL to a CALL
      */
-    void		undoComputedBB(Statement* stmt) {
+    void		undoComputedBB(Statement* stmt)
+    {
         cfg->undoComputedBB(stmt);
     }
 
@@ -831,7 +863,8 @@ public:
 
     // Add a location to the UseCollector; this means this location is used before defined, and hence is an
     // *initial* parameter. Note that final parameters don't use this information; it's only for handling recursion.
-    void		useBeforeDefine(Exp* loc) {
+    void		useBeforeDefine(Exp* loc)
+    {
         col.insert(loc);
     }
 
@@ -844,15 +877,18 @@ private:
     ReturnStatement* theReturnStatement;
     int			DFGcount;
 public:
-    ADDRESS		getTheReturnAddr() {
+    ADDRESS		getTheReturnAddr()
+    {
         return theReturnStatement == NULL ? NO_ADDRESS : theReturnStatement->getRetAddr();
     }
-    void		setTheReturnAddr(ReturnStatement* s, ADDRESS r) {
+    void		setTheReturnAddr(ReturnStatement* s, ADDRESS r)
+    {
         assert(theReturnStatement == NULL);
         theReturnStatement = s;
         theReturnStatement->setRetAddr(r);
     }
-    ReturnStatement* getTheReturnStatement() {
+    ReturnStatement* getTheReturnStatement()
+    {
         return theReturnStatement;
     }
     bool		filterReturns(Exp* e);			// Decide whether to filter out e (return true) or keep it
@@ -863,7 +899,8 @@ public:
 protected:
     friend class XMLProgParser;
     UserProc();
-    void		setCFG(Cfg *c) {
+    void		setCFG(Cfg *c)
+    {
         cfg = c;
     }
 };		// class UserProc

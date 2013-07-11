@@ -23,9 +23,10 @@ bool BfdArchMatcher::Load()
     if(!m_arch_bfd)
         return false;
 
-    if (!bfd_check_format (m_arch_bfd, bfd_archive)) {
-        return false;
-    }
+    if (!bfd_check_format (m_arch_bfd, bfd_archive))
+        {
+            return false;
+        }
 
     if(!GetNextBFD())
         return false;
@@ -55,12 +56,14 @@ void BfdArchMatcher::Unload()
 }
 
 
-bool BfdArchMatcher::Next() {
+bool BfdArchMatcher::Next()
+{
 
-    if(!BfdObjMatcher::Next()) {
-        ObjUnload();
-        return GetNextBFD();
-    }
+    if(!BfdObjMatcher::Next())
+        {
+            ObjUnload();
+            return GetNextBFD();
+        }
     return true;
 }
 
@@ -71,9 +74,10 @@ bool BfdArchMatcher::GetNextBFD()
     if(!m_bfd)
         return false;
 
-    if (!bfd_check_format (m_bfd, bfd_object)) {
-        return false;
-    }
+    if (!bfd_check_format (m_bfd, bfd_object))
+        {
+            return false;
+        }
 
     if(!InitSymtab())
         return false;
@@ -98,11 +102,12 @@ bool BfdArchMatcher::CanHandle(const char *sSymbolContainer)
 
 bool BfdArchMatcher::Init()
 {
-    if(!Load()) {
-        if(m_bfd)
-            Unload();
-        return false;
-    }
+    if(!Load())
+        {
+            if(m_bfd)
+                Unload();
+            return false;
+        }
     return true;
 }
 
