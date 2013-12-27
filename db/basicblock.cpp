@@ -1808,6 +1808,8 @@ void BasicBlock::prependStmt(Statement* s, UserProc* proc)
     // Check the first RTL (if any)
     s->setBB(this);
     s->setProc(proc);
+    if (!m_pRtls)
+        m_pRtls = new std::list<RTL*>;
     if (m_pRtls->size())
         {
             RTL* rtl = m_pRtls->front();
@@ -2679,6 +2681,8 @@ void BasicBlock::processSwitch(UserProc* proc)
 // Change the BB enclosing stmt from type COMPCALL to CALL
 bool BasicBlock::undoComputedBB(Statement* stmt)
 {
+    if (!m_pRtls)
+        return false;
     RTL* last = m_pRtls->back();
     std::list<Statement*>& list = last->getList();
     std::list<Statement*>::reverse_iterator rr;
