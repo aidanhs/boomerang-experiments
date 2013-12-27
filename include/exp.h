@@ -615,6 +615,8 @@ public:
         return u.l;
 #elif SIZEOF_INT_P == 8
         return u.ll;
+#else
+		return NULL;
 #endif
     }
     const char*	getFuncName();

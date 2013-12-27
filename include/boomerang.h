@@ -55,6 +55,8 @@ class ObjcModule;
 
 #define DEBUG_RANGE_ANALYSIS 0
 
+#define VERSION "aidanvsn"
+
 /// Virtual class to monitor the decompilation.
 class Watcher
 {

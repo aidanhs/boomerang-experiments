@@ -2601,7 +2601,7 @@ void XMLProgParser::persistToXML(std::ostream &out, Exp *e)
             if (c->op == opIntConst)
                 out << " value=\"" << c->u.i << "\"";
             else if (c->op == opFuncConst)
-                out << " value=\"" << c->u.a << "\"";
+                out << " value=\"" << c->u.pp << "\"";
             else if (c->op == opFltConst)
                 out << " value=\"" << c->u.d << "\"";
             else if (c->op == opStrConst)
